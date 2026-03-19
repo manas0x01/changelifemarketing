@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import Navbar from "@/components/Navbar";
 
-// ── Tree data structure ───────────────────────────────────────────────────────
 interface TreeNode {
   id: string;
   name: string;
@@ -31,7 +30,6 @@ const defaultTree: TreeNode = {
   ]
 };
 
-// ── Avatar SVG: Active (blue shirt) or Gold (yellow shirt) ───────────────────
 const ActiveAvatar = ({ size = 56 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
     <circle cx="40" cy="40" r="40" fill="#fff"/>
@@ -80,7 +78,6 @@ const GoldAvatar = ({ size = 56 }: { size?: number }) => (
   </svg>
 );
 
-// ── Tree node rendered recursively on SVG canvas ──────────────────────────────
 const NODE_W   = 140;
 const NODE_H   = 44;
 const H_GAP    = 40;
@@ -136,7 +133,6 @@ function collectEdges(layout: LayoutNode, out: { x1: number; y1: number; x2: num
   return out;
 }
 
-// ── Render tree on an SVG ────────────────────────────────────────────────────
 function TreeSVG({ root }: { root: TreeNode }) {
   const treeWidth  = measureWidth(root);
   const depth      = getMaxDepth(root);
@@ -320,9 +316,9 @@ export default function MotherTreePage() {
         {/* BREADCRUMB */}
         <div className="breadcrumb">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <a href="#">Home</a>
+          <a href="/dashboard">Home</a>
           <span className="sep">/</span>
-          <a href="#">My Network</a>
+          <span className="current">My Network</span>
           <span className="sep">/</span>
           <span>Mother Tree</span>
         </div>

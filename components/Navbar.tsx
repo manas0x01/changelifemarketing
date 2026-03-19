@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useSidebar } from "@/context/SidebarContext";
+import { useState } from "react";
 
 interface NavbarProps {
   dropdownOpen: boolean;
@@ -10,7 +11,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }: NavbarProps) {
-  const { toggleSidebar } = useSidebar();
+  const { toggleSidebar, isSidebarOpen } = useSidebar();
 
   return (
     <>
@@ -38,10 +39,19 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
           cursor: pointer;
           color: #555;
         }
-        .hamburger-icon { display: flex; flex-direction: column; gap: 4px; }
+        .hamburger-icon { display: flex; flex-direction: column; gap: 4px; transition: all 0.3s ease; }
         .hamburger-icon span {
           width: 22px; height: 2px;
-          background: #555; border-radius: 2px;
+          background: #555; border-radius: 2px; transition: all 0.3s ease;
+        }
+        .hamburger-icon.active span:nth-child(1) {
+          transform: rotate(45deg) translate(8px, 8px);
+        }
+        .hamburger-icon.active span:nth-child(2) {
+          opacity: 0;
+        }
+        .hamburger-icon.active span:nth-child(3) {
+          transform: rotate(-45deg) translate(7px, -7px);
         }
         .topnav-right {
           display: flex;
@@ -107,7 +117,7 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
 
       <nav className="topnav">
         <div className="topnav-left">
-          <div className="hamburger-icon" onClick={toggleSidebar}>
+          <div className={`hamburger-icon ${isSidebarOpen ? 'active' : ''}`} onClick={toggleSidebar}>
             <span /><span /><span />
           </div>
         </div>

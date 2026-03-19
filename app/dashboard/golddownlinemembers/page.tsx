@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Navbar from "@/components/Navbar";
 
 const pageSizes = [10, 20, 50, 100];
 
@@ -59,34 +60,7 @@ export default function GoldDownlineMembersPage() {
 
         .gd-root { font-family:'Poppins',sans-serif; background:#f0f2f5; min-height:100vh; }
 
-        /* NAV */
-        .topnav {
-          background:#fff; height:52px;
-          display:flex; align-items:center; justify-content:space-between;
-          padding:0 20px; border-bottom:3px solid #1de9b6;
-          position:sticky; top:0; z-index:100;
-          box-shadow:0 1px 6px rgba(0,0,0,0.08);
-        }
-        .hamburger { display:flex; flex-direction:column; gap:4px; cursor:pointer; }
-        .hamburger span { width:22px; height:2px; background:#555; border-radius:2px; }
-        .topnav-right { display:flex; align-items:center; gap:10px; position:relative; }
-        .user-name { font-size:13.5px; font-weight:500; color:#333; cursor:pointer; }
-        .user-avatar {
-          width:36px; height:36px; border-radius:50%;
-          background:linear-gradient(135deg,#ff9800 50%,#5c6bc0 50%);
-          cursor:pointer; border:2px solid #e0e0e0; flex-shrink:0;
-        }
-
-        /* DROPDOWN */
-        .dropdown {
-          position:absolute; top:46px; right:0; background:#fff;
-          border:1px solid #e0e0e0; border-radius:6px; width:200px;
-          box-shadow:0 4px 20px rgba(0,0,0,0.12); z-index:200; overflow:hidden;
-        }
-        .dropdown-header { padding:12px 16px; font-size:13px; font-weight:600; color:#333; border-bottom:1px solid #f0f0f0; }
-        .dropdown-item { display:flex; align-items:center; gap:10px; padding:10px 16px; font-size:13px; color:#444; cursor:pointer; transition:background .15s; }
-        .dropdown-item:hover { background:#f5f5f5; }
-        .dropdown-item.red { color:#e53935; }
+        /* NAV handled by Navbar component */
 
         /* GREEN BAR */
         .green-bar { height:8px; background:linear-gradient(90deg,#00c853,#1de9b6); }
@@ -219,28 +193,7 @@ export default function GoldDownlineMembersPage() {
       <div className="gd-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
 
         {/* TOP NAV */}
-        <nav className="topnav">
-          <div className="hamburger"><span /><span /><span /></div>
-          <div className="topnav-right" onClick={(e) => e.stopPropagation()}>
-            <span className="user-name" onClick={() => setDropdownOpen(!dropdownOpen)}>
-              ajay kumar ( Sm674643 )
-            </span>
-            <div className="user-avatar" onClick={() => setDropdownOpen(!dropdownOpen)} />
-            {dropdownOpen && (
-              <div className="dropdown">
-                <div className="dropdown-header">Welcome, Sm674643</div>
-                <div className="dropdown-item">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#4caf50"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
-                  Profile
-                </div>
-                <div className="dropdown-item red">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#e53935"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z"/></svg>
-                  Logout
-                </div>
-              </div>
-            )}
-          </div>
-        </nav>
+        <Navbar dropdownOpen={dropdownOpen} setDropdownOpen={setDropdownOpen} setActivePage={() => {}} />
 
         {/* Green bar */}
         <div className="green-bar" />
@@ -248,9 +201,9 @@ export default function GoldDownlineMembersPage() {
         {/* BREADCRUMB */}
         <div className="breadcrumb">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <a href="#">Home</a>
+          <a href="/dashboard">Home</a>
           <span className="sep">/</span>
-          <a href="#">My Network</a>
+          <span className="current">My Network</span>
           <span className="sep">/</span>
           <span>Gold Downline Members</span>
         </div>

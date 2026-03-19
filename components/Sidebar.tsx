@@ -87,7 +87,7 @@ const menuItems: MenuItem[] = [
         <line x1="2" y1="10" x2="22" y2="10"/>
       </svg>
     ),
-    children: [{ label: "Payout History" }, { label: "Withdraw Request" }],
+    children: [{ label: "Processed Payments" }, { label: "Reimbursement of Expenditure" },{ label: "TDS Charge" }],
   },
   {
     id: "chat-support",
@@ -107,7 +107,7 @@ const menuItems: MenuItem[] = [
         <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
       </svg>
     ),
-    children: [{ label: "Change Password" }, { label: "Bank Details" }],
+    children: [{ label: "Change Password" }, { label: "Change Transaction Password" }],
   },
   {
     id: "logout",
@@ -183,6 +183,30 @@ export default function Sidebar() {
       setActiveId("my-network");
       setActiveSubmenuId("my-network-Gold Downline Members");
       setOpenMenus((prev) => Array.from(new Set([...prev, "my-network"])));
+    } else if (pathname.includes("/dashboard/silverbinaryincome")) {
+      setActiveId("reports");
+      setActiveSubmenuId("reports-Silver Binary Income");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "reports"])));
+    } else if (pathname.includes("/dashboard/goldcounting")) {
+      setActiveId("reports");
+      setActiveSubmenuId("reports-Gold Counting");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "reports"])));
+    } else if (pathname.includes("/dashboard/goldbinaryincome")) {
+      setActiveId("reports");
+      setActiveSubmenuId("reports-Gold Binary Income");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "reports"])));
+    } else if (pathname.includes("/dashboard/changepassword")) {
+      setActiveId("settings");
+      setActiveSubmenuId("settings-Change Password");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "settings"])));
+    } else if (pathname.includes("/dashboard/changetransactionpassword")) {
+      setActiveId("settings");
+      setActiveSubmenuId("settings-Change Transaction Password");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "settings"])));
+    } else if (pathname.includes("/dashboard/payouttdscharge")) {
+      setActiveId("daily-payout");
+      setActiveSubmenuId("daily-payout-TDS Charge");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "daily-payout"])));
     } else if (pathname.includes("/dashboard/registration")) {
       setActiveId("registration");
     } else if (pathname === "/dashboard") {
@@ -200,7 +224,7 @@ export default function Sidebar() {
     "my-network": "/dashboard/network",
     "reports": "/dashboard/reports",
     "daily-payout": "/dashboard/payout",
-    "chat-support": "/dashboard/chat",
+    "chat-support": "/dashboard/chatsupport",
     "settings": "/dashboard/settings",
   };
 
@@ -402,6 +426,11 @@ export default function Sidebar() {
           background: rgba(255,255,255,0.07);
           margin: 4px 14px;
         }
+        .sidebar {
+  width: 240px;
+  height: 100%;
+      }
+}
       `}</style>
 
       <aside className="sidebar">
@@ -468,6 +497,22 @@ export default function Sidebar() {
                               router.push("/dashboard/mothertree");
                             } else if (item.id === "my-network" && child.label === "Gold Downline Members") {
                               router.push("/dashboard/golddownlinemembers");
+                            } else if (item.id === "reports" && child.label === "Silver Binary Income") {
+                              router.push("/dashboard/silverbinaryincome");
+                            } else if (item.id === "reports" && child.label === "Gold Counting") {
+                              router.push("/dashboard/goldcounting");
+                            } else if (item.id === "reports" && child.label === "Gold Binary Income") {
+                              router.push("/dashboard/goldbinaryincome");
+                            } else if (item.id === "settings" && child.label === "Change Password") {
+                              router.push("/dashboard/changepassword");
+                            } else if (item.id === "settings" && child.label === "Change Transaction Password") {
+                              router.push("/dashboard/changetransactionpassword");
+                            } else if (item.id === "daily-payout" && child.label === "Processed Payments") {
+                              router.push("/dashboard/payoutprocessed");
+                            } else if (item.id === "daily-payout" && child.label === "Reimbursement of Expenditure") {
+                              router.push("/dashboard/reimbursementofexpenditure");
+                            } else if (item.id === "daily-payout" && child.label === "TDS Charge") {
+                              router.push("/dashboard/payouttdscharge");
                             }
                           }}
                         >

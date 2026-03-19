@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useSidebar } from "@/context/SidebarContext";
 import Navbar from "@/components/Navbar";
+import Link from "next/link";
 
 {/*Types */ }
 interface CycleRow {
@@ -534,15 +535,15 @@ export default function Dashboard() {
                                     </div>
                                     <div className="profile-divider" />
                                     <div className="profile-actions">
-                                        <button className="action-btn" onClick={() => setActivePage("profile")}>
+                                        <Link href="/dashboard/profile" className="action-btn">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" /></svg>
                                             My Profile
-                                        </button>
+                                        </Link>
                                         <div className="profile-actions-divider" />
-                                        <button className="action-btn">
+                                        <Link href="https://www.changelifemarketing.in/" className="action-btn">
                                             <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" /></svg>
                                             Visit Website
-                                        </button>
+                                        </Link>
                                     </div>
                                 </div>
 
@@ -629,15 +630,15 @@ export default function Dashboard() {
                                 </div>
                                 <div className="profile-divider" />
                                 <div className="profile-actions">
-                                    <button className="action-btn">
+                                    <Link href="/dashboard/profile" className="action-btn">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" /></svg>
                                         My Profile
-                                    </button>
+                                    </Link>
                                     <div className="profile-actions-divider" />
-                                    <button className="action-btn">
+                                    <Link href="/" className="action-btn">
                                         <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" /></svg>
                                         Visit Website
-                                    </button>
+                                    </Link>
                                 </div>
                             </div>
 

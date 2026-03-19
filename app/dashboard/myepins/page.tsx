@@ -69,9 +69,7 @@ export default function MyEPinsPage() {
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
         * { margin: 0; padding: 0; box-sizing: border-box; }
-
         .ep-root {
           font-family: 'Poppins', sans-serif;
           background: #f0f2f5;
@@ -268,9 +266,9 @@ export default function MyEPinsPage() {
         {/* BREADCRUMB */}
         <div className="breadcrumb">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <a href="#">Home</a>
+          <a href="/dashboard">Home</a>
           <span className="sep">/</span>
-          <a href="#">E-Pin Management</a>
+          <span className="current">E-Pin Management</span>
           <span className="sep">/</span>
           <span className="current">My E-Pins</span>
         </div>

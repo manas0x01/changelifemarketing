@@ -199,9 +199,9 @@ export default function GoldCountingReportPage() {
         {/* BREADCRUMB */}
         <div className="breadcrumb">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <a href="#">Home</a>
+          <a href="/dashboard">Home</a>
           <span className="sep">/</span>
-          <a href="#">Reports</a>
+          <span >Reports</span>
           <span className="sep">/</span>
           <span>Gold Counting Report</span>
         </div>

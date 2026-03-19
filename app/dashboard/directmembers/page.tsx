@@ -177,9 +177,9 @@ export default function DirectMembersPage() {
         {/* BREADCRUMB */}
         <div className="breadcrumb">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <a href="#">Home</a>
+          <a href="/dashboard">Home</a>
           <span className="sep">/</span>
-          <a href="#">My Network</a>
+          <span className="current">My Network</span>
           <span className="sep">/</span>
           <span>Direct Members</span>
         </div>

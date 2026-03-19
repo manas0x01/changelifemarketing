@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, usePathname } from "next/navigation";
 
 interface MenuItem {
   id: string;
@@ -54,7 +54,7 @@ const menuItems: MenuItem[] = [
         <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
       </svg>
     ),
-    children: [{ label: "Buy E-Pin" }, { label: "Transfer E-Pin" }, { label: "E-Pin History" }],
+    children: [{ label: "Transfer" }, { label: "My E-pins" }, { label: "My Requests" },{label:"Transferred/ Rejected"}],
   },
   {
     id: "my-network",
@@ -66,7 +66,7 @@ const menuItems: MenuItem[] = [
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
       </svg>
     ),
-    children: [{ label: "Direct Team" }, { label: "My Downline" }, { label: "Tree View" }],
+    children: [{ label: "Direct Members" }, { label: "Downline Members" }, { label: "Mother Tree" },{label: "Gold Downline Members"}],
   },
   {
     id: "reports",
@@ -136,13 +136,65 @@ const ChevronDown = () => (
 
 export default function Sidebar() {
   const router = useRouter();
+  const pathname = usePathname();
   const [activeId, setActiveId] = useState("dashboard");
+  const [activeSubmenuId, setActiveSubmenuId] = useState<string | null>(null);
   const [openMenus, setOpenMenus] = useState<string[]>(["profile-management"]);
+
+  // Update active menu based on current pathname
+  useEffect(() => {
+    if (pathname.includes("/dashboard/profile")) {
+      setActiveId("profile");
+      setActiveSubmenuId("profile-My Profile");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "profile"])));
+    } else if (pathname.includes("/dashboard/welcomekit")) {
+      setActiveId("profile");
+      setActiveSubmenuId("profile-Welcome Kit");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "profile"])));
+    } else if (pathname.includes("/dashboard/transferepin")) {
+      setActiveId("epin");
+      setActiveSubmenuId("epin-Transfer");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "epin"])));
+    } else if (pathname.includes("/dashboard/myepins")) {
+      setActiveId("epin");
+      setActiveSubmenuId("epin-My E-pins");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "epin"])));
+    } else if (pathname.includes("/dashboard/myrequests")) {
+      setActiveId("epin");
+      setActiveSubmenuId("epin-My Requests");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "epin"])));
+    } else if (pathname.includes("/dashboard/transferred")) {
+      setActiveId("epin");
+      setActiveSubmenuId("epin-Transferred/ Rejected");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "epin"])));
+    } else if (pathname.includes("/dashboard/directmembers")) {
+      setActiveId("my-network");
+      setActiveSubmenuId("my-network-Direct Members");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "my-network"])));
+    } else if (pathname.includes("/dashboard/downlinemembers")) {
+      setActiveId("my-network");
+      setActiveSubmenuId("my-network-Downline Members");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "my-network"])));
+    } else if (pathname.includes("/dashboard/mothertree")) {
+      setActiveId("my-network");
+      setActiveSubmenuId("my-network-Mother Tree");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "my-network"])));
+    } else if (pathname.includes("/dashboard/golddownlinemembers")) {
+      setActiveId("my-network");
+      setActiveSubmenuId("my-network-Gold Downline Members");
+      setOpenMenus((prev) => Array.from(new Set([...prev, "my-network"])));
+    } else if (pathname.includes("/dashboard/registration")) {
+      setActiveId("registration");
+    } else if (pathname === "/dashboard") {
+      setActiveId("dashboard");
+      setActiveSubmenuId(null);
+    }
+  }, [pathname]);
 
   // Route mapping for menu items
   const routeMap: Record<string, string> = {
     "dashboard": "/dashboard",
-    "new-register": "/dashboard/new-register",
+    "registration": "/dashboard/registration",
     "profile-management": "/dashboard/profile",
     "epin": "/dashboard/epin",
     "my-network": "/dashboard/network",
@@ -339,6 +391,10 @@ export default function Sidebar() {
           color: #ffffff;
           background: rgba(255,255,255,0.05);
         }
+        .submenu-item.active {
+          color: #f5a623;
+          font-weight: 500;
+        }
 
         /* Divider */
         .menu-divider {
@@ -383,15 +439,42 @@ export default function Sidebar() {
 
                 {hasChildren && (
                   <div className={`submenu ${isOpen ? "open" : ""}`}>
-                    {item.children!.map((child) => (
-                      <div
-                        key={child.label}
-                        className="submenu-item"
-                        onClick={() => setActiveId(`${item.id}-${child.label}`)}
-                      >
-                        {child.label}
-                      </div>
-                    ))}
+                    {item.children!.map((child) => {
+                      const submenuItemId = `${item.id}-${child.label}`;
+                      const isSubmenuActive = activeSubmenuId === submenuItemId;
+                      return (
+                        <div
+                          key={child.label}
+                          className={`submenu-item ${isSubmenuActive ? "active" : ""}`}
+                          onClick={() => {
+                            setActiveSubmenuId(submenuItemId);
+                            if (item.id === "profile" && child.label === "My Profile") {
+                              router.push("/dashboard/profile");
+                            } else if (item.id === "profile" && child.label === "Welcome Kit") {
+                              router.push("/dashboard/welcomekit");
+                            } else if (item.id === "epin" && child.label === "Transfer") {
+                              router.push("/dashboard/transferepin");
+                            } else if (item.id === "epin" && child.label === "My E-pins") {
+                              router.push("/dashboard/myepins");
+                            } else if (item.id === "epin" && child.label === "My Requests") {
+                              router.push("/dashboard/myrequests");
+                            } else if (item.id === "epin" && child.label === "Transferred/ Rejected") {
+                              router.push("/dashboard/transferred");
+                            } else if (item.id === "my-network" && child.label === "Direct Members") {
+                              router.push("/dashboard/directmembers");
+                            } else if (item.id === "my-network" && child.label === "Downline Members") {
+                              router.push("/dashboard/downlinemembers");
+                            } else if (item.id === "my-network" && child.label === "Mother Tree") {
+                              router.push("/dashboard/mothertree");
+                            } else if (item.id === "my-network" && child.label === "Gold Downline Members") {
+                              router.push("/dashboard/golddownlinemembers");
+                            }
+                          }}
+                        >
+                          {child.label}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

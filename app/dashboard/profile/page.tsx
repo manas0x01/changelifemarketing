@@ -329,7 +329,15 @@ export default function ProfilePage() {
               <button
                 key={tab}
                 className={`tab-btn ${activeTab === tab ? "active" : ""}`}
-                onClick={() => tab === "myprofile" ? router.push("/dashboard/updateprofile") : setActiveTab(tab)}
+                onClick={() => {
+                  if (tab === "myprofile") {
+                    router.push("/dashboard/updateprofile");
+                  } else if (tab === "editbank") {
+                    router.push("/dashboard/editbank");
+                  } else {
+                    setActiveTab(tab);
+                  }
+                }}
               >
                 {tab === "overview" ? "Overview" : tab === "myprofile" ? "My Profile" : "Edit Bank"}
               </button>
@@ -360,36 +368,6 @@ export default function ProfilePage() {
                   <span className="detail-value">{row.value}</span>
                 </div>
               ))}
-            </div>
-          </div>
-        )}
-
-        {activeTab === "editbank" && (
-          <div style={{ padding: "0 20px 20px" }}>
-            <div className="detail-card">
-              <div className="detail-header">Edit Bank Details</div>
-              <div className="edit-form">
-                <div className="form-grid">
-                  {[
-                    { label: "Bank Name", placeholder: "CENTER BANK OF INDIA" },
-                    { label: "Branch Name", placeholder: "MASAURHI" },
-                    { label: "Account No.", placeholder: "5511182971" },
-                    { label: "IFSC Code", placeholder: "CBIN0284349" },
-                    { label: "Account Type", placeholder: "SAVING" },
-                    { label: "Account Holder Name", placeholder: "ajay kumar" },
-                  ].map((f) => (
-                    <div className="form-group" key={f.label}>
-                      <label className="form-label">{f.label}</label>
-                      <input
-                        className="form-input"
-                        type="text"
-                        defaultValue={f.placeholder}
-                      />
-                    </div>
-                  ))}
-                </div>
-                <button className="save-btn">Save Changes</button>
-              </div>
             </div>
           </div>
         )}

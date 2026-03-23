@@ -352,7 +352,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --- STATISTICS STRIP --- */}
+      {/* STATISTICS STRIP */}
       <section className="bg-[#0A6E5A] py-24 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
           <div className="absolute -top-[50%] -left-[10%] w-[70%] h-[200%] bg-[#FFFFFF]/5 rotate-12 blur-3xl"></div>
@@ -395,8 +395,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-
-      {/* --- LEGAL DOCUMENTS SECTION --- */}
+      {/* LEGAL DOCUMENTS SECTION */}
       <section className="py-32 bg-[#FFFFFF]">
         <div className="max-w-480 mx-auto px-6 md:px-12">
           <SectionHeading
@@ -488,7 +487,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --- BANKING PARTNER SECTION --- */}
+      {/* BANKING PARTNER SECTION */}
       <section className="py-32 bg-[#0A6E5A] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '4rem 4rem' }}></div>
 
@@ -549,12 +548,11 @@ export default function HomePage() {
                 </div>
               </div>
             </motion.div>
-
           </div>
         </div>
       </section>
 
-      {/* --- CTA TEASER SECTION --- */}
+      {/* CTA TEASER SECTION */}
       <section className="py-24 bg-[#FFFFFF] border-t border-[#0A6E5A]/10">
         <div className="max-w-7xl mx-auto px-6 text-center">
           <motion.div
@@ -578,7 +576,6 @@ export default function HomePage() {
           </motion.div>
         </div>
       </section>
-
       <Footer />
     </div>
   );

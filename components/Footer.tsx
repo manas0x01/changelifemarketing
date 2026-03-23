@@ -1,6 +1,6 @@
-import { Link } from 'react-router-dom';
+import Link from 'next/link';
 import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react';
-import { Image } from '@/components/ui/image';
+import Image from 'next/image';
 
 export default function Footer() {
   const quickLinks = [
@@ -24,6 +24,7 @@ export default function Footer() {
                 alt="Change Life Marketing Logo"
                 className="w-12 h-12"
                 width={48}
+                height={48}
               />
               <div>
                 <h3 className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C]">Change Life Marketing</h3>
@@ -36,7 +37,7 @@ export default function Footer() {
               Empowering lives through natural health products and financial opportunities since November 2025.
             </p>
           </div>
-
+          
           {/* Quick Links */}
           <div>
             <h4 className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C] mb-4">Quick Links</h4>
@@ -44,7 +45,7 @@ export default function Footer() {
               {quickLinks.map((link) => (
                 <li key={link.path}>
                   <Link
-                    to={link.path}
+                    href={link.path}
                     className="font-['Roboto'] text-[0.875rem] hover:text-[#C9A84C] transition-colors"
                   >
                     {link.name}

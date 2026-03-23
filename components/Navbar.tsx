@@ -11,7 +11,7 @@ interface NavbarProps {
 }
 
 export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }: NavbarProps) {
-  const { toggleSidebar, isSidebarOpen } = useSidebar();
+  const { toggleSidebar, isOpen } = useSidebar();
 
   return (
     <>
@@ -117,7 +117,7 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
 
       <nav className="topnav">
         <div className="topnav-left">
-          <div className={`hamburger-icon ${isSidebarOpen ? 'active' : ''}`} onClick={toggleSidebar}>
+          <div className={`hamburger-icon ${isOpen ? 'active' : ''}`} onClick={toggleSidebar}>
             <span /><span /><span />
           </div>
         </div>

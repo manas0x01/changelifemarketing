@@ -278,6 +278,7 @@ export default function Sidebar() {
         /* Logo area */
         .sidebar-logo {
           display: flex;
+          justify-content: left;
           align-items: center;
           gap: 6px;
           padding: 22px 18px 18px;
@@ -293,7 +294,7 @@ export default function Sidebar() {
           flex-shrink: 0;
         }
         .logo-image {
-          max-width: 140px;
+          max-width: 150px;
           height: auto;
           display: block;
         }

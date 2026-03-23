@@ -1,8 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Login() {
+  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [captchaAnswer, setCaptchaAnswer] = useState("");
@@ -22,7 +25,7 @@ export default function Login() {
     generateCaptcha();
   }, []);
 
-  const handleLogin = (e: React.MouseEvent) => {
+  const handleLogin = async (e: React.MouseEvent) => {
     e.preventDefault();
     setError("");
 
@@ -37,10 +40,34 @@ export default function Login() {
     }
 
     setLoading(true);
-    setTimeout(() => {
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Login failed. Please try again.");
+        generateCaptcha();
+        setLoading(false);
+        return;
+      }
+
+      // Login successful - redirect to dashboard
+      router.push("/dashboard");
+    } catch (err) {
+      setError("An error occurred. Please try again.");
+      generateCaptcha();
       setLoading(false);
-      setError("Invalid credentials. Please try again.");
-    }, 1500);
+    }
   };
 
   return (
@@ -480,9 +507,9 @@ export default function Login() {
             {error && <div className="error-msg">{error}</div>}
 
             {/* Forgot password */}
-            <button className="forgot-link" onClick={() => {}}>
+            <Link href="/auth/forgotpassword" className="forgot-link">
               Forgot password?
-            </button>
+            </Link>
 
             {/* Login button */}
             <button
@@ -496,7 +523,7 @@ export default function Login() {
             {/* Social icons */}
             <div className="social-icons">
               {/* Instagram */}
-              <a href="#" className="social-icon" aria-label="Instagram">
+              <a href="https://www.instagram.com/changelifemarketing?igsh=dzYxYWsza29qZHhm" className="social-icon" aria-label="Instagram">
                 <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
                   <defs>
                     <radialGradient id="igGrad" cx="30%" cy="107%" r="150%">
@@ -515,26 +542,10 @@ export default function Login() {
               </a>
 
               {/* Facebook */}
-              <a href="#" className="social-icon" aria-label="Facebook">
+              <a href="https://www.facebook.com/share/183CFq7YEz/" className="social-icon" aria-label="Facebook">
                 <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
                   <rect width="36" height="36" rx="9" fill="#1877F2"/>
                   <path d="M21 12h-2.5A1.5 1.5 0 0 0 17 13.5V16h4l-.5 4H17v9h-4v-9h-3v-4h3v-2.5C13 11.01 15.01 9 17.5 9H21v3z" fill="white"/>
-                </svg>
-              </a>
-
-              {/* WhatsApp */}
-              <a href="#" className="social-icon" aria-label="WhatsApp">
-                <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="36" height="36" rx="9" fill="#25D366"/>
-                  <path d="M18 8C12.48 8 8 12.48 8 18c0 1.74.46 3.37 1.26 4.78L8 28l5.36-1.24A9.93 9.93 0 0 0 18 28c5.52 0 10-4.48 10-10S23.52 8 18 8zm4.98 13.98c-.22.62-1.28 1.18-1.76 1.22-.44.04-.86.2-2.86-.6-2.4-.96-3.94-3.38-4.06-3.54-.12-.16-.98-1.3-.98-2.48s.62-1.76.86-2c.22-.24.48-.3.64-.3h.48c.16 0 .38-.06.58.44.22.52.74 1.8.8 1.94.06.14.1.3.02.48-.08.18-.12.3-.24.46-.12.16-.26.36-.36.48-.12.14-.24.28-.1.54.14.26.62 1.02 1.34 1.64.92.82 1.68 1.08 1.92 1.2.24.12.38.1.52-.06.14-.18.6-.7.76-.94.16-.24.32-.2.54-.12.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.58-.16 1.18z" fill="white"/>
-                </svg>
-              </a>
-
-              {/* YouTube */}
-              <a href="#" className="social-icon" aria-label="YouTube">
-                <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="36" height="36" rx="9" fill="#FF0000"/>
-                  <polygon points="13,10 13,26 27,18" fill="white"/>
                 </svg>
               </a>
             </div>

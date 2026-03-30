@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "@/context/SidebarContext";
-import { useState } from "react";
 
 interface NavbarProps {
   dropdownOpen: boolean;

@@ -9,37 +9,53 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 // Mock Data
 const MOCK_STATISTICS = [
-  { _id: '1', statisticName: 'Members', statisticValue: 15000, unit: '+', displayOrder: 1 },
-  { _id: '2', statisticName: 'Products', statisticValue: 50, unit: '', displayOrder: 2 },
-  { _id: '3', statisticName: 'Countries', statisticValue: 5, unit: '', displayOrder: 3 },
-  { _id: '4', statisticName: 'Growth', statisticValue: 350, unit: '%', displayOrder: 4 },
+  { _id: '1', statisticName: 'Members Joined', statisticValue: 15000, description :'Total number of members who have joined our platform since inception.', unit: 'members', displayOrder: 1 },
+  { _id: '2', statisticName: 'Products Available', statisticValue: 250, description: 'The total count of unique products currently available in our catalog.', unit: 'products', displayOrder: 2 },
+  { _id: '3', statisticName: 'States Active', statisticValue: 15, description: 'Number of states where our services are actively operational.', unit: 'states', displayOrder: 3 },
+  { _id: '4', statisticName: 'Income Distributed', statisticValue: 5000000, description: 'Cumulative income distributed to our partners and members.', unit: '₹', displayOrder: 4 },
 ];
 
 const MOCK_LEGAL_DOCS = [
   {
     _id: '1',
-    documentName: 'GST Certificate',
-    documentTypeLabel: 'Government',
-    description: 'Official GST registration certificate from Ministry of Finance, India.',
-    thumbnailImage: '/images/gst-certificate.png',
+    documentName: 'Goods and Services Tax (GST) Certificate',
+    documentTypeLabel: 'GST',
+    description: 'Official registration certificate for Goods and Services Tax (GSTIN) for Company.',
+    thumbnailImage: '/images/gstcertificate.png',
     documentUrl: '#',
   },
   {
     _id: '2',
-    documentName: 'MSME Registration',
-    documentTypeLabel: 'Certificate',
-    description: 'Ministry of Micro, Small & Medium Enterprises registration certificate.',
-    thumbnailImage: '/images/msme-certificate.png',
+    documentName: 'MSME Udyam Registration Certificate',
+    documentTypeLabel: 'MSME',
+    description: 'Certificate of registration under the Micro, Small and Medium Enterprises (MSME) Development Act, 2006.',
+    thumbnailImage: '/images/msmecertificate.png',
     documentUrl: '#',
   },
   {
     _id: '3',
-    documentName: 'Direct Selling License',
-    documentTypeLabel: 'License',
-    description: 'Direct selling compliance certificate and authorization.',
-    thumbnailImage: '/images/direct-selling-license.png',
+    documentName: 'Permanent Account Number (PAN) Card',
+    documentTypeLabel: 'PAN',
+    description: 'Official PAN card for Company, issued by the Indian Income Tax Department..',
+    thumbnailImage: '/images/pancard.png',
     documentUrl: '#',
   },
+  {
+    _id: '4',
+    documentName: 'Aadhar Card - Director Ajay Kumar',
+    documentTypeLabel: 'Aadhar',
+    description: 'Aadhar card of a key personnel for identity verification purposes.',
+    thumbnailImage: '/images/aadharcard.png',
+    documentUrl: '#',
+  },
+  {
+    _id: '5',
+    documentName: 'Certificate of Incorporation',
+    documentTypeLabel: 'Incorporation',
+    description: 'Official document certifying the legal formation and existence of Company.',
+    thumbnailImage: '/images/companyregistration.png',
+    documentUrl: '#',
+  }
 ];
 
 const SectionHeading = ({ title, subtitle, align = 'center', light = false }: { title: string, subtitle?: string, align?: 'left' | 'center', light?: boolean }) => (
@@ -85,8 +101,6 @@ export default function HomePage() {
 
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
-
-  // Using mock data - database loading disabled
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -143,7 +157,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-linear-to-b from-[#0A6E5A]/80 via-[#0A6E5A]/60 to-[#0A6E5A]/90 mix-blend-multiply"></div>
           <div className="absolute inset-0 bg-[#0A6E5A]/30"></div>
         </motion.div>
-
+        
         <div className="relative z-10 w-full max-w-480 mx-auto px-6 md:px-12 flex flex-col items-center text-center mt-16">
           <motion.h1
             initial={{ opacity: 0, y: 40 }}

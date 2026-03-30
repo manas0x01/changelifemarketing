@@ -55,21 +55,22 @@ export default function AchieversPage() {
   const placeholderSlots = Math.max(0, 8 - achievers.length);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#FFFFFF]">
       <Header />
+
       {/* Hero Section */}
-      <section className="bg-primary py-20">
+      <section className="bg-[#0A6E5A] py-20">
         <div className="max-w-400 mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <Trophy className="w-16 h-16 text-secondary mx-auto mb-6" />
-            <h1 className="font-heading text-4xl md:text-6xl text-white-card-background mb-4">
+            <Trophy className="w-16 h-16 text-[#C9A84C] mx-auto mb-6" />
+            <h1 className="font-['Fraunces'] text-[2.25rem] md:text-[3.75rem] text-[#FFFFFF] mb-4">
               Hall of Fame
             </h1>
-            <p className="font-paragraph text-lg text-white-card-background max-w-3xl mx-auto">
+            <p className="font-['Roboto'] text-[1.125rem] text-[#FFFFFF] max-w-3xl mx-auto">
               Celebrating our Booster Plan achievers and award recipients
             </p>
           </motion.div>
@@ -78,7 +79,7 @@ export default function AchieversPage() {
 
       {/* First Booster Achiever Section */}
       {achievers.length > 0 && (
-        <section className="py-20 bg-white-card-background">
+        <section className="py-20 bg-[#FFFFFF]">
           <div className="max-w-400 mx-auto px-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -87,11 +88,11 @@ export default function AchieversPage() {
               transition={{ duration: 0.6 }}
               className="text-center mb-12"
             >
-              <Star className="w-12 h-12 text-secondary mx-auto mb-4" />
-              <h2 className="font-heading text-4xl md:text-5xl text-primary mb-4">
+              <Star className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
+              <h2 className="font-['Fraunces'] text-[2.25rem] md:text-[3rem] text-[#0A6E5A] mb-4">
                 First Booster Achiever
               </h2>
-              <p className="font-paragraph text-lg text-foreground">
+              <p className="font-['Roboto'] text-[1.125rem] text-[#333333]">
                 Pioneering success and inspiring the community
               </p>
             </motion.div>
@@ -101,35 +102,35 @@ export default function AchieversPage() {
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
               transition={{ duration: 0.6 }}
-              className="max-w-4xl mx-auto bg-linear-to-br from-secondary to-gold-accent p-1 rounded-lg"
+              className="max-w-4xl mx-auto bg-linear-to-br from-[#C9A84C] to-[#F5A623] p-1 rounded-lg"
             >
-              <div className="bg-white-card-background rounded-lg p-8 md:p-12">
+              <div className="bg-[#FFFFFF] rounded-lg p-8 md:p-12">
                 <div className="flex flex-col md:flex-row items-center gap-8">
                   <div className="relative">
-                    <div className="absolute -inset-4 bg-secondary rounded-full opacity-20 animate-pulse"></div>
+                    <div className="absolute -inset-4 bg-[#C9A84C] rounded-full opacity-20 animate-pulse"></div>
                     <Image
                       src={achievers[0].profilePhoto || ''}
                       alt={achievers[0].achieverName || 'First Achiever'}
-                      className="relative w-48 h-48 rounded-full object-cover border-8 border-secondary"
+                      className="relative w-48 h-48 rounded-full object-cover border-8 border-[#C9A84C]"
                       width={192}
                       height={192}
                     />
-                    <div className="absolute -bottom-2 -right-2 bg-secondary rounded-full p-3">
-                      <Trophy className="w-8 h-8 text-secondary-foreground" />
+                    <div className="absolute -bottom-2 -right-2 bg-[#C9A84C] rounded-full p-3">
+                      <Trophy className="w-8 h-8 text-[#FFFFFF]" />
                     </div>
                   </div>
 
                   <div className="flex-1 text-center md:text-left">
-                    <h3 className="font-heading text-3xl md:text-4xl text-primary mb-2">
+                    <h3 className="font-['Fraunces'] text-[1.875rem] md:text-[2.25rem] text-[#0A6E5A] mb-2">
                       {achievers[0].achieverName}
                     </h3>
-                    <p className="font-paragraph text-xl text-secondary mb-4">
+                    <p className="font-['Roboto'] text-[1.25rem] text-[#C9A84C] mb-4">
                       {achievers[0].rankAchievement}
                     </p>
-                    <p className="font-paragraph text-lg text-foreground mb-4">
+                    <p className="font-['Roboto'] text-[1.125rem] text-[#333333] mb-4">
                       <span className="font-semibold">Location:</span> {achievers[0].locationState}
                     </p>
-                    <p className="font-paragraph text-foreground">
+                    <p className="font-['Roboto'] text-[#333333]">
                       {achievers[0].description}
                     </p>
                   </div>
@@ -141,7 +142,7 @@ export default function AchieversPage() {
       )}
 
       {/* Booster Achievers Grid */}
-      <section className="py-20 bg-primary">
+      <section className="py-20 bg-[#0A6E5A]">
         <div className="max-w-400 mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -150,11 +151,11 @@ export default function AchieversPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <Award className="w-12 h-12 text-secondary mx-auto mb-4" />
-            <h2 className="font-heading text-4xl md:text-5xl text-white-card-background mb-4">
+            <Award className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
+            <h2 className="font-['Fraunces'] text-[2.25rem] md:text-[3rem] text-[#FFFFFF] mb-4">
               Booster Achievers Gallery
             </h2>
-            <p className="font-paragraph text-lg text-white-card-background">
+            <p className="font-['Roboto'] text-[1.125rem] text-[#FFFFFF]">
               Join our growing community of successful achievers
             </p>
           </motion.div>
@@ -167,51 +168,51 @@ export default function AchieversPage() {
               transition={{ duration: 0.6 }}
               className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-8"
             >
-                {achievers.slice(1).map((achiever, index) => (
-                  <motion.div
-                    key={achiever._id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-white-card-background rounded-lg p-6 text-center hover:shadow-2xl transition-shadow"
-                  >
-                    <div className="relative mb-4">
-                      <Image
-                        src={achiever.profilePhoto || ''}
-                        alt={achiever.achieverName || 'Achiever'}
-                        className="w-32 h-32 rounded-full object-cover border-4 border-secondary mx-auto"
-                        width={128}
-                        height={128}
-                      />
-                      <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-secondary rounded-full p-2">
-                        <Trophy className="w-5 h-5 text-secondary-foreground" />
-                      </div>
+              {achievers.slice(1).map((achiever, index) => (
+                <motion.div
+                  key={achiever._id}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1 }}
+                  className="bg-[#FFFFFF] rounded-lg p-6 text-center hover:shadow-2xl transition-shadow"
+                >
+                  <div className="relative mb-4">
+                    <Image
+                      src={achiever.profilePhoto || ''}
+                      alt={achiever.achieverName || 'Achiever'}
+                      className="w-32 h-32 rounded-full object-cover border-4 border-[#C9A84C] mx-auto"
+                      width={128}
+                      height={128}
+                    />
+                    <div className="absolute -bottom-2 left-1/2 transform -translate-x-1/2 bg-[#C9A84C] rounded-full p-2">
+                      <Trophy className="w-5 h-5 text-[#FFFFFF]" />
                     </div>
-                    <h3 className="font-heading text-xl text-primary mb-2">{achiever.achieverName}</h3>
-                    <p className="font-paragraph text-sm text-secondary mb-2">{achiever.rankAchievement}</p>
-                    <p className="font-paragraph text-sm text-foreground">{achiever.locationState}</p>
-                  </motion.div>
-                ))}
+                  </div>
+                  <h3 className="font-['Fraunces'] text-[1.25rem] text-[#0A6E5A] mb-2">{achiever.achieverName}</h3>
+                  <p className="font-['Roboto'] text-[0.875rem] text-[#C9A84C] mb-2">{achiever.rankAchievement}</p>
+                  <p className="font-['Roboto'] text-[0.875rem] text-[#333333]">{achiever.locationState}</p>
+                </motion.div>
+              ))}
 
-                {Array.from({ length: placeholderSlots }).map((_, index) => (
-                  <motion.div
-                    key={`placeholder-${index}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: (achievers.length - 1 + index) * 0.1 }}
-                    className="bg-white-card-background rounded-lg p-6 text-center border-4 border-dashed border-secondary"
-                  >
-                    <div className="w-32 h-32 rounded-full bg-gray-200 mx-auto mb-4 flex items-center justify-center">
-                      <Star className="w-12 h-12 text-secondary" />
-                    </div>
-                    <h3 className="font-heading text-lg text-primary mb-2">Next Achiever</h3>
-                    <p className="font-paragraph text-sm text-secondary font-semibold">Could Be You!</p>
-                  </motion.div>
-                ))}
-              </motion.div>
-            </div>
+              {Array.from({ length: placeholderSlots }).map((_, index) => (
+                <motion.div
+                  key={`placeholder-${index}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: (achievers.length - 1 + index) * 0.1 }}
+                  className="bg-[#FFFFFF] rounded-lg p-6 text-center border-4 border-dashed border-[#C9A84C]"
+                >
+                  <div className="w-32 h-32 rounded-full bg-gray-200 mx-auto mb-4 flex items-center justify-center">
+                    <Star className="w-12 h-12 text-[#C9A84C]" />
+                  </div>
+                  <h3 className="font-['Fraunces'] text-[1.125rem] text-[#0A6E5A] mb-2">Next Achiever</h3>
+                  <p className="font-['Roboto'] text-[0.875rem] text-[#C9A84C] font-semibold">Could Be You!</p>
+                </motion.div>
+              ))}
+            </motion.div>
+          </div>
         </div>
       </section>
       <Footer />

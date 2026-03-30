@@ -20,7 +20,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <Image
-                src="https://static.wixstatic.com/media/38f579_7bb58bd4ae1c476fb919fba079c0fef7~mv2.png?originWidth=128&originHeight=128"
+                src="/images/changelifemarketinglogo.png"
                 alt="Change Life Marketing Logo"
                 className="w-12 h-12"
                 width={48}

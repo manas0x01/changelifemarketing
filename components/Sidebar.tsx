@@ -141,6 +141,25 @@ export default function Sidebar() {
   const [activeSubmenuId, setActiveSubmenuId] = useState<string | null>(null);
   const [openMenus, setOpenMenus] = useState<string[]>(["profile-management"]);
 
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (response.ok) {
+        router.push('/');
+      } else {
+        console.error('Logout failed');
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
+
   // Update active menu based on current pathname
   useEffect(() => {
     if (pathname.includes("/dashboard/profile")) {
@@ -235,7 +254,9 @@ export default function Sidebar() {
   };
 
   const handleItemClick = (item: MenuItem) => {
-    if (item.children) {
+    if (item.id === "logout") {
+      handleLogout();
+    } else if (item.children) {
       toggleMenu(item.id);
     } else {
       setActiveId(item.id);

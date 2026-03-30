@@ -8,17 +8,17 @@ export const proxy = (request: NextRequest) => {
     request.cookies.has('next-auth.session-token') ||
     request.cookies.has('__Secure-next-auth.session-token');
 
-  // Handle root path "/"
-  if (pathname === '/') {
-    if (hasSessionCookie) {
-      const dashboardUrl = request.nextUrl.clone();
-      dashboardUrl.pathname = '/dashboard';
-      return NextResponse.redirect(dashboardUrl);
-    }
-    const loginUrl = request.nextUrl.clone();
-    loginUrl.pathname = '/auth/login';
-    return NextResponse.redirect(loginUrl);
-  }
+  // Handle root path "/" - Allow everyone to access
+  // if (pathname === '/') {
+  //   if (hasSessionCookie) {
+  //     const dashboardUrl = request.nextUrl.clone();
+  //     dashboardUrl.pathname = '/dashboard';
+  //     return NextResponse.redirect(dashboardUrl);
+  //   }
+  //   const loginUrl = request.nextUrl.clone();
+  //   loginUrl.pathname = '/auth/login';
+  //   return NextResponse.redirect(loginUrl);
+  // }
 
   // Protect /dashboard and all subroutes
   if (pathname.startsWith('/dashboard')) {

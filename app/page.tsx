@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
@@ -6,7 +7,6 @@ import { ArrowRight, Play, Shield, CheckCircle, Building2, Users, Package, Trend
 import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
 // Mock Data
 const MOCK_STATISTICS = [
   { _id: '1', statisticName: 'Members', statisticValue: 15000, unit: '+', displayOrder: 1 },
@@ -21,7 +21,7 @@ const MOCK_LEGAL_DOCS = [
     documentName: 'GST Certificate',
     documentTypeLabel: 'Government',
     description: 'Official GST registration certificate from Ministry of Finance, India.',
-    thumbnailImage: 'https://static.wixstatic.com/media/38f579_5a56bd001ed148a4b667bd6adf1aeeed~mv2.png?originWidth=384&originHeight=256',
+    thumbnailImage: '/images/gst-certificate.png',
     documentUrl: '#',
   },
   {
@@ -29,7 +29,7 @@ const MOCK_LEGAL_DOCS = [
     documentName: 'MSME Registration',
     documentTypeLabel: 'Certificate',
     description: 'Ministry of Micro, Small & Medium Enterprises registration certificate.',
-    thumbnailImage: 'https://static.wixstatic.com/media/38f579_5a56bd001ed148a4b667bd6adf1aeeed~mv2.png?originWidth=384&originHeight=256',
+    thumbnailImage: '/images/msme-certificate.png',
     documentUrl: '#',
   },
   {
@@ -37,27 +37,10 @@ const MOCK_LEGAL_DOCS = [
     documentName: 'Direct Selling License',
     documentTypeLabel: 'License',
     description: 'Direct selling compliance certificate and authorization.',
-    thumbnailImage: 'https://static.wixstatic.com/media/38f579_5a56bd001ed148a4b667bd6adf1aeeed~mv2.png?originWidth=384&originHeight=256',
+    thumbnailImage: '/images/direct-selling-license.png',
     documentUrl: '#',
   },
 ];
-
-interface Statistics {
-  _id: string;
-  statisticName: string;
-  statisticValue: number;
-  unit: string;
-  displayOrder: number;
-}
-
-interface LegalDoc {
-  _id: string;
-  documentName: string;
-  documentTypeLabel: string;
-  description: string;
-  thumbnailImage: string;
-  documentUrl: string;
-}
 
 const SectionHeading = ({ title, subtitle, align = 'center', light = false }: { title: string, subtitle?: string, align?: 'left' | 'center', light?: boolean }) => (
   <div className={`mb-16 ${align === 'center' ? 'text-center' : 'text-left'}`}>
@@ -88,8 +71,8 @@ const SectionHeading = ({ title, subtitle, align = 'center', light = false }: { 
 );
 
 export default function HomePage() {
-  const [statistics, setStatistics] = useState<Statistics[]>([]);
-  const [legalDocs, setLegalDocs] = useState<LegalDoc[]>([]);
+  const [statistics, setStatistics] = useState(MOCK_STATISTICS);
+  const [legalDocs, setLegalDocs] = useState(MOCK_LEGAL_DOCS);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [isLoadingDocs, setIsLoadingDocs] = useState(false);
   const [counts, setCounts] = useState<Record<string, number>>({});
@@ -103,11 +86,7 @@ export default function HomePage() {
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
 
-  useEffect(() => {
-    // Initialize with mock data
-    setStatistics(MOCK_STATISTICS);
-    setLegalDocs(MOCK_LEGAL_DOCS);
-  }, []);
+  // Using mock data - database loading disabled
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -151,36 +130,21 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] selection:bg-[#C9A84C]/30 selection:text-[#0A6E5A] overflow-clip">
       <Header />
-
-      {/* --- HERO SECTION --- */}
-      <section ref={heroRef} className="relative w-full h-[100svh flex items-center justify-center overflow-hidden bg-[#0A6E5A]">
+      {/* HERO SECTION */}
+      <section ref={heroRef} className="relative w-full h-svh flex items-center justify-center overflow-hidden bg-[#0A6E5A]">
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="absolute inset-0 z-0">
           <Image
-            src="https://static.wixstatic.com/media/38f579_995b0ee9147d46dc9201e37e6313229b~mv2.png?originWidth=1920&originHeight=1024"
+            src="/images/professionalbusinessbackground.png"
             alt="Professional business background"
             className="w-full h-full object-cover"
             width={1920}
+            height={1024}
           />
           <div className="absolute inset-0 bg-linear-to-b from-[#0A6E5A]/80 via-[#0A6E5A]/60 to-[#0A6E5A]/90 mix-blend-multiply"></div>
           <div className="absolute inset-0 bg-[#0A6E5A]/30"></div>
         </motion.div>
 
         <div className="relative z-10 w-full max-w-480 mx-auto px-6 md:px-12 flex flex-col items-center text-center mt-16">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-            className="mb-8 relative"
-          >
-            <div className="absolute inset-0 bg-[#C9A84C]/20 blur-3xl rounded-full"></div>
-            <Image
-              src="https://static.wixstatic.com/media/38f579_8367f91ae437400d88673bf7df694233~mv2.png?originWidth=1920&originHeight=1024"
-              alt="Change Life Marketing Logo"
-              className="w-32 h-32 md:w-48 md:h-48 object-contain relative z-10 drop-shadow-2xl"
-              width={192}
-            />
-          </motion.div>
-
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -255,10 +219,11 @@ export default function HomePage() {
             >
               <div className="relative aspect-4/5 w-full overflow-hidden rounded-sm">
                 <Image
-                  src="https://static.wixstatic.com/media/38f579_4f375e420e8d46839c6c64d7b33472f5~mv2.png?originWidth=768&originHeight=960"
+                  src="/images/changelifemarketingcorporateoffice.png"
                   alt="Change Life Marketing Corporate Office"
                   className="w-full h-full object-cover"
                   width={800}
+                  height={960}
                 />
                 <div className="absolute inset-0 border border-[#0A6E5A]/10 m-4 rounded-sm pointer-events-none"></div>
               </div>
@@ -274,10 +239,11 @@ export default function HomePage() {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#C9A84C]/30 shrink-0">
                     <Image
-                      src="https://static.wixstatic.com/media/38f579_6b85374634aa46a1a605eb9341dd2bd8~mv2.png?originWidth=768&originHeight=960"
+                      src="/images/ajaykumar.png"  
                       alt="Mr. Ajay Kumar"
                       className="w-full h-full object-cover"
                       width={80}
+                      height={80}
                     />
                   </div>
                   <div>
@@ -395,6 +361,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
       {/* LEGAL DOCUMENTS SECTION */}
       <section className="py-32 bg-[#FFFFFF]">
         <div className="max-w-480 mx-auto px-6 md:px-12">
@@ -402,7 +369,6 @@ export default function HomePage() {
             title="100% Legal & Verified"
             subtitle="Transparency is our foundation. Explore our government-approved certifications and registrations."
           />
-
           <div className="min-h-100">
             {isLoadingDocs ? (
               <div className="flex justify-center items-center h-64">
@@ -422,10 +388,11 @@ export default function HomePage() {
                     <div className="relative aspect-4/3 overflow-hidden bg-[#0A6E5A]/5 p-8 flex items-center justify-center">
                       <div className="absolute inset-0 bg-[#0A6E5A]/0 group-hover:bg-[#0A6E5A]/5 transition-colors duration-500 z-10"></div>
                       <Image
-                        src={doc.thumbnailImage || 'https://static.wixstatic.com/media/38f579_5a56bd001ed148a4b667bd6adf1aeeed~mv2.png?originWidth=384&originHeight=256'}
+                        src={doc.thumbnailImage || '/images/default-document.png'}
                         alt={doc.documentName || 'Legal Document'}
                         className="w-full h-full object-contain filter drop-shadow-md group-hover:scale-105 transition-transform duration-700 ease-out"
                         width={400}
+                        height={300}
                       />
                       <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none">
                         <div className="bg-[#FFFFFF]/90 p-3 rounded-full shadow-lg">
@@ -548,6 +515,7 @@ export default function HomePage() {
                 </div>
               </div>
             </motion.div>
+
           </div>
         </div>
       </section>

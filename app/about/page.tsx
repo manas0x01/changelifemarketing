@@ -194,7 +194,7 @@ export default function AboutPage() {
     <div className="min-h-screen bg-[#FFFFFF] selection:bg-[#C9A84C]/30 selection:text-[#0A6E5A] overflow-clip">
       <Header />
 
-      {/* --- HERO SECTION --- */}
+      {/* HERO SECTION */}
       <section className="relative w-full min-h-[70vh] flex items-center justify-center overflow-hidden bg-[#0A6E5A] py-24">
         <div className="absolute inset-0 z-0">
           <Image
@@ -229,7 +229,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* --- OUR STORY SECTION --- */}
+      {/* OUR STORY SECTION */}
       <section className="py-32 bg-[#FFFFFF] relative">
         <div className="max-w-480 mx-auto px-6 md:px-12">
           <div className="grid lg:grid-cols-2 gap-16 lg:gap-24 items-center">
@@ -262,7 +262,7 @@ export default function AboutPage() {
                   className="space-y-4"
                 >
                   <p className="font-['Roboto'] text-[1.125rem] text-[#333333]/80 leading-relaxed">
-                    Founded in November 2025, Change Life Marketing emerged from a vision to revolutionize the direct selling industry in India. We believe in the power of natural health products combined with ethical business practices.
+                    Founded in January 2026, Change Life Marketing emerged from a vision to revolutionize the direct selling industry in India. We believe in the power of natural health products combined with ethical business practices.
                   </p>
                   <p className="font-['Roboto'] text-[1.125rem] text-[#333333]/80 leading-relaxed">
                     Our founder, Mr. Ajay Kumar, brings over 10 years of network marketing expertise and a passion for creating genuine opportunities. With a background in graphics design and deep understanding of the industry, he envisioned a company that prioritizes member success over profit maximization.
@@ -306,7 +306,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* --- CORE VALUES SECTION --- */}
+      {/* CORE VALUES SECTION */}
       <section className="py-32 bg-[#0A6E5A] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '4rem 4rem' }}></div>
 
@@ -341,7 +341,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* --- AWARDS & RECOGNITION SECTION --- */}
+      {/* AWARDS & RECOGNITION SECTION */}
       <section className="py-32 bg-[#FFFFFF]">
         <div className="max-w-480 mx-auto px-6 md:px-12">
           <SectionHeading
@@ -395,7 +395,7 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* --- ACHIEVERS GALLERY SECTION --- */}
+      {/* ACHIEVERS GALLERY SECTION */}
       <section className="py-32 bg-[#0A6E5A] relative overflow-hidden">
         <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(circle at 20% 50%, #ffffff 1px, transparent 1px)', backgroundSize: '3rem 3rem' }}></div>
 
@@ -425,6 +425,7 @@ export default function AboutPage() {
                           alt={achiever.achieverName || 'Achiever'}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                           width={400}
+                          height={533}
                         />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center bg-[#0A6E5A]/30">

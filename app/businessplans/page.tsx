@@ -1,3 +1,5 @@
+"use client";
+
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Award, Gift, Clock } from 'lucide-react';
@@ -6,7 +8,6 @@ import Footer from '@/components/Footer';
 import { IncomePlans, AwardsandRewards } from '@/entities';
 import Image from 'next/image';
 
-// Mock Income Plans Data
 const mockIncomePlans: IncomePlans[] = [
   {
     _id: '1',
@@ -112,7 +113,7 @@ export default function BusinessPlanPage() {
 
       {/* Hero Section */}
       <section className="bg-primary py-20">
-        <div className="max-w-[100rem] mx-auto px-6 text-center">
+        <div className="max-w-400 mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -131,8 +132,8 @@ export default function BusinessPlanPage() {
 
       {/* Income Plans Section */}
       <section className="py-20 bg-white-card-background">
-        <div className="max-w-[100rem] mx-auto px-6">
-          <div className="min-h-[400px]">
+        <div className="max-w-400 mx-auto px-6">
+          <div className="min-h-100">
             {incomePlans.length > 0 ? (
               <div className="space-y-16">
                 {incomePlans.map((plan, index) => (
@@ -245,7 +246,7 @@ export default function BusinessPlanPage() {
 
       {/* Awards & Rewards Section */}
       <section className="py-20 bg-primary">
-        <div className="max-w-[100rem] mx-auto px-6">
+        <div className="max-w-400 mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -262,7 +263,7 @@ export default function BusinessPlanPage() {
             </p>
           </motion.div>
 
-          <div className="min-h-[400px]">
+          <div className="min-h-100">
             {awards.length > 0 ? (
               <motion.div
                 initial={{ opacity: 0 }}

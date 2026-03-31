@@ -12,7 +12,7 @@ export default function Header() {
     { name: 'Home', path: '/' },
     { name: 'About', path: '/about' },
     { name: 'Products', path: '/products' },
-    { name: 'Business Plan', path: '/business-plan' },
+    { name: 'Business Plan', path: '/businessplans' },
     { name: 'Achievers', path: '/achievers' },
     { name: 'Contact', path: '/contact' },
   ];

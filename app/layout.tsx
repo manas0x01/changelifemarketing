@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Roboto } from "next/font/google";
 import "./globals.css";
+import WhatsappChatbot from "@/components/WhatsappChatbot";
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -32,6 +33,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         {children}
+        <WhatsappChatbot />
       </body>
     </html>
   );

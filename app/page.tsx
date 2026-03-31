@@ -201,7 +201,7 @@ export default function HomePage() {
             {[...Array(4)].map((_, i) => (
               <div key={i} className="flex items-center">
                 <span className="font-['Roboto'] text-[0.875rem] md:text-[1rem] text-[#C9A84C]/90 px-8 uppercase tracking-widest flex items-center gap-8">
-                  <span>Established Nov 2025</span>
+                  <span>Established Jan 2026</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]/50"></span>
                   <span>Head Office: Masaurhi, Patna</span>
                   <span className="w-1.5 h-1.5 rounded-full bg-[#C9A84C]/50"></span>
@@ -218,7 +218,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* --- ABOUT US / COMPANY OVERVIEW --- */}
+      {/* ABOUT US / COMPANY OVERVIEW */}
       <section className="py-32 bg-[#FFFFFF] relative">
         <div className="max-w-480 mx-auto px-6 md:px-12">
           <div className="grid lg:grid-cols-12 gap-16 lg:gap-24 items-start">
@@ -280,7 +280,7 @@ export default function HomePage() {
                 <div className="grid sm:grid-cols-2 gap-8">
                   <div className="space-y-2">
                     <p className="text-[0.875rem] font-['Roboto'] text-[#C9A84C] uppercase tracking-wider font-semibold">Established</p>
-                    <p className="font-['Fraunces'] text-[1.5rem] text-[#0A6E5A]">10 Nov 2025</p>
+                    <p className="font-['Fraunces'] text-[1.5rem] text-[#0A6E5A]">26 Jan 2026</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-[0.875rem] font-['Roboto'] text-[#C9A84C] uppercase tracking-wider font-semibold">Headquarters</p>

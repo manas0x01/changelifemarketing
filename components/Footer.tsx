@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { Facebook, Instagram, Twitter, Youtube, Mail, Phone, MapPin } from 'lucide-react';
+import { Facebook, Instagram, MessageCircle, Youtube, Mail, Phone, MapPin } from 'lucide-react';
 import Image from 'next/image';
 
 export default function Footer() {
@@ -67,11 +67,11 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-5 h-5 text-[#C9A84C]" />
-                <span className="font-['Roboto'] text-[0.875rem]">+91 XXXXX XXXXX</span>
+                <span className="font-['Roboto'] text-[0.875rem]">+91 6204720770</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-5 h-5 text-[#C9A84C]" />
-                <span className="font-['Roboto'] text-[0.875rem]">info@changelifemarketing.in</span>
+                <span className="font-['Roboto'] text-[0.875rem]">changelifesupport@gmail.com</span>
               </li>
             </ul>
           </div>
@@ -81,28 +81,30 @@ export default function Footer() {
             <h4 className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C] mb-4">Follow Us</h4>
             <div className="flex gap-4 mb-6">
               <a
-                href="#"
+                href="https://www.facebook.com/profile.php?id=61582397320349&rdid=rsFwto1UbBVg5pxj&share_url=https%3A%2F%2Fwww.facebook.com%2Fshare%2F183CFq7YEz%2F#"
                 className="w-10 h-10 bg-[#C9A84C] rounded-full flex items-center justify-center hover:bg-[#F5A623] transition-colors"
                 aria-label="Facebook"
               >
                 <Facebook className="w-5 h-5 text-[#FFFFFF]" />
               </a>
               <a
-                href="#"
+                href="https://www.instagram.com/changelifemarketing"
                 className="w-10 h-10 bg-[#C9A84C] rounded-full flex items-center justify-center hover:bg-[#F5A623] transition-colors"
                 aria-label="Instagram"
               >
                 <Instagram className="w-5 h-5 text-[#FFFFFF]" />
               </a>
               <a
-                href="#"
+                href="https://wa.me/916204720770"
                 className="w-10 h-10 bg-[#C9A84C] rounded-full flex items-center justify-center hover:bg-[#F5A623] transition-colors"
-                aria-label="Twitter"
+                aria-label="WhatsApp"
+                target="_blank"
+                rel="noopener noreferrer"
               >
-                <Twitter className="w-5 h-5 text-[#FFFFFF]" />
+                <MessageCircle className="w-5 h-5 text-[#FFFFFF]" />
               </a>
               <a
-                href="#"
+                href="https://www.youtube.com/@changelifeofficial-w2p"
                 className="w-10 h-10 bg-[#C9A84C] rounded-full flex items-center justify-center hover:bg-[#F5A623] transition-colors"
                 aria-label="YouTube"
               >
@@ -125,7 +127,7 @@ export default function Footer() {
         {/* Copyright */}
         <div className="text-center">
           <p className="font-['Roboto'] text-[0.875rem]">
-            © 2026 Change Life Marketing. All rights reserved. | Website: www.changelifemarketing.in
+            © 2026 Change Life Marketing. All rights reserved.
           </p>
         </div>
       </div>

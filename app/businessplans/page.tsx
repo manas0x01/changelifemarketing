@@ -175,7 +175,7 @@ export default function BusinessPlanPage() {
                       </div>
 
                       <p className={`font-paragraph text-lg mb-6 ${
-                        index % 2 === 0 ? 'text-foreground' : 'text-white-card-background'
+                        index % 2 === 0 ? 'text-black' : 'text-white-card-background'
                       }`}>
                         {plan.shortDescription}
                       </p>
@@ -199,9 +199,8 @@ export default function BusinessPlanPage() {
                         }`}>
                           Detailed Explanation:
                         </h3>
-                        <p className={`font-paragraph whitespace-pre-line ${
-                          index % 2 === 0 ? 'text-white-card-background' : 'text-foreground'
-                        }`}>
+                        <p className={'font-paragraph whitespace-pre-line text-secondary'
+                      }>
                           {plan.detailedExplanation}
                         </p>
                       </div>
@@ -228,9 +227,8 @@ export default function BusinessPlanPage() {
                           }`}>
                             Income Potential:
                           </h3>
-                          <p className={`font-paragraph text-xl whitespace-pre-line ${
-                            index % 2 === 0 ? 'text-foreground' : 'text-white-card-background'
-                          }`}>
+                          <p className={'font-paragraph text-xl whitespace-pre-line text-secondary'
+                }>
                             {plan.incomePotential}
                           </p>
                         </div>
@@ -309,10 +307,10 @@ export default function BusinessPlanPage() {
                           <td className="font-heading text-lg text-primary px-6 py-4">
                             {award.rankName}
                           </td>
-                          <td className="font-paragraph text-foreground px-6 py-4">
+                          <td className="font-paragraph text-secondary px-6 py-4">
                             {award.requiredPairs?.toLocaleString()} pairs
                           </td>
-                          <td className="font-paragraph text-foreground px-6 py-4">
+                          <td className="font-paragraph text-secondary px-6 py-4">
                             {award.awardDescription}
                           </td>
                           <td className="font-heading text-xl text-secondary px-6 py-4">

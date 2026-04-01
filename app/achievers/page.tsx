@@ -142,6 +142,52 @@ export default function AchieversPage() {
         </section>
       )}
 
+      {/* Impact Statistics Section */}
+      <section className="py-20 bg-[#FFFFFF]">
+        <div className="max-w-400 mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <Zap className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
+            <h2 className="font-['Fraunces'] text-[2.25rem] md:text-[3rem] text-[#0A6E5A] mb-4">
+              Our Impact
+            </h2>
+            <p className="font-['Roboto'] text-[1.125rem] text-[#333333]">
+              Transforming lives and building success stories
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+            {[
+              { number: '5000+', label: 'Active Members', icon: Users },
+              { number: '847', label: 'Achievers Recognized', icon: Trophy },
+              { number: '92%', label: 'Success Rate', icon: Target },
+              { number: '45+', label: 'Countries', icon: Star }
+            ].map((stat, index) => {
+              const StatIcon = stat.icon;
+              return (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: index * 0.1, duration: 0.6 }}
+                  className="bg-linear-to-br from-[#0A6E5A] to-[#1B7A6B] rounded-lg p-8 text-center text-[#FFFFFF] hover:shadow-xl transition-shadow"
+                >
+                  <StatIcon className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
+                  <h3 className="font-['Fraunces'] text-[2.25rem] mb-2">{stat.number}</h3>
+                  <p className="font-['Roboto'] text-[1.125rem]">{stat.label}</p>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
       {/* Booster Achievers Grid */}
       <section className="py-20 bg-[#0A6E5A]">
         <div className="max-w-400 mx-auto px-6">
@@ -216,6 +262,164 @@ export default function AchieversPage() {
           </div>
         </div>
       </section>
+
+      {/* Achievement Categories Section */}
+      <section className="py-20 bg-[#FFFFFF]">
+        <div className="max-w-400 mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <Award className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
+            <h2 className="font-['Fraunces'] text-[2.25rem] md:text-[3rem] text-[#0A6E5A] mb-4">
+              Award Categories
+            </h2>
+            <p className="font-['Roboto'] text-[1.125rem] text-[#333333]">
+              Recognize excellence across different domains
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              { title: 'Excellence in Leadership', description: 'Outstanding leadership qualities and team management' },
+              { title: 'Innovation & Creativity', description: 'Pioneering new ideas and creative solutions' },
+              { title: 'Community Impact', description: 'Significant contribution to community development' },
+              { title: 'Growth & Performance', description: 'Exceptional growth metrics and performance' },
+              { title: 'Customer Satisfaction', description: 'Exceptional customer service and satisfaction' },
+              { title: 'Mentor of the Year', description: 'Dedicated mentorship and guidance to others' }
+            ].map((category, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.6 }}
+                className="bg-gradient-to-br from-[#0A6E5A] to-[#1B7A6B] rounded-lg p-8 text-[#FFFFFF] hover:shadow-xl transition-shadow"
+              >
+                <CheckCircle className="w-10 h-10 text-[#C9A84C] mb-4" />
+                <h3 className="font-['Fraunces'] text-[1.5rem] mb-3">{category.title}</h3>
+                <p className="font-['Roboto'] text-[1rem]">{category.description}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Path to Success Section */}
+      <section className="py-20 bg-[#0A6E5A]">
+        <div className="max-w-400 mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <Target className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
+            <h2 className="font-['Fraunces'] text-[2.25rem] md:text-[3rem] text-[#FFFFFF] mb-4">
+              Your Path to Achievement
+            </h2>
+            <p className="font-['Roboto'] text-[1.125rem] text-[#FFFFFF]">
+              Simple steps to join our elite community of achievers
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+            {[
+              { step: '01', title: 'Join Booster Plan', description: 'Enroll in our comprehensive Booster Plan program' },
+              { step: '02', title: 'Set Your Goals', description: 'Define clear, measurable objectives for success' },
+              { step: '03', title: 'Execute & Grow', description: 'Implement strategies and track your progress' },
+              { step: '04', title: 'Get Recognized', description: 'Achieve milestones and earn recognition' }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.1, duration: 0.6 }}
+                className="relative"
+              >
+                {index < 3 && (
+                  <div className="hidden md:block absolute top-12 left-full w-6 h-1 bg-[#C9A84C]" />
+                )}
+                <div className="bg-[#FFFFFF] rounded-lg p-8 text-center">
+                  <div className="w-16 h-16 bg-[#C9A84C] rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span className="font-['Fraunces'] text-2xl text-[#0A6E5A] font-bold">{item.step}</span>
+                  </div>
+                  <h3 className="font-['Fraunces'] text-[1.25rem] text-[#0A6E5A] mb-2">{item.title}</h3>
+                  <p className="font-['Roboto'] text-[0.95rem] text-[#333333]">{item.description}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.4, duration: 0.6 }}
+            className="text-center mt-12"
+          >
+            <button className="bg-[#C9A84C] hover:bg-[#F5A623] text-[#0A6E5A] font-['Fraunces'] text-[1.25rem] px-12 py-4 rounded-lg transition-colors inline-flex items-center gap-2">
+              Start Your Journey <ArrowRight className="w-6 h-6" />
+            </button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Testimonials Section */}
+      <section className="py-20 bg-[#FFFFFF]">
+        <div className="max-w-400 mx-auto px-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <Star className="w-12 h-12 text-[#C9A84C] mx-auto mb-4" />
+            <h2 className="font-['Fraunces'] text-[2.25rem] md:text-[3rem] text-[#0A6E5A] mb-4">
+              Success Stories
+            </h2>
+            <p className="font-['Roboto'] text-[1.125rem] text-[#333333]">
+              Real experiences from our achievers
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            {achievers.slice(0, 2).map((achiever, index) => (
+              <motion.div
+                key={achiever._id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: index * 0.2, duration: 0.6 }}
+                className="bg-gradient-to-br from-[#0A6E5A] to-[#1B7A6B] rounded-lg p-8 text-[#FFFFFF]"
+              >
+                <div className="flex items-center gap-4 mb-6">
+                  <Image
+                    src={achiever.profilePhoto || ''}
+                    alt={achiever.achieverName || 'Achiever'}
+                    className="w-16 h-16 rounded-full object-cover border-3 border-[#C9A84C]"
+                    width={64}
+                    height={64}
+                  />
+                  <div>
+                    <h3 className="font-['Fraunces'] text-[1.25rem]">{achiever.achieverName}</h3>
+                    <p className="font-['Roboto'] text-[0.875rem] text-[#C9A84C]">{achiever.rankAchievement}</p>
+                  </div>
+                </div>
+                <p className="font-['Roboto'] text-[1rem] mb-4 italic">"{achiever.description}"</p>
+                <p className="font-['Roboto'] text-[0.875rem] text-[#C9A84C]">📍 {achiever.locationState}</p>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <Footer />
     </div>
   );

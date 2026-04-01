@@ -1,7 +1,7 @@
 "use client";
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Star, Award } from 'lucide-react';
+import { Trophy, Star, Award, Users, Zap, Target, ArrowRight, CheckCircle } from 'lucide-react';
 import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';

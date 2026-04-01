@@ -71,7 +71,6 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-background">
       <Header />
-
       {/* Hero Section */}
       <section className="bg-primary py-20">
         <div className="max-w-400 mx-auto px-6 text-center">
@@ -105,7 +104,7 @@ export default function ContactPage() {
             >
               <div>
                 <h2 className="font-heading text-3xl text-primary mb-6">Get In Touch</h2>
-                <p className="font-paragraph text-lg text-foreground mb-8">
+                <p className="font-paragraph text-lg text-black mb-8">
                   We're here to help and answer any questions you might have. We look forward to hearing from you!
                 </p>
               </div>
@@ -136,7 +135,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-heading text-xl text-secondary mb-2">Phone</h3>
                     <p className="font-paragraph text-white-card-background">
-                      +91 XXXXX XXXXX<br />
+                      +91 6204720770<br />
                       Mon - Sat: 9:00 AM - 6:00 PM
                     </p>
                   </div>
@@ -163,7 +162,7 @@ export default function ContactPage() {
               <div className="bg-secondary p-6 rounded-lg">
                 <h3 className="font-heading text-xl text-secondary-foreground mb-2">Website</h3>
                 <p className="font-paragraph text-secondary-foreground">
-                  www.changelifemarketing.in
+                  www.changelifemarketing.com
                 </p>
               </div>
 
@@ -227,7 +226,7 @@ export default function ContactPage() {
 
                 <form onSubmit={handleSubmit} className="space-y-6">
                   <div>
-                    <label className="block font-paragraph font-semibold text-foreground mb-2">
+                    <label className="block font-paragraph font-semibold text-black mb-2">
                       Full Name *
                     </label>
                     <input
@@ -237,13 +236,13 @@ export default function ContactPage() {
                       onChange={handleChange}
                       required
                       suppressHydrationWarning={true}
-                      className="w-full px-4 py-3 border-2 border-primary rounded-lg font-paragraph focus:outline-none focus:border-secondary"
+                      className="w-full px-4 py-3 border-2 text-gray-700 border-primary rounded-lg font-paragraph focus:outline-none focus:border-secondary"
                       placeholder="Enter your name"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-paragraph font-semibold text-foreground mb-2">
+                    <label className="block font-paragraph font-semibold text-black mb-2">
                       Mobile Number *
                     </label>
                     <input
@@ -253,13 +252,13 @@ export default function ContactPage() {
                       onChange={handleChange}
                       required
                       suppressHydrationWarning={true}
-                      className="w-full px-4 py-3 border-2 border-primary rounded-lg font-paragraph focus:outline-none focus:border-secondary"
+                      className="w-full px-4 py-3  text-gray-700 border-2 border-primary rounded-lg font-paragraph focus:outline-none focus:border-secondary"
                       placeholder="Enter your mobile number"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-paragraph font-semibold text-foreground mb-2">
+                    <label className="block font-paragraph font-semibold text-black mb-2">
                       Email Address *
                     </label>
                     <input
@@ -269,13 +268,13 @@ export default function ContactPage() {
                       onChange={handleChange}
                       required
                       suppressHydrationWarning={true}
-                      className="w-full px-4 py-3 border-2 border-primary rounded-lg font-paragraph focus:outline-none focus:border-secondary"
+                      className="w-full px-4 py-3 border-2 text-gray-700 border-primary rounded-lg font-paragraph focus:outline-none focus:border-secondary"
                       placeholder="Enter your email"
                     />
                   </div>
 
                   <div>
-                    <label className="block font-paragraph font-semibold text-foreground mb-2">
+                    <label className="block font-paragraph font-semibold text-black mb-2">
                       Message *
                     </label>
                     <textarea
@@ -285,7 +284,7 @@ export default function ContactPage() {
                       required
                       rows={6}
                       suppressHydrationWarning={true}
-                      className="w-full px-4 py-3 border-2 border-primary rounded-lg font-paragraph focus:outline-none focus:border-secondary"
+                      className="w-full px-4 py-3 border-2 border-primary text-gray-700 rounded-lg font-paragraph focus:outline-none focus:border-secondary"
                       placeholder="Write your message here..."
                     />
                   </div>
@@ -293,7 +292,7 @@ export default function ContactPage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-secondary text-secondary-foreground px-8 py-4 rounded-lg font-paragraph font-semibold text-lg hover:bg-gold-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-secondary text-gray-700 px-8 py-4 rounded-lg font-paragraph font-semibold text-lg hover:bg-gold-accent transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   >
                     {isSubmitting ? (
                       'Sending...'
@@ -320,14 +319,14 @@ export default function ContactPage() {
             <h2 className="font-heading text-3xl text-primary mb-6 text-center">Find Us on Map</h2>
             <div className="w-full h-96 bg-gray-200 rounded-lg overflow-hidden border-4 border-primary">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3598.4!2d85.0!3d25.5!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjXCsDMwJzAwLjAiTiA4NcKwMDAnMDAuMCJF!5e0!3m2!1sen!2sin!4v1234567890"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3597.8!2d85.13506!3d25.59412!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x39f6e0d5f5f5f5f5%3A0x5f5f5f5f5f5f5f5f!2sWard%20No.%2021%2C%20Masaurhi%2C%20Patna%2C%20Bihar%20804452!5e0!3m2!1sen!2sin!4v1704067200"
                 width="100%"
                 height="100%"
                 style={{ border: 0 }}
                 allowFullScreen
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
-                title="Change Life Marketing Location"
+                title="Change Life Marketing Location - Patna, Bihar"
               ></iframe>
             </div>
           </motion.div>

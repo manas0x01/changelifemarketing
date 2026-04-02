@@ -7,6 +7,8 @@ import { ArrowRight, Play, Shield, CheckCircle, Building2, Users, Package, Trend
 import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { MessageCircle } from 'lucide-react';
+import TeamPromotersSection from '@/components/TeamPromotersSection';
 // Mock Data
 const MOCK_STATISTICS = [
   { _id: '1', statisticName: 'Members Joined', statisticValue: 15000, description :'Total number of members who have joined our platform since inception.', unit: 'members', displayOrder: 1 },
@@ -375,6 +377,8 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      <TeamPromotersSection />
 
       {/* LEGAL DOCUMENTS SECTION */}
       <section className="py-32 bg-[#FFFFFF]">

@@ -9,7 +9,7 @@ import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { MessageCircle } from 'lucide-react';
 import TeamPromotersSection from '@/components/TeamPromotersSection';
-// Mock Data
+
 const MOCK_STATISTICS = [
   { _id: '1', statisticName: 'Members Joined', statisticValue: 15000, description :'Total number of members who have joined our platform since inception.', unit: 'members', displayOrder: 1 },
   { _id: '2', statisticName: 'Products Available', statisticValue: 250, description: 'The total count of unique products currently available in our catalog.', unit: 'products', displayOrder: 2 },
@@ -146,6 +146,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] selection:bg-[#C9A84C]/30 selection:text-[#0A6E5A] overflow-clip">
       <Header />
+
       {/* HERO SECTION */}
       <section ref={heroRef} className="relative w-full h-svh flex items-center justify-center overflow-hidden bg-[#0A6E5A]">
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="absolute inset-0 z-0">

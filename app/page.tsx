@@ -222,7 +222,7 @@ export default function HomePage() {
       </section>
 
       {/* TEAM PROMOTERS */}
-
+      
 
       {/* ABOUT US / COMPANY OVERVIEW */}
       <section className="py-32 bg-[#FFFFFF] relative">
@@ -247,6 +247,34 @@ export default function HomePage() {
                 />
                 <div className="absolute inset-0 border border-[#0A6E5A]/10 m-4 rounded-sm pointer-events-none"></div>
               </div>
+
+              {/* Director Profile Overlay */}
+              <motion.div
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="absolute -bottom-12 -right-6 md:-right-12 bg-[#FFFFFF] p-6 shadow-2xl border-l-4 border-[#C9A84C] max-w-70"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#C9A84C]/30 shrink-0">
+                    <Image
+                      src="/images/ajaykumar.png"
+                      alt="Mr. Ajay Kumar"
+                      className="w-full h-full object-cover"
+                      width={80}
+                      height={80}
+                    />
+                  </div>
+                  <div>
+                    <h3 className="font-['Fraunces'] text-[1.25rem] text-[#0A6E5A] leading-tight">Mr. Ajay Kumar</h3>
+                    <p className="font-['Roboto'] text-[0.875rem] text-[#C9A84C] font-medium">Director & Founder</p>
+                  </div>
+                </div>
+                <p className="font-['Roboto'] text-[0.75rem] text-[#333333]/70 leading-relaxed">
+                  Graphics Designer with 10 Years of Network Marketing experience, leading the vision of Change Life Marketing.
+                </p>
+              </motion.div>
             </motion.div>
 
             {/* Right: Content */}
@@ -301,33 +329,6 @@ export default function HomePage() {
                     </h3>
                     <p className="font-['Roboto'] text-[#333333]/80 leading-relaxed">
                       "To make Change Life Marketing an inspiring brand that brings positive change to everyone's life."
-                    </p>
-                  </motion.div>
-                  {/* Director Profile Overlay */}
-                  <motion.div
-                    initial={{ opacity: 0, y: 40 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: 0.3 }}
-                    className="-bottom-12 md:-right-12 bg-[#FFFFFF] p-6 shadow-2xl border-l-4 border-[#C9A84C] max-w-70"
-                  >
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#C9A84C]/30 shrink-0">
-                        <Image
-                          src="/images/ajaykumar.png"
-                          alt="Mr. Ajay Kumar"
-                          className="w-full h-full object-cover"
-                          width={80}
-                          height={80}
-                        />
-                      </div>
-                      <div>
-                        <h3 className="font-['Fraunces'] text-[1.25rem] text-[#0A6E5A] leading-tight">Mr. Ajay Kumar</h3>
-                        <p className="font-['Roboto'] text-[0.875rem] text-[#C9A84C] font-medium">Director & Founder</p>
-                      </div>
-                    </div>
-                    <p className="font-['Roboto'] text-[0.75rem] text-[#333333]/70 leading-relaxed">
-                      Graphics Designer with 10 Years of Network Marketing experience, leading the vision of Change Life Marketing.
                     </p>
                   </motion.div>
                 </div>

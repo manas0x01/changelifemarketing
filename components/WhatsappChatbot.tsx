@@ -18,7 +18,7 @@ interface QuickReply {
 
 const AGENT_NAME = 'CLM Support';
 const AGENT_SUBTITLE = 'Change Life Marketing • Typically replies instantly';
-const WA_NUMBER = '916204720770';
+const WA_NUMBER = '918299471579';
 
 function getTime() {
   return new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -85,7 +85,7 @@ const BOT_RESPONSES: Record<string, { text: string; quickReplies?: QuickReply[] 
     ],
   },
   leader: {
-    text: `👤 *Talk to Our Team Leader*\n\nHamara senior team leader personally aapki help karega.\n\n🧑‍💼 *Mr. Ajay Kumar*\nFounder & Network Marketing Expert\n10+ years experience\n\n⏰ Available: Mon–Sat, 9AM–8PM\n📱 WhatsApp: +91 62047 20770\n\nClick below to directly connect on WhatsApp — we respond within 5 minutes! 🚀`,
+    text: `👤 *Talk to Our Team Leader*\n\nHamara senior team leader personally aapki help karega.\n\n🧑‍💼 *Mr Prem Kumar*\nBusiness Coach And Company Pramoter\n10+ years experience\n\n⏰ Available: Mon–Sat, 9AM–8PM\n📱 WhatsApp: +91 82994 71579\n\nClick below to directly connect on WhatsApp — we respond within 5 minutes! 🚀`,
     quickReplies: [
       { label: '💬 Open WhatsApp', value: 'whatsapp' },
       { label: '🚀 Join Karo', value: 'join' },

@@ -146,7 +146,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] selection:bg-[#C9A84C]/30 selection:text-[#0A6E5A] overflow-clip">
       <Header />
-
+      
       {/* HERO SECTION */}
       <section ref={heroRef} className="relative w-full h-svh flex items-center justify-center overflow-hidden bg-[#0A6E5A]">
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="absolute inset-0 z-0">
@@ -335,6 +335,7 @@ export default function HomePage() {
         </div>
       </section>
 
+      <TeamPromotersSection />
       {/* STATISTICS STRIP */}
       <section className="bg-[#0A6E5A] py-24 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -379,7 +380,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <TeamPromotersSection />
+      
 
       {/* BANKING PARTNER SECTION */}
       <section className="py-32 bg-[#0A6E5A] relative overflow-hidden">

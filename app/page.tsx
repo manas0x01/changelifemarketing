@@ -11,7 +11,7 @@ import { MessageCircle } from 'lucide-react';
 import TeamPromotersSection from '@/components/TeamPromotersSection';
 
 const MOCK_STATISTICS = [
-  { _id: '1', statisticName: 'Members Joined', statisticValue: 15000, description :'Total number of members who have joined our platform since inception.', unit: 'members', displayOrder: 1 },
+  { _id: '1', statisticName: 'Members Joined', statisticValue: 15000, description: 'Total number of members who have joined our platform since inception.', unit: 'members', displayOrder: 1 },
   { _id: '2', statisticName: 'Products Available', statisticValue: 250, description: 'The total count of unique products currently available in our catalog.', unit: 'products', displayOrder: 2 },
   { _id: '3', statisticName: 'States Active', statisticValue: 15, description: 'Number of states where our services are actively operational.', unit: 'states', displayOrder: 3 },
   { _id: '4', statisticName: 'Income Distributed', statisticValue: 5000000, description: 'Cumulative income distributed to our partners and members.', unit: '₹', displayOrder: 4 },
@@ -146,7 +146,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#FFFFFF] selection:bg-[#C9A84C]/30 selection:text-[#0A6E5A] overflow-clip">
       <Header />
-      
+
       {/* HERO SECTION */}
       <section ref={heroRef} className="relative w-full h-svh flex items-center justify-center overflow-hidden bg-[#0A6E5A]">
         <motion.div style={{ y: heroY, opacity: heroOpacity }} className="absolute inset-0 z-0">
@@ -160,7 +160,7 @@ export default function HomePage() {
           <div className="absolute inset-0 bg-linear-to-b from-[#0A6E5A]/80 via-[#0A6E5A]/60 to-[#0A6E5A]/90 mix-blend-multiply"></div>
           <div className="absolute inset-0 bg-[#0A6E5A]/30"></div>
         </motion.div>
-        
+
         <div className="relative z-10 w-full max-w-480 mx-auto px-6 md:px-12 flex flex-col items-center text-center mt-16">
           <motion.h1
             initial={{ opacity: 0, y: 40 }}
@@ -221,6 +221,8 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* TEAM PROMOTERS */}
+      <TeamPromotersSection />
       {/* ABOUT US / COMPANY OVERVIEW */}
       <section className="py-32 bg-[#FFFFFF] relative">
         <div className="max-w-480 mx-auto px-6 md:px-12">
@@ -256,7 +258,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#C9A84C]/30 shrink-0">
                     <Image
-                      src="/images/ajaykumar.png"  
+                      src="/images/ajaykumar.png"
                       alt="Mr. Ajay Kumar"
                       className="w-full h-full object-cover"
                       width={80}
@@ -335,7 +337,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <TeamPromotersSection />
+
       {/* STATISTICS STRIP */}
       <section className="bg-[#0A6E5A] py-24 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -380,7 +382,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      
+
 
       {/* BANKING PARTNER SECTION */}
       <section className="py-32 bg-[#0A6E5A] relative overflow-hidden">

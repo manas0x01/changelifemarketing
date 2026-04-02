@@ -10,60 +10,41 @@ export default function Login() {
   const [password, setPassword] = useState("");
   const [captchaAnswer, setCaptchaAnswer] = useState("");
   const [captcha, setCaptcha] = useState({ num1: 0, num2: 0 });
+  const [captchaValid, setCaptchaValid] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Generate random captcha
   const generateCaptcha = () => {
     const num1 = Math.floor(Math.random() * 20) + 1;
     const num2 = Math.floor(Math.random() * 20) + 1;
     setCaptcha({ num1, num2 });
     setCaptchaAnswer("");
+    setCaptchaValid(false);
   };
 
-  useEffect(() => {
-    generateCaptcha();
-  }, []);
+  useEffect(() => { generateCaptcha(); }, []);
+
+  const handleCaptchaChange = (val: string) => {
+    setCaptchaAnswer(val);
+    setCaptchaValid(parseInt(val) === captcha.num1 + captcha.num2);
+  };
 
   const handleLogin = async (e: React.MouseEvent) => {
     e.preventDefault();
     setError("");
-
-    if (!username || !password) {
-      setError("Please enter username and password.");
-      return;
-    }
-    if (parseInt(captchaAnswer) !== captcha.num1 + captcha.num2) {
-      setError("Incorrect captcha answer. Please try again.");
-      generateCaptcha();
-      return;
-    }
-
+    if (!username || !password) { setError("Please enter username and password."); return; }
+    if (!captchaValid) { setError("Incorrect captcha answer. Please try again."); generateCaptcha(); return; }
     setLoading(true);
     try {
       const response = await fetch("/api/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          username,
-          password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password }),
       });
-
       const data = await response.json();
-
-      if (!response.ok) {
-        setError(data.error || "Login failed. Please try again.");
-        generateCaptcha();
-        setLoading(false);
-        return;
-      }
-
-      // Login successful - redirect to dashboard
+      if (!response.ok) { setError(data.error || "Login failed. Please try again."); generateCaptcha(); setLoading(false); return; }
       router.push("/dashboard");
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
       generateCaptcha();
       setLoading(false);
@@ -73,488 +54,432 @@ export default function Login() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Nunito:wght@400;500;600;700&display=swap');
 
-        * {
-          margin: 0;
-          padding: 0;
-          box-sizing: border-box;
-        }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .login-page {
-          min-height: 100vh;
+        .lp-root {
+          height: 100vh;
           width: 100%;
-          background: linear-gradient(135deg, #1565c0 0%, #1976d2 40%, #0d47a1 100%);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-family: 'Poppins', sans-serif;
-          position: relative;
-          overflow: hidden;
-          padding: 20px;
-        }
-
-        /* Decorative arc rings - bottom left */
-        .arc-left {
-          position: absolute;
-          bottom: -80px;
-          left: -60px;
-          width: 380px;
-          height: 380px;
-          border-radius: 50%;
-          border: 28px solid rgba(255,255,255,0.18);
-          pointer-events: none;
-        }
-        .arc-left-inner {
-          position: absolute;
-          bottom: -30px;
-          left: 10px;
-          width: 280px;
-          height: 280px;
-          border-radius: 50%;
-          border: 18px solid rgba(255,255,255,0.1);
-          pointer-events: none;
-        }
-
-        /* Decorative arc rings - right */
-        .arc-right {
-          position: absolute;
-          bottom: -60px;
-          right: -40px;
-          width: 340px;
-          height: 340px;
-          border-radius: 50%;
-          border: 26px solid rgba(0, 200, 180, 0.25);
-          pointer-events: none;
-        }
-        .arc-right-inner {
-          position: absolute;
-          bottom: 20px;
-          right: 20px;
-          width: 240px;
-          height: 240px;
-          border-radius: 50%;
-          border: 16px solid rgba(0, 200, 180, 0.15);
-          pointer-events: none;
-        }
-
-        /* Glow blobs top-right */
-        .blob-teal {
-          position: absolute;
-          top: 80px;
-          right: 160px;
-          width: 80px;
-          height: 80px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(0,230,200,0.55) 0%, transparent 70%);
-          filter: blur(8px);
-          pointer-events: none;
-        }
-        .blob-blue {
-          position: absolute;
-          top: 140px;
-          right: 100px;
-          width: 50px;
-          height: 50px;
-          border-radius: 50%;
-          background: radial-gradient(circle, rgba(100,200,255,0.4) 0%, transparent 70%);
-          filter: blur(6px);
-          pointer-events: none;
-        }
-
-        /* Card */
-        .card {
-          background: #ffffff;
-          border-radius: 20px;
-          width: 100%;
-          max-width: 720px;
-          min-height: 420px;
-          display: flex;
-          flex-direction: row;
-          overflow: hidden;
-          position: relative;
-          z-index: 10;
-          box-shadow: 0 24px 60px rgba(0,0,0,0.22);
-        }
-
-        /* Left illustration panel */
-        .card-left {
-          flex: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          padding: 40px 20px;
-          background: #fff;
-        }
-
-        .illustration-wrapper {
-          width: 100%;
-          max-width: 240px;
-          aspect-ratio: 1;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
-
-        /* SVG illustration inline */
-        .illustration-svg {
-          width: 100%;
-          height: auto;
-        }
-
-        /* Right form panel */
-        .card-right {
-          flex: 1;
+          font-family: 'Nunito', sans-serif;
           display: flex;
           flex-direction: column;
+          align-items: center;
           justify-content: center;
-          padding: 40px 36px;
-          border-left: 1px solid #f0f0f0;
+          padding: clamp(10px, 2vw, 12px) clamp(10px, 2vw, 12px);
+          position: relative;
+          overflow: hidden;
+          background: #020d2e;
         }
 
-        /* Logo */
-        .logo {
+        /* ── Starfield background ── */
+        .lp-bg {
+          position: absolute;
+          inset: 0;
+          background:
+            radial-gradient(ellipse 80% 60% at 50% 0%, #0d3fa6 0%, transparent 70%),
+            radial-gradient(ellipse 60% 50% at 80% 100%, #061a6e 0%, transparent 70%),
+            radial-gradient(ellipse 50% 40% at 20% 80%, #05134d 0%, transparent 60%),
+            #020d2e;
+          pointer-events: none;
+        }
+
+        /* Animated stars */
+        .stars {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          overflow: hidden;
+        }
+        .star {
+          position: absolute;
+          border-radius: 50%;
+          background: #fff;
+          animation: twinkle var(--dur, 3s) ease-in-out infinite var(--delay, 0s);
+          opacity: 0;
+        }
+        @keyframes twinkle {
+          0%, 100% { opacity: 0; transform: scale(0.8); }
+          50% { opacity: var(--op, 0.8); transform: scale(1.2); }
+        }
+
+        /* Gold arc lines */
+        .arcs {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+        .arcs svg {
+          width: 100%;
+          height: 100%;
+        }
+
+        /* ── Branding above card ── */
+        .brand {
+          position: relative;
+          z-index: 10;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          margin-bottom: clamp(8px, 2vw, 14px);
+          animation: fadeDown 0.7s ease both;
+        }
+        @keyframes fadeDown {
+          from { opacity: 0; transform: translateY(-18px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .brand-logo {
+          width: clamp(50px, 10vw, 70px);
+          height: clamp(50px, 10vw, 70px);
+          margin-bottom: 8px;
+          filter: drop-shadow(0 0 18px rgba(255,200,50,0.6));
+        }
+
+        .brand-name {
+          font-family: 'Cinzel', serif;
+          font-size: clamp(20px, 4.5vw, 32px);
+          font-weight: 700;
+          letter-spacing: 4px;
+          background: linear-gradient(135deg, #f5c842 0%, #ffeaa0 40%, #d4930a 70%, #f5c842 100%);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          text-shadow: none;
+          line-height: 1.1;
+        }
+
+        .brand-tagline {
+          color: rgba(255,255,255,0.75);
+          font-size: clamp(10px, 2vw, 12px);
+          font-weight: 400;
+          letter-spacing: 1.2px;
+          margin-top: 2px;
+        }
+
+        /* ── Card ── */
+        .card {
+          position: relative;
+          z-index: 10;
+          width: 100%;
+          max-width: 360px;
+          background: rgba(245, 247, 255, 0.96);
+          border-radius: 20px;
+          padding: clamp(14px, 2.5vw, 26px) clamp(12px, 2.5vw, 26px);
+          box-shadow: 0 8px 60px rgba(0,0,100,0.45), 0 0 0 1px rgba(255,255,255,0.08);
+          animation: fadeUp 0.7s ease 0.15s both;
+          overflow-y: auto;
+          max-height: 80vh;
+        }
+        @keyframes fadeUp {
+          from { opacity: 0; transform: translateY(22px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-logo {
+          width: clamp(100px, 14vw, 110px);
+          height: clamp(75px, 14vw, 110px);
+          margin: clamp(6px, 1.5vw, 12px) auto clamp(10px, 1.5vw, 14px);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          position: relative;
+          z-index: 10;
+          animation: fadeDown 0.7s ease both;
+        }
+        .card-logo img {
+          width: 100%;
+          height: 100%;
+          object-fit: contain;
+          filter: drop-shadow(0 2px 8px rgba(0,0,0,0.15));
+        }
+
+        .card-title {
+          font-family: 'Nunito', sans-serif;
+          font-size: clamp(17px, 3.5vw, 24px);
+          font-weight: 700;
+          color: #0d1d4a;
+          margin-bottom: clamp(12px, 2.5vw, 20px);
+        }
+
+        /* ── Inputs ── */
+        .field {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          border-bottom: 1.5px solid #c8cfe8;
+          padding-bottom: 8px;
+          margin-bottom: clamp(11px, 2.5vw, 16px);
+          transition: border-color 0.2s;
+        }
+        .field:focus-within { border-color: #1a4ec0; }
+
+        .field-icon { color: #8895b5; flex-shrink: 0; }
+
+        .field input {
+          flex: 1;
+          border: none;
+          outline: none;
+          background: transparent;
+          font-family: 'Nunito', sans-serif;
+          font-size: clamp(13px, 3.5vw, 15px);
+          color: #1a1a3e;
+        }
+        .field input::placeholder { color: #a0aac4; }
+
+        /* ── Captcha ── */
+        .captcha-eq {
+          font-size: 15px;
+          font-weight: 700;
+          margin-bottom: clamp(4px, 1.5vw, 8px);
           display: flex;
           align-items: center;
           gap: 4px;
-          margin-bottom: 18px;
         }
-        .logo-bar {
-          width: 4px;
-          height: 36px;
-          background: #2e7d32;
-          border-radius: 2px;
-          margin-right: 6px;
-        }
-        .logo-text {
-          font-size: 26px;
-          font-weight: 700;
-          color: #1a237e;
-          letter-spacing: -0.5px;
-        }
-        .logo-life {
-          font-size: 16px;
-          font-weight: 600;
-          color: #e53935;
-          font-style: italic;
-          margin-left: 1px;
-          vertical-align: super;
-          line-height: 1;
-        }
+        .cap-num { color: #e53935; }
+        .cap-op, .cap-eq  { color: #333; }
+        .cap-result { color: #111; }
 
-        .sign-in-title {
-          font-size: 26px;
-          font-weight: 700;
-          color: #1a1a2e;
-          margin-bottom: 24px;
-        }
-
-        /* Input fields */
-        .input-group {
+        .captcha-field {
           display: flex;
           align-items: center;
-          border-bottom: 1.5px solid #d0d0d0;
-          margin-bottom: 18px;
-          padding-bottom: 6px;
-          gap: 8px;
+          gap: 10px;
+          background: #f0f3ff;
+          border: 1.5px solid #c8cfe8;
+          border-radius: 10px;
+          padding: 8px 12px;
+          margin-bottom: clamp(4px, 1.5vw, 6px);
           transition: border-color 0.2s;
         }
-        .input-group:focus-within {
-          border-color: #1565c0;
-        }
+        .captcha-field:focus-within { border-color: #1a4ec0; }
+        .captcha-field.valid { border-color: #2ecc71; background: #f0fff5; }
 
-        .input-icon {
-          color: #888;
-          font-size: 16px;
-          flex-shrink: 0;
-        }
-
-        .input-field {
+        .captcha-field input {
+          flex: 1;
           border: none;
           outline: none;
-          width: 100%;
-          font-size: 14px;
-          font-family: 'Poppins', sans-serif;
-          color: #333;
           background: transparent;
-          padding: 2px 0;
+          font-family: 'Nunito', sans-serif;
+          font-size: clamp(13px, 3.5vw, 15px);
+          color: #1a1a3e;
         }
-        .input-field::placeholder {
-          color: #aaa;
-        }
+        .captcha-field input::placeholder { color: #a0aac4; }
+        .cap-check { color: #2ecc71; font-size: 18px; }
 
-        /* Captcha */
-        .captcha-question {
-          color: #e53935;
-          font-size: 15px;
-          font-weight: 600;
-          margin-bottom: 6px;
-        }
+        .error-msg { color: #e53935; font-size: 11px; margin-bottom: clamp(6px, 1.5vw, 8px); }
 
-        .captcha-input-group {
-          display: flex;
-          align-items: center;
-          border-bottom: 1.5px solid #d0d0d0;
-          margin-bottom: 18px;
-          padding-bottom: 6px;
-          gap: 8px;
-          transition: border-color 0.2s;
-        }
-        .captcha-input-group:focus-within {
-          border-color: #1565c0;
-        }
-        .captcha-arrow {
-          color: #555;
-          font-size: 16px;
-          flex-shrink: 0;
-        }
-
-        /* Error message */
-        .error-msg {
-          color: #e53935;
-          font-size: 12px;
-          margin-bottom: 10px;
-          margin-top: -8px;
-        }
-
-        /* Forgot password */
-        .forgot-link {
+        /* ── Forgot ── */
+        .forgot {
           display: inline-block;
           color: #1565c0;
           font-size: 13px;
-          text-decoration: underline;
-          margin-bottom: 22px;
-          cursor: pointer;
-          background: none;
-          border: none;
-          padding: 0;
-          font-family: 'Poppins', sans-serif;
-        }
-        .forgot-link:hover {
-          color: #0d47a1;
-        }
-
-        /* Login button */
-        .login-btn {
-          background: #1565c0;
-          color: #fff;
-          border: none;
-          border-radius: 8px;
-          padding: 12px 40px;
-          font-size: 15px;
           font-weight: 600;
-          font-family: 'Poppins', sans-serif;
+          text-decoration: underline;
+          margin-bottom: clamp(11px, 2.5vw, 16px);
+        }
+
+        /* ── Login Button ── */
+        .login-btn {
+          width: 100%;
+          padding: 12px;
+          border-radius: 12px;
+          border: 2.5px solid #c8962a;
+          background: linear-gradient(180deg, #1e3fa8 0%, #112485 100%);
+          color: #fff;
+          font-family: 'Nunito', sans-serif;
+          font-size: 15px;
+          font-weight: 700;
+          letter-spacing: 1px;
           cursor: pointer;
-          letter-spacing: 0.3px;
-          transition: background 0.2s, transform 0.1s;
-          margin-bottom: 24px;
-          align-self: flex-start;
+          box-shadow: 0 0 0 1px rgba(200,150,42,0.3), 0 4px 24px rgba(10,30,120,0.35);
+          transition: filter 0.2s, transform 0.1s;
+          margin-bottom: clamp(12px, 3vw, 18px);
         }
-        .login-btn:hover {
-          background: #0d47a1;
-        }
-        .login-btn:active {
-          transform: scale(0.98);
-        }
-        .login-btn:disabled {
-          opacity: 0.7;
-          cursor: not-allowed;
-        }
+        .login-btn:hover { filter: brightness(1.12); }
+        .login-btn:active { transform: scale(0.98); }
+        .login-btn:disabled { opacity: 0.65; cursor: not-allowed; }
 
-        /* Social icons */
-        .social-icons {
+        /* ── Social ── */
+        .social-row {
           display: flex;
+          justify-content: center;
           gap: 14px;
-          align-items: center;
-          margin-bottom: 20px;
+          margin-bottom: clamp(8px, 2vw, 14px);
         }
-
         .social-icon {
-          width: 36px;
-          height: 36px;
-          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          border-radius: 10px;
           display: flex;
           align-items: center;
           justify-content: center;
-          cursor: pointer;
-          transition: transform 0.2s, opacity 0.2s;
           text-decoration: none;
+          transition: transform 0.2s, box-shadow 0.2s;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.15);
         }
-        .social-icon:hover {
-          transform: scale(1.1);
-          opacity: 0.85;
-        }
+        .social-icon:hover { transform: translateY(-2px) scale(1.06); box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
 
         .footer-text {
-          font-size: 12px;
-          color: #888;
+          text-align: center;
+          font-size: 11px;
+          color: #8895b5;
+          margin-top: clamp(6px, 1.5vw, 10px);
         }
-        .footer-link {
-          color: #1565c0;
-          text-decoration: underline;
-          cursor: pointer;
-        }
+        .footer-link { color: #1565c0; text-decoration: underline; }
 
-        /* Responsive */
-        @media (max-width: 600px) {
-          .card {
-            flex-direction: column;
-            max-width: 400px;
-          }
-          .card-left {
-            padding: 30px 20px 10px;
-          }
-          .illustration-wrapper {
-            max-width: 160px;
-          }
-          .card-right {
-            border-left: none;
-            border-top: 1px solid #f0f0f0;
-            padding: 28px 24px;
-          }
-          .arc-left { width: 260px; height: 260px; }
-          .arc-right { width: 240px; height: 240px; }
+        /* ── Responsive ── */
+        @media (max-width: 380px) {
+          .card { padding: 12px clamp(10px, 2vw, 14px); border-radius: 16px; }
+          .brand-tagline { word-spacing: 100vw; margin-top: 1px; }
+          .brand-name { font-size: clamp(18px, 4vw, 28px); }
+          .social-icon svg { width: 36px; height: 36px; }
+        }
+        @media (min-width: 768px) {
+          .lp-root { justify-content: center; }
         }
       `}</style>
 
-      <div className="login-page">
-        {/* Background decorative elements */}
-        <div className="arc-left" />
-        <div className="arc-left-inner" />
-        <div className="arc-right" />
-        <div className="arc-right-inner" />
-        <div className="blob-teal" />
-        <div className="blob-blue" />
+      <div className="lp-root">
+        {/* Background */}
+        <div className="lp-bg" />
+
+        {/* Stars */}
+        <div className="stars">
+          {Array.from({ length: 60 }).map((_, i) => (
+            <div key={i} className="star" style={{
+              width: `${Math.random() * 2.5 + 1}px`,
+              height: `${Math.random() * 2.5 + 1}px`,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              ['--dur' as string]: `${(Math.random() * 3 + 2).toFixed(1)}s`,
+              ['--delay' as string]: `${(Math.random() * 4).toFixed(1)}s`,
+              ['--op' as string]: `${(Math.random() * 0.5 + 0.4).toFixed(2)}`,
+            }} />
+          ))}
+        </div>
+
+        {/* Gold arc decorations */}
+        <div className="arcs" aria-hidden>
+          <svg viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="gold1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="transparent"/>
+                <stop offset="40%" stopColor="#c8962a" stopOpacity="0.7"/>
+                <stop offset="70%" stopColor="#f5e06e" stopOpacity="0.9"/>
+                <stop offset="100%" stopColor="transparent"/>
+              </linearGradient>
+              <linearGradient id="gold2" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stopColor="transparent"/>
+                <stop offset="50%" stopColor="#c8962a" stopOpacity="0.5"/>
+                <stop offset="100%" stopColor="transparent"/>
+              </linearGradient>
+            </defs>
+            {/* Top arcs */}
+            <path d="M-100,200 Q300,80 700,320 Q900,420 1100,280" stroke="url(#gold1)" strokeWidth="1.5" fill="none"/>
+            <path d="M-100,280 Q200,120 600,380 Q850,480 1100,360" stroke="url(#gold2)" strokeWidth="1" fill="none"/>
+            <path d="M-50,350 Q250,160 650,440 Q880,540 1100,420" stroke="url(#gold1)" strokeWidth="0.8" fill="none" opacity="0.6"/>
+            {/* Bottom arcs */}
+            <path d="M-100,550 Q400,480 750,600 Q900,640 1100,580" stroke="url(#gold2)" strokeWidth="1.2" fill="none" opacity="0.5"/>
+            <path d="M-100,620 Q350,540 700,660 Q900,700 1100,640" stroke="url(#gold1)" strokeWidth="0.9" fill="none" opacity="0.4"/>
+            {/* Dots on arcs */}
+            {[
+              [140, 170], [320, 115], [520, 140], [720, 280], [850, 330],
+              [200, 240], [450, 190], [650, 380], [820, 420],
+            ].map(([cx, cy], i) => (
+              <circle key={i} cx={cx} cy={cy} r="3" fill="#f5c842" opacity="0.75"/>
+            ))}
+          </svg>
+        </div>
+
+        {/* Login Logo */}
+        <div className="card-logo">
+          <img src="/images/login.png" alt="Login" />
+        </div>
 
         {/* Card */}
         <div className="card">
-          {/* Left — Illustration */}
-          <div className="card-left">
-            <div className="illustration-wrapper">
-              <img
-                src="/images/login.png"
-                alt="Change Life Marketing Logo"
-                className="illustration-svg"
-                style={{ objectFit: 'contain' }}
-              />
-            </div>
+          <h2 className="card-title">Sign In</h2>
+
+          {/* Username */}
+          <div className="field">
+            <span className="field-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+            </span>
+            <input type="text" placeholder="Username / Member ID" value={username} onChange={e => setUsername(e.target.value)}/>
           </div>
 
-          {/* Right — Form */}
-          <div className="card-right">
-            {/* Logo */}
-            <img
-              src="/images/changelifemarketinglogo.png"
-              alt="Change Life Marketing"
-              style={{
-                height: '60px',
-                marginBottom: '18px',
-                objectFit: 'contain'
-              }}
+          {/* Password */}
+          <div className="field">
+            <span className="field-icon">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+            </span>
+            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}/>
+          </div>
+
+          {/* Captcha */}
+          <div className="captcha-eq">
+            <span className="cap-num">{captcha.num1}</span>
+            <span className="cap-op"> + </span>
+            <span className="cap-num">{captcha.num2}</span>
+            <span className="cap-op"> = </span>
+            <span className="cap-result">{captchaValid ? captcha.num1 + captcha.num2 : "?"}</span>
+          </div>
+          <div className={`captcha-field${captchaValid ? " valid" : ""}`}>
+            <input
+              type="number"
+              placeholder="Enter Correct Answer"
+              value={captchaAnswer}
+              onChange={e => handleCaptchaChange(e.target.value)}
             />
-
-            <h2 className="sign-in-title">Sign In</h2>
-
-            {/* Username */}
-            <div className="input-group">
-              <span className="input-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                  <circle cx="12" cy="7" r="4"/>
-                </svg>
-              </span>
-              <input
-                type="text"
-                className="input-field"
-                placeholder="Username / Member ID"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-              />
-            </div>
-
-            {/* Password */}
-            <div className="input-group">
-              <span className="input-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#888" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-                </svg>
-              </span>
-              <input
-                type="password"
-                className="input-field"
-                placeholder="Password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-
-            {/* Captcha */}
-            <div className="captcha-question">
-              {captcha.num1} + {captcha.num2} =
-            </div>
-            <div className="captcha-input-group">
-              <span className="captcha-arrow">→</span>
-              <input
-                type="number"
-                className="input-field"
-                placeholder="Enter Correct Answer"
-                value={captchaAnswer}
-                onChange={(e) => setCaptchaAnswer(e.target.value)}
-              />
-            </div>
-
-            {error && <div className="error-msg">{error}</div>}
-
-            {/* Forgot password */}
-            <Link href="/auth/forgotpassword" className="forgot-link">
-              Forgot password?
-            </Link>
-
-            {/* Login button */}
-            <button
-              className="login-btn"
-              onClick={handleLogin}
-              disabled={loading}
-            >
-              {loading ? "Logging in..." : "Login"}
-            </button>
-
-            {/* Social icons */}
-            <div className="social-icons">
-              {/* Instagram */}
-              <a href="https://www.instagram.com/changelifemarketing?igsh=dzYxYWsza29qZHhm" className="social-icon" aria-label="Instagram">
-                <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <radialGradient id="igGrad" cx="30%" cy="107%" r="150%">
-                      <stop offset="0%" stopColor="#fdf497"/>
-                      <stop offset="5%" stopColor="#fdf497"/>
-                      <stop offset="45%" stopColor="#fd5949"/>
-                      <stop offset="60%" stopColor="#d6249f"/>
-                      <stop offset="90%" stopColor="#285aeb"/>
-                    </radialGradient>
-                  </defs>
-                  <rect width="36" height="36" rx="9" fill="url(#igGrad)"/>
-                  <rect x="10" y="10" width="16" height="16" rx="4.5" stroke="white" strokeWidth="2" fill="none"/>
-                  <circle cx="18" cy="18" r="4.5" stroke="white" strokeWidth="2" fill="none"/>
-                  <circle cx="24" cy="12" r="1.2" fill="white"/>
-                </svg>
-              </a>
-
-              {/* Facebook */}
-              <a href="https://www.facebook.com/share/183CFq7YEz/" className="social-icon" aria-label="Facebook">
-                <svg width="36" height="36" viewBox="0 0 36 36" xmlns="http://www.w3.org/2000/svg">
-                  <rect width="36" height="36" rx="9" fill="#1877F2"/>
-                  <path d="M21 12h-2.5A1.5 1.5 0 0 0 17 13.5V16h4l-.5 4H17v9h-4v-9h-3v-4h3v-2.5C13 11.01 15.01 9 17.5 9H21v3z" fill="white"/>
-                </svg>
-              </a>
-            </div>
-
-            {/* Footer */}
-            <p className="footer-text">
-              © 2026 <a href="#" className="footer-link">Change Life Marketing</a>
-            </p>
+            {captchaValid && <span className="cap-check">✓</span>}
           </div>
+
+          {error && <div className="error-msg">{error}</div>}
+
+          {/* Forgot */}
+          <Link href="/auth/forgotpassword" className="forgot">Forgot password?</Link>
+
+          {/* Login */}
+          <button className="login-btn" onClick={handleLogin} disabled={loading}>
+            {loading ? "Logging in..." : "Login"}
+          </button>
+
+          {/* Social */}
+          <div className="social-row">
+            <a href="https://www.instagram.com/changelifemarketing?igsh=dzYxYWsza29qZHhm" className="social-icon" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+              <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <radialGradient id="ig2" cx="30%" cy="107%" r="150%">
+                    <stop offset="0%" stopColor="#fdf497"/>
+                    <stop offset="5%" stopColor="#fdf497"/>
+                    <stop offset="45%" stopColor="#fd5949"/>
+                    <stop offset="60%" stopColor="#d6249f"/>
+                    <stop offset="90%" stopColor="#285aeb"/>
+                  </radialGradient>
+                </defs>
+                <rect width="44" height="44" rx="11" fill="url(#ig2)"/>
+                <rect x="12" y="12" width="20" height="20" rx="5.5" stroke="white" strokeWidth="2.2" fill="none"/>
+                <circle cx="22" cy="22" r="5.5" stroke="white" strokeWidth="2.2" fill="none"/>
+                <circle cx="29" cy="15" r="1.5" fill="white"/>
+              </svg>
+            </a>
+            <a href="https://www.facebook.com/share/183CFq7YEz/" className="social-icon" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+              <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                <rect width="44" height="44" rx="11" fill="#1877F2"/>
+                <path d="M26 14h-3a2 2 0 0 0-2 2v3h-3v4h3v10h4V23h3l.5-4H24v-2.5A.5.5 0 0 1 24.5 16H26v-2z" fill="white"/>
+              </svg>
+            </a>
+          </div>
+
+          <p className="footer-text">
+            © 2026 <a href="#" className="footer-link">Change Life Marketing</a>
+          </p>
         </div>
       </div>
     </>

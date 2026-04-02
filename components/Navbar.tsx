@@ -38,8 +38,6 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-
-        /* ── TOP NAV ── */
         .topnav {
           background: #fff;
           height: 52px;
@@ -60,19 +58,12 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
           cursor: pointer;
           color: #555;
         }
-        .hamburger-icon { display: flex; flex-direction: column; gap: 4px; transition: all 0.3s ease; }
+        .hamburger-icon { display: flex; flex-direction: column; gap: 4px; cursor: pointer; }
         .hamburger-icon span {
-          width: 22px; height: 2px;
-          background: #555; border-radius: 2px; transition: all 0.3s ease;
-        }
-        .hamburger-icon.active span:nth-child(1) {
-          transform: rotate(45deg) translate(8px, 8px);
-        }
-        .hamburger-icon.active span:nth-child(2) {
-          opacity: 0;
-        }
-        .hamburger-icon.active span:nth-child(3) {
-          transform: rotate(-45deg) translate(7px, -7px);
+          width: 22px; 
+          height: 2.5px;
+          background: #333; 
+          border-radius: 2px;
         }
         .topnav-right {
           display: flex;
@@ -163,10 +154,12 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
                   Profile
                 </div>
               </Link>
-              <div className="dropdown-item red" onClick={handleLogout}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="#e53935"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" /></svg>
-                Logout
-              </div>
+              <Link href="/api/auth/logout">
+                <div className="dropdown-item red" onClick={() => setDropdownOpen(false)}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#e53935"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" /></svg>
+                  Logout
+                </div>
+              </Link>
             </div>
           )}
         </div>

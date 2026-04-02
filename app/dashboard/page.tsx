@@ -48,26 +48,25 @@ const MoneyIcon = () => (
 const MoonIcon = () => <span style={{ fontSize: 14 }}>🌙</span>;
 const GearIcon = () => <span style={{ fontSize: 14 }}>⚙️</span>;
 
-// ── Stat Cards ────────────────────────────────────────────────────────────────
 const statCards = [
     {
         title: "Total Team",
-        gradient: "linear-gradient(135deg, #29b6d2 0%, #1de9b6 100%)",
+        gradient: "linear-gradient(135deg, #9CAF00 0%, #7A8C00 100%)",
         icon: <TeamIcon />,
     },
     {
-        title: "Silver Binary",
-        gradient: "linear-gradient(135deg, #ff5f6d 0%, #ffc371 100%)",
+        title: "Basic Income",
+        gradient: "linear-gradient(135deg, #FF9800 0%, #F57C00 100%)",
         icon: <MoneyIcon />,
     },
     {
-        title: "Gold Binary",
-        gradient: "linear-gradient(135deg, #29b6d2 0%, #2196f3 100%)",
+        title: "Booster Income",
+        gradient: "linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)",
         icon: <MoneyIcon />,
     },
     {
         title: "Total Direct",
-        gradient: "linear-gradient(135deg, #b71c1c 0%, #e53935 100%)",
+        gradient: "linear-gradient(135deg, #00BCD4 0%, #0097A7 100%)",
         icon: <TeamIcon />,
     },
 ];

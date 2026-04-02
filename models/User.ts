@@ -22,11 +22,11 @@ const userSchema = new Schema<IUser>(
     password: {
       type: String,
       required: [true, 'Password is required'],
-      select: false, // Don't return password by default in queries
+      select: false,
     },
   },
   {
-    timestamps: true, // Automatically creates createdAt and updatedAt
+    timestamps: true,
   }
 );
 

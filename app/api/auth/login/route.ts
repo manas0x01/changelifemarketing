@@ -8,8 +8,11 @@ export async function POST(request: NextRequest) {
 
     const { username, password } = await request.json();
 
+    console.log('🔐 Login attempt:', { username, passwordLength: password?.length });
+
     // Validation
     if (!username || !password) {
+      console.log('❌ Validation failed - missing credentials');
       return NextResponse.json(
         { error: 'Username and password are required' },
         { status: 400 }
@@ -20,21 +23,35 @@ export async function POST(request: NextRequest) {
     const user = await User.findOne({ username }).select('+password');
 
     if (!user) {
+      console.log('❌ User not found:', username);
       return NextResponse.json(
         { error: 'Invalid username or password' },
         { status: 401 }
       );
     }
+
+    console.log('✅ User found, comparing password...');
+    console.log('📋 User details:', {
+      id: user._id,
+      username: user.username,
+      hasPassword: !!user.password,
+      passwordHashLength: user.password?.length,
+    });
 
     // Compare passwords
     const isPasswordCorrect = await user.comparePassword(password);
 
+    console.log('🔑 Password comparison result:', isPasswordCorrect);
+
     if (!isPasswordCorrect) {
+      console.log('❌ Password mismatch for user:', username);
       return NextResponse.json(
         { error: 'Invalid username or password' },
         { status: 401 }
       );
     }
+
+    console.log('✅ Password correct, creating session...');
 
     // Create response
     const response = NextResponse.json(
@@ -57,9 +74,10 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
+    console.log('✅ Login successful for:', username);
     return response;
   } catch (error: any) {
-    console.error('Error during login:', error);
+    console.error('❌ Error during login:', error);
     return NextResponse.json(
       { error: error.message || 'Error during login' },
       { status: 500 }

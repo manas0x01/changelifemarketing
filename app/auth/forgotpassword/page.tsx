@@ -355,7 +355,7 @@ export default function ForgotPassword() {
           <p className="card-subtitle">
             Enter your User ID or Email and we'll send you a reset link.
           </p>
-
+          
           {/* User ID */}
           <div className="field">
             <span className="field-icon">

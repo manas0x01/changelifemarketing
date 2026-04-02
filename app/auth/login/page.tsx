@@ -35,16 +35,45 @@ export default function Login() {
     if (!username || !password) { setError("Please enter username and password."); return; }
     if (!captchaValid) { setError("Incorrect captcha answer. Please try again."); generateCaptcha(); return; }
     setLoading(true);
+    
     try {
+      console.log("\n🔐 === LOGIN ATTEMPT ===");
+      console.log("📤 Sending login request...");
+      console.log("   Username:", username);
+      console.log("   Password length:", password?.length);
+      
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
+        credentials: "include", // IMPORTANT: Include cookies
       });
+      
+      console.log("📥 Login response received:");
+      console.log("   Status:", response.status);
+      console.log("   Status Text:", response.statusText);
+      
       const data = await response.json();
-      if (!response.ok) { setError(data.error || "Login failed. Please try again."); generateCaptcha(); setLoading(false); return; }
+      console.log("   Response data:", data);
+      
+      if (!response.ok) { 
+        console.log("❌ Login failed:", data.error);
+        setError(data.error || "Login failed. Please try again."); 
+        generateCaptcha(); 
+        setLoading(false); 
+        return; 
+      }
+      
+      console.log("✅ Login successful!");
+      console.log("   User ID:", data.user.id);
+      console.log("   Username:", data.user.username);
+      console.log("   Cookies should be set now (check Network tab)");
+      console.log("   Redirecting to dashboard...");
+      console.log("\n");
+      
       router.push("/dashboard");
-    } catch {
+    } catch (err) {
+      console.error("❌ Error during login:", err);
       setError("An error occurred. Please try again.");
       generateCaptcha();
       setLoading(false);

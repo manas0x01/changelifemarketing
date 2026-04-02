@@ -53,20 +53,28 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ Password correct, creating session...');
 
+    // Get the user's _id as string
+    const userId = user._id?.toString() || '';
+
+    console.log('📋 Session details:', {
+      userId,
+      userIdType: typeof userId,
+    });
+
     // Create response
     const response = NextResponse.json(
       {
         message: 'Login successful',
         user: {
-          id: user._id,
+          id: userId,
           username: user.username,
         },
       },
       { status: 200 }
     );
 
-    // Set secure cookie with session token
-    response.cookies.set('next-auth.session-token', `${user._id}`, {
+    // Set secure cookie with user _id
+    response.cookies.set('next-auth.session-token', userId, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -74,7 +82,26 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    console.log('✅ Login successful for:', username);
+    // Set username cookie for transaction password verification
+    response.cookies.set('user-username', username, {
+      httpOnly: false,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, 
+      path: '/',
+    });
+
+    console.log('\n✅ Login successful for:', username);
+    console.log('🍪 Cookies being set:');
+    console.log('   - next-auth.session-token:', userId);
+    console.log('   - user-username:', username);
+    console.log('   - maxAge: 30 days');
+    console.log('   - sameSite: lax');
+    console.log('   - httpOnly (session-token): true');
+    console.log('   - httpOnly (user-username): false');
+    console.log('✅ Session cookies set with userId:', userId);
+    console.log('\n');
+    
     return response;
   } catch (error: any) {
     console.error('❌ Error during login:', error);

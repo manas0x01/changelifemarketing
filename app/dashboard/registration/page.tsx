@@ -4,7 +4,7 @@ import { useState } from "react";
 import Navbar from "@/components/Navbar";
 
 // ── Steps ─────────────────────────────────────────────────────────────────────
-type Step = "validate" | "register";
+type Step = "validate" | "sponsor" | "register";
 
 const indianStates = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
@@ -36,13 +36,107 @@ export default function NewRegisterPage() {
   const [dobYear,      setDobYear]      = useState("1995");
   const [state,        setState]        = useState("Bihar");
   const [toast,        setToast]        = useState(false);
+  
+  // Step 2: Sponsor & Package
+  const [sponsorId,    setSponsorId]    = useState("");
+  const [sponsorName,  setSponsorName]  = useState("");
+  const [sponsorValidated, setSponsorValidated] = useState(false);
+  const [sponsorError, setSponsorError] = useState("");
+  const [placementId,  setPlacementId]  = useState("SM956718");
+  const [position,     setPosition]     = useState("-- Select --");
+  const [pkg,          setPkg]          = useState("-- Select Package --");
+  const [epin,         setEpin]         = useState("");
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     if (!txnPassword.trim()) {
       setTxnError("Please enter your transaction password.");
       return;
     }
+    
     setTxnError("");
+    
+    try {
+      console.log("\n🔐 === TRANSACTION PASSWORD VERIFICATION ===");
+      console.log("🔐 Verifying transaction password with backend...");
+      console.log("   Password entered length:", txnPassword?.length);
+      
+      // Check if credentials are being sent
+      console.log("📤 Sending request to: /api/auth/verify-transaction-password");
+      console.log("   Method: POST");
+      console.log("   Credentials: include (cookies will be sent)");
+      
+      // Call API to verify transaction password with credentials
+      const verifyResponse = await fetch('/api/auth/verify-transaction-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ transactionPassword: txnPassword }),
+        credentials: 'include', // IMPORTANT: Include cookies in request
+      });
+
+      console.log("📥 Response received:");
+      console.log("   Status:", verifyResponse.status);
+      console.log("   Status Text:", verifyResponse.statusText);
+
+      const verifyData = await verifyResponse.json();
+
+      console.log("   Response body:", verifyData);
+
+      if (!verifyResponse.ok) {
+        console.log("❌ Verification failed:");
+        console.log("   Error:", verifyData.error);
+        console.log("   Status code:", verifyResponse.status);
+        setTxnError(verifyData.error || 'Transaction password verification failed');
+        return;
+      }
+
+      console.log("✅ Transaction password verified!");
+      console.log("   User ID:", verifyData.userId);
+      console.log("   Username:", verifyData.username);
+      console.log("   Ready to proceed to sponsor selection");
+      console.log("\n");
+      setStep("sponsor");
+    } catch (error) {
+      console.error("❌ Error verifying password:", error);
+      console.error("   Error details:", (error as Error).message);
+      setTxnError("An error occurred. Please try again.");
+    }
+  };
+
+  const handleValidateSponsor = () => {
+    if (!sponsorId.trim()) {
+      setSponsorError("Please enter a sponsor ID.");
+      return;
+    }
+
+    setSponsorError("");
+    
+    // TODO: Validate sponsor ID from database
+    // For now, simulate sponsor validation
+    if (sponsorId === "SM956718") {
+      setSponsorName("ANKIT KUMAR");
+      setSponsorValidated(true);
+    } else {
+      setSponsorError("Sponsor ID not found. Please try again.");
+    }
+  };
+
+  const handleSponsorSubmit = () => {
+    if (!sponsorValidated) {
+      alert("Please validate sponsor ID first");
+      return;
+    }
+    if (!position || position === "-- Select --") {
+      alert("Please select a position");
+      return;
+    }
+    if (!pkg || pkg === "-- Select Package --") {
+      alert("Please select a package");
+      return;
+    }
+    if (!epin.trim()) {
+      alert("Please enter an E-Pin");
+      return;
+    }
     setStep("register");
   };
 
@@ -285,6 +379,7 @@ export default function NewRegisterPage() {
         <div className="page-body">
 
           {/* ══ STEP 1: VALIDATE TRANSACTION PASSWORD ══ */}
+          {step === "validate" && (
           <div className="section-card">
             <div className="section-header">Validate Transaction Password</div>
             <div className="validate-body">
@@ -298,26 +393,137 @@ export default function NewRegisterPage() {
                     value={txnPassword}
                     onChange={(e) => setTxnPassword(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleProceed()}
-                    disabled={step === "register"}
+                    suppressHydrationWarning={true}
                   />
-                  {step === "validate" && (
-                    <button className="proceed-btn" onClick={handleProceed}>
-                      PROCEED
-                    </button>
-                  )}
-                  {step === "register" && (
-                    <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                      Verified
-                    </span>
-                  )}
+                  <button className="proceed-btn" onClick={handleProceed} suppressHydrationWarning={true}>
+                    PROCEED
+                  </button>
                 </div>
                 {txnError && <div className="txn-error">{txnError}</div>}
               </div>
             </div>
           </div>
+          )}
 
-          {/* ══ STEP 2: REGISTRATION FORM ══ */}
+          {/* ══ STEP 2: SPONSOR & PACKAGE ══ */}
+          {step === "sponsor" && (
+            <div className="section-card">
+              <div className="section-header">Fill The Sponsor Details</div>
+              <div className="form-body">
+
+                {/* Sponsor Validation Section */}
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label"><span className="req">*</span>Sponsor ID :</label>
+                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <div style={{ flex: 1 }}>
+                        <input
+                          className="form-input"
+                          type="text"
+                          placeholder="ENTER SPONSOR ID"
+                          value={sponsorId}
+                          onChange={(e) => setSponsorId(e.target.value)}
+                          onKeyDown={(e) => e.key === "Enter" && handleValidateSponsor()}
+                          disabled={sponsorValidated}
+                          suppressHydrationWarning
+                        />
+                        {sponsorError && <div className="txn-error">{sponsorError}</div>}
+                      </div>
+                      {!sponsorValidated ? (
+                        <button 
+                          className="proceed-btn" 
+                          onClick={handleValidateSponsor}
+                          style={{ marginTop: 0 }}
+                          suppressHydrationWarning
+                        >
+                          VALIDATE
+                        </button>
+                      ) : (
+                        <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Show rest of fields only after sponsor validation */}
+                {sponsorValidated && (
+                  <>
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">Sponsor Name :</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={sponsorName}
+                          readOnly
+                          style={{ background: "#f5f5f5", color: "#777" }}
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label"><span className="req">*</span>Placement ID :</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={placementId}
+                          onChange={(e) => setPlacementId(e.target.value)}
+                          suppressHydrationWarning
+                        />
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label"><span className="req">*</span>Position :</label>
+                        <select
+                          className="form-select"
+                          value={position}
+                          onChange={(e) => setPosition(e.target.value)}
+                        >
+                          {positions.map(p => <option key={p}>{p}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label"><span className="req">*</span>Package :</label>
+                        <select
+                          className="form-select"
+                          value={pkg}
+                          onChange={(e) => setPkg(e.target.value)}
+                        >
+                          {packages.map(p => <option key={p}>{p}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label"><span className="req">*</span>E-Pin :</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          placeholder="Enter E-Pin"
+                          value={epin}
+                          onChange={(e) => setEpin(e.target.value)}
+                          suppressHydrationWarning
+                        />
+                      </div>
+                    </div>
+
+                    <div className="submit-wrap" style={{ paddingTop: "20px" }}>
+                      <button className="proceed-btn" onClick={handleSponsorSubmit}>
+                        NEXT
+                      </button>
+                    </div>
+                  </>
+                )}
+
+              </div>
+            </div>
+          )}
+
+          {/* ══ STEP 3: REGISTRATION FORM ══ */}
           {step === "register" && (
             <div className="section-card">
               <div className="section-header">New Member Registration</div>

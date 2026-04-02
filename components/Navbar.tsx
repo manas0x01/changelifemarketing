@@ -160,7 +160,7 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
                   Logout
                 </div>
               </Link>
-            </div>
+            </div>     
           )}
         </div>
       </nav>

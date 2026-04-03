@@ -4,6 +4,17 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 
+interface Star {
+  id: number;
+  width: number;
+  height: number;
+  top: number;
+  left: number;
+  dur: number;
+  delay: number;
+  op: number;
+}
+
 export default function Login() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -13,6 +24,21 @@ export default function Login() {
   const [captchaValid, setCaptchaValid] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [stars, setStars] = useState<Star[]>([]);
+
+  const generateStars = () => {
+    const newStars: Star[] = Array.from({ length: 60 }, (_, i) => ({
+      id: i,
+      width: Math.random() * 2.5 + 1,
+      height: Math.random() * 2.5 + 1,
+      top: Math.random() * 100,
+      left: Math.random() * 100,
+      dur: Math.random() * 3 + 2,
+      delay: Math.random() * 4,
+      op: Math.random() * 0.5 + 0.4,
+    }));
+    setStars(newStars);
+  };
 
   const generateCaptcha = () => {
     const num1 = Math.floor(Math.random() * 20) + 1;
@@ -22,7 +48,10 @@ export default function Login() {
     setCaptchaValid(false);
   };
 
-  useEffect(() => { generateCaptcha(); }, []);
+  useEffect(() => { 
+    generateStars();
+    generateCaptcha(); 
+  }, []);
 
   const handleCaptchaChange = (val: string) => {
     setCaptchaAnswer(val);
@@ -68,10 +97,22 @@ export default function Login() {
       console.log("   User ID:", data.user.id);
       console.log("   Username:", data.user.username);
       console.log("   Cookies should be set now (check Network tab)");
+      
+      console.log("✅ Login successful!");
+      console.log("   User ID:", data.user.id);
+      console.log("   Username:", data.user.username);
+      console.log("   Email:", data.user.email);
+      console.log("   JWT token stored in httpOnly cookie");
       console.log("   Redirecting to dashboard...");
       console.log("\n");
       
-      router.push("/dashboard");
+      // Clear loading state and redirect
+      setLoading(false);
+      
+      // Use a small timeout to ensure cookies are fully set before redirect
+      setTimeout(() => {
+        router.push("/dashboard");
+      }, 100);
     } catch (err) {
       console.error("❌ Error during login:", err);
       setError("An error occurred. Please try again.");

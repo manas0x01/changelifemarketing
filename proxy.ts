@@ -3,22 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export const proxy = (request: NextRequest) => {
   const pathname = request.nextUrl.pathname;
   
-  // Check if user has session cookie
+  // Check if user has session cookie (checking for auth-token cookie)
   const hasSessionCookie =
+    request.cookies.has('auth-token') ||
     request.cookies.has('next-auth.session-token') ||
     request.cookies.has('__Secure-next-auth.session-token');
 
-  // Handle root path "/" - Allow everyone to access
-  // if (pathname === '/') {
-  //   if (hasSessionCookie) {
-  //     const dashboardUrl = request.nextUrl.clone();
-  //     dashboardUrl.pathname = '/dashboard';
-  //     return NextResponse.redirect(dashboardUrl);
-  //   }
-  //   const loginUrl = request.nextUrl.clone();
-  //   loginUrl.pathname = '/auth/login';
-  //   return NextResponse.redirect(loginUrl);
-  // }
 
   // Protect /dashboard and all subroutes
   if (pathname.startsWith('/dashboard')) {

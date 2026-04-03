@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
@@ -20,21 +21,235 @@ const years  = Array.from({ length: 60 }, (_, i) => String(2005 - i));
 const nomineeRelations = ["Son","Daughter","Wife","Husband","Father","Mother","Brother","Sister","Other"];
 
 export default function EditProfilePage() {
+  const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activePage, setActivePage] = useState<"dashboard" | "profile">("profile");
-  const [gender, setGender]             = useState<"Male" | "Female">("Male");
-  const [state,  setState]              = useState("Bihar");
-  const [district, setDistrict]         = useState("Patna");
-  const [city, setCity]                 = useState("Masaurhi");
-  const [dobDay,   setDobDay]           = useState("1");
-  const [dobMonth, setDobMonth]         = useState("January");
-  const [dobYear,  setDobYear]          = useState("1991");
-  const [nomineeRelation, setNomineeRelation] = useState("Son");
-  const [saved, setSaved]               = useState(false);
+  
+  // Form data states
+  const [formData, setFormData] = useState({
+    fullName: "",
+    gender: "Male" as "Male" | "Female",
+    email: "",
+    phone: "91",
+    mobileNo: "",
+    panNo: "",
+    dateOfBirth: "",
+    state: "Bihar",
+    district: "Patna",
+    city: "Patna",
+    address: "",
+    pincode: "",
+    bankName: "",
+    branchName: "",
+    accountNo: "",
+    ifsc: "",
+    accountType: "",
+    nomineeName: "",
+    nomineeRelation: "Son",
+    joiningDate: "",
+    sponsorId: "",
+    sponsorName: "",
+    placementId: "",
+    placementName: "",
+  });
 
-  const handleUpdate = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  // UI states
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+  const [placementData, setPlacementData] = useState({
+    memberId: "",
+    joiningDate: "",
+    sponsorId: "",
+    sponsorName: "",
+    placementId: "",
+    placementName: "",
+  });
+
+  // Date of birth states
+  const [dobDay, setDobDay] = useState("1");
+  const [dobMonth, setDobMonth] = useState("January");
+  const [dobYear, setDobYear] = useState("1991");
+
+  // Fetch profile data on mount
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        console.log("🔍 Fetching profile data...");
+
+        const response = await fetch("/api/user/update-profile", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        console.log("📥 Profile response status:", response.status);
+        console.log("📥 Response content-type:", response.headers.get("content-type"));
+
+        if (!response.ok) {
+          // Try to parse as JSON, fallback to text
+          let errorData;
+          const contentType = response.headers.get("content-type");
+          
+          try {
+            if (contentType?.includes("application/json")) {
+              errorData = await response.json();
+            } else {
+              const text = await response.text();
+              errorData = { error: text?.substring(0, 200) || "Unknown error" };
+            }
+          } catch (parseErr) {
+            console.error("❌ Error parsing response:", parseErr);
+            errorData = { error: "Failed to parse server response" };
+          }
+          
+          console.error("❌ Profile fetch error:", errorData);
+          
+          if (response.status === 401) {
+            router.push("/auth/login");
+            return;
+          }
+          
+          throw new Error(errorData.error || "Failed to fetch profile");
+        }
+
+        const data = await response.json();
+        console.log("✅ Profile data fetched:", data.data);
+
+        if (data.data) {
+          setFormData(data.data);
+
+          // Debug: Check placement fields
+          console.log("🔍 DEBUG - Placement fields from API:");
+          console.log("   joiningDate:", data.data.joiningDate);
+          console.log("   sponsorId:", data.data.sponsorId);
+          console.log("   sponsorName:", data.data.sponsorName);
+          console.log("   placementId:", data.data.placementId);
+          console.log("   placementName:", data.data.placementName);
+
+          // Parse date of birth
+          if (data.data.dateOfBirth) {
+            const dob = new Date(data.data.dateOfBirth);
+            setDobDay(String(dob.getDate()).padStart(2, "0"));
+            setDobMonth(months[dob.getMonth()]);
+            setDobYear(String(dob.getFullYear()));
+          }
+
+          const newPlacementData = {
+            memberId: data.data.username || "",
+            joiningDate: data.data.joiningDate || "",
+            sponsorId: data.data.sponsorId || "",
+            sponsorName: data.data.sponsorName || "",
+            placementId: data.data.placementId || "",
+            placementName: data.data.placementName || "",
+          };
+          
+          console.log("🔍 DEBUG - Setting placementData:", newPlacementData);
+          setPlacementData(newPlacementData);
+        }
+
+        setError(null);
+      } catch (err) {
+        console.error("❌ Error fetching profile:", err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [router]);
+
+  // Handle input change
+  const handleInputChange = (
+    field: keyof typeof formData,
+    value: any
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Handle date change
+  const handleDateChange = (type: "day" | "month" | "year", value: string) => {
+    if (type === "day") setDobDay(value);
+    if (type === "month") setDobMonth(value);
+    if (type === "year") setDobYear(value);
+
+    // Update formData with the new date
+    const monthIndex = months.indexOf(type === "month" ? value : dobMonth);
+    const year = type === "year" ? value : dobYear;
+    const day = type === "day" ? value : dobDay;
+    const newDate = new Date(parseInt(year), monthIndex, parseInt(day));
+    handleInputChange("dateOfBirth", newDate.toISOString());
+  };
+  const handleUpdate = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+      console.log("💾 Saving profile data...");
+      console.log("📋 Form data:", formData);
+      if (formData.mobileNo.trim() && !/^\d{10}$/.test(formData.mobileNo)) {
+        setError("Mobile number must be 10 digits");
+        setSaving(false);
+        return;
+      }
+      if (formData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo)) {
+        setError("Invalid PAN number format");
+        setSaving(false);
+        return;
+      }
+      const response = await fetch("/api/user/update-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+        credentials: "include",
+      });
+
+      console.log("📥 Update response status:", response.status);
+      console.log("📥 Response content-type:", response.headers.get("content-type"));
+
+      if (!response.ok) {
+        // Try to parse as JSON, fallback to text
+        let errorData;
+        const contentType = response.headers.get("content-type");
+        
+        try {
+          if (contentType?.includes("application/json")) {
+            errorData = await response.json();
+          } else {
+            const text = await response.text();
+            errorData = { error: text?.substring(0, 200) || "Unknown error" };
+          }
+        } catch (parseErr) {
+          console.error("❌ Error parsing response:", parseErr);
+          errorData = { error: "Failed to parse server response" };
+        }
+        
+        console.error("❌ Update error:", errorData);
+        throw new Error(errorData.error || "Failed to update profile");
+      }
+
+      const data = await response.json();
+      console.log("✅ Profile updated successfully");
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2500);
+    } catch (err) {
+      console.error("❌ Error updating profile:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -260,6 +475,28 @@ export default function EditProfilePage() {
           from { opacity: 0; transform: translateY(12px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+
+        /* ── SKELETON LOADER ── */
+        .skeleton-group { display: flex; flex-direction: column; gap: 6px; }
+        .skeleton-label {
+          height: 12px;
+          width: 80px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          border-radius: 3px;
+          animation: shimmer 2s infinite;
+        }
+        .skeleton-input {
+          height: 38px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          border-radius: 5px;
+          animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
       `}</style>
 
       <div className="ep-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -295,12 +532,12 @@ export default function EditProfilePage() {
           <div className="section-card">
             <div className="section-header">Placement &amp; Sponsor Details</div>
             <div className="placement-grid">
-              <div className="placement-item">Member ID : <strong>Sm674643</strong></div>
-              <div className="placement-item">Joining Date : <strong>24-May-2020</strong></div>
-              <div className="placement-item">Sponsor ID : <strong>SM956718</strong></div>
-              <div className="placement-item">Sponsor Name : <strong>ANKIT KUMAR</strong></div>
-              <div className="placement-item">Placement ID : <strong>SM956718</strong></div>
-              <div className="placement-item">Placement Name : <strong>ANKIT KUMAR</strong></div>
+              <div className="placement-item">Member ID : <strong>{placementData.memberId}</strong></div>
+              <div className="placement-item">Joining Date : <strong>{placementData.joiningDate}</strong></div>
+              <div className="placement-item">Sponsor ID : <strong>{placementData.sponsorId}</strong></div>
+              <div className="placement-item">Sponsor Name : <strong>{placementData.sponsorName}</strong></div>
+              <div className="placement-item">Placement ID : <strong>{placementData.placementId}</strong></div>
+              <div className="placement-item">Placement Name : <strong>{placementData.placementName}</strong></div>
             </div>
           </div>
 
@@ -309,152 +546,385 @@ export default function EditProfilePage() {
             <div className="section-header">Edit Personal Information</div>
             <div className="form-body">
 
-              {/* Row 1: Name | Gender */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label"><span className="req">*</span>Name :</label>
-                  <input className="form-input" type="text" defaultValue="AJAY KUMAR" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Gender :</label>
-                  <div className="gender-group">
-                    <label className="radio-label">
+              {loading ? (
+                <>
+                  {/* Skeleton Row 1 */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "70px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "60px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
+
+                  {/* Skeleton Row 2 */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "70px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "90px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
+
+                  {/* Skeleton Row 3 */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "70px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "80px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
+
+                  {/* Skeleton Row 4 */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "120px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "80px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
+
+                  {/* Skeleton Row 5 */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "60px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "80px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
+
+                  {/* Skeleton Row 6 */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "60px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "100px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
+
+                  {/* Skeleton Row 7 - Nominee */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "90px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "110px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
+
+                  {/* Skeleton Row 8 - Placement dates */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "85px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "75px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
+
+                  {/* Skeleton Row 9 - Sponsor details */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "95px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "80px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
+
+                  {/* Skeleton Row 10 - Placement name */}
+                  <div className="form-row">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "100px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group"></div>
+                  </div>
+
+                  {/* Skeleton Button */}
+                  <div className="update-wrap">
+                    <div className="skeleton-input" style={{ width: "160px", height: "42px" }} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {error && (
+                    <div style={{
+                      background: "#ffebee",
+                      color: "#c62828",
+                      padding: "12px 16px",
+                      borderRadius: "6px",
+                      marginBottom: "20px",
+                      fontSize: "13px",
+                      border: "1px solid #ef5350"
+                    }}>
+                      ❌ {error}
+                    </div>
+                  )}
+
+                  {/* Row 1: Name | Gender */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Name :</label>
                       <input
-                        type="radio"
-                        name="gender"
-                        checked={gender === "Male"}
-                        onChange={() => setGender("Male")}
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={formData.fullName}
+                        onChange={(e) => handleInputChange("fullName", e.target.value)}
                       />
-                      Male
-                    </label>
-                    <label className="radio-label">
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Gender :</label>
+                      <div className="gender-group">
+                        <label className="radio-label">
+                          <input
+                            type="radio"
+                            name="gender"
+                            checked={formData.gender === "Male"}
+                            onChange={() => handleInputChange("gender", "Male")}
+                          />
+                          Male
+                        </label>
+                        <label className="radio-label">
+                          <input
+                            type="radio"
+                            name="gender"
+                            checked={formData.gender === "Female"}
+                            onChange={() => handleInputChange("gender", "Female")}
+                          />
+                          Female
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 2: Country | Mobile No. */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Country :</label>
+                      <select
+                        className="form-select"
+                        value="India"
+                        disabled
+                      >
+                        <option>India</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Mobile No. :</label>
+                      <div className="mobile-split">
+                        <input
+                          className="form-input mobile-code"
+                          type="text"
+                          suppressHydrationWarning
+                          value="+ 91"
+                          disabled
+                        />
+                        <input
+                          className="form-input mobile-num"
+                          type="text"
+                          suppressHydrationWarning
+                          value={formData.mobileNo}
+                          onChange={(e) => handleInputChange("mobileNo", e.target.value)}
+                          placeholder="10-digit mobile number"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Row 3: Email | PAN No. */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Email ID :</label>
                       <input
-                        type="radio"
-                        name="gender"
-                        checked={gender === "Female"}
-                        onChange={() => setGender("Female")}
+                        className="form-input"
+                        type="email"
+                        suppressHydrationWarning
+                        value={formData.email}
+                        onChange={(e) => handleInputChange("email", e.target.value)}
                       />
-                      Female
-                    </label>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">PAN No. :</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={formData.panNo}
+                        onChange={(e) => handleInputChange("panNo", e.target.value.toUpperCase())}
+                        placeholder="e.g., ABCDE1234F"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Row 2: Country | Mobile No. */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label"><span className="req">*</span>Country :</label>
-                  <select className="form-select" defaultValue="India">
-                    <option>India</option>
-                    <option>Nepal</option>
-                    <option>Bangladesh</option>
-                    <option>Sri Lanka</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label"><span className="req">*</span>Mobile No. :</label>
-                  <div className="mobile-split">
-                    <input className="form-input mobile-code" type="text" defaultValue="91" />
-                    <input className="form-input mobile-num"  type="text" defaultValue="6204720770" />
+                  {/* Row 4: Date of Birth | Pin Code */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Date of Birth :</label>
+                      <div className="dob-split">
+                        <select
+                          className="form-select"
+                          value={dobDay}
+                          onChange={(e) => handleDateChange("day", e.target.value)}
+                        >
+                          {days.map(d => <option key={d}>{d}</option>)}
+                        </select>
+                        <select
+                          className="form-select"
+                          value={dobMonth}
+                          onChange={(e) => handleDateChange("month", e.target.value)}
+                        >
+                          {months.map(m => <option key={m}>{m}</option>)}
+                        </select>
+                        <select
+                          className="form-select"
+                          value={dobYear}
+                          onChange={(e) => handleDateChange("year", e.target.value)}
+                        >
+                          {years.map(y => <option key={y}>{y}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Pin Code :</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={formData.pincode}
+                        onChange={(e) => handleInputChange("pincode", e.target.value)}
+                        placeholder="6-digit pincode"
+                      />
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Row 3: Email | PAN No. */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Email ID :</label>
-                  <input className="form-input" type="email" defaultValue="AJAYSHARMAMLM71@GMAIL.COM" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label"><span className="req">*</span>PAN No. :</label>
-                  <input className="form-input" type="text" defaultValue="FVEPK3555E" />
-                </div>
-              </div>
-
-              {/* Row 4: Date of Birth | Pin Code */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label"><span className="req">*</span>Date of Birth :</label>
-                  <div className="dob-split">
-                    <select className="form-select" value={dobDay} onChange={e => setDobDay(e.target.value)}>
-                      {days.map(d => <option key={d}>{d}</option>)}
-                    </select>
-                    <select className="form-select" value={dobMonth} onChange={e => setDobMonth(e.target.value)}>
-                      {months.map(m => <option key={m}>{m}</option>)}
-                    </select>
-                    <select className="form-select" value={dobYear} onChange={e => setDobYear(e.target.value)}>
-                      {years.map(y => <option key={y}>{y}</option>)}
-                    </select>
+                  {/* Row 5: State | District */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">State :</label>
+                      <select
+                        className="form-select"
+                        value={formData.state}
+                        onChange={(e) => handleInputChange("state", e.target.value)}
+                      >
+                        {indianStates.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">District :</label>
+                      <select
+                        className="form-select"
+                        value={formData.district}
+                        onChange={(e) => handleInputChange("district", e.target.value)}
+                      >
+                        {["Patna","Gaya","Bhagalpur","Muzaffarpur","Nalanda","Vaishali","Saran","Darbhanga"].map(d => (
+                          <option key={d}>{d}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                </div>
-                <div className="form-group">
-                  <label className="form-label"><span className="req">*</span>Pin Code :</label>
-                  <input className="form-input" type="text" defaultValue="804452" />
-                </div>
-              </div>
 
-              {/* Row 5: State | District */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label"><span className="req">*</span> State :</label>
-                  <select className="form-select" value={state} onChange={e => setState(e.target.value)}>
-                    {indianStates.map(s => <option key={s}>{s}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">District :</label>
-                  <select className="form-select" value={district} onChange={e => setDistrict(e.target.value)}>
-                    {["Patna","Gaya","Bhagalpur","Muzaffarpur","Nalanda","Vaishali","Saran","Darbhanga"].map(d => (
-                      <option key={d}>{d}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
+                  {/* Row 6: City | Street/Landmark */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">City :</label>
+                      <select
+                        className="form-select"
+                        value={formData.city}
+                        onChange={(e) => handleInputChange("city", e.target.value)}
+                      >
+                        {["Masaurhi","Patna","Barh","Danapur","Fatuha","Punpun"].map(c => (
+                          <option key={c}>{c}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Street/Landmark/Building (Address Block) :</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={formData.address}
+                        onChange={(e) => handleInputChange("address", e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-              {/* Row 6: City | Street/Landmark */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">City :</label>
-                  <select className="form-select" value={city} onChange={e => setCity(e.target.value)}>
-                    {["Masaurhi","Patna","Barh","Danapur","Fatuha","Punpun"].map(c => (
-                      <option key={c}>{c}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Street/Landmark/Building (Address Block) :</label>
-                  <input className="form-input" type="text" defaultValue="KAILUACHK" />
-                </div>
-              </div>
-
-              {/* Row 7: Nominee Name | Nominee Relation */}
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Nominee Name :</label>
-                  <input className="form-input" type="text" defaultValue="Dhadkan Kumar" />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Nominee Relation :</label>
-                  <select className="form-select" value={nomineeRelation} onChange={e => setNomineeRelation(e.target.value)}>
-                    {nomineeRelations.map(r => <option key={r}>{r}</option>)}
-                  </select>
-                </div>
-              </div>
-
-              {/* Update Button */}
-              <div className="update-wrap">
-                <button className="update-btn" onClick={handleUpdate}>
-                  Update Profile
-                </button>
-              </div>
+                  {/* Row 7: Nominee Name | Nominee Relation */}
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Nominee Name :</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={formData.nomineeName}
+                        onChange={(e) => handleInputChange("nomineeName", e.target.value)}
+                        placeholder="Enter nominee name"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Nominee Relation :</label>
+                      <select
+                        className="form-select"
+                        value={formData.nomineeRelation}
+                        onChange={(e) => handleInputChange("nomineeRelation", e.target.value)}
+                      >
+                        {nomineeRelations.map(r => (
+                          <option key={r}>{r}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  
+                  {/* Update Button */}
+                  <div className="update-wrap">
+                    <button
+                      className="update-btn"
+                      onClick={handleUpdate}
+                      disabled={saving}
+                      style={{
+                        opacity: saving ? 0.7 : 1,
+                        cursor: saving ? "not-allowed" : "pointer"
+                      }}
+                    >
+                      {saving ? "Saving..." : "Update Profile"}
+                    </button>
+                  </div>
+                </>
+              )}
 
             </div>
           </div>
         </div>
 
         {/* Toast */}
-        {saved && (
+        {success && (
           <div className="toast">✓ Profile updated successfully!</div>
         )}
 

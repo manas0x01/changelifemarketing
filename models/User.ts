@@ -7,7 +7,28 @@ export interface IUser extends Document {
   transactionPassword?: string;
   email?: string;
   phone?: string;
+  mobileNo?: string;
   fullName?: string;
+  gender?: string;
+  dateOfBirth?: Date;
+  panNo?: string;
+  state?: string;
+  district?: string;
+  city?: string;
+  address?: string;
+  pincode?: string;
+  bankName?: string;
+  branchName?: string;
+  accountNo?: string;
+  ifsc?: string;
+  accountType?: string;
+  nomineeName?: string;
+  nomineeRelation?: string;
+  joiningDate?: string;
+  sponsorId?: string;
+  sponsorName?: string;
+  placementId?: string;
+  placementName?: string;
   role?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -45,7 +66,114 @@ const userSchema = new Schema<IUser>(
       required: false,
       trim: true,
     },
+    mobileNo: {
+      type: String,
+      required: false,
+      trim: true,
+    },
     fullName: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    gender: {
+      type: String,
+      required: false,
+      enum: ['Male', 'Female', 'Other'],
+    },
+    dateOfBirth: {
+      type: Date,
+      required: false,
+    },
+    panNo: {
+      type: String,
+      required: false,
+      trim: true,
+      uppercase: true,
+    },
+    state: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    district: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    city: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    address: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    pincode: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    bankName: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    branchName: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    accountNo: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    ifsc: {
+      type: String,
+      required: false,
+      trim: true,
+      uppercase: true,
+    },
+    accountType: {
+      type: String,
+      required: false,
+      enum: ['Savings', 'Current', 'Business'],
+    },
+    nomineeName: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    nomineeRelation: {
+      type: String,
+      required: false,
+      default: 'Son',
+      enum: ['Son', 'Daughter', 'Wife', 'Husband', 'Father', 'Mother', 'Brother', 'Sister', 'Other'],
+    },
+    joiningDate: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    sponsorId: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    sponsorName: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    placementId: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    placementName: {
       type: String,
       required: false,
       trim: true,
@@ -92,5 +220,9 @@ userSchema.methods.compareTransactionPassword = async function (
   return bcrypt.compare(transactionPassword, this.transactionPassword);
 };
 
-export default mongoose.models.User ||
-  mongoose.model<IUser>('User', userSchema);
+// Force clear old models to ensure schema is fresh
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
+export default mongoose.model<IUser>('User', userSchema);

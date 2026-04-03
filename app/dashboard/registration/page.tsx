@@ -59,13 +59,9 @@ export default function NewRegisterPage() {
       console.log("\n🔐 === TRANSACTION PASSWORD VERIFICATION ===");
       console.log("🔐 Verifying transaction password with backend...");
       console.log("   Password entered length:", txnPassword?.length);
-      
-      // Check if credentials are being sent
       console.log("📤 Sending request to: /api/auth/verify-transaction-password");
       console.log("   Method: POST");
       console.log("   Credentials: include (cookies will be sent)");
-      
-      // Call API to verify transaction password with credentials
       const verifyResponse = await fetch('/api/auth/verify-transaction-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

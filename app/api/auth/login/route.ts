@@ -1,6 +1,8 @@
 import { connectDB } from '@/lib/database';
 import User from '@/models/User';
 import { NextRequest, NextResponse } from 'next/server';
+import { signToken } from '@/lib/jwt';
+import { encryptCookieValue } from '@/lib/cookieEncryption';
 
 export async function POST(request: NextRequest) {
   try {
@@ -58,8 +60,23 @@ export async function POST(request: NextRequest) {
 
     console.log('📋 Session details:', {
       userId,
+      userEmail: user.email,
       userIdType: typeof userId,
     });
+
+    // Generate JWT token (use username as primary identifier)
+    const token = signToken({
+      username: user.username,
+      userId: userId,
+      email: user.email || undefined,
+    });
+
+    console.log('🔐 JWT token generated successfully');
+
+    // Encrypt sensitive data before storing in cookies
+    console.log('🔒 Encrypting cookie values...');
+    const encryptedUsername = encryptCookieValue(username);
+    console.log('✅ Username encrypted successfully');
 
     // Create response
     const response = NextResponse.json(
@@ -68,13 +85,14 @@ export async function POST(request: NextRequest) {
         user: {
           id: userId,
           username: user.username,
+          email: user.email,
         },
       },
       { status: 200 }
     );
 
-    // Set secure cookie with user _id
-    response.cookies.set('next-auth.session-token', userId, {
+    // Set JWT token in httpOnly cookie
+    response.cookies.set('auth-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -82,8 +100,8 @@ export async function POST(request: NextRequest) {
       path: '/',
     });
 
-    // Set username cookie for transaction password verification
-    response.cookies.set('user-username', username, {
+    // Set encrypted username cookie for transaction password verification
+    response.cookies.set('user-username', encryptedUsername, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -93,13 +111,12 @@ export async function POST(request: NextRequest) {
 
     console.log('\n✅ Login successful for:', username);
     console.log('🍪 Cookies being set:');
-    console.log('   - next-auth.session-token:', userId);
-    console.log('   - user-username:', username);
+    console.log('   - auth-token (JWT): ✓');
+    console.log('   - user-username (Encrypted): ✓');
     console.log('   - maxAge: 30 days');
     console.log('   - sameSite: lax');
-    console.log('   - httpOnly (session-token): true');
-    console.log('   - httpOnly (user-username): false');
-    console.log('✅ Session cookies set with userId:', userId);
+    console.log('   - httpOnly (auth-token): true');
+    console.log('🔒 All sensitive data encrypted with AES-256-GCM');
     console.log('\n');
     
     return response;

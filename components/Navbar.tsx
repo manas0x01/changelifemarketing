@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSidebar } from "@/context/SidebarContext";
+import { useState, useEffect } from "react";
 
 interface NavbarProps {
   dropdownOpen: boolean;
@@ -13,6 +14,33 @@ interface NavbarProps {
 export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }: NavbarProps) {
   const { toggleSidebar, isOpen } = useSidebar();
   const router = useRouter();
+  const [userData, setUserData] = useState<{ username: string; fullName: string } | null>(null);
+
+  // Fetch user data on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("/api/user/update-profile", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data) {
+            setUserData({
+              username: data.data.username,
+              fullName: data.data.fullName,
+            });
+          }
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      }
+    };
+
+    fetchUserData();
+  }, []);
 
   const handleLogout = async () => {
     try {
@@ -135,7 +163,7 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
         </div>
         <div className="topnav-right">
           <span className="user-name" onClick={() => setDropdownOpen(!dropdownOpen)}>
-            ajay kumar ( Sm674643 )
+            {userData ? `${userData.fullName} ( ${userData.username} )` : 'Loading...'}
           </span>
           <img
             src="/images/user.png"
@@ -147,7 +175,7 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
 
           {dropdownOpen && (
             <div className="dropdown">
-              <div className="dropdown-header">Welcome, Sm674643</div>
+              <div className="dropdown-header">Welcome, {userData?.username || 'User'}</div>
               <Link href="/dashboard/profile">
                 <div className="dropdown-item" onClick={() => setDropdownOpen(false)}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="#4caf50"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" /></svg>

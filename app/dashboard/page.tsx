@@ -71,7 +71,7 @@ const statCards = [
     },
 ];
 
-// ── Main Component ────────────────────────────────────────────────────────────
+{/* Main Component */ }
 export default function Dashboard() {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [activePage, setActivePage] = useState<"dashboard" | "profile">("dashboard");

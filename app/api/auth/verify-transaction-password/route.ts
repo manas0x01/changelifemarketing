@@ -1,6 +1,7 @@
 import { connectDB } from '@/lib/database';
 import User from '@/models/User';
 import { NextRequest, NextResponse } from 'next/server';
+import { decryptCookieValue } from '@/lib/cookieEncryption';
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,11 +37,22 @@ export async function POST(request: NextRequest) {
     console.log('\n🔍 Looking for "user-username" cookie...');
     console.log('   Cookie found:', !!usernameCookie);
     
-    if (usernameCookie) {
-      console.log('   Cookie value:', usernameCookie.value);
-    }
+    let username: string | undefined;
     
-    const username = usernameCookie?.value;
+    if (usernameCookie) {
+      try {
+        // Decrypt the username cookie
+        console.log('🔒 Decrypting username from cookie...');
+        username = decryptCookieValue(usernameCookie.value);
+        console.log('✅ Username decrypted successfully');
+      } catch (error) {
+        console.error('❌ Error decrypting username:', error);
+        return NextResponse.json(
+          { error: 'Invalid session. Please login again.' },
+          { status: 401 }
+        );
+      }
+    }
     
     if (!username) {
       console.log('\n❌ Username not found in cookies');

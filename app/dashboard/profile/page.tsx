@@ -1,39 +1,92 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 type Tab = "overview" | "myprofile" | "editbank";
 
-const personalDetails = [
-  { label: "Full Name",     value: "ajay kumar" },
-  { label: "Gender",        value: "Male" },
-  { label: "Date of Birth", value: "01 Jan 1991" },
-  { label: "Mobile No.",    value: "6204720770" },
-  { label: "Pan No.",       value: "FVEPK3555E" },
-  { label: "Email",         value: "ajaysharmamlm71@gmail.com" },
-  { label: "State",         value: "Bihar" },
-  { label: "District",      value: "Patna" },
-  { label: "City",          value: "Masaurhi" },
-  { label: "Address",       value: "Kailuachk" },
-  { label: "Pincode",       value: "804452" },
-];
-
-const bankDetails = [
-  { label: "Bank Name",    value: "CENTER BANK OF INDIA" },
-  { label: "Branch Name",  value: "MASAURHI" },
-  { label: "Account No.",  value: "5511182971" },
-  { label: "IFSC",         value: "CBIN0284349" },
-  { label: "Account Type", value: "SAVING" },
-];
+interface ProfileData {
+  personalDetails: { label: string; value: string }[];
+  bankDetails: { label: string; value: string }[];
+  username: string;
+  userId: string;
+  avatar: string;
+}
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activePage, setActivePage] = useState<"dashboard" | "profile">("profile");
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        
+        console.log("🔍 Fetching profile with JWT cookie...");
+
+        // Send request with credentials - JWT will be in httpOnly cookie
+        const response = await fetch("/api/user/profile", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        console.log("📥 Profile response status:", response.status);
+        console.log("📥 Response content-type:", response.headers.get("content-type"));
+
+        if (!response.ok) {
+          // Try to parse as JSON, fallback to text
+          let errorData;
+          const contentType = response.headers.get("content-type");
+          
+          try {
+            if (contentType?.includes("application/json")) {
+              errorData = await response.json();
+            } else {
+              const text = await response.text();
+              errorData = { error: text?.substring(0, 200) || "Unknown error" };
+            }
+          } catch (parseErr) {
+            console.error("❌ Error parsing response:", parseErr);
+            errorData = { error: "Failed to parse server response" };
+          }
+          
+          console.error("❌ Profile API error:", errorData);
+          throw new Error(errorData.error || "Failed to fetch profile");
+        }
+        
+        const data = await response.json();
+        console.log("✅ Profile data received successfully");
+        setProfileData(data);
+        setError(null);
+      } catch (err) {
+        console.error("❌ Profile fetch error:", err);
+        
+        // If authentication fails, redirect to login
+        if (err instanceof Error && err.message.includes("Unauthorized")) {
+          console.log("🔐 Redirecting to login...");
+          router.push("/auth/login");
+          return;
+        }
+        
+        setError(err instanceof Error ? err.message : "An error occurred");
+        setProfileData(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [router]);
 
   return (
     <>
@@ -281,6 +334,73 @@ export default function ProfilePage() {
           transition: opacity 0.18s, transform 0.15s;
         }
         .save-btn:hover { opacity: 0.88; transform: translateY(-1px); }
+
+        /* ── SKELETON LOADER ── */
+        .skeleton-avatar {
+          width: 110px;
+          height: 110px;
+          border-radius: 50%;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: shimmer 2s infinite;
+          margin-top: -55px;
+          border: 4px solid #fff;
+          flex-shrink: 0;
+        }
+
+        .skeleton-text {
+          height: 20px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          border-radius: 4px;
+          animation: shimmer 2s infinite;
+          margin-bottom: 8px;
+        }
+
+        .skeleton-card {
+          background: #fff;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        }
+
+        .skeleton-header {
+          background: #f0f0f0;
+          height: 42px;
+          padding: 11px 18px;
+        }
+
+        .skeleton-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 13px 18px;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .skeleton-row:last-child { border-bottom: none; }
+
+        .skeleton-label {
+          height: 14px;
+          width: 120px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          border-radius: 3px;
+          animation: shimmer 2s infinite;
+        }
+
+        .skeleton-value {
+          height: 14px;
+          width: 150px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          border-radius: 3px;
+          animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
       `}</style>
 
       <div className="profile-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -319,8 +439,26 @@ export default function ProfilePage() {
 
           {/* Avatar + Name strip */}
           <div className="hero-strip">
-            <img src="/images/user.png" alt="User Avatar" className="hero-avatar" />
-            <span className="hero-username">ajay kumar (Sm674643)</span>
+            {loading ? (
+              <>
+                <div className="skeleton-avatar" />
+                <div style={{ flex: 1 }}>
+                  <div className="skeleton-text" style={{ width: "200px" }} />
+                  <div className="skeleton-text" style={{ width: "150px" }} />
+                </div>
+              </>
+            ) : (
+              <>
+                <img 
+                  src={profileData?.avatar || "/images/user.png"} 
+                  alt="User Avatar" 
+                  className="hero-avatar" 
+                />
+                <span className="hero-username">
+                  {profileData?.username || "User"} ({profileData?.userId || "ID"})
+                </span>
+              </>
+            )}
           </div>
 
           {/* Tabs */}
@@ -348,27 +486,59 @@ export default function ProfilePage() {
         {/* ── TAB CONTENT ── */}
         {(activeTab === "overview" || activeTab === "myprofile") && (
           <div className="content-grid">
-            {/* Personal Details */}
-            <div className="detail-card">
-              <div className="detail-header">Personal Details</div>
-              {personalDetails.map((row) => (
-                <div className="detail-row" key={row.label}>
-                  <span className="detail-label">{row.label}</span>
-                  <span className="detail-value">{row.value}</span>
+            {loading ? (
+              <>
+                {/* Personal Details Skeleton */}
+                <div className="skeleton-card">
+                  <div className="skeleton-header" />
+                  {[1, 2, 3, 4, 5].map((i) => (
+                    <div className="skeleton-row" key={i}>
+                      <div className="skeleton-label" />
+                      <div className="skeleton-value" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {/* Bank Details */}
-            <div className="detail-card" style={{ alignSelf: "flex-start" }}>
-              <div className="detail-header">Bank Details</div>
-              {bankDetails.map((row) => (
-                <div className="detail-row" key={row.label}>
-                  <span className="detail-label">{row.label}</span>
-                  <span className="detail-value">{row.value}</span>
+                {/* Bank Details Skeleton */}
+                <div className="skeleton-card">
+                  <div className="skeleton-header" />
+                  {[1, 2, 3, 4].map((i) => (
+                    <div className="skeleton-row" key={i}>
+                      <div className="skeleton-label" />
+                      <div className="skeleton-value" />
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </>
+            ) : error ? (
+              <div style={{ gridColumn: "1 / -1", padding: "40px", textAlign: "center", color: "#d32f2f" }}>
+                <p>Error: {error}</p>
+              </div>
+            ) : profileData ? (
+              <>
+                {/* Personal Details */}
+                <div className="detail-card">
+                  <div className="detail-header">Personal Details</div>
+                  {profileData.personalDetails.map((row) => (
+                    <div className="detail-row" key={row.label}>
+                      <span className="detail-label">{row.label}</span>
+                      <span className="detail-value">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Bank Details */}
+                <div className="detail-card" style={{ alignSelf: "flex-start" }}>
+                  <div className="detail-header">Bank Details</div>
+                  {profileData.bankDetails.map((row) => (
+                    <div className="detail-row" key={row.label}>
+                      <span className="detail-label">{row.label}</span>
+                      <span className="detail-value">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            ) : null}
           </div>
         )}
       </div>

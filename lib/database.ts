@@ -42,3 +42,5 @@ export async function connectDB() {
 
   return cached.mongoose.conn;
 }
+
+export default connectDB;

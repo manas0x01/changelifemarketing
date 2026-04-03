@@ -1,18 +1,180 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import Link from "next/link";
 
 const accountTypes = ["-- Select --", "Saving", "Current", "Salary", "NRI", "Joint"];
 
 export default function EditBankPage() {
+  const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [accountType, setAccountType]   = useState("-- Select --");
-  const [saved, setSaved]               = useState(false);
 
-  const handleUpdate = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
+  // Form data states - ONLY bank fields
+  const [bankData, setBankData] = useState({
+    bankName: "",
+    ifsc: "",
+    accountNo: "",
+    branchName: "",
+    accountType: "-- Select --",
+    panNo: "",
+  });
+
+  // UI states
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  // Fetch bank details on mount
+  useEffect(() => {
+    const fetchBankDetails = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        console.log("🏦 Fetching bank details...");
+
+        const response = await fetch("/api/user/update-profile", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+        });
+
+        console.log("📥 Bank details response status:", response.status);
+        console.log("📥 Response content-type:", response.headers.get("content-type"));
+
+        if (!response.ok) {
+          // Try to parse as JSON, fallback to text
+          let errorData;
+          const contentType = response.headers.get("content-type");
+          
+          try {
+            if (contentType?.includes("application/json")) {
+              errorData = await response.json();
+            } else {
+              const text = await response.text();
+              errorData = { error: text?.substring(0, 200) || "Unknown error" };
+            }
+          } catch (parseErr) {
+            console.error("❌ Error parsing response:", parseErr);
+            errorData = { error: "Failed to parse server response" };
+          }
+          
+          console.error("❌ Bank details fetch error:", errorData);
+          
+          if (response.status === 401) {
+            console.log("🔐 Unauthorized - redirecting to login");
+            router.push("/auth/login");
+            return;
+          }
+          
+          throw new Error(errorData.error || "Failed to fetch bank details");
+        }
+
+        const data = await response.json();
+        console.log("✅ Bank details fetched:", data);
+
+        if (data.data) {
+          setBankData({
+            bankName: data.data.bankName || "",
+            ifsc: data.data.ifsc || "",
+            accountNo: data.data.accountNo || "",
+            branchName: data.data.branchName || "",
+            accountType: data.data.accountType || "-- Select --",
+            panNo: data.data.panNo || "",
+          });
+        }
+
+        setError(null);
+      } catch (err) {
+        console.error("❌ Error fetching bank details:", err);
+        setError(err instanceof Error ? err.message : "An error occurred");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBankDetails();
+  }, [router]);
+
+  // Handle input change
+  const handleInputChange = (field: keyof typeof bankData, value: string) => {
+    setBankData((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  // Handle update
+  const handleUpdate = async () => {
+    try {
+      setSaving(true);
+      setError(null);
+
+      console.log("💾 Saving bank details...");
+      console.log("📋 Bank data:", bankData);
+
+      // Validation - format only if provided
+      if (bankData.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankData.ifsc)) {
+        setError("Invalid IFSC code format (e.g., CBIN0284349)");
+        setSaving(false);
+        return;
+      }
+
+      if (bankData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(bankData.panNo)) {
+        setError("Invalid PAN number format");
+        setSaving(false);
+        return;
+      }
+
+      const response = await fetch("/api/user/update-profile", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(bankData),
+        credentials: "include",
+      });
+
+      console.log("📥 Update response status:", response.status);
+      console.log("📥 Response content-type:", response.headers.get("content-type"));
+
+      if (!response.ok) {
+        // Try to parse as JSON, fallback to text
+        let errorData;
+        const contentType = response.headers.get("content-type");
+        
+        try {
+          if (contentType?.includes("application/json")) {
+            errorData = await response.json();
+          } else {
+            const text = await response.text();
+            errorData = { error: text?.substring(0, 200) || "Unknown error" };
+          }
+        } catch (parseErr) {
+          console.error("❌ Error parsing response:", parseErr);
+          errorData = { error: "Failed to parse server response" };
+        }
+        
+        console.error("❌ Update error:", errorData);
+        throw new Error(errorData.error || "Failed to update bank details");
+      }
+
+      const data = await response.json();
+      console.log("✅ Bank details updated successfully");
+
+      setSuccess(true);
+      setTimeout(() => setSuccess(false), 2500);
+    } catch (err) {
+      console.error("❌ Error updating bank details:", err);
+      setError(err instanceof Error ? err.message : "An error occurred");
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -174,6 +336,28 @@ export default function EditBankPage() {
           from { opacity: 0; transform: translateY(10px); }
           to   { opacity: 1; transform: translateY(0); }
         }
+
+        /* ── SKELETON LOADER ── */
+        .skeleton-group { display: flex; flex-direction: column; gap: 7px; }
+        .skeleton-label {
+          height: 12px;
+          width: 90px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          border-radius: 3px;
+          animation: shimmer 2s infinite;
+        }
+        .skeleton-input {
+          height: 40px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          border-radius: 5px;
+          animation: shimmer 2s infinite;
+        }
+        @keyframes shimmer {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
       `}</style>
 
       <div className="eb-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -194,13 +378,13 @@ export default function EditBankPage() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="#555">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>
-            <a href="/dashboard">Home</a>
+            <Link href="/dashboard">Home</Link>
             <span className="sep">/</span>
-            <a href="/dashboard/profile">Profile</a>
+            <Link href="/dashboard/profile">Profile</Link>
             <span className="sep">/</span>
             <span className="current">Edit Bank</span>
           </div>
-          <button className="return-btn">Return to Profile</button>
+          <Link href="/dashboard/profile" className="return-btn">Return to Profile</Link>
         </div>
 
         {/* ── MAIN CARD ── */}
@@ -209,86 +393,170 @@ export default function EditBankPage() {
             <div className="section-header">Edit Bank Details</div>
 
             <div className="form-body">
-              <div className="form-grid">
+              {loading ? (
+                <>
+                  {/* Skeleton Row 1 */}
+                  <div className="form-grid">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "80px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "90px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
 
-                {/* Bank Name */}
-                <div className="form-group">
-                  <label className="form-label">Bank Name :</label>
-                  <input
-                    className="form-input"
-                    type="text"
-                    defaultValue="CENTER BANK OF INDIA"
-                  />
-                </div>
+                  {/* Skeleton Row 2 */}
+                  <div className="form-grid">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "100px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "80px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
 
-                {/* IFSC Code */}
-                <div className="form-group">
-                  <label className="form-label">IFSC Code :</label>
-                  <input
-                    className="form-input"
-                    type="text"
-                    defaultValue="CBIN0284349"
-                  />
-                </div>
+                  {/* Skeleton Row 3 */}
+                  <div className="form-grid">
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "110px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                    <div className="skeleton-group">
+                      <div className="skeleton-label" style={{ width: "70px" }} />
+                      <div className="skeleton-input" />
+                    </div>
+                  </div>
 
-                {/* Account No. */}
-                <div className="form-group">
-                  <label className="form-label">Account No. :</label>
-                  <input
-                    className="form-input"
-                    type="text"
-                    defaultValue="5511182971"
-                  />
-                </div>
+                  {/* Skeleton Button */}
+                  <div className="update-wrap">
+                    <div className="skeleton-input" style={{ width: "200px", height: "42px" }} />
+                  </div>
+                </>
+              ) : (
+                <>
+                  {error && (
+                    <div style={{
+                      background: "#ffebee",
+                      color: "#c62828",
+                      padding: "12px 16px",
+                      borderRadius: "6px",
+                      marginBottom: "20px",
+                      fontSize: "13px",
+                      border: "1px solid #ef5350"
+                    }}>
+                      ❌ {error}
+                    </div>
+                  )}
 
-                {/* Branch */}
-                <div className="form-group">
-                  <label className="form-label">Branch :</label>
-                  <input
-                    className="form-input"
-                    type="text"
-                    defaultValue="MASAURHI"
-                  />
-                </div>
+                  <div className="form-grid">
 
-                {/* Account Type */}
-                <div className="form-group">
-                  <label className="form-label">Account Type :</label>
-                  <select
-                    className="form-select"
-                    value={accountType}
-                    onChange={(e) => setAccountType(e.target.value)}
-                  >
-                    {accountTypes.map((t) => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
+                    {/* Bank Name */}
+                    <div className="form-group">
+                      <label className="form-label">Bank Name :</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={bankData.bankName}
+                        onChange={(e) => handleInputChange("bankName", e.target.value)}
+                        placeholder="Enter bank name"
+                      />
+                    </div>
 
-                {/* PAN */}
-                <div className="form-group">
-                  <label className="form-label">PAN :</label>
-                  <input
-                    className="form-input"
-                    type="text"
-                    defaultValue="FVEPK3555E"
-                  />
-                </div>
+                    {/* IFSC Code */}
+                    <div className="form-group">
+                      <label className="form-label">IFSC Code :</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={bankData.ifsc}
+                        onChange={(e) => handleInputChange("ifsc", e.target.value.toUpperCase())}
+                        placeholder="e.g., CBIN0284349"
+                      />
+                    </div>
 
-              </div>
+                    {/* Account No. */}
+                    <div className="form-group">
+                      <label className="form-label">Account No. :</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={bankData.accountNo}
+                        onChange={(e) => handleInputChange("accountNo", e.target.value)}
+                        placeholder="Enter account number"
+                      />
+                    </div>
 
-              {/* Update Button */}
-              <div className="update-wrap">
-                <button className="update-btn" onClick={handleUpdate}>
-                  Update Bank Details
-                </button>
-              </div>
+                    {/* Branch */}
+                    <div className="form-group">
+                      <label className="form-label">Branch :</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={bankData.branchName}
+                        onChange={(e) => handleInputChange("branchName", e.target.value)}
+                        placeholder="Enter branch name"
+                      />
+                    </div>
+
+                    {/* Account Type */}
+                    <div className="form-group">
+                      <label className="form-label">Account Type :</label>
+                      <select
+                        className="form-select"
+                        value={bankData.accountType}
+                        onChange={(e) => handleInputChange("accountType", e.target.value)}
+                      >
+                        {accountTypes.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* PAN */}
+                    <div className="form-group">
+                      <label className="form-label">PAN :</label>
+                      <input
+                        className="form-input"
+                        type="text"
+                        suppressHydrationWarning
+                        value={bankData.panNo}
+                        onChange={(e) => handleInputChange("panNo", e.target.value.toUpperCase())}
+                        placeholder="e.g., ABCDE1234F"
+                      />
+                    </div>
+
+                  </div>
+
+                  {/* Update Button */}
+                  <div className="update-wrap">
+                    <button
+                      className="update-btn"
+                      onClick={handleUpdate}
+                      disabled={saving}
+                      style={{
+                        opacity: saving ? 0.7 : 1,
+                        cursor: saving ? "not-allowed" : "pointer"
+                      }}
+                    >
+                      {saving ? "Saving..." : "Update Bank Details"}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
 
         {/* Toast */}
-        {saved && (
+        {success && (
           <div className="toast">✓ Bank details updated successfully!</div>
         )}
 

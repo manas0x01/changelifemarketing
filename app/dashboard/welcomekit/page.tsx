@@ -1,10 +1,9 @@
 "use client";
 
 import React from "react";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
-import html2pdf from 'html2pdf.js';
 
 export default function WelcomeKitPage() {
   const router = useRouter();
@@ -63,40 +62,46 @@ export default function WelcomeKitPage() {
     fetchUserData();
   }, [router]);
 
-  const handleDownload = (ref: React.RefObject<HTMLDivElement>, filename: string) => {
+  const handleDownload = useCallback(async (ref: React.RefObject<HTMLDivElement | null>, filename: string) => {
     if (!ref.current) return;
 
-    const element = ref.current;
-    const opt = {
-      margin: 10,
-      filename: `${filename}-${userData.username || 'document'}.pdf`,
-      image: { type: 'png', quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
-    };
+    try {
+      const { default: html2pdfLib } = await import('html2pdf.js');
+      
+      const element = ref.current;
+      const opt: any = {
+        margin: 10,
+        filename: `${filename}-${userData.username || 'document'}.pdf`,
+        image: { type: 'png' as const, quality: 0.98 },
+        html2canvas: { scale: 2 },
+        jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+      };
 
-    html2pdf()
-      .set(opt)
-      .from(element)
-      .save()
-      .catch((err) => console.error('PDF download failed:', err));
-  };
+      html2pdfLib()
+        .set(opt)
+        .from(element)
+        .save()
+        .catch((err: any) => console.error('PDF download failed:', err));
+    } catch (err) {
+      console.error('Failed to load html2pdf:', err);
+    }
+  }, [userData.username]);
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=UnifrakturMaguntia&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         .wk-root {
           font-family: 'Poppins', sans-serif;
-          background: #f0f2f5;
+          background: linear-gradient(135deg, #f5f1e8 0%, #e8dcc8 100%);
           min-height: 100vh;
         }
 
         /* GREEN BAR */
-        .green-bar { height: 8px; background: linear-gradient(90deg,#00c853,#1de9b6); }
+        .green-bar { height: 8px; background: linear-gradient(90deg, #d4af37, #f4d03f); }
 
         /* BREADCRUMB */
         .breadcrumb {
@@ -116,242 +121,213 @@ export default function WelcomeKitPage() {
         .section-title {
           font-size: 20px;
           font-weight: 700;
-          color: #1a1a2e;
+          color: #2a2a2a;
           margin-bottom: 10px;
         }
 
         /* DOWNLOAD BTN */
         .dl-btn {
-          background: #1976d2;
+          background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
           color: #fff;
           border: none;
-          border-radius: 6px;
-          padding: 9px 22px;
+          border-radius: 8px;
+          padding: 10px 24px;
           font-size: 13.5px;
           font-weight: 600;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
           margin-bottom: 16px;
-          transition: background .18s, transform .15s;
+          transition: all 0.3s;
           display: inline-flex;
           align-items: center;
           gap: 6px;
+          box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
         }
-        .dl-btn:hover { background: #1565c0; transform: translateY(-1px); }
+        .dl-btn:hover { 
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+        }
 
         /* ═══════════════════════════════════════
-           CERTIFICATE
+           CERTIFICATE - GOLDEN BLUR
         ═══════════════════════════════════════ */
         .cert-wrap {
-          border: 2px solid #c97b3b;
-          border-radius: 4px;
-          width: 760px;
+          background: rgba(255, 255, 255, 0.7);
+          backdrop-filter: blur(10px);
+          border: 2px solid rgba(212, 175, 55, 0.3);
+          border-radius: 20px;
+          width: 800px;
           max-width: 100%;
           overflow: hidden;
           position: relative;
-          background: #fff;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
           min-height: 500px;
           display: flex;
+          flex-direction: column;
+          padding: 50px 40px;
+          align-items: center;
         }
 
-        /* Left decorative column */
-        .cert-left-deco {
-          width: 130px;
-          flex-shrink: 0;
-          position: relative;
-          overflow: hidden;
-        }
-        .cert-deco-navy {
+        .cert-wrap::before {
+          content: '';
           position: absolute;
-          left: 0; top: 0; bottom: 0;
-          width: 90px;
-          background: #1a3561;
-          clip-path: ellipse(90px 120% at 0% 50%);
-        }
-        .cert-deco-green-top {
-          position: absolute;
-          top: -10px; right: -10px;
-          width: 100px; height: 220px;
-          background: #5cb85c;
-          border-radius: 0 0 50% 0;
-          transform: rotate(-10deg);
-        }
-        .cert-deco-teal-bottom {
-          position: absolute;
-          bottom: -10px; right: -20px;
-          width: 100px; height: 200px;
-          background: #5bc8c8;
-          border-radius: 50% 0 0 0;
-          transform: rotate(10deg);
-        }
-        .cert-deco-green-bottom {
-          position: absolute;
-          bottom: 40px; left: 0;
-          width: 80px; height: 120px;
-          background: #4caf50;
-          border-radius: 0 50% 0 0;
+          inset: 0;
+          background: radial-gradient(circle at top right, rgba(244, 208, 63, 0.1), transparent),
+                      radial-gradient(circle at bottom left, rgba(212, 175, 55, 0.08), transparent);
+          pointer-events: none;
+          border-radius: 20px;
         }
 
-        /* Right decorative column */
-        .cert-right-deco {
-          width: 100px;
-          flex-shrink: 0;
-          position: relative;
-          overflow: hidden;
-        }
-        .cert-rdeco-navy {
-          position: absolute;
-          right: 0; top: 0; bottom: 0;
-          width: 70px;
-          background: #1a3561;
-          clip-path: ellipse(70px 120% at 100% 50%);
-        }
-        .cert-rdeco-green {
-          position: absolute;
-          top: -10px; left: 0;
-          width: 80px; height: 200px;
-          background: #6bc76b;
-          border-radius: 0 0 0 50%;
-          transform: rotate(8deg);
-        }
-        .cert-rdeco-teal {
-          position: absolute;
-          top: 120px; left: -10px;
-          width: 80px; height: 160px;
-          background: #4dd0e1;
-          border-radius: 50% 0 0 0;
-          transform: rotate(-5deg);
-        }
+        /* Left & Right decorative columns hidden */
+        .cert-left-deco, .cert-right-deco { display: none; }
 
         /* Certificate main content */
         .cert-content {
           flex: 1;
-          padding: 36px 32px 32px;
           display: flex;
           flex-direction: column;
+          align-items: center;
+          text-align: center;
+          position: relative;
+          z-index: 1;
         }
 
         /* Logo */
         .cert-logo {
           display: flex; align-items: center; justify-content: center;
-          gap: 4px; margin-bottom: 20px;
+          margin-bottom: 20px;
         }
-        .cert-logo-bar { width: 4px; height: 32px; background: #2e7d32; border-radius: 2px; margin-right: 4px; }
-        .cert-logo-text { font-size: 22px; font-weight: 700; color: #1a237e; letter-spacing: -0.3px; }
-        .cert-logo-life { font-size: 14px; font-weight: 600; color: #e53935; font-style: italic; vertical-align: super; }
 
         /* Certificate heading */
         .cert-heading {
-          font-family: 'UnifrakturMaguntia', cursive;
-          font-size: 32px;
-          color: #111;
+          font-family: 'Playfair Display', serif;
+          font-size: 42px;
+          color: #d4af37;
           text-align: center;
-          margin-bottom: 22px;
+          margin-bottom: 10px;
+          letter-spacing: 2px;
         }
 
         .cert-presented {
-          font-size: 15px; font-weight: 400;
-          color: #333; text-align: center;
-          margin-bottom: 6px;
+          font-size: 14px; font-weight: 500;
+          color: #666; text-align: center;
+          margin-bottom: 8px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
         .cert-name {
-          font-size: 34px; font-weight: 700;
-          color: #111; text-align: center;
-          margin-bottom: 18px;
+          font-size: 38px; font-weight: 700;
+          color: #1a1a1a; text-align: center;
+          margin-bottom: 20px;
           font-family: 'Poppins', sans-serif;
         }
         .cert-body-text {
-          font-size: 13px; color: #333;
-          line-height: 1.7;
+          font-size: 13px; color: #555;
+          line-height: 1.8;
           margin-bottom: 28px;
-          padding-left: 4px;
+          max-width: 600px;
         }
 
         /* Info grid */
         .cert-info-grid {
           display: grid;
           grid-template-columns: 1fr 1fr;
-          gap: 10px 20px;
-          font-size: 13px;
+          gap: 20px;
+          font-size: 12px;
           color: #333;
+          width: 100%;
+          max-width: 600px;
         }
-        .cert-info-grid p { line-height: 1.8; }
+        .cert-info-grid p { 
+          line-height: 2;
+          padding: 8px 12px;
+          background: rgba(212, 175, 55, 0.05);
+          border-left: 3px solid #d4af37;
+          border-radius: 4px;
+        }
 
         /* ═══════════════════════════════════════
-           ID CARD
+           ID CARD - GOLDEN BLUR
         ═══════════════════════════════════════ */
         .id-card-wrap {
-          width: 320px;
+          width: 360px;
           max-width: 100%;
-          border-radius: 14px;
+          border-radius: 20px;
           overflow: hidden;
           position: relative;
-          background: linear-gradient(160deg, #e0f7fa 0%, #b2ebf2 40%, #80deea 70%, #26c6da 100%);
-          min-height: 420px;
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(10px);
+          border: 2px solid rgba(212, 175, 55, 0.3);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+          min-height: 480px;
           display: flex;
           flex-direction: column;
+          padding: 30px 25px;
           align-items: center;
-          padding-bottom: 0;
+        }
+
+        .id-card-wrap::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(244, 208, 63, 0.08) 0%, rgba(212, 175, 55, 0.05) 100%);
+          pointer-events: none;
+          border-radius: 20px;
         }
 
         /* Wave bg lines */
-        .id-wave-bg {
-          position: absolute;
-          inset: 0;
-          pointer-events: none;
-          overflow: hidden;
-        }
+        .id-wave-bg { display: none; }
 
         .id-top-section {
           width: 100%;
-          padding: 22px 20px 16px;
           display: flex;
           flex-direction: column;
           align-items: center;
           position: relative;
           z-index: 2;
+          text-align: center;
         }
 
         .id-logo {
-          display: flex; align-items: center; justify-content: center; gap: 3px;
-          margin-bottom: 16px;
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 20px;
         }
-        .id-logo-bar { width: 3px; height: 26px; background: #2e7d32; border-radius: 2px; margin-right: 3px; }
-        .id-logo-text { font-size: 18px; font-weight: 700; color: #1a237e; }
-        .id-logo-life { font-size: 12px; font-weight: 600; color: #e53935; font-style: italic; vertical-align: super; }
 
         .id-avatar {
-          width: 90px; height: 90px; border-radius: 50%;
-          background: linear-gradient(135deg, #ff9800 50%, #5c6bc0 50%);
-          border: 3px solid #fff;
-          box-shadow: 0 3px 12px rgba(0,0,0,0.15);
-          margin-bottom: 18px;
+          width: 100px; height: 100px; border-radius: 50%;
+          background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+          border: 4px solid #fff;
+          box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3);
+          margin-bottom: 20px;
         }
 
         .id-info {
           text-align: center;
           font-size: 14px;
-          color: #1a1a2e;
-          line-height: 2;
-          margin-bottom: 12px;
+          color: #1a1a1a;
+          line-height: 2.2;
+          margin-bottom: 16px;
+          width: 100%;
         }
-        .id-info p { font-weight: 400; }
+        .id-info p { font-weight: 500; }
 
         .id-divider {
-          width: 70%;
+          width: 80%;
           border: none;
-          border-top: 1.5px dashed #555;
-          margin: 8px 0 4px;
+          border-top: 2px solid #d4af37;
+          margin: 12px 0 8px;
         }
         .id-sig {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 700;
-          color: #111;
+          color: #d4af37;
           text-align: center;
           margin-bottom: 0;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
 
-        /* bottom blue wave */
+        /* bottom wave */
         .id-bottom-wave {
           width: 100%;
           margin-top: auto;
@@ -360,91 +336,108 @@ export default function WelcomeKitPage() {
         }
 
         .id-visit {
-          background: linear-gradient(90deg, #29b6f6, #0288d1);
-          padding: 10px 16px;
+          background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+          padding: 12px 16px;
           text-align: center;
-          font-size: 12px;
+          font-size: 11px;
           color: #fff;
-          font-weight: 500;
+          font-weight: 600;
+          border-radius: 8px;
+          margin-top: 12px;
         }
 
         /* ═══════════════════════════════════════
-           VISITING CARD
+           VISITING CARD - GOLDEN BLUR
         ═══════════════════════════════════════ */
         .visit-card-wrap {
-          width: 400px;
+          width: 420px;
           max-width: 100%;
-          border-radius: 12px;
+          border-radius: 20px;
           overflow: hidden;
           position: relative;
-          background: linear-gradient(160deg, #e0f7fa 0%, #b2ebf2 50%, #4dd0e1 100%);
-          min-height: 260px;
+          background: rgba(255, 255, 255, 0.8);
+          backdrop-filter: blur(10px);
+          border: 2px solid rgba(212, 175, 55, 0.3);
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+          min-height: 300px;
+          padding: 30px;
+        }
+
+        .visit-card-wrap::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(244, 208, 63, 0.08) 0%, rgba(212, 175, 55, 0.05) 100%);
+          pointer-events: none;
+          border-radius: 20px;
         }
 
         .visit-top {
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 16px 18px 8px;
+          padding: 0 0 16px 0;
           position: relative;
           z-index: 2;
         }
 
         .visit-logo {
-          display: flex; align-items: center; justify-content: center; gap: 3px;
+          display: flex; align-items: center; justify-content: center;
         }
-        .visit-logo-bar { width: 3px; height: 24px; background: #2e7d32; border-radius: 2px; margin-right: 3px; }
-        .visit-logo-text { font-size: 17px; font-weight: 700; color: #1a237e; }
-        .visit-logo-life { font-size: 11px; font-weight: 600; color: #e53935; font-style: italic; vertical-align: super; }
 
         .visit-body {
-          padding: 4px 18px 0;
+          padding: 0;
           position: relative;
           z-index: 2;
           display: flex;
           align-items: flex-start;
-          gap: 14px;
+          gap: 16px;
+          margin-bottom: 16px;
         }
         .visit-avatar {
-          width: 60px; height: 60px; border-radius: 50%;
-          background: linear-gradient(135deg, #ff9800 50%, #5c6bc0 50%);
-          border: 2px solid #fff;
-          box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+          width: 70px; height: 70px; border-radius: 50%;
+          background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+          border: 3px solid #fff;
+          box-shadow: 0 4px 12px rgba(212, 175, 55, 0.2);
           flex-shrink: 0;
         }
         .visit-member-info {
-          display: flex; flex-direction: column; gap: 1px;
-          padding-top: 6px;
+          display: flex; flex-direction: column; gap: 2px;
+          padding-top: 8px;
         }
-        .visit-member-id { font-size: 15px; font-weight: 700; color: #111; }
-        .visit-member-mobile { font-size: 12.5px; color: #555; }
+        .visit-member-id { font-size: 16px; font-weight: 700; color: #1a1a1a; }
+        .visit-member-mobile { font-size: 13px; color: #d4af37; font-weight: 600; }
 
         .visit-details {
-          padding: 14px 18px 0;
+          padding: 12px;
           font-size: 13px;
-          color: #222;
-          line-height: 2;
+          color: #333;
+          line-height: 2.2;
           position: relative;
           z-index: 2;
+          background: rgba(212, 175, 55, 0.05);
+          border-left: 3px solid #d4af37;
+          border-radius: 8px;
         }
 
-        /* bottom blue wave for visiting */
-        .visit-bottom-wave {
-          margin-top: 16px;
+        /* bottom wave for visiting */
+        .visit-bottom-wave { display: none; }
+        
+        .visit-footer {
+          background: linear-gradient(135deg, #d4af37 0%, #f4d03f 100%);
+          padding: 12px 16px;
+          text-align: center;
+          font-size: 11px;
+          color: #fff;
+          font-weight: 600;
+          border-radius: 8px;
+          margin-top: 12px;
           position: relative;
           z-index: 2;
-        }
-        .visit-footer {
-          background: linear-gradient(90deg, #29b6f6, #0288d1);
-          padding: 10px 16px;
-          text-align: center;
-          font-size: 12px;
-          color: #fff;
-          font-weight: 500;
         }
 
         /* spacing helpers */
-        .kit-section { margin-bottom: 36px; }
+        .kit-section { margin-bottom: 40px; }
       `}</style>
 
       <div className="wk-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>

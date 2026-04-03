@@ -22,7 +22,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "registration",
-    label: "New Register",
+    label: "Create Account",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
@@ -45,7 +45,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "profile",
-    label: "Profile Management",
+    label: "Profile Settings",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -59,7 +59,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "epin",
-    label: "E-Pin Management",
+    label: "E-Pin Control",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
@@ -69,7 +69,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "my-network",
-    label: "My Network",
+    label: "My Team",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <circle cx="12" cy="12" r="10"/>
@@ -77,7 +77,7 @@ const menuItems: MenuItem[] = [
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
       </svg>
     ),
-    children: [{ label: "Direct Members" }, { label: "Downline Members" }, { label: "Mother Tree" },{label: "Gold Downline Members"}],
+    children: [{ label: "Direct Members" }, { label: "Downline Members" }, { label: "Network Tree" },{label: "Gold Downline Members"}],
   },
   {
     id: "reports",
@@ -102,7 +102,7 @@ const menuItems: MenuItem[] = [
   },
   {
     id: "chat-support",
-    label: "Chat Support",
+    label: "Support Center",
     icon: (
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
@@ -523,13 +523,13 @@ export default function Sidebar() {
                               router.push("/dashboard/myrequests");
                             } else if (item.id === "epin" && child.label === "Transferred/ Rejected") {
                               router.push("/dashboard/transferred");
-                            } else if (item.id === "my-network" && child.label === "Direct Members") {
+                            } else if (item.id === "my-network" && child.label === "Direct Teams") {
                               router.push("/dashboard/directmembers");
-                            } else if (item.id === "my-network" && child.label === "Downline Members") {
+                            } else if (item.id === "my-network" && child.label === "Team Network") {
                               router.push("/dashboard/downlinemembers");
-                            } else if (item.id === "my-network" && child.label === "Mother Tree") {
+                            } else if (item.id === "my-network" && child.label === "Network Tree") {
                               router.push("/dashboard/mothertree");
-                            } else if (item.id === "my-network" && child.label === "Gold Downline Members") {
+                            } else if (item.id === "my-network" && child.label === "Booster") {
                               router.push("/dashboard/golddownlinemembers");
                             } else if (item.id === "reports" && child.label === "Silver Binary Income") {
                               router.push("/dashboard/silverbinaryincome");

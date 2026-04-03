@@ -1,17 +1,85 @@
 "use client";
 
 import React from "react";
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Navbar from "@/components/Navbar";
+import { useRouter } from "next/navigation";
+import html2pdf from 'html2pdf.js';
 
 export default function WelcomeKitPage() {
+  const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [userData, setUserData] = useState({
+    fullName: "",
+    username: "",
+    mobileNo: "",
+    email: "",
+    address: "",
+    createdAt: "",
+  });
+  
   const certRef    = useRef<HTMLDivElement>(null);
   const idRef      = useRef<HTMLDivElement>(null);
   const visitRef   = useRef<HTMLDivElement>(null);
 
-  const handleDownload = (label: string) => {
-    alert(`Downloading ${label}…`);
+  // Fetch user data on mount
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const response = await fetch("/api/user/update-profile", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data) {
+            // Format date
+            let dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+            if (data.data.createdAt) {
+              dateStr = new Date(data.data.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+            }
+
+            setUserData({
+              fullName: data.data.fullName || "",
+              username: data.data.username || "",
+              mobileNo: data.data.mobileNo || "",
+              email: data.data.email || "",
+              address: data.data.address || "Jaysingpur, Taluka: Shirol, Dist: Kolhapur Pin code: 416 101",
+              createdAt: dateStr,
+            });
+          }
+        } else if (response.status === 401) {
+          router.push("/auth/login");
+        }
+      } catch (error) {
+        console.error("Failed to fetch user data:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [router]);
+
+  const handleDownload = (ref: React.RefObject<HTMLDivElement>, filename: string) => {
+    if (!ref.current) return;
+
+    const element = ref.current;
+    const opt = {
+      margin: 10,
+      filename: `${filename}-${userData.username || 'document'}.pdf`,
+      image: { type: 'png', quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+    };
+
+    html2pdf()
+      .set(opt)
+      .from(element)
+      .save()
+      .catch((err) => console.error('PDF download failed:', err));
   };
 
   return (
@@ -401,12 +469,18 @@ export default function WelcomeKitPage() {
 
         <div className="page-body">
 
+          {loading ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#666', fontSize: '16px' }}>
+              Loading your profile data...
+            </div>
+          ) : (
+            <>
           {/* ══════════════════════════════
                CERTIFICATE
           ══════════════════════════════ */}
           <div className="kit-section">
             <h2 className="section-title">Certificate</h2>
-            <button className="dl-btn" onClick={() => handleDownload("Certificate")}>
+            <button className="dl-btn" onClick={() => handleDownload(certRef, "Certificate")}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               Download
             </button>
@@ -430,26 +504,25 @@ export default function WelcomeKitPage() {
                 <div className="cert-heading">Certificate of Membership</div>
 
                 <p className="cert-presented">Presented to</p>
-                <p className="cert-name">ajay kumar</p>
+                <p className="cert-name">{userData.fullName || "Member"}</p>
 
                 <p className="cert-body-text">
-                  For the Honourable Membership of the Swamini.<br />
+                  For the Honourable Membership of the Change Life Management.<br />
                   Your cordial Association is welcome in the Business Family Wish you Bright<br />
                   Future of Growth.
                 </p>
 
                 <div className="cert-info-grid">
                   <div>
-                    <p>Name : ajay kumar</p>
-                    <p>Member ID : Sm674643</p>
-                    <p>Date : 24 May 2020</p>
+                    <p>Name : {userData.fullName || "N/A"}</p>
+                    <p>Member ID : {userData.username || "N/A"}</p>
+                    <p>Date : {userData.createdAt}</p>
                   </div>
                   <div>
-                    <p>Address : Kadage Building, Behind Post Office,</p>
-                    <p>Jaysingpur, Taluka: Shirol, Dist: Kolhapur Pin code: 416 101</p>
+                    <p>Address : {userData.address || "N/A"}</p>
                     <br />
                     <p>Website : https://changelifemarketing.in/</p>
-                    <p>Email : support@changelifemarketing.in</p>
+                    <p>Email : {userData.email || "support@changelifemarketing.in"}</p>
                   </div>
                 </div>
               </div>
@@ -468,7 +541,7 @@ export default function WelcomeKitPage() {
           ══════════════════════════════ */}
           <div className="kit-section">
             <h2 className="section-title">ID Card</h2>
-            <button className="dl-btn" onClick={() => handleDownload("ID Card")}>
+            <button className="dl-btn" onClick={() => handleDownload(idRef, "ID-Card")}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               Download
             </button>
@@ -499,9 +572,9 @@ export default function WelcomeKitPage() {
 
                 {/* Info */}
                 <div className="id-info">
-                  <p>Member - Sm674643</p>
-                  <p>Name - ajay kumar</p>
-                  <p>Mobile No. - 6204720770</p>
+                  <p>Member - {userData.username || "N/A"}</p>
+                  <p>Name - {userData.fullName || "N/A"}</p>
+                  <p>Mobile No. - {userData.mobileNo || "N/A"}</p>
                 </div>
 
                 <hr className="id-divider" />
@@ -526,7 +599,7 @@ export default function WelcomeKitPage() {
           ══════════════════════════════ */}
           <div className="kit-section">
             <h2 className="section-title">Visiting Card</h2>
-            <button className="dl-btn" onClick={() => handleDownload("Visiting Card")}>
+            <button className="dl-btn" onClick={() => handleDownload(visitRef, "Visiting-Card")}>
               <svg width="15" height="15" viewBox="0 0 24 24" fill="white"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
               Download
             </button>
@@ -554,15 +627,15 @@ export default function WelcomeKitPage() {
               <div className="visit-body">
                 <img src="/images/user.png" alt="User Profile" className="visit-avatar" />
                 <div className="visit-member-info">
-                  <span className="visit-member-id">Sm674643</span>
-                  <span className="visit-member-mobile">6204720770</span>
+                  <span className="visit-member-id">{userData.username || "N/A"}</span>
+                  <span className="visit-member-mobile">{userData.mobileNo || "N/A"}</span>
                 </div>
               </div>
 
               {/* Details */}
               <div className="visit-details">
-                <p>Name - ajay kumar</p>
-                <p>Email - ajaysharmamlm71@gmail.com</p>
+                <p>Name - {userData.fullName || "N/A"}</p>
+                <p>Email - {userData.email || "N/A"}</p>
               </div>
 
               {/* Bottom wave + footer */}
@@ -578,6 +651,8 @@ export default function WelcomeKitPage() {
             </div>
           </div>
 
+            </>
+          )}
         </div>
       </div>
     </>

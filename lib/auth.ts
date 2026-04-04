@@ -3,6 +3,28 @@ import { NextAuthOptions } from "next-auth";
 import User from "@/models/User";
 import { connectDB } from "./database";
 
+declare module "next-auth" {
+  interface User {
+    role?: string;
+    username?: string;
+  }
+  interface Session {
+    user: User & {
+      id?: string;
+      role?: string;
+      username?: string;
+    }
+  }
+}
+
+declare module "next-auth/jwt" {
+  interface JWT {
+    id?: string;
+    role?: string;
+    username?: string;
+  }
+}
+
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({

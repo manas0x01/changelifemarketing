@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/database";
+import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
 export async function GET(req: NextRequest) {
@@ -20,40 +20,27 @@ export async function GET(req: NextRequest) {
     }
 
     console.log('✅ Session verified, username:', session.user.username);
-    }
     
-    await dbConnect();
-    let user;
+    await connectDB();
     
-    // Try to find user by email first
-    if (email) {
-      user = await User.findOne({ email }).select("-password -otp -otpExpiry");
-    }
-    // Fall back to username if no email
-    else if (decodedToken?.username) {
-      user = await User.findOne({ username: decodedToken.username }).select("-password -otp -otpExpiry");
-    }
-    // Fall back to email from Authorization header
-    else if (authHeader?.startsWith("Bearer ")) {
-      const headerEmail = authHeader.slice(7);
-      user = await User.findOne({ email: headerEmail }).select("-password -otp -otpExpiry");
-    }
+    // Find user by username from session
+    const user = await User.findOne({ username: session.user.username }).select("-password -otp -otpExpiry -transactionPassword");
     
     if (!user) {
-      console.error("❌ User not found for email:", email);
+      console.error("❌ User not found for username:", session.user.username);
       return NextResponse.json(
         { error: "User not found" },
         { status: 404 }
       );
     }
     
-    console.log("✅ User found, returning profile data for:", email);
+    console.log("✅ User found, returning profile data for:", session.user.username);
     const profileData = {
       personalDetails: [
         { label: "Full Name", value: user.fullName || "N/A" },
         { label: "Gender", value: user.gender || "N/A" },
         { label: "Date of Birth", value: user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : "N/A" },
-        { label: "Mobile No.", value: user.phone || user.mobileNo || "N/A" },
+        { label: "Mobile No.", value: user.mobileNo || "N/A" },
         { label: "Pan No.", value: user.panNo || "N/A" },
         { label: "Email", value: user.email || "N/A" },
         { label: "State", value: user.state || "N/A" },

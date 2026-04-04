@@ -7,6 +7,7 @@ export async function POST(req: Request) {
         const registrationData = await req.json();
 
         const {
+            userId,
             sponsorId,
             placementId,
             position,
@@ -74,13 +75,33 @@ export async function POST(req: Request) {
             return Response.json({ error: "E-Pin not available or already used" }, { status: 400 });
         }
 
-        // Create new user
-        const userId = `USR${Date.now()}`;
-        const username = mobileNo; // Use mobile number as username
+        // Generate sequential userId with CLM2026 prefix
+        // Find the highest existing userId
+        const lastUser = await User.findOne({ userId: /^CLM2026/ }).sort({ userId: -1 });
+        let nextSequence = 1;
+        
+        if (lastUser?.userId) {
+            const match = lastUser.userId.match(/CLM2026(\d+)/);
+            if (match) {
+                nextSequence = parseInt(match[1]) + 1;
+            }
+        }
+        
+        const autoUserId = `CLM2026${nextSequence}`;
+        
+        // Use provided userId or auto-generated one
+        const finalUserId = userId && userId !== "CLM" ? userId : autoUserId;
+        const username = finalUserId; // Username is same as userId
+        
+        // Check if userId already exists
+        const existingUserId = await User.findOne({ userId: finalUserId });
+        if (existingUserId) {
+            return Response.json({ error: "User ID already exists" }, { status: 400 });
+        }
 
         const newUser = new User({
             username,
-            userId,
+            userId: finalUserId,
             password,
             transactionPassword,
             fullName,
@@ -116,23 +137,32 @@ export async function POST(req: Request) {
             await sponsor.save();
         }
 
-        console.log(`✅ User registered successfully: ${username} (${userId})`);
-
         return Response.json({
             success: true,
             message: "Registration successful",
             user: {
                 id: newUser._id,
-                userId,
+                userId: finalUserId,
                 username,
                 fullName,
             },
         });
     } catch (error) {
-        console.error("❌ Registration error:", error);
-        if (error instanceof Error && error.message.includes("password")) {
-            return Response.json({ error: "Password hashing failed" }, { status: 500 });
+        // Handle specific error cases
+        if (error instanceof Error) {
+            
+            if (error.message.includes("password")) {
+                return Response.json({ error: "Password hashing failed" }, { status: 500 });
+            }
+            
+            if (error.message.includes("duplicate")) {
+                return Response.json({ error: "User already exists" }, { status: 400 });
+            }
         }
-        return Response.json({ error: "Registration failed" }, { status: 500 });
+        
+        return Response.json({ 
+            error: error instanceof Error ? error.message : "Registration failed",
+            details: process.env.NODE_ENV === 'development' ? String(error) : undefined
+        }, { status: 500 });
     }
 }

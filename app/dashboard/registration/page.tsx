@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import Navbar from "@/components/Navbar";
 
 // ── Steps ─────────────────────────────────────────────────────────────────────
@@ -44,12 +44,19 @@ export default function NewRegisterPage() {
   const [sponsorValidated, setSponsorValidated] = useState(false);
   const [sponsorError, setSponsorError] = useState("");
   const [placementId,  setPlacementId]  = useState("");
+  const [placementName, setPlacementName] = useState("");
   const [position,     setPosition]     = useState("-- Select --");
   const [pkg,          setPkg]          = useState("-- Select Package --");
   const [epin,         setEpin]         = useState("");
+  const [epinError,    setEpinError]    = useState("");
+  const [availableEPins, setAvailableEPins] = useState<string[]>([]);
+  const [epinValidated, setEpinValidated] = useState(false);
 
   // Step 3: Registration Form Fields
   const [fullName,     setFullName]     = useState("");
+  const [userId,       setUserId]       = useState("CLM");
+  const [userIdError,  setUserIdError]  = useState("");
+  const [userIdValidated, setUserIdValidated] = useState(false);
   const [mobileNo,     setMobileNo]     = useState("");
   const [email,        setEmail]        = useState("");
   const [panNo,        setPanNo]        = useState("");
@@ -67,6 +74,11 @@ export default function NewRegisterPage() {
   const [password,     setPassword]     = useState("");
   const [confirmPwd,   setConfirmPwd]   = useState("");
   const [txnPwd,       setTxnPwd]       = useState("");
+  const [passwordError,    setPasswordError]    = useState("");
+  const [confirmPwdError,  setConfirmPwdError]  = useState("");
+  const [txnPwdError,      setTxnPwdError]      = useState("");
+  const [nomineeRelError,  setNomineeRelError]  = useState("");
+  const [accountTypeError, setAccountTypeError] = useState("");
 
   const handleProceed = async () => {
     if (!txnPassword.trim()) {
@@ -85,25 +97,12 @@ export default function NewRegisterPage() {
       });
       const verifyData = await verifyResponse.json();
 
-      console.log("   Response body:", verifyData);
-
       if (!verifyResponse.ok) {
-        console.log("❌ Verification failed:");
-        console.log("   Error:", verifyData.error);
-        console.log("   Status code:", verifyResponse.status);
         setTxnError(verifyData.error || 'Transaction password verification failed');
         return;
       }
-
-      console.log("✅ Transaction password verified!");
-      console.log("   User ID:", verifyData.userId);
-      console.log("   Username:", verifyData.username);
-      console.log("   Ready to proceed to sponsor selection");
-      console.log("\n");
       setStep("sponsor");
     } catch (error) {
-      console.error("❌ Error verifying password:", error);
-      console.error("   Error details:", (error as Error).message);
       setTxnError("An error occurred. Please try again.");
     }
   };
@@ -140,13 +139,131 @@ export default function NewRegisterPage() {
       }
 
       // E-Pins are available, proceed with validation
-      setSponsorName(data.sponsorName || "");
+      // Fetch sponsor name from database
+      try {
+        const nameResponse = await fetch('/api/user/get-name', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: sponsorId }),
+          credentials: 'include',
+        });
+        const nameData = await nameResponse.json();
+        setSponsorName(nameData.name || "");
+      } catch (err) {
+        setSponsorName("");
+      }
+      
+      // Extract just the pin strings from the API response
+      const pinStrings = data.availableEPins?.map((ePin: any) => {
+        if (typeof ePin === 'string') {
+          return ePin;
+        } else if (typeof ePin === 'object' && ePin.pin) {
+          return ePin.pin;
+        }
+        return ePin;
+      }) || [];
+      
+      setAvailableEPins(pinStrings);
       setSponsorValidated(true);
+      setEpin("");
+      setEpinError("");
+      setEpinValidated(false);
       toast.success(`Sponsor validated! ${data.availableEPins.length} E-Pin(s) available.`);
     } catch (error) {
-      console.error("Error validating sponsor:", error);
       setSponsorError("An error occurred. Please try again.");
       toast.error("Error validating sponsor");
+    }
+  };
+
+  const handleEpinChange = (value: string) => {
+    setEpin(value);
+    setEpinValidated(false);
+    setEpinError("");
+  };
+
+  const handlePlacementIdChange = async (value: string) => {
+    setPlacementId(value);
+    
+    // Fetch placement name from database if ID is entered
+    if (value && value.trim()) {
+      try {
+        const response = await fetch('/api/user/get-name', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: value.trim() }),
+          credentials: 'include',
+        });
+        const data = await response.json();
+        if (data.name) {
+          setPlacementName(data.name);
+        } else {
+          setPlacementName("");
+        }
+      } catch (err) {
+        setPlacementName("");
+      }
+    } else {
+      setPlacementName("");
+    }
+  };
+
+  const handleValidateEpin = () => {
+    if (!epin.trim()) {
+      setEpinError("Please enter an E-Pin");
+      return;
+    }
+
+    // Check if E-Pin exists in available E-Pins
+    let isValid = false;
+    if (Array.isArray(availableEPins)) {
+      availableEPins.forEach((pin, index) => {
+        if (typeof pin === 'string' && pin === epin.trim()) {
+          isValid = true;
+        } else if (typeof pin === 'object' && pin.pin === epin.trim()) {
+          isValid = true;
+        }
+      });
+    }
+    
+    if (isValid) {
+      setEpinValidated(true);
+      setEpinError("");
+      toast.success("✓ E-Pin validated!");
+    } else {
+    }
+  };
+
+  const handleValidateUserId = async () => {
+    if (!userId.trim() || userId === "CLM") {
+      setUserIdError("Please enter a User ID");
+      return;
+    }
+
+    setUserIdError("");
+    
+    try {
+      const response = await fetch('/api/auth/check-userid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: userId.trim() }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setUserIdError(data.error || "This User ID is already taken");
+        setUserIdValidated(false);
+        toast.error("User ID already exists!");
+        return;
+      }
+
+      setUserIdValidated(true);
+      setUserIdError("");
+      toast.success("✓ User ID is available!");
+    } catch (error) {
+      setUserIdError("Error checking User ID availability");
+      toast.error("Error validating User ID");
     }
   };
 
@@ -167,40 +284,72 @@ export default function NewRegisterPage() {
       toast.error("Please enter an E-Pin");
       return;
     }
+    if (!epinValidated) {
+      toast.error("Please validate E-Pin first");
+      return;
+    }
     setStep("register");
   };
 
   const handleRegistrationSubmit = async () => {
     // Validate required fields
+    if (!userIdValidated) {
+      toast.error("Please validate User ID first");
+      return;
+    }
     if (!fullName.trim()) {
       toast.error("Full name is required");
+      return;
+    }
+    if (!gender) {
+      toast.error("Please select gender");
       return;
     }
     if (!mobileNo.trim()) {
       toast.error("Mobile number is required");
       return;
     }
+    if (!email.trim()) {
+      toast.error("Email ID is required");
+      return;
+    }
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
     if (!password.trim()) {
+      setPasswordError("Password is required");
       toast.error("Password is required");
       return;
     }
+    setPasswordError("");
     if (!confirmPwd.trim()) {
+      setConfirmPwdError("Confirm password is required");
       toast.error("Please confirm password");
       return;
     }
+    setConfirmPwdError("");
     if (password !== confirmPwd) {
+      setPasswordError("Passwords don't match");
+      setConfirmPwdError("Passwords don't match");
       toast.error("Passwords do not match");
       return;
     }
+    setPasswordError("");
+    setConfirmPwdError("");
     if (!txnPwd.trim()) {
+      setTxnPwdError("Transaction password is required");
       toast.error("Transaction password is required");
       return;
     }
-
+    setTxnPwdError("");
     setIsSubmitting(true);
 
     try {
-      const registrationData = {
+      const registrationData: any = {
+        userId,
         sponsorId,
         placementId,
         position,
@@ -218,15 +367,21 @@ export default function NewRegisterPage() {
         address,
         pincode,
         nomineeName,
-        nomineeRelation: nomineeRel,
         bankName,
         branchName,
         accountNo,
         ifsc: ifscCode,
-        accountType,
         password,
         transactionPassword: txnPwd,
       };
+
+      // Only add optional fields if they have valid values
+      if (nomineeRel && nomineeRel !== "-- Select --") {
+        registrationData.nomineeRelation = nomineeRel;
+      }
+      if (accountType && accountType !== "-- Select --") {
+        registrationData.accountType = accountType;
+      }
 
       const response = await fetch('/api/auth/register', {
         method: 'POST',
@@ -236,7 +391,7 @@ export default function NewRegisterPage() {
       });
 
       const data = await response.json();
-
+      
       if (!response.ok) {
         toast.error(data.error || "Registration failed");
         return;
@@ -247,7 +402,6 @@ export default function NewRegisterPage() {
         window.location.href = "/auth/login";
       }, 2000);
     } catch (error) {
-      console.error("Registration error:", error);
       toast.error("An error occurred during registration");
     } finally {
       setIsSubmitting(false);
@@ -402,6 +556,10 @@ export default function NewRegisterPage() {
         .form-input:focus, .form-select:focus {
           border-color: #26a69a;
           box-shadow: 0 0 0 2px rgba(38,166,154,0.12);
+        }
+        .form-input[style*="borderColor: #e53935"] {
+          border-color: #e53935 !important;
+          box-shadow: 0 0 0 2px rgba(229,57,53,0.12) !important;
         }
         .form-select {
           appearance: none;
@@ -563,9 +721,26 @@ export default function NewRegisterPage() {
                           className="form-input"
                           type="text"
                           value={placementId}
-                          onChange={(e) => setPlacementId(e.target.value)}
+                          onChange={(e) => handlePlacementIdChange(e.target.value)}
+                          placeholder="Enter Placement ID"
                           suppressHydrationWarning
                         />
+                      </div>
+                    </div>
+
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label">Placement Name :</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          value={placementName}
+                          readOnly
+                          style={{ background: "#f5f5f5", color: "#777" }}
+                        />
+                      </div>
+                      <div className="form-group" style={{ visibility: "hidden" }}>
+                        <label className="form-label">Placeholder</label>
                       </div>
                     </div>
 
@@ -595,14 +770,36 @@ export default function NewRegisterPage() {
                     <div className="form-row">
                       <div className="form-group">
                         <label className="form-label"><span className="req">*</span>E-Pin :</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          placeholder="Enter E-Pin"
-                          value={epin}
-                          onChange={(e) => setEpin(e.target.value)}
-                          suppressHydrationWarning
-                        />
+                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                          <div style={{ flex: 1 }}>
+                            <input
+                              className="form-input"
+                              type="text"
+                              placeholder="Enter E-Pin"
+                              value={epin}
+                              onChange={(e) => handleEpinChange(e.target.value)}
+                              onKeyDown={(e) => e.key === "Enter" && handleValidateEpin()}
+                              disabled={epinValidated}
+                              suppressHydrationWarning
+                            />
+                            {epinError && <div className="txn-error">{epinError}</div>}
+                          </div>
+                          {!epinValidated ? (
+                            <button 
+                              className="proceed-btn" 
+                              onClick={handleValidateEpin}
+                              style={{ marginTop: 0 }}
+                              suppressHydrationWarning
+                            >
+                              VALIDATE
+                            </button>
+                          ) : (
+                            <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                              Verified
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
@@ -642,10 +839,20 @@ export default function NewRegisterPage() {
                     <input className="form-input" type="text" value={placementId} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
                   </div>
                   <div className="form-group">
+                    <label className="form-label">Placement Name :</label>
+                    <input className="form-input" type="text" value={placementName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Position :</label>
                     <select className="form-select" value={position} disabled style={{ background: "#f5f5f5", color: "#777" }}>
                       <option>{position}</option>
                     </select>
+                  </div>
+                  <div className="form-group" style={{ visibility: "hidden" }}>
+                    <label className="form-label">Placeholder</label>
                   </div>
                 </div>
 
@@ -663,6 +870,51 @@ export default function NewRegisterPage() {
                 </div>
 
                 <div className="sub-header">Personal Information</div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label"><span className="req">*</span>User ID :</label>
+                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                      <div style={{ flex: 1 }}>
+                        <input
+                          className="form-input"
+                          type="text"
+                          placeholder="CLM + your ID"
+                          value={userId}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val.startsWith("CLM")) {
+                              setUserId(val);
+                              setUserIdValidated(false);
+                              setUserIdError("");
+                            } else {
+                              setUserId("CLM" + val.replace("CLM", ""));
+                            }
+                          }}
+                          onKeyDown={(e) => e.key === "Enter" && handleValidateUserId()}
+                          disabled={userIdValidated}
+                          suppressHydrationWarning
+                        />
+                        {userIdError && <div className="txn-error">{userIdError}</div>}
+                      </div>
+                      {!userIdValidated ? (
+                        <button 
+                          className="proceed-btn" 
+                          onClick={handleValidateUserId}
+                          style={{ marginTop: 0 }}
+                          suppressHydrationWarning
+                        >
+                          VALIDATE
+                        </button>
+                      ) : (
+                        <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                          Verified
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
                 <div className="form-row">
                   <div className="form-group">
@@ -755,7 +1007,14 @@ export default function NewRegisterPage() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Nominee Relation :</label>
-                    <select className="form-select" value={nomineeRel} onChange={(e) => setNomineeRel(e.target.value)}>
+                    <select 
+                      className="form-select" 
+                      value={nomineeRel} 
+                      onChange={(e) => {
+                        setNomineeRel(e.target.value);
+                        setNomineeRelError("");
+                      }}
+                    >
                       {nomineeRels.map(r => <option key={r}>{r}</option>)}
                     </select>
                   </div>
@@ -788,24 +1047,76 @@ export default function NewRegisterPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Account Type :</label>
-                    <select className="form-select" value={accountType} onChange={(e) => setAccountType(e.target.value)}>
+                    <select 
+                      className="form-select" 
+                      value={accountType} 
+                      onChange={(e) => {
+                        setAccountType(e.target.value);
+                        setAccountTypeError("");
+                      }}
+                    >
                       {accountTypes.map(t => <option key={t}>{t}</option>)}
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Password :</label>
-                    <input className="form-input" type="password" placeholder="Create Password" value={password} onChange={(e) => setPassword(e.target.value)} suppressHydrationWarning />
+                  <div className="form-group" style={{ visibility: "hidden" }}>
+                    <label className="form-label">Placeholder</label>
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Confirm Password :</label>
-                    <input className="form-input" type="password" placeholder="Confirm Password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} suppressHydrationWarning />
+                    <label className="form-label"><span className="req">*</span>Password :</label>
+                    <input 
+                      className="form-input" 
+                      type="password" 
+                      placeholder="Create Password" 
+                      value={password} 
+                      onChange={(e) => {
+                        setPassword(e.target.value);
+                        setPasswordError("");
+                      }}
+                      style={{ borderColor: passwordError ? "#e53935" : "" }}
+                      suppressHydrationWarning 
+                    />
+                    {passwordError && <div className="txn-error">{passwordError}</div>}
                   </div>
                   <div className="form-group">
+                    <label className="form-label"><span className="req">*</span>Confirm Password :</label>
+                    <input 
+                      className="form-input" 
+                      type="password" 
+                      placeholder="Confirm Password" 
+                      value={confirmPwd} 
+                      onChange={(e) => {
+                        setConfirmPwd(e.target.value);
+                        setConfirmPwdError("");
+                      }}
+                      style={{ borderColor: confirmPwdError ? "#e53935" : "" }}
+                      suppressHydrationWarning 
+                    />
+                    {confirmPwdError && <div className="txn-error">{confirmPwdError}</div>}
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Transaction Password :</label>
-                    <input className="form-input" type="password" placeholder="Create Transaction Password" value={txnPwd} onChange={(e) => setTxnPwd(e.target.value)} suppressHydrationWarning />
+                    <input 
+                      className="form-input" 
+                      type="password" 
+                      placeholder="Create Transaction Password" 
+                      value={txnPwd} 
+                      onChange={(e) => {
+                        setTxnPwd(e.target.value);
+                        setTxnPwdError("");
+                      }}
+                      style={{ borderColor: txnPwdError ? "#e53935" : "" }}
+                      suppressHydrationWarning 
+                    />
+                    {txnPwdError && <div className="txn-error">{txnPwdError}</div>}
+                  </div>
+                  <div className="form-group" style={{ visibility: "hidden" }}>
+                    <label className="form-label">Placeholder</label>
                   </div>
                 </div>
 
@@ -822,6 +1133,8 @@ export default function NewRegisterPage() {
         </div>
 
       </div>
+
+      <Toaster position="top-right" />
     </>
   );
 }

@@ -79,7 +79,6 @@ export default function EditProfilePage() {
         setLoading(true);
         setError(null);
 
-        console.log("� [UpdateProfile] Starting to fetch profile data...");
 
         const response = await fetch("/api/user/update-profile", {
           method: "GET",
@@ -87,12 +86,6 @@ export default function EditProfilePage() {
             "Content-Type": "application/json",
           },
           credentials: "include",
-        });
-
-        console.log("📥 [UpdateProfile] Response received:", {
-          status: response.status,
-          statusText: response.statusText,
-          contentType: response.headers.get("content-type"),
         });
 
         if (!response.ok) {
@@ -108,11 +101,8 @@ export default function EditProfilePage() {
               errorData = { error: text?.substring(0, 200) || "Unknown error" };
             }
           } catch (parseErr) {
-            console.error("❌ [UpdateProfile] Error parsing response:", parseErr);
             errorData = { error: "Failed to parse server response" };
           }
-          
-          console.error("❌ [UpdateProfile] Profile fetch error:", errorData);
           
           if (response.status === 401) {
             router.push("/auth/login");
@@ -123,19 +113,9 @@ export default function EditProfilePage() {
         }
 
         const data = await response.json();
-        console.log("✅ [UpdateProfile] Full profile data fetched:", JSON.stringify(data, null, 2));
 
         if (data.data) {
           setFormData(data.data);
-          console.log("✅ [UpdateProfile] Form data set successfully");
-          console.log("🔍 [UpdateProfile] DEBUG - Full data.data object:");
-          console.log("   userId:", data.data.userId || data.data.username);
-          console.log("   fullName:", data.data.fullName);
-          console.log("   joiningDate:", data.data.joiningDate);
-          console.log("   sponsorId:", data.data.sponsorId);
-          console.log("   sponsorName:", data.data.sponsorName);
-          console.log("   placementId:", data.data.placementId);
-          console.log("   placementName:", data.data.placementName);
 
           // Parse date of birth
           if (data.data.dateOfBirth) {
@@ -143,35 +123,63 @@ export default function EditProfilePage() {
             setDobDay(String(dob.getDate()).padStart(2, "0"));
             setDobMonth(months[dob.getMonth()]);
             setDobYear(String(dob.getFullYear()));
-            console.log("✅ [UpdateProfile] DOB parsed:", dob);
+          }
+
+          let sponsorName = data.data.sponsorName || "";
+          let placementName = data.data.placementName || "";
+
+          // Fetch sponsor name from database if not available
+          if (data.data.sponsorId && !sponsorName) {
+            try {
+              const sponsorResponse = await fetch('/api/user/get-name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: data.data.sponsorId }),
+                credentials: 'include',
+              });
+              const sponsorData = await sponsorResponse.json();
+              if (sponsorData.name) {
+                sponsorName = sponsorData.name;
+              }
+            } catch (err) {
+              // Keep existing sponsor name if fetch fails
+            }
+          }
+
+          // Fetch placement name from database if not available
+          if (data.data.placementId && !placementName) {
+            try {
+              const placementResponse = await fetch('/api/user/get-name', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: data.data.placementId }),
+                credentials: 'include',
+              });
+              const placementDataResponse = await placementResponse.json();
+              if (placementDataResponse.name) {
+                placementName = placementDataResponse.name;
+              }
+            } catch (err) {
+              // Keep existing placement name if fetch fails
+            }
           }
 
           const newPlacementData = {
             memberId: data.data.userId || data.data.username || "",
             joiningDate: data.data.joiningDate || "",
             sponsorId: data.data.sponsorId || "",
-            sponsorName: data.data.sponsorName || "",
+            sponsorName: sponsorName,
             placementId: data.data.placementId || "",
-            placementName: data.data.placementName || "",
+            placementName: placementName,
           };
           
-          console.log("🔍 [UpdateProfile] Creating placement data:");
-          console.log("   memberId:", newPlacementData.memberId);
-          console.log("   joiningDate:", newPlacementData.joiningDate);
-          console.log("   sponsorId:", newPlacementData.sponsorId);
-          console.log("   sponsorName:", newPlacementData.sponsorName);
-          console.log("   placementId:", newPlacementData.placementId);
-          console.log("   placementName:", newPlacementData.placementName);
-          
           setPlacementData(newPlacementData);
-          console.log("✅ [UpdateProfile] Placement data state updated:", newPlacementData);
         } else {
-          console.warn("⚠️ [UpdateProfile] No data.data found in response");
+          // No data available
         }
 
         setError(null);
       } catch (err) {
-        console.error("❌ [UpdateProfile] Error fetching profile:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
@@ -209,8 +217,6 @@ export default function EditProfilePage() {
     try {
       setSaving(true);
       setError(null);
-      console.log("💾 Saving profile data...");
-      console.log("📋 Form data:", formData);
       if (formData.mobileNo.trim() && !/^\d{10}$/.test(formData.mobileNo)) {
         setError("Mobile number must be 10 digits");
         setSaving(false);
@@ -230,9 +236,6 @@ export default function EditProfilePage() {
         credentials: "include",
       });
 
-      console.log("📥 Update response status:", response.status);
-      console.log("📥 Response content-type:", response.headers.get("content-type"));
-
       if (!response.ok) {
         // Try to parse as JSON, fallback to text
         let errorData;
@@ -246,21 +249,17 @@ export default function EditProfilePage() {
             errorData = { error: text?.substring(0, 200) || "Unknown error" };
           }
         } catch (parseErr) {
-          console.error("❌ Error parsing response:", parseErr);
           errorData = { error: "Failed to parse server response" };
         }
         
-        console.error("❌ Update error:", errorData);
         throw new Error(errorData.error || "Failed to update profile");
       }
 
       const data = await response.json();
-      console.log("✅ Profile updated successfully");
 
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2500);
     } catch (err) {
-      console.error("❌ Error updating profile:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setSaving(false);

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 
 interface MenuItem {
   id: string;
@@ -154,20 +155,18 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      console.log("🔵 [Sidebar] Initiating logout with NextAuth...");
+      
+      // Use NextAuth's signOut function
+      await signOut({ 
+        redirect: false, 
+        callbackUrl: '/'
       });
-
-      if (response.ok) {
-        router.push('/');
-      } else {
-        console.error('Logout failed');
-      }
+      
+      console.log("✅ [Sidebar] Logout successful with NextAuth");
+      router.push('/');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ [Sidebar] Logout error:', error);
     }
   };
 
@@ -460,11 +459,20 @@ export default function Sidebar() {
           background: rgba(255,255,255,0.07);
           margin: 4px 14px;
         }
-        .sidebar {
-  width: 240px;
-  height: 100%;
-      }
-}
+
+        @media (max-width: 768px) {
+          .sidebar {
+            width: 100%;
+            max-width: 240px;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .sidebar {
+            width: 100%;
+            max-width: 240px;
+          }
+        }
       `}</style>
 
       <aside className="sidebar">

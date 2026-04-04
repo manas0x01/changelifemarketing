@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
         const session = await getServerSession(authOptions);
 
         // If no session, return default values
-        if (!session || !session.user?.email) {
+        if (!session || !session.user?.username) {
             return NextResponse.json({
                 success: true,
                 boosterIncome: { LG: 0, RG: 0, totalGoldMatching: 0 }
@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
         await connectDB();
 
         // Fetch user data with boosterIncome info
-        const user = await User.findOne({ email: session.user.email }).select('boosterIncome');
+        const user = await User.findOne({ username: session.user.username }).select('boosterIncome');
 
         if (!user) {
             return NextResponse.json({

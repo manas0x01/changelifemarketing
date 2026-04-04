@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { useSidebar } from "@/context/SidebarContext";
 import { useState, useEffect } from "react";
 
@@ -20,22 +21,38 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        console.log("🔵 [Navbar] Fetching user data from /api/user/update-profile...");
+        
         const response = await fetch("/api/user/update-profile", {
           method: "GET",
           credentials: "include",
         });
 
+        console.log("📥 [Navbar] Response received:", {
+          status: response.status,
+          statusText: response.statusText,
+          ok: response.ok,
+        });
+
         if (response.ok) {
           const data = await response.json();
+          console.log("✅ [Navbar] User data fetched successfully:", data);
+          
           if (data.data) {
             setUserData({
               username: data.data.username,
               fullName: data.data.fullName,
             });
+            console.log("✅ [Navbar] User state updated:", {
+              username: data.data.username,
+              fullName: data.data.fullName,
+            });
           }
+        } else {
+          console.warn("⚠️ [Navbar] Response not OK:", response.status);
         }
       } catch (error) {
-        console.error("Failed to fetch user data:", error);
+        console.error("❌ [Navbar] Failed to fetch user data:", error);
       }
     };
 
@@ -44,21 +61,19 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+      console.log("🔵 [Navbar] Initiating logout with NextAuth...");
+      
+      // Use NextAuth's signOut function
+      await signOut({ 
+        redirect: false, 
+        callbackUrl: '/'
       });
-
-      if (response.ok) {
-        setDropdownOpen(false);
-        router.push('/');
-      } else {
-        console.error('Logout failed');
-      }
+      
+      console.log("✅ [Navbar] Logout successful with NextAuth");
+      setDropdownOpen(false);
+      router.push('/');
     } catch (error) {
-      console.error('Logout error:', error);
+      console.error('❌ [Navbar] Logout error:', error);
     }
   };
 
@@ -182,12 +197,17 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
                   Profile
                 </div>
               </Link>
-              <Link href="/api/auth/logout">
-                <div className="dropdown-item red" onClick={() => setDropdownOpen(false)}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#e53935"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" /></svg>
-                  Logout
-                </div>
-              </Link>
+              <div 
+                className="dropdown-item red" 
+                onClick={() => {
+                  setDropdownOpen(false);
+                  handleLogout();
+                }}
+                style={{ cursor: 'pointer' }}
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="#e53935"><path d="M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z" /></svg>
+                Logout
+              </div>
             </div>     
           )}
         </div>

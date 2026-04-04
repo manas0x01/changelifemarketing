@@ -356,10 +356,8 @@ export default function HomePage() {
       }}
     />
   </div>
-
   <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 relative z-10">
-
-    {/* ── Optional Section Label ── */}
+    {/* Optional Section Label */}
     <motion.p
       initial={{ opacity: 0, y: 10 }}
       whileInView={{ opacity: 1, y: 0 }}

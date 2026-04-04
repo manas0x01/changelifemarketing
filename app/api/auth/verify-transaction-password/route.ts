@@ -1,21 +1,13 @@
 import { connectDB } from '@/lib/database';
 import User from '@/models/User';
 import { NextRequest, NextResponse } from 'next/server';
-import { decryptCookieValue } from '@/lib/cookieEncryption';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
-
-    console.log('\n🔐 === VERIFY TRANSACTION PASSWORD ===');
-    
-    // Get transaction password from request body
     const { transactionPassword } = await request.json();
-
-    console.log('🔐 Verifying transaction password...');
-    console.log(`   Password length: ${transactionPassword?.length}`);
-
-    // Validation
     if (!transactionPassword) {
       console.log('❌ Validation failed - transaction password missing');
       return NextResponse.json(
@@ -24,50 +16,20 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Debug: Log all cookies received
-    console.log('\n🍪 Cookies received from browser:');
-    const allCookies = request.cookies.getAll();
-    console.log('   Total cookies:', allCookies.length);
-    allCookies.forEach((cookie, index) => {
-      console.log(`   [${index + 1}] Name: "${cookie.name}" | Value: "${cookie.value.substring(0, 20)}..."`);
-    });
-
-    // Get username from cookies
-    const usernameCookie = request.cookies.get('user-username');
-    console.log('\n🔍 Looking for "user-username" cookie...');
-    console.log('   Cookie found:', !!usernameCookie);
+    // Get session using NextAuth
+    console.log('\n🔍 Getting NextAuth session...');
+    const session = await getServerSession(authOptions);
     
-    let username: string | undefined;
-    
-    if (usernameCookie) {
-      try {
-        // Decrypt the username cookie
-        console.log('🔒 Decrypting username from cookie...');
-        username = decryptCookieValue(usernameCookie.value);
-        console.log('✅ Username decrypted successfully');
-      } catch (error) {
-        console.error('❌ Error decrypting username:', error);
-        return NextResponse.json(
-          { error: 'Invalid session. Please login again.' },
-          { status: 401 }
-        );
-      }
-    }
-    
-    if (!username) {
-      console.log('\n❌ Username not found in cookies');
-      console.log('   Possible causes:');
-      console.log('   1. User not logged in');
-      console.log('   2. Login did not set cookies properly');
-      console.log('   3. Browser not sending cookies');
-      console.log('   4. Cookie has expired');
+    if (!session?.user?.username) {
+      console.log('❌ No valid session found');
       return NextResponse.json(
         { error: 'User session not found. Please login again.' },
         { status: 401 }
       );
     }
 
-    console.log(`\n✅ Username from cookies: ${username}`);
+    const username = session.user.username;
+    console.log(`✅ Username from session: ${username}`);
 
     // Find user by username and get transaction password
     console.log('\n🔍 Searching database for user...');

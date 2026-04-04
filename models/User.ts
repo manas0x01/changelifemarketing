@@ -46,6 +46,11 @@ export interface IUser extends Document {
     RG: number;
     totalGoldMatching: number;
   };
+  ePins?: {
+    pin: string;
+    packageName: string;
+    usedDate?: Date;
+  }[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -254,6 +259,16 @@ const userSchema = new Schema<IUser>(
         },
       },
       default: { LG: 0, RG: 0, totalGoldMatching: 0 },
+    },
+    ePins: {
+      type: [
+        {
+          pin: String,
+          packageName: String,
+          usedDate: Date,
+        },
+      ],
+      default: [],
     },
   },
   {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
 // ── Steps ─────────────────────────────────────────────────────────────────────
@@ -35,17 +36,37 @@ export default function NewRegisterPage() {
   const [dobMonth,     setDobMonth]     = useState("January");
   const [dobYear,      setDobYear]      = useState("1995");
   const [state,        setState]        = useState("Bihar");
-  const [toast,        setToast]        = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Step 2: Sponsor & Package
   const [sponsorId,    setSponsorId]    = useState("");
   const [sponsorName,  setSponsorName]  = useState("");
   const [sponsorValidated, setSponsorValidated] = useState(false);
   const [sponsorError, setSponsorError] = useState("");
-  const [placementId,  setPlacementId]  = useState("SM956718");
+  const [placementId,  setPlacementId]  = useState("");
   const [position,     setPosition]     = useState("-- Select --");
   const [pkg,          setPkg]          = useState("-- Select Package --");
   const [epin,         setEpin]         = useState("");
+
+  // Step 3: Registration Form Fields
+  const [fullName,     setFullName]     = useState("");
+  const [mobileNo,     setMobileNo]     = useState("");
+  const [email,        setEmail]        = useState("");
+  const [panNo,        setPanNo]        = useState("");
+  const [district,     setDistrict]     = useState("");
+  const [city,         setCity]         = useState("");
+  const [address,      setAddress]      = useState("");
+  const [pincode,      setPincode]      = useState("");
+  const [nomineeName,  setNomineeName]  = useState("");
+  const [nomineeRel,   setNomineeRel]   = useState("-- Select --");
+  const [bankName,     setBankName]     = useState("");
+  const [branchName,   setBranchName]   = useState("");
+  const [accountNo,    setAccountNo]    = useState("");
+  const [ifscCode,     setIfscCode]     = useState("");
+  const [accountType,  setAccountType]  = useState("-- Select --");
+  const [password,     setPassword]     = useState("");
+  const [confirmPwd,   setConfirmPwd]   = useState("");
+  const [txnPwd,       setTxnPwd]       = useState("");
 
   const handleProceed = async () => {
     if (!txnPassword.trim()) {
@@ -56,23 +77,12 @@ export default function NewRegisterPage() {
     setTxnError("");
     
     try {
-      console.log("\n🔐 === TRANSACTION PASSWORD VERIFICATION ===");
-      console.log("🔐 Verifying transaction password with backend...");
-      console.log("   Password entered length:", txnPassword?.length);
-      console.log("📤 Sending request to: /api/auth/verify-transaction-password");
-      console.log("   Method: POST");
-      console.log("   Credentials: include (cookies will be sent)");
       const verifyResponse = await fetch('/api/auth/verify-transaction-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transactionPassword: txnPassword }),
-        credentials: 'include', // IMPORTANT: Include cookies in request
+        credentials: 'include',
       });
-
-      console.log("📥 Response received:");
-      console.log("   Status:", verifyResponse.status);
-      console.log("   Status Text:", verifyResponse.statusText);
-
       const verifyData = await verifyResponse.json();
 
       console.log("   Response body:", verifyData);
@@ -98,7 +108,7 @@ export default function NewRegisterPage() {
     }
   };
 
-  const handleValidateSponsor = () => {
+  const handleValidateSponsor = async () => {
     if (!sponsorId.trim()) {
       setSponsorError("Please enter a sponsor ID.");
       return;
@@ -106,13 +116,37 @@ export default function NewRegisterPage() {
 
     setSponsorError("");
     
-    // TODO: Validate sponsor ID from database
-    // For now, simulate sponsor validation
-    if (sponsorId === "SM956718") {
-      setSponsorName("ANKIT KUMAR");
+    try {
+      // Fetch sponsor details and E-Pins availability
+      const response = await fetch('/api/user/check-epins', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sponsorId: sponsorId }),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setSponsorError(data.error || "Sponsor ID not found. Please try again.");
+        return;
+      }
+
+      // Check if E-Pins are available
+      if (!data.availableEPins || data.availableEPins.length === 0) {
+        toast.error("No E-Pins Available! First Buy The E-Pin Then Registration");
+        setSponsorError("No E-Pins available. Please purchase E-Pins first.");
+        return;
+      }
+
+      // E-Pins are available, proceed with validation
+      setSponsorName(data.sponsorName || "");
       setSponsorValidated(true);
-    } else {
-      setSponsorError("Sponsor ID not found. Please try again.");
+      toast.success(`Sponsor validated! ${data.availableEPins.length} E-Pin(s) available.`);
+    } catch (error) {
+      console.error("Error validating sponsor:", error);
+      setSponsorError("An error occurred. Please try again.");
+      toast.error("Error validating sponsor");
     }
   };
 
@@ -122,23 +156,102 @@ export default function NewRegisterPage() {
       return;
     }
     if (!position || position === "-- Select --") {
-      alert("Please select a position");
+      toast.error("Please select a position");
       return;
     }
     if (!pkg || pkg === "-- Select Package --") {
-      alert("Please select a package");
+      toast.error("Please select a package");
       return;
     }
     if (!epin.trim()) {
-      alert("Please enter an E-Pin");
+      toast.error("Please enter an E-Pin");
       return;
     }
     setStep("register");
   };
 
-  const handleSubmit = () => {
-    setToast(true);
-    setTimeout(() => setToast(false), 3000);
+  const handleRegistrationSubmit = async () => {
+    // Validate required fields
+    if (!fullName.trim()) {
+      toast.error("Full name is required");
+      return;
+    }
+    if (!mobileNo.trim()) {
+      toast.error("Mobile number is required");
+      return;
+    }
+    if (!password.trim()) {
+      toast.error("Password is required");
+      return;
+    }
+    if (!confirmPwd.trim()) {
+      toast.error("Please confirm password");
+      return;
+    }
+    if (password !== confirmPwd) {
+      toast.error("Passwords do not match");
+      return;
+    }
+    if (!txnPwd.trim()) {
+      toast.error("Transaction password is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const registrationData = {
+        sponsorId,
+        placementId,
+        position,
+        package: pkg,
+        epin,
+        fullName,
+        gender,
+        mobileNo,
+        email,
+        dateOfBirth: `${dobDay}-${dobMonth}-${dobYear}`,
+        panNo,
+        state,
+        district,
+        city,
+        address,
+        pincode,
+        nomineeName,
+        nomineeRelation: nomineeRel,
+        bankName,
+        branchName,
+        accountNo,
+        ifsc: ifscCode,
+        accountType,
+        password,
+        transactionPassword: txnPwd,
+      };
+
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(registrationData),
+        credentials: 'include',
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Registration failed");
+        return;
+      }
+
+      toast.success("✓ Member registered successfully!");
+      setTimeout(() => {
+        window.location.href = "/auth/login";
+      }, 2000);
+    } catch (error) {
+      console.error("Registration error:", error);
+      toast.error("An error occurred during registration");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -251,6 +364,7 @@ export default function NewRegisterPage() {
         }
         .proceed-btn:hover { background: #1565c0; transform: translateY(-1px); }
         .proceed-btn:active { transform: scale(0.98); }
+        .proceed-btn:disabled { background: #999; cursor: not-allowed; opacity: 0.7; transform: none; }
 
         /* ── REGISTRATION FORM ── */
         .form-body { padding: 24px 20px 20px; }
@@ -336,21 +450,6 @@ export default function NewRegisterPage() {
 
         /* submit wrap */
         .submit-wrap { display: flex; justify-content: center; padding-top: 10px; }
-
-        /* ── TOAST ── */
-        .toast {
-          position: fixed; bottom: 28px; right: 28px;
-          background: #26a69a; color: #fff;
-          padding: 12px 22px; border-radius: 8px;
-          font-size: 13.5px; font-weight: 500;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-          z-index: 999;
-          animation: fadeUp 0.3s ease;
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
       `}</style>
 
       <div className="nr-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -529,23 +628,23 @@ export default function NewRegisterPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Sponsor ID :</label>
-                    <input className="form-input" type="text" defaultValue="SM956718" />
+                    <input className="form-input" type="text" value={sponsorId} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Sponsor Name :</label>
-                    <input className="form-input" type="text" defaultValue="ANKIT KUMAR" readOnly style={{ background: "#f5f5f5", color: "#777" }} />
+                    <input className="form-input" type="text" value={sponsorName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Placement ID :</label>
-                    <input className="form-input" type="text" defaultValue="SM956718" />
+                    <input className="form-input" type="text" value={placementId} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
                   </div>
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Position :</label>
-                    <select className="form-select" defaultValue="-- Select --">
-                      {positions.map(p => <option key={p}>{p}</option>)}
+                    <select className="form-select" value={position} disabled style={{ background: "#f5f5f5", color: "#777" }}>
+                      <option>{position}</option>
                     </select>
                   </div>
                 </div>
@@ -553,13 +652,13 @@ export default function NewRegisterPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Package :</label>
-                    <select className="form-select" defaultValue="-- Select Package --">
-                      {packages.map(p => <option key={p}>{p}</option>)}
+                    <select className="form-select" value={pkg} disabled style={{ background: "#f5f5f5", color: "#777" }}>
+                      <option>{pkg}</option>
                     </select>
                   </div>
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>E-Pin :</label>
-                    <input className="form-input" type="text" placeholder="Enter E-Pin" />
+                    <input className="form-input" type="text" value={epin} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
                   </div>
                 </div>
 
@@ -568,7 +667,7 @@ export default function NewRegisterPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Full Name :</label>
-                    <input className="form-input" type="text" placeholder="Enter Full Name" />
+                    <input className="form-input" type="text" placeholder="Enter Full Name" value={fullName} onChange={(e) => setFullName(e.target.value)} suppressHydrationWarning />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Gender :</label>
@@ -587,19 +686,19 @@ export default function NewRegisterPage() {
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Mobile No. :</label>
                     <div className="mobile-split">
-                      <input className="form-input mobile-code" type="text" defaultValue="91" />
-                      <input className="form-input mobile-num" type="text" placeholder="Mobile Number" />
+                      <input className="form-input mobile-code" type="text" defaultValue="91" disabled />
+                      <input className="form-input mobile-num" type="text" placeholder="Mobile Number" value={mobileNo} onChange={(e) => setMobileNo(e.target.value)} suppressHydrationWarning />
                     </div>
                   </div>
                   <div className="form-group">
                     <label className="form-label">Email ID :</label>
-                    <input className="form-input" type="email" placeholder="Enter Email Address" />
+                    <input className="form-input" type="email" placeholder="Enter Email Address" value={email} onChange={(e) => setEmail(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Date of Birth :</label>
+                    <label className="form-label">Date of Birth :</label>
                     <div className="dob-split">
                       <select className="form-select" value={dobDay} onChange={e => setDobDay(e.target.value)}>
                         {days.map(d => <option key={d}>{d}</option>)}
@@ -613,8 +712,8 @@ export default function NewRegisterPage() {
                     </div>
                   </div>
                   <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>PAN No. :</label>
-                    <input className="form-input" type="text" placeholder="Enter PAN Number" />
+                    <label className="form-label">PAN No. :</label>
+                    <input className="form-input" type="text" placeholder="Enter PAN Number" value={panNo} onChange={(e) => setPanNo(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 
@@ -627,36 +726,36 @@ export default function NewRegisterPage() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">District :</label>
-                    <input className="form-input" type="text" placeholder="Enter District" />
+                    <input className="form-input" type="text" placeholder="Enter District" value={district} onChange={(e) => setDistrict(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">City :</label>
-                    <input className="form-input" type="text" placeholder="Enter City" />
+                    <input className="form-input" type="text" placeholder="Enter City" value={city} onChange={(e) => setCity(e.target.value)} suppressHydrationWarning />
                   </div>
                   <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Pin Code :</label>
-                    <input className="form-input" type="text" placeholder="Enter Pin Code" />
+                    <label className="form-label">Pin Code :</label>
+                    <input className="form-input" type="text" placeholder="Enter Pin Code" value={pincode} onChange={(e) => setPincode(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group" style={{ gridColumn: "1 / -1" }}>
                     <label className="form-label">Address :</label>
-                    <input className="form-input" type="text" placeholder="Street / Landmark / Building" />
+                    <input className="form-input" type="text" placeholder="Street / Landmark / Building" value={address} onChange={(e) => setAddress(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Nominee Name :</label>
-                    <input className="form-input" type="text" placeholder="Enter Nominee Name" />
+                    <input className="form-input" type="text" placeholder="Enter Nominee Name" value={nomineeName} onChange={(e) => setNomineeName(e.target.value)} suppressHydrationWarning />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Nominee Relation :</label>
-                    <select className="form-select" defaultValue="-- Select --">
+                    <select className="form-select" value={nomineeRel} onChange={(e) => setNomineeRel(e.target.value)}>
                       {nomineeRels.map(r => <option key={r}>{r}</option>)}
                     </select>
                   </div>
@@ -667,53 +766,53 @@ export default function NewRegisterPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Bank Name :</label>
-                    <input className="form-input" type="text" placeholder="Enter Bank Name" />
+                    <input className="form-input" type="text" placeholder="Enter Bank Name" value={bankName} onChange={(e) => setBankName(e.target.value)} suppressHydrationWarning />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Branch :</label>
-                    <input className="form-input" type="text" placeholder="Enter Branch Name" />
+                    <input className="form-input" type="text" placeholder="Enter Branch Name" value={branchName} onChange={(e) => setBranchName(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Account No. :</label>
-                    <input className="form-input" type="text" placeholder="Enter Account Number" />
+                    <input className="form-input" type="text" placeholder="Enter Account Number" value={accountNo} onChange={(e) => setAccountNo(e.target.value)} suppressHydrationWarning />
                   </div>
                   <div className="form-group">
                     <label className="form-label">IFSC Code :</label>
-                    <input className="form-input" type="text" placeholder="Enter IFSC Code" />
+                    <input className="form-input" type="text" placeholder="Enter IFSC Code" value={ifscCode} onChange={(e) => setIfscCode(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Account Type :</label>
-                    <select className="form-select" defaultValue="-- Select --">
+                    <select className="form-select" value={accountType} onChange={(e) => setAccountType(e.target.value)}>
                       {accountTypes.map(t => <option key={t}>{t}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Password :</label>
-                    <input className="form-input" type="password" placeholder="Create Password" />
+                    <input className="form-input" type="password" placeholder="Create Password" value={password} onChange={(e) => setPassword(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Confirm Password :</label>
-                    <input className="form-input" type="password" placeholder="Confirm Password" />
+                    <input className="form-input" type="password" placeholder="Confirm Password" value={confirmPwd} onChange={(e) => setConfirmPwd(e.target.value)} suppressHydrationWarning />
                   </div>
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Transaction Password :</label>
-                    <input className="form-input" type="password" placeholder="Create Transaction Password" />
+                    <input className="form-input" type="password" placeholder="Create Transaction Password" value={txnPwd} onChange={(e) => setTxnPwd(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 
                 {/* Submit */}
                 <div className="submit-wrap">
-                  <button className="proceed-btn" onClick={handleSubmit}>
-                    REGISTER MEMBER
+                  <button className="proceed-btn" onClick={handleRegistrationSubmit} disabled={isSubmitting}>
+                    {isSubmitting ? "REGISTERING..." : "REGISTER MEMBER"}
                   </button>
                 </div>
 
@@ -721,11 +820,6 @@ export default function NewRegisterPage() {
             </div>
           )}
         </div>
-
-        {/* Toast */}
-        {toast && (
-          <div className="toast">✓ Member registered successfully!</div>
-        )}
 
       </div>
     </>

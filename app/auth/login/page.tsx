@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 
 interface Star {
@@ -15,6 +16,12 @@ interface Star {
   op: number;
 }
 
+// Seeded random function for consistent results across server/client renders
+const seededRandom = (seed: number): number => {
+  const x = Math.sin(seed) * 10000;
+  return x - Math.floor(x);
+};
+
 export default function Login() {
   const router = useRouter();
   const [username, setUsername] = useState("");
@@ -27,16 +34,19 @@ export default function Login() {
   const [stars, setStars] = useState<Star[]>([]);
 
   const generateStars = () => {
-    const newStars: Star[] = Array.from({ length: 60 }, (_, i) => ({
-      id: i,
-      width: Math.random() * 2.5 + 1,
-      height: Math.random() * 2.5 + 1,
-      top: Math.random() * 100,
-      left: Math.random() * 100,
-      dur: Math.random() * 3 + 2,
-      delay: Math.random() * 4,
-      op: Math.random() * 0.5 + 0.4,
-    }));
+    const newStars: Star[] = Array.from({ length: 60 }, (_, i) => {
+      const baseSeed = i * 73; // Prime number for good distribution
+      return {
+        id: i,
+        width: seededRandom(baseSeed) * 2.5 + 1,
+        height: seededRandom(baseSeed + 1) * 2.5 + 1,
+        top: seededRandom(baseSeed + 2) * 100,
+        left: seededRandom(baseSeed + 3) * 100,
+        dur: seededRandom(baseSeed + 4) * 3 + 2,
+        delay: seededRandom(baseSeed + 5) * 4,
+        op: seededRandom(baseSeed + 6) * 0.5 + 0.4,
+      };
+    });
     setStars(newStars);
   };
 
@@ -66,50 +76,35 @@ export default function Login() {
     setLoading(true);
     
     try {
-      console.log("\n🔐 === LOGIN ATTEMPT ===");
-      console.log("📤 Sending login request...");
+      console.log("\n🔐 === LOGIN ATTEMPT (NextAuth) ===");
+      console.log("📤 Calling nextAuth signIn...");
       console.log("   Username:", username);
-      console.log("   Password length:", password?.length);
       
-      const response = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-        credentials: "include", // IMPORTANT: Include cookies
+      const result = await signIn("credentials", {
+        username,
+        password,
+        redirect: false,
       });
       
-      console.log("📥 Login response received:");
-      console.log("   Status:", response.status);
-      console.log("   Status Text:", response.statusText);
+      console.log("📥 SignIn response received:");
+      console.log("   Status:", result?.status);
+      console.log("   Error:", result?.error);
+      console.log("   URL:", result?.url);
       
-      const data = await response.json();
-      console.log("   Response data:", data);
-      
-      if (!response.ok) { 
-        console.log("❌ Login failed:", data.error);
-        setError(data.error || "Login failed. Please try again."); 
-        generateCaptcha(); 
-        setLoading(false); 
-        return; 
+      if (!result?.ok) {
+        console.log("❌ Login failed:", result?.error);
+        setError(result?.error || "Login failed. Please try again.");
+        generateCaptcha();
+        setLoading(false);
+        return;
       }
       
       console.log("✅ Login successful!");
-      console.log("   User ID:", data.user.id);
-      console.log("   Username:", data.user.username);
-      console.log("   Cookies should be set now (check Network tab)");
-      
-      console.log("✅ Login successful!");
-      console.log("   User ID:", data.user.id);
-      console.log("   Username:", data.user.username);
-      console.log("   Email:", data.user.email);
-      console.log("   JWT token stored in httpOnly cookie");
+      console.log("   NextAuth session created");
       console.log("   Redirecting to dashboard...");
       console.log("\n");
       
-      // Clear loading state and redirect
       setLoading(false);
-      
-      // Use a small timeout to ensure cookies are fully set before redirect
       setTimeout(() => {
         router.push("/dashboard");
       }, 100);
@@ -415,15 +410,15 @@ export default function Login() {
 
         {/* Stars */}
         <div className="stars">
-          {Array.from({ length: 60 }).map((_, i) => (
-            <div key={i} className="star" style={{
-              width: `${Math.random() * 2.5 + 1}px`,
-              height: `${Math.random() * 2.5 + 1}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              ['--dur' as string]: `${(Math.random() * 3 + 2).toFixed(1)}s`,
-              ['--delay' as string]: `${(Math.random() * 4).toFixed(1)}s`,
-              ['--op' as string]: `${(Math.random() * 0.5 + 0.4).toFixed(2)}`,
+          {stars.map((star) => (
+            <div key={star.id} className="star" style={{
+              width: `${star.width}px`,
+              height: `${star.height}px`,
+              top: `${star.top}%`,
+              left: `${star.left}%`,
+              ['--dur' as string]: `${star.dur.toFixed(1)}s`,
+              ['--delay' as string]: `${star.delay.toFixed(1)}s`,
+              ['--op' as string]: `${star.op.toFixed(2)}`,
             }} />
           ))}
         </div>
@@ -478,7 +473,7 @@ export default function Login() {
                 <circle cx="12" cy="7" r="4"/>
               </svg>
             </span>
-            <input type="text" placeholder="Username / Member ID" value={username} onChange={e => setUsername(e.target.value)}/>
+            <input type="text" placeholder="Username / Member ID" value={username} onChange={e => setUsername(e.target.value)} suppressHydrationWarning={true}/>
           </div>
 
           {/* Password */}
@@ -489,7 +484,7 @@ export default function Login() {
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
               </svg>
             </span>
-            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)}/>
+            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} suppressHydrationWarning={true}/>
           </div>
 
           {/* Captcha */}
@@ -506,6 +501,7 @@ export default function Login() {
               placeholder="Enter Correct Answer"
               value={captchaAnswer}
               onChange={e => handleCaptchaChange(e.target.value)}
+              suppressHydrationWarning={true}
             />
             {captchaValid && <span className="cap-check">✓</span>}
           </div>

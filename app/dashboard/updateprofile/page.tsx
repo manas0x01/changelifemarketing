@@ -79,7 +79,7 @@ export default function EditProfilePage() {
         setLoading(true);
         setError(null);
 
-        console.log("🔍 Fetching profile data...");
+        console.log("� [UpdateProfile] Starting to fetch profile data...");
 
         const response = await fetch("/api/user/update-profile", {
           method: "GET",
@@ -89,8 +89,11 @@ export default function EditProfilePage() {
           credentials: "include",
         });
 
-        console.log("📥 Profile response status:", response.status);
-        console.log("📥 Response content-type:", response.headers.get("content-type"));
+        console.log("📥 [UpdateProfile] Response received:", {
+          status: response.status,
+          statusText: response.statusText,
+          contentType: response.headers.get("content-type"),
+        });
 
         if (!response.ok) {
           // Try to parse as JSON, fallback to text
@@ -105,11 +108,11 @@ export default function EditProfilePage() {
               errorData = { error: text?.substring(0, 200) || "Unknown error" };
             }
           } catch (parseErr) {
-            console.error("❌ Error parsing response:", parseErr);
+            console.error("❌ [UpdateProfile] Error parsing response:", parseErr);
             errorData = { error: "Failed to parse server response" };
           }
           
-          console.error("❌ Profile fetch error:", errorData);
+          console.error("❌ [UpdateProfile] Profile fetch error:", errorData);
           
           if (response.status === 401) {
             router.push("/auth/login");
@@ -120,13 +123,14 @@ export default function EditProfilePage() {
         }
 
         const data = await response.json();
-        console.log("✅ Profile data fetched:", data.data);
+        console.log("✅ [UpdateProfile] Full profile data fetched:", JSON.stringify(data, null, 2));
 
         if (data.data) {
           setFormData(data.data);
-
-          // Debug: Check placement fields
-          console.log("🔍 DEBUG - Placement fields from API:");
+          console.log("✅ [UpdateProfile] Form data set successfully");
+          console.log("🔍 [UpdateProfile] DEBUG - Full data.data object:");
+          console.log("   userId:", data.data.userId || data.data.username);
+          console.log("   fullName:", data.data.fullName);
           console.log("   joiningDate:", data.data.joiningDate);
           console.log("   sponsorId:", data.data.sponsorId);
           console.log("   sponsorName:", data.data.sponsorName);
@@ -139,10 +143,11 @@ export default function EditProfilePage() {
             setDobDay(String(dob.getDate()).padStart(2, "0"));
             setDobMonth(months[dob.getMonth()]);
             setDobYear(String(dob.getFullYear()));
+            console.log("✅ [UpdateProfile] DOB parsed:", dob);
           }
 
           const newPlacementData = {
-            memberId: data.data.username || "",
+            memberId: data.data.userId || data.data.username || "",
             joiningDate: data.data.joiningDate || "",
             sponsorId: data.data.sponsorId || "",
             sponsorName: data.data.sponsorName || "",
@@ -150,13 +155,23 @@ export default function EditProfilePage() {
             placementName: data.data.placementName || "",
           };
           
-          console.log("🔍 DEBUG - Setting placementData:", newPlacementData);
+          console.log("🔍 [UpdateProfile] Creating placement data:");
+          console.log("   memberId:", newPlacementData.memberId);
+          console.log("   joiningDate:", newPlacementData.joiningDate);
+          console.log("   sponsorId:", newPlacementData.sponsorId);
+          console.log("   sponsorName:", newPlacementData.sponsorName);
+          console.log("   placementId:", newPlacementData.placementId);
+          console.log("   placementName:", newPlacementData.placementName);
+          
           setPlacementData(newPlacementData);
+          console.log("✅ [UpdateProfile] Placement data state updated:", newPlacementData);
+        } else {
+          console.warn("⚠️ [UpdateProfile] No data.data found in response");
         }
 
         setError(null);
       } catch (err) {
-        console.error("❌ Error fetching profile:", err);
+        console.error("❌ [UpdateProfile] Error fetching profile:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);

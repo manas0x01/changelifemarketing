@@ -3,9 +3,8 @@ import { NextRequest, NextResponse } from 'next/server';
 export const proxy = (request: NextRequest) => {
   const pathname = request.nextUrl.pathname;
   
-  // Check if user has session cookie (checking for auth-token cookie)
+  // Check if user has NextAuth session cookie
   const hasSessionCookie =
-    request.cookies.has('auth-token') ||
     request.cookies.has('next-auth.session-token') ||
     request.cookies.has('__Secure-next-auth.session-token');
 

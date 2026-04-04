@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
-import { Fraunces, Roboto } from "next/font/google";
+import { Fraunces, Roboto, Geist } from "next/font/google";
 import "./globals.css";
 import WhatsappChatbot from "@/components/WhatsappChatbot";
+import { cn } from "@/lib/utils";
+
+const geist = Geist({subsets:['latin'],variable:'--font-sans'});
 
 const fraunces = Fraunces({
   variable: "--font-fraunces",
@@ -30,7 +33,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
       <body
         className={`${fraunces.variable} ${roboto.variable} antialiased`}
         suppressHydrationWarning

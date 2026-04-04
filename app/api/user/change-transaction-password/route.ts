@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
         
-        if (!session?.user?.email) {
+        if (!session?.user?.username) {
             return Response.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
 
@@ -37,7 +37,7 @@ export async function POST(req: Request) {
         }
 
         await connectDB();
-        const user = await User.findOne({ email: session.user.email }).select("+transactionPassword");
+        const user = await User.findOne({ username: session.user.username }).select("+transactionPassword");
 
         if (!user) {
             return Response.json({ 
@@ -78,12 +78,12 @@ export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
         
-        if (!session?.user?.email) {
+        if (!session?.user?.username) {
             return Response.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
 
         await connectDB();
-        const user = await User.findOne({ email: session.user.email });
+        const user = await User.findOne({ username: session.user.username }).select("+transactionPassword");
 
         if (!user) {
             return Response.json({ 

@@ -1,53 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 import dbConnect from "@/lib/database";
 import User from "@/models/User";
-import { verifyToken } from "@/lib/jwt";
 
 export async function GET(req: NextRequest) {
   try {
-    // Extract auth token from cookies
-    const authToken = req.cookies.get('auth-token')?.value;
-    const authHeader = req.headers.get("authorization");
-    let email: string | null = null;
-    let decodedToken = null;
-
-    console.log('🔐 Profile API - Authenticating request...');
+    console.log('🔐 Profile API - Getting session...');
     
-    // Try JWT token from cookie first (preferred method)
-    if (authToken) {
-      console.log('📍 Found auth-token cookie, verifying JWT...');
-      decodedToken = verifyToken(authToken);
-      if (decodedToken) {
-        // Use email from token, or fall back to username lookup
-        const username = decodedToken.username;
-        console.log('✅ JWT verified, username:', username, 'email:', email);
-        
-        // If no email in token, use username to look up user
-        if (!email && username) {
-          console.log('📍 No email in JWT, will lookup by username:', username);
-        }
-      } else {
-        console.error('❌ JWT verification failed');
-      }
-    }
-
-    // Fall back to Authorization header if no JWT cookie
-    if (!email && authHeader?.startsWith("Bearer ")) {
-      email = authHeader.slice(7);
-      console.log('📍 Using email from Authorization header:', email);
-    }
+    // Get NextAuth session
+    const session = await getServerSession(authOptions);
     
-    // Try to find user by email first, then by username from JWT
-    if (!email && decodedToken?.username) {
-      console.log('📍 Using username from JWT for lookup:', decodedToken.username);
-    }
-    
-    if (!email && !decodedToken?.username && !authHeader?.startsWith("Bearer ")) {
-      console.error('❌ No valid authentication found - Token:', !!authToken, 'Header:', !!authHeader);
+    if (!session?.user?.username) {
+      console.error('❌ No valid session found');
       return NextResponse.json(
         { error: "Unauthorized - Please login" },
         { status: 401 }
       );
+    }
+
+    console.log('✅ Session verified, username:', session.user.username);
     }
     
     await dbConnect();

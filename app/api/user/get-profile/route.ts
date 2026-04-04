@@ -7,12 +7,12 @@ export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
         
-        if (!session?.user?.email) {
+        if (!session?.user?.username) {
             return Response.json({ success: true, user: null });
         }
 
         await connectDB();
-        const user = await User.findOne({ email: session.user.email });
+        const user = await User.findOne({ username: session.user.username });
 
         if (!user) {
             return Response.json({ success: true, user: null });

@@ -7,7 +7,7 @@ export async function POST(req: Request) {
     try {
         const session = await getServerSession(authOptions);
         
-        if (!session?.user?.email) {
+        if (!session?.user?.username) {
             return Response.json({ success: false, error: "Unauthorized - Please login" }, { status: 401 });
         }
 
@@ -29,7 +29,7 @@ export async function POST(req: Request) {
         await connectDB();
         
         // Find user with password field
-        const user = await User.findOne({ email: session.user.email }).select("+password");
+        const user = await User.findOne({ username: session.user.username }).select("+password");
 
         if (!user) {
             return Response.json({ success: false, error: "User not found" }, { status: 404 });

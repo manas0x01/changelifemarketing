@@ -1,11 +1,5 @@
 'use client';
 
-/**
- * Client-side utility to safely read cookies 
- * Note: Encrypted cookies can only be fully decrypted on the server
- * This utility is for reading plain cookies only
- */
-
 export function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null;
   
@@ -21,10 +15,6 @@ export function getCookie(name: string): string | null {
   
   return null;
 }
-
-/**
- * Get all cookies as an object
- */
 export function getAllCookies(): Record<string, string> {
   if (typeof document === 'undefined') return {};
   
@@ -38,10 +28,6 @@ export function getAllCookies(): Record<string, string> {
   
   return cookies;
 }
-
-/**
- * Check if user is authenticated (has auth-token)
- */
 export function isAuthenticated(): boolean {
-  return !!getCookie('auth-token');
+  return !!getCookie('next-auth.session-token') || !!getCookie('__Secure-next-auth.session-token');
 }

@@ -29,9 +29,9 @@ export default function ProfilePage() {
       try {
         setLoading(true);
         
-        console.log("🔍 Fetching profile with JWT cookie...");
+        console.log("🔍 Fetching profile with NextAuth session...");
 
-        // Send request with credentials - JWT will be in httpOnly cookie
+        // Send request with credentials - NextAuth session will be in cookies
         const response = await fetch("/api/user/profile", {
           method: "GET",
           headers: {

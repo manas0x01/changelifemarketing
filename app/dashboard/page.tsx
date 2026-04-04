@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSidebar } from "@/context/SidebarContext";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
 
-{/*Types */ }
+{/*Types */}
 interface CycleRow {
     date: string;
     cycles: { label: string; moon: boolean }[];
@@ -17,7 +17,7 @@ interface EPin {
     package: string;
 }
 
-{/*Mock Data */ }
+{/* Mock Data */}
 const cycleHistory: CycleRow[] = [
     { date: "10-Jan-2026", cycles: [{ label: "12 TO 12", moon: true }, { label: "12 TO 12", moon: false }], matches: [0, 1], cappings: [0, 0] },
     { date: "23-Oct-2025", cycles: [{ label: "12 TO 12", moon: true }, { label: "12 TO 12", moon: false }], matches: [0, 1], cappings: [0, 0] },
@@ -32,7 +32,6 @@ const ePins: EPin[] = [
     { package: "Sanitary Napkine" },
 ];
 
-// ── Icons (inline SVG) ───────────────────────────────────────────────────────
 const TeamIcon = () => (
     <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.9">
         <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
@@ -75,6 +74,81 @@ const statCards = [
 export default function Dashboard() {
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [activePage, setActivePage] = useState<"dashboard" | "profile">("dashboard");
+    const [showTotalTeamInfo, setShowTotalTeamInfo] = useState(false);
+    const [showTotalDirectInfo, setShowTotalDirectInfo] = useState(false);
+    const [showBasicIncomeInfo, setShowBasicIncomeInfo] = useState(false);
+    const [showBoosterIncomeInfo, setShowBoosterIncomeInfo] = useState(false);
+    const [totalTeam, setTotalTeam] = useState({ left: 0, right: 0 });
+    const [totalDirect, setTotalDirect] = useState({ left: 0, right: 0 });
+    const [totalDirectAmount, setTotalDirectAmount] = useState(0);
+    const [basicIncome, setBasicIncome] = useState(0);
+    const [boosterIncomeAmount, setBoosterIncomeAmount] = useState(0);
+    const [boosterIncome, setBoosterIncome] = useState({ LG: 0, RG: 0, totalGoldMatching: 0 });
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                const teamResponse = await fetch('/api/user/total-team', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                
+                if (teamResponse.ok) {
+                    const teamData = await teamResponse.json();
+                    setTotalTeam(teamData.totalTeam || { left: 0, right: 0 });
+                }
+                const directResponse = await fetch('/api/user/total-direct', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                
+                if (directResponse.ok) {
+                    const directData = await directResponse.json();
+                    setTotalDirect(directData.totalDirect || { left: 0, right: 0 });
+                }
+                const directAmountResponse = await fetch('/api/user/total-direct-amount', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                
+                if (directAmountResponse.ok) {
+                    const directAmountData = await directAmountResponse.json();
+                    setTotalDirectAmount(directAmountData.totalDirectAmount || 0);
+                }
+                const incomeResponse = await fetch('/api/user/basic-income', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                if (incomeResponse.ok) {
+                    const incomeData = await incomeResponse.json();
+                    setBasicIncome(incomeData.basicIncome || 0);
+                }
+                const boosterResponse = await fetch('/api/user/booster-income', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                if (boosterResponse.ok) {
+                    const boosterData = await boosterResponse.json();
+                    setBoosterIncome(boosterData.boosterIncome || { LG: 0, RG: 0, totalGoldMatching: 0 });
+                }
+                const boosterAmountResponse = await fetch('/api/user/booster-income-amount', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                if (boosterAmountResponse.ok) {
+                    const boosterAmountData = await boosterAmountResponse.json();
+                    setBoosterIncomeAmount(boosterAmountData.boosterIncomeAmount || 0);
+                }
+            } catch (error) {
+                console.error('Error fetching dashboard data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchDashboardData();
+    }, []);
     return (
         <>
             <style>{`
@@ -431,11 +505,32 @@ export default function Dashboard() {
                                         key={card.title}
                                         className="stat-card"
                                         style={{ background: card.gradient }}
+                                        onClick={() => {
+                                            if (card.title === "Total Team") {
+                                                setShowTotalTeamInfo(!showTotalTeamInfo);
+                                            } else if (card.title === "Basic Income") {
+                                                setShowBasicIncomeInfo(!showBasicIncomeInfo);
+                                            } else if (card.title === "Booster Income") {
+                                                setShowBoosterIncomeInfo(!showBoosterIncomeInfo);
+                                            } else if (card.title === "Total Direct") {
+                                                setShowTotalDirectInfo(!showTotalDirectInfo);
+                                            }
+                                        }}
                                     >
                                         <div className="stat-card-icon">{card.icon}</div>
                                         <div className="stat-card-info">
                                             <div className="stat-card-title">{card.title}</div>
-                                            <span className="stat-card-link">View</span>
+                                            {card.title === "Total Team" && showTotalTeamInfo ? (
+                                                <span className="stat-card-link">Left : {totalTeam.left} | Right : {totalTeam.right}</span>
+                                            ) : card.title === "Basic Income" && showBasicIncomeInfo ? (
+                                                <span className="stat-card-link">₹ {basicIncome}</span>
+                                            ) : card.title === "Booster Income" && showBoosterIncomeInfo ? (
+                                                <span className="stat-card-link">₹ {boosterIncomeAmount} | LG : {boosterIncome.LG} | RG : {boosterIncome.RG} | Matching : {boosterIncome.totalGoldMatching}</span>
+                                            ) : card.title === "Total Direct" && showTotalDirectInfo ? (
+                                                <span className="stat-card-link">₹ {totalDirectAmount} | Left : {totalDirect.left} | Right : {totalDirect.right}</span>
+                                            ) : (
+                                                <span className="stat-card-link" style={{ cursor: 'pointer' }}>View</span>
+                                            )}
                                         </div>
                                     </div>
                                 ))}

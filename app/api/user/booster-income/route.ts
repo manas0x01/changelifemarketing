@@ -1,0 +1,45 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import User from '@/models/User';
+import { connectDB } from '@/lib/database';
+
+export async function GET(request: NextRequest) {
+    try {
+        // Get session to verify user is authenticated
+        const session = await getServerSession(authOptions);
+
+        // If no session, return default values
+        if (!session || !session.user?.email) {
+            return NextResponse.json({
+                success: true,
+                boosterIncome: { LG: 0, RG: 0, totalGoldMatching: 0 }
+            });
+        }
+
+        // Connect to database
+        await connectDB();
+
+        // Fetch user data with boosterIncome info
+        const user = await User.findOne({ email: session.user.email }).select('boosterIncome');
+
+        if (!user) {
+            return NextResponse.json({
+                success: true,
+                boosterIncome: { LG: 0, RG: 0, totalGoldMatching: 0 }
+            });
+        }
+
+        return NextResponse.json({
+            success: true,
+            boosterIncome: user.boosterIncome || { LG: 0, RG: 0, totalGoldMatching: 0 }
+        });
+
+    } catch (error) {
+        console.error('Error fetching booster income:', error);
+        return NextResponse.json({
+            success: true,
+            boosterIncome: { LG: 0, RG: 0, totalGoldMatching: 0 }
+        });
+    }
+}

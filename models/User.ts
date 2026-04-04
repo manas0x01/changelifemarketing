@@ -30,6 +30,22 @@ export interface IUser extends Document {
   placementId?: string;
   placementName?: string;
   role?: string;
+  totalTeam?: {
+    left: number;
+    right: number;
+  };
+  totalDirectAmount?: number;
+  totalDirect?: {
+    left: number;
+    right: number;
+  };
+  basicIncome?: number;
+  boosterIncomeAmount?: number;
+  boosterIncome?: {
+    LG: number;
+    RG: number;
+    totalGoldMatching: number;
+  };
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -183,6 +199,61 @@ const userSchema = new Schema<IUser>(
       required: false,
       default: 'user',
       enum: ['user', 'admin', 'moderator'],
+    },
+    totalTeam: {
+      type: {
+        left: {
+          type: Number,
+          default: 0,
+        },
+        right: {
+          type: Number,
+          default: 0,
+        },
+      },
+      default: { left: 0, right: 0 },
+    },
+    totalDirect: {
+      type: {
+        left: {
+          type: Number,
+          default: 0,
+        },
+        right: {
+          type: Number,
+          default: 0,
+        },
+      },
+      default: { left: 0, right: 0 },
+    },
+    totalDirectAmount: {
+      type: Number,
+      default: 0,
+    },
+    basicIncome: {
+      type: Number,
+      default: 0,
+    },
+    boosterIncomeAmount: {
+      type: Number,
+      default: 0,
+    },
+    boosterIncome: {
+      type: {
+        LG: {
+          type: Number,
+          default: 0,
+        },
+        RG: {
+          type: Number,
+          default: 0,
+        },
+        totalGoldMatching: {
+          type: Number,
+          default: 0,
+        },
+      },
+      default: { LG: 0, RG: 0, totalGoldMatching: 0 },
     },
   },
   {

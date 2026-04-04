@@ -370,7 +370,7 @@ export default function HomePage() {
       Our Impact in Numbers
     </motion.p>
 
-    {/* ── Stats Grid ── */}
+    {/* Stats Grid */}
     <div
       id="stats-trigger"
       className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4 sm:gap-x-6 md:gap-x-8"

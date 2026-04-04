@@ -11,20 +11,48 @@ export default function ChangeTransactionPasswordPage() {
   const [rePwd,        setRePwd]        = useState("");
   const [error,        setError]        = useState("");
   const [success,      setSuccess]      = useState(false);
+  const [loading,      setLoading]      = useState(false);
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     setError("");
     setSuccess(false);
-
     if (!oldTxnPwd.trim()) { setError("Please enter your old transaction password."); return; }
     if (!newPwd.trim())     { setError("Please enter a new password."); return; }
     if (newPwd.length < 6)  { setError("New password must be at least 6 characters."); return; }
     if (newPwd !== rePwd)   { setError("New passwords do not match."); return; }
+    setLoading(true);
+    try {
+      const response = await fetch("/api/user/change-transaction-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          oldPassword: oldTxnPwd,
+          newPassword: newPwd,
+          confirmPassword: rePwd,
+        }),
+      });
 
-    setSuccess(true);
-    setOldTxnPwd("");
-    setNewPwd("");
-    setRePwd("");
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        setSuccess(true);
+        setOldTxnPwd("");
+        setNewPwd("");
+        setRePwd("");
+        // Clear success message after 3 seconds
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(data.message || "Failed to change transaction password.");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      setError("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const clearErr = () => { setError(""); setSuccess(false); };
@@ -118,8 +146,9 @@ export default function ChangeTransactionPasswordPage() {
           letter-spacing:0.3px;
           transition:background .18s, transform .15s;
         }
-        .proceed-btn:hover { background:#1565c0; transform:translateY(-1px); }
-        .proceed-btn:active { transform:scale(0.98); }
+        .proceed-btn:hover:not(:disabled) { background:#1565c0; transform:translateY(-1px); }
+        .proceed-btn:active:not(:disabled) { transform:scale(0.98); }
+        .proceed-btn:disabled { opacity:0.6; cursor:not-allowed; }
       `}</style>
 
       <div className="ctp-root">
@@ -206,8 +235,8 @@ export default function ChangeTransactionPasswordPage() {
 
               {/* Proceed Button */}
               <div className="proceed-wrap">
-                <button className="proceed-btn" onClick={handleProceed}>
-                  Proceed
+                <button className="proceed-btn" onClick={handleProceed} disabled={loading}>
+                  {loading ? "Changing..." : "Proceed"}
                 </button>
               </div>
 

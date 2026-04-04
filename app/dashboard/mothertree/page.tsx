@@ -214,97 +214,363 @@ export default function MotherTreePage() {
         .mt-root { font-family:'Poppins',sans-serif; background:#f0f2f5; min-height:100vh; }
 
         /* BREADCRUMB */
-        .breadcrumb { padding:12px 20px; font-size:13px; color:#555; display:flex; align-items:center; gap:6px; }
+        .breadcrumb { 
+          padding:12px 16px; 
+          font-size:13px; 
+          color:#555; 
+          display:flex; 
+          align-items:center; 
+          gap:6px;
+          overflow-x:auto;
+          white-space:nowrap;
+        }
         .breadcrumb a { color:#555; text-decoration:none; }
         .breadcrumb a:hover { text-decoration:underline; }
         .breadcrumb .sep { color:#999; }
 
         /* PAGE BODY */
-        .page-body { padding:0 20px 40px; }
+        .page-body { 
+          padding:16px 12px 40px;
+        }
+        @media (min-width: 640px) {
+          .page-body { padding:20px 16px 40px; }
+        }
+        @media (min-width: 1024px) {
+          .page-body { padding:20px 20px 40px; }
+        }
 
         /* MAIN CARD */
-        .main-card { background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.07); }
+        .main-card { 
+          background:#fff; 
+          border-radius:8px; 
+          overflow:hidden; 
+          box-shadow:0 2px 10px rgba(0,0,0,0.07); 
+        }
+        @media (min-width: 640px) {
+          .main-card { border-radius:10px; }
+        }
 
         /* HEADER */
         .section-header {
           background:linear-gradient(90deg,#26a69a,#1de9b6);
-          padding:12px 16px;
-          display:flex; align-items:center; justify-content:space-between;
+          padding:12px 14px;
+          display:flex; 
+          align-items:center; 
+          justify-content:space-between;
         }
-        .section-title { font-size:13px; font-weight:700; color:#fff; letter-spacing:0.8px; text-transform:uppercase; }
+        @media (min-width: 640px) {
+          .section-header { padding:12px 16px; }
+        }
+
+        .section-title { 
+          font-size:12px; 
+          font-weight:700; 
+          color:#fff; 
+          letter-spacing:0.8px; 
+          text-transform:uppercase; 
+        }
+        @media (min-width: 640px) {
+          .section-title { font-size:13px; }
+        }
 
         /* LEGEND */
         .legend-row {
-          display:flex; align-items:flex-end; justify-content:center;
-          gap:40px; padding:18px 20px 10px; flex-wrap:wrap;
+          display:grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap:12px;
+          padding:14px 12px;
+          justify-items:center;
         }
-        .legend-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
-        .legend-label { font-size:12.5px; color:#333; font-weight:500; }
-        .legend-box-red   { width:44px; height:44px; border:2.5px solid #e53935; border-radius:6px; }
-        .legend-box-green { width:44px; height:44px; border:2.5px solid #388e3c; border-radius:6px; }
+        @media (min-width: 640px) {
+          .legend-row {
+            display:flex;
+            grid-template-columns: unset;
+            align-items:flex-end;
+            justify-content:center;
+            gap:30px;
+            padding:18px 20px 10px;
+            flex-wrap:wrap;
+          }
+        }
+
+        .legend-item { 
+          display:flex; 
+          flex-direction:column; 
+          align-items:center; 
+          gap:4px; 
+        }
+        .legend-label { 
+          font-size:11px; 
+          color:#333; 
+          font-weight:500;
+          text-align:center;
+        }
+        @media (min-width: 640px) {
+          .legend-label { font-size:12.5px; }
+        }
 
         /* FILTER AREA */
-        .filter-area { padding:10px 20px 18px; }
-        .filter-inner { display:flex; align-items:flex-end; gap:12px; flex-wrap:wrap; }
-        .filter-group { display:flex; flex-direction:column; gap:5px; }
-        .filter-label { font-size:12.5px; font-weight:500; color:#444; }
-        .filter-input {
-          border:1px solid #d0d0d0; border-radius:5px;
-          padding:9px 13px; font-size:13px;
-          font-family:'Poppins',sans-serif; color:#333;
-          background:#fff; outline:none; height:40px;
-          min-width:220px; transition:border-color .18s;
+        .filter-area { 
+          padding:12px 12px 14px;
         }
+        @media (min-width: 640px) {
+          .filter-area { padding:10px 20px 18px; }
+        }
+
+        .filter-inner { 
+          display:flex; 
+          align-items:flex-end; 
+          gap:8px; 
+          flex-wrap:wrap; 
+        }
+        @media (min-width: 640px) {
+          .filter-inner { gap:12px; }
+        }
+
+        .filter-group { 
+          display:flex; 
+          flex-direction:column; 
+          gap:4px;
+          flex:1;
+          min-width:200px;
+        }
+        @media (min-width: 640px) {
+          .filter-group { 
+            gap:5px;
+            flex:0 1 auto;
+            min-width:220px;
+          }
+        }
+
+        .filter-label { 
+          font-size:11px; 
+          font-weight:600; 
+          color:#444;
+        }
+        @media (min-width: 640px) {
+          .filter-label { font-size:12.5px; font-weight:500; }
+        }
+
+        .filter-input {
+          border:1px solid #d0d0d0; 
+          border-radius:4px;
+          padding:8px 10px; 
+          font-size:12px;
+          font-family:'Poppins',sans-serif; 
+          color:#333;
+          background:#fff; 
+          outline:none; 
+          height:36px;
+          width:100%;
+          transition:border-color .18s;
+        }
+        @media (min-width: 640px) {
+          .filter-input {
+            border-radius:5px;
+            padding:9px 13px;
+            font-size:13px;
+            height:40px;
+            width:auto;
+          }
+        }
+
         .filter-input::placeholder { color:#aaa; }
-        .filter-input:focus { border-color:#26a69a; box-shadow:0 0 0 2px rgba(38,166,154,0.1); }
+        .filter-input:focus { 
+          border-color:#26a69a; 
+          box-shadow:0 0 0 2px rgba(38,166,154,0.1); 
+        }
+
         .filter-btn {
-          background:#1976d2; color:#fff; border:none; border-radius:6px;
-          padding:0 28px; height:40px; font-size:14px; font-weight:600;
-          font-family:'Poppins',sans-serif; cursor:pointer;
+          background:#1976d2; 
+          color:#fff; 
+          border:none; 
+          border-radius:4px;
+          padding:0 16px; 
+          height:36px; 
+          font-size:12px; 
+          font-weight:600;
+          font-family:'Poppins',sans-serif; 
+          cursor:pointer;
+          white-space:nowrap;
           transition:background .18s, transform .15s;
         }
-        .filter-btn:hover { background:#1565c0; transform:translateY(-1px); }
+        @media (min-width: 640px) {
+          .filter-btn {
+            border-radius:6px;
+            padding:0 28px;
+            height:40px;
+            font-size:14px;
+          }
+        }
+
+        .filter-btn:hover { 
+          background:#1565c0; 
+          transform:translateY(-1px); 
+        }
 
         /* LEFT PANEL + TREE PANEL */
         .tree-layout {
-          display:flex; gap:0;
+          display:flex; 
+          flex-direction:column;
+          gap:0;
           border-top:1px solid #e0e0e0;
+        }
+        @media (min-width: 768px) {
+          .tree-layout {
+            flex-direction:row;
+          }
         }
 
         /* Left sidebar */
         .tree-sidebar {
-          width:200px; flex-shrink:0;
-          padding:20px 16px;
-          border-right:1px solid #e0e0e0;
+          width:100%;
+          padding:14px 12px;
+          border-right:none;
+          border-bottom:1px solid #e0e0e0;
+          display:flex;
+          align-items:center;
+          gap:12px;
         }
+        @media (min-width: 768px) {
+          .tree-sidebar {
+            width:160px;
+            flex-direction:column;
+            padding:16px 14px;
+            border-right:1px solid #e0e0e0;
+            border-bottom:none;
+            flex-shrink:0;
+          }
+        }
+        @media (min-width: 1024px) {
+          .tree-sidebar {
+            width:200px;
+            padding:20px 16px;
+          }
+        }
+
         .sidebar-avatar-wrap {
-          width:70px; height:70px; border-radius:50%;
-          background:#e0e0e0; overflow:hidden;
-          display:flex; align-items:center; justify-content:center;
-          margin-bottom:14px;
+          width:56px; 
+          height:56px; 
+          border-radius:50%;
+          background:#e0e0e0; 
+          overflow:hidden;
+          display:flex; 
+          align-items:center; 
+          justify-content:center;
+          flex-shrink:0;
         }
-        .searched-label { font-size:12px; font-weight:700; color:#1976d2; margin-bottom:4px; }
-        .team-row { display:flex; align-items:center; gap:6px; }
-        .team-dot { width:12px; height:12px; border-radius:50%; background:#ff5722; flex-shrink:0; }
-        .team-id  { font-size:13px; color:#333; font-weight:500; }
+        @media (min-width: 768px) {
+          .sidebar-avatar-wrap {
+            width:60px;
+            height:60px;
+            margin-bottom:10px;
+          }
+        }
+        @media (min-width: 1024px) {
+          .sidebar-avatar-wrap {
+            width:70px;
+            height:70px;
+            margin-bottom:14px;
+          }
+        }
+
+        .searched-label { 
+          font-size:11px; 
+          font-weight:700; 
+          color:#1976d2;
+          margin-bottom:0;
+        }
+        @media (min-width: 768px) {
+          .searched-label { 
+            font-size:12px;
+            margin-bottom:4px;
+          }
+        }
+
+        .team-row { 
+          display:flex; 
+          align-items:center; 
+          gap:6px; 
+        }
+        @media (min-width: 768px) {
+          .team-row { margin-top:6px; }
+        }
+        @media (min-width: 1024px) {
+          .team-row { margin-top:8px; }
+        }
+
+        .team-dot { 
+          width:10px; 
+          height:10px; 
+          border-radius:50%; 
+          background:#ff5722; 
+          flex-shrink:0; 
+        }
+        @media (min-width: 768px) {
+          .team-dot { width:12px; height:12px; }
+        }
+
+        .team-id  { 
+          font-size:12px; 
+          color:#333; 
+          font-weight:500; 
+        }
+        @media (min-width: 768px) {
+          .team-id { font-size:13px; }
+        }
 
         /* Tree canvas */
         .tree-canvas-wrap {
-          flex:1; overflow:auto; position:relative;
+          flex:1; 
+          overflow:auto; 
+          position:relative;
           background:#1a6bb5;
-          min-height:520px;
-          /* scrollbar styling */
+          min-height:320px;
           scrollbar-width:thin;
           scrollbar-color:#e6a817 #1565c0;
         }
-        .tree-canvas-wrap::-webkit-scrollbar { width:10px; height:10px; }
+        @media (min-width: 768px) {
+          .tree-canvas-wrap {
+            min-height:420px;
+          }
+        }
+        @media (min-width: 1024px) {
+          .tree-canvas-wrap {
+            min-height:520px;
+          }
+        }
+
+        .tree-canvas-wrap::-webkit-scrollbar { 
+          width:8px; 
+          height:8px; 
+        }
+        @media (min-width: 768px) {
+          .tree-canvas-wrap::-webkit-scrollbar {
+            width:10px;
+            height:10px;
+          }
+        }
+
         .tree-canvas-wrap::-webkit-scrollbar-track { background:#1565c0; }
-        .tree-canvas-wrap::-webkit-scrollbar-thumb { background:#e6a817; border-radius:4px; }
+        .tree-canvas-wrap::-webkit-scrollbar-thumb { 
+          background:#e6a817; 
+          border-radius:4px; 
+        }
 
         .tree-canvas-inner {
-          padding:30px 40px 40px;
+          padding:20px 24px 30px;
           display:inline-block;
           min-width:100%;
+        }
+        @media (min-width: 640px) {
+          .tree-canvas-inner {
+            padding:25px 30px 35px;
+          }
+        }
+        @media (min-width: 1024px) {
+          .tree-canvas-inner {
+            padding:30px 40px 40px;
+          }
         }
       `}</style>
 
@@ -334,20 +600,20 @@ export default function MotherTreePage() {
             {/* LEGEND ROW */}
             <div className="legend-row">
               <div className="legend-item">
-                <ActiveAvatar size={52} />
+                <ActiveAvatar size={40} />
                 <span className="legend-label">Active ID</span>
               </div>
               <div className="legend-item">
-                <GoldAvatar size={52} />
+                <GoldAvatar size={40} />
                 <span className="legend-label">Gold ID</span>
               </div>
               <div className="legend-item">
                 <div className="legend-box-red" />
-                <span className="legend-label">Close for Joining</span>
+                <span className="legend-label">Close for<br/>Joining</span>
               </div>
               <div className="legend-item">
                 <div className="legend-box-green" />
-                <span className="legend-label">Open for Joining</span>
+                <span className="legend-label">Open for<br/>Joining</span>
               </div>
             </div>
 
@@ -376,7 +642,7 @@ export default function MotherTreePage() {
               <div className="tree-sidebar">
                 <div className="sidebar-avatar-wrap">
                   {/* Business person avatar */}
-                  <svg width="70" height="70" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                  <svg width="56" height="56" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
                     <circle cx="40" cy="40" r="40" fill="#e0e0e0"/>
                     <ellipse cx="40" cy="28" rx="13" ry="14" fill="#f5cba7"/>
                     <ellipse cx="40" cy="17" rx="14" ry="8" fill="#555"/>
@@ -385,10 +651,12 @@ export default function MotherTreePage() {
                     <ellipse cx="40" cy="72" rx="18" ry="8" fill="#c62828"/>
                   </svg>
                 </div>
-                <p className="searched-label">Searched<br/>Team</p>
-                <div className="team-row" style={{ marginTop: 8 }}>
-                  <div className="team-dot" />
-                  <span className="team-id">{memberId || "Sm674643"}</span>
+                <div>
+                  <p className="searched-label">Searched<br/>Team</p>
+                  <div className="team-row" style={{ marginTop: 4 }}>
+                    <div className="team-dot" />
+                    <span className="team-id">{memberId || "Sm674643"}</span>
+                  </div>
                 </div>
               </div>
 

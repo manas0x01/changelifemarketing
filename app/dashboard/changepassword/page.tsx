@@ -11,20 +11,49 @@ export default function ChangePasswordPage() {
   const [rePassword,   setRePassword]   = useState("");
   const [error,        setError]        = useState("");
   const [success,      setSuccess]      = useState(false);
+  const [loading,      setLoading]      = useState(false);
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     setError("");
     setSuccess(false);
+    setLoading(true);
 
-    if (!oldPassword.trim()) { setError("Please enter your old password."); return; }
-    if (!newPassword.trim()) { setError("Please enter a new password."); return; }
-    if (newPassword.length < 6) { setError("New password must be at least 6 characters."); return; }
-    if (newPassword !== rePassword) { setError("New passwords do not match."); return; }
+    if (!oldPassword.trim()) { setError("Please enter your old password."); setLoading(false); return; }
+    if (!newPassword.trim()) { setError("Please enter a new password."); setLoading(false); return; }
+    if (newPassword.length < 6) { setError("New password must be at least 6 characters."); setLoading(false); return; }
+    if (newPassword !== rePassword) { setError("New passwords do not match."); setLoading(false); return; }
 
-    setSuccess(true);
-    setOldPassword("");
-    setNewPassword("");
-    setRePassword("");
+    try {
+      const response = await fetch('/api/user/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          oldPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.error || "Failed to change password");
+        setLoading(false);
+        return;
+      }
+
+      setSuccess(true);
+      setOldPassword("");
+      setNewPassword("");
+      setRePassword("");
+      setLoading(false);
+    } catch (err) {
+      setError("An error occurred while changing the password");
+      console.error(err);
+      setLoading(false);
+    }
   };
 
   return (
@@ -140,8 +169,9 @@ export default function ChangePasswordPage() {
           letter-spacing:0.3px;
           transition:background .18s, transform .15s;
         }
-        .proceed-btn:hover { background:#1565c0; transform:translateY(-1px); }
-        .proceed-btn:active { transform:scale(0.98); }
+        .proceed-btn:hover:not(:disabled) { background:#1565c0; transform:translateY(-1px); }
+        .proceed-btn:active:not(:disabled) { transform:scale(0.98); }
+        .proceed-btn:disabled { background:#9fa8da; cursor:not-allowed; opacity:0.7; }
       `}</style>
 
       <div className="cp-root">
@@ -230,8 +260,8 @@ export default function ChangePasswordPage() {
 
               {/* Proceed Button */}
               <div className="proceed-wrap">
-                <button className="proceed-btn" onClick={handleProceed}>
-                  Proceed
+                <button className="proceed-btn" onClick={handleProceed} disabled={loading}>
+                  {loading ? "Processing..." : "Proceed"}
                 </button>
               </div>
 

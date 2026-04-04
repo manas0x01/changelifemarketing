@@ -84,6 +84,7 @@ export default function Dashboard() {
     const [basicIncome, setBasicIncome] = useState(0);
     const [boosterIncomeAmount, setBoosterIncomeAmount] = useState(0);
     const [boosterIncome, setBoosterIncome] = useState({ LG: 0, RG: 0, totalGoldMatching: 0 });
+    const [userProfile, setUserProfile] = useState({ fullName: "N/A", userId: "N/A", mobileNo: "N/A", email: "N/A", joiningDate: "N/A" });
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -139,6 +140,16 @@ export default function Dashboard() {
                 if (boosterAmountResponse.ok) {
                     const boosterAmountData = await boosterAmountResponse.json();
                     setBoosterIncomeAmount(boosterAmountData.boosterIncomeAmount || 0);
+                }
+                const profileResponse = await fetch('/api/user/get-profile', {
+                    method: 'GET',
+                    credentials: 'include',
+                });
+                if (profileResponse.ok) {
+                    const profileData = await profileResponse.json();
+                    if (profileData.user) {
+                        setUserProfile(profileData.user);
+                    }
                 }
             } catch (error) {
                 console.error('Error fetching dashboard data:', error);
@@ -621,11 +632,11 @@ export default function Dashboard() {
                                         <img src="/images/user.png" alt="User Profile" className="profile-avatar" style={{ objectFit: 'cover' }} />
                                     </div>
                                     <div className="profile-info">
-                                        <p>Name : ajay kumar</p>
-                                        <p>User ID : Sm674643</p>
-                                        <p>Mobile No. : 6204720770</p>
-                                        <p>Email ID : ajaysharmamlm71@gmail.com</p>
-                                        <p>Activation Date : 24 May 2020</p>
+                                        <p>Name : {userProfile.fullName}</p>
+                                        <p>User ID : {userProfile.userId}</p>
+                                        <p>Mobile No. : {userProfile.mobileNo}</p>
+                                        <p>Email ID : {userProfile.email}</p>
+                                        <p>Activation Date : {userProfile.joiningDate}</p>
                                     </div>
                                     <div className="profile-divider" />
                                     <div className="profile-actions">
@@ -643,7 +654,7 @@ export default function Dashboard() {
 
                                 {/* Insight Swamini */}
                                 <div className="insight-section">
-                                    <div className="section-header">Insight Swamini</div>
+                                    <div className="section-header"></div>
                                     <div style={{ padding: 20, minHeight: 200 }}>
                                         {/* Empty as in original */}
                                     </div>
@@ -716,11 +727,11 @@ export default function Dashboard() {
                                     <img src="/images/user.png" alt="User Profile" className="profile-avatar" style={{ objectFit: 'cover' }} />
                                 </div>
                                 <div className="profile-info">
-                                    <p>Name : ajay kumar</p>
-                                    <p>User ID : Sm674643</p>
-                                    <p>Mobile No. : 6204720770</p>
-                                    <p>Email ID : ajaysharmamlm71@gmail.com</p>
-                                    <p>Activation Date : 24 May 2020</p>
+                                    <p>Name : {userProfile.fullName}</p>
+                                    <p>User ID : {userProfile.userId}</p>
+                                    <p>Mobile No. : {userProfile.mobileNo}</p>
+                                    <p>Email ID : {userProfile.email}</p>
+                                    <p>Activation Date : {userProfile.joiningDate}</p>
                                 </div>
                                 <div className="profile-divider" />
                                 <div className="profile-actions">

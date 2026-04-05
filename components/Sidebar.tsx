@@ -78,7 +78,7 @@ const menuItems: MenuItem[] = [
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
       </svg>
     ),
-    children: [{ label: "Direct Members" }, { label: "Downline Members" }, { label: "Network Tree" },{label: "Gold Downline Members"}],
+    children: [{ label: "Direct Teams" }, { label: "Team Network" }, { label: "Network Tree" },{label: "Booster"}],
   },
   {
     id: "reports",

@@ -216,10 +216,8 @@ export default function NewRegisterPage() {
     // Check if E-Pin exists in available E-Pins
     let isValid = false;
     if (Array.isArray(availableEPins)) {
-      availableEPins.forEach((pin, index) => {
+      availableEPins.forEach((pin) => {
         if (typeof pin === 'string' && pin === epin.trim()) {
-          isValid = true;
-        } else if (typeof pin === 'object' && pin.pin === epin.trim()) {
           isValid = true;
         }
       });
@@ -230,6 +228,8 @@ export default function NewRegisterPage() {
       setEpinError("");
       toast.success("✓ E-Pin validated!");
     } else {
+      setEpinError("❌ E-Pin not found in database. Please check and try again.");
+      setEpinValidated(false);
     }
   };
 

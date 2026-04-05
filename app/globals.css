@@ -17,8 +17,8 @@
   --color-gold-accent: #F5A623;
   --color-white-card-background: #FFFFFF;
 
-  --font-heading: var(--font-sans);
-  --font-paragraph: roboto;
+  --font-heading: system-ui, -apple-system, sans-serif;
+  --font-paragraph: system-ui, -apple-system, sans-serif;
 
   --text-xs: 0.75rem;
   --text-sm: 0.875rem;

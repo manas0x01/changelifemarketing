@@ -1,23 +1,6 @@
 import type { Metadata } from "next";
-import { Fraunces, Roboto, Geist } from "next/font/google";
 import "./globals.css";
 import WhatsappChatbot from "@/components/WhatsappChatbot";
-import { cn } from "@/lib/utils";
-
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
-
-const fraunces = Fraunces({
-  variable: "--font-fraunces",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const roboto = Roboto({
-  variable: "--font-roboto",
-  weight: ["400", "500", "700", "900"],
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: "Change Life Marketing - Empowering Lives with Natural Health Products and Financial Opportunities",
@@ -33,9 +16,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" suppressHydrationWarning className={cn("font-sans", geist.variable)}>
+    <html lang="en" suppressHydrationWarning>
       <body
-        className={`${fraunces.variable} ${roboto.variable} antialiased`}
+        className="antialiased"
         suppressHydrationWarning
       >
         {children}

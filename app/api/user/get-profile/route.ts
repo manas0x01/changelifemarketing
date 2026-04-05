@@ -6,18 +6,14 @@ import User from "@/models/User";
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        
         if (!session?.user?.username) {
             return Response.json({ success: true, user: null });
         }
-
         await connectDB();
         const user = await User.findOne({ username: session.user.username });
-
         if (!user) {
             return Response.json({ success: true, user: null });
         }
-
         return Response.json({
             success: true,
             user: {
@@ -30,7 +26,6 @@ export async function GET(req: Request) {
             },
         });
     } catch (error) {
-        console.error("Error fetching user profile:", error);
         return Response.json({ success: true, user: null });
     }
 }

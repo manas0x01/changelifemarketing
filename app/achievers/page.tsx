@@ -297,7 +297,7 @@ export default function AchieversPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.1, duration: 0.6 }}
-                className="bg-gradient-to-br from-[#0A6E5A] to-[#1B7A6B] rounded-lg p-8 text-[#FFFFFF] hover:shadow-xl transition-shadow"
+                className="bg-linear-to-br from-[#0A6E5A] to-[#1B7A6B] rounded-lg p-8 text-[#FFFFFF] hover:shadow-xl transition-shadow"
               >
                 <CheckCircle className="w-10 h-10 text-[#C9A84C] mb-4" />
                 <h3 className="font-['Fraunces'] text-[1.5rem] mb-3">{category.title}</h3>
@@ -397,7 +397,7 @@ export default function AchieversPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: index * 0.2, duration: 0.6 }}
-                className="bg-gradient-to-br from-[#0A6E5A] to-[#1B7A6B] rounded-lg p-8 text-[#FFFFFF]"
+                className="bg-linear-to-br from-[#0A6E5A] to-[#1B7A6B] rounded-lg p-8 text-[#FFFFFF]"
               >
                 <div className="flex items-center gap-4 mb-6">
                   <Image

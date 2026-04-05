@@ -6,37 +6,27 @@ import { connectDB } from '@/lib/database';
 
 export async function GET(request: NextRequest) {
     try {
-        // Get session to verify user is authenticated
         const session = await getServerSession(authOptions);
-
-        // If no session, return default values
         if (!session || !session.user?.username) {
             return NextResponse.json({
                 success: true,
                 basicIncome: 0
             });
         }
-
-        // Connect to database
         await connectDB();
-
-        // Fetch user data with basicIncome info
         const user = await User.findOne({ username: session.user.username }).select('basicIncome');
-
         if (!user) {
             return NextResponse.json({
                 success: true,
                 basicIncome: 0
             });
         }
-
         return NextResponse.json({
             success: true,
             basicIncome: user.basicIncome || 0
         });
 
     } catch (error) {
-        console.error('Error fetching basic income:', error);
         return NextResponse.json({
             success: true,
             basicIncome: 0

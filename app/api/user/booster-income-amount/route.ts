@@ -23,7 +23,6 @@ export async function GET(req: Request) {
             boosterIncomeAmount: user.boosterIncomeAmount || 0,
         });
     } catch (error) {
-        console.error("Error fetching boosterIncomeAmount:", error);
         return Response.json({ success: true, boosterIncomeAmount: 0 });
     }
 }

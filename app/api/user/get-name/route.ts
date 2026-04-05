@@ -4,25 +4,19 @@ import User from "@/models/User";
 export async function POST(req: Request) {
     try {
         const { userId } = await req.json();
-
         if (!userId || !userId.trim()) {
             return Response.json({ error: "User ID is required" }, { status: 400 });
         }
-
         await connectDB();
-
-        // Find user by userId or username
         const user = await User.findOne({
             $or: [
                 { userId: userId.trim() },
                 { username: userId.trim() }
             ]
         }).select("fullName username userId");
-
         if (!user) {
             return Response.json({ error: "User not found" }, { status: 404 });
         }
-
         return Response.json({
             success: true,
             name: user.fullName || user.username || userId,

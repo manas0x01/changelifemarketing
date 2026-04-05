@@ -124,6 +124,7 @@ export async function POST(req: Request) {
             accountType,
             sponsorId,
             placementId,
+            placementPosition: position,
             role: "user",
             joiningDate: new Date().toISOString().split("T")[0],
         });

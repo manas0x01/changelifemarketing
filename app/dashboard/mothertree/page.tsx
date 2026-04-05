@@ -1,34 +1,16 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 
 interface TreeNode {
   id: string;
   name: string;
+  userId: string;
   type: "gold" | "active";
+  position?: "left" | "right";
   children?: TreeNode[];
 }
-
-const defaultTree: TreeNode = {
-  id: "Sm674643", name: "ajay kumar", type: "active",
-  children: [
-    {
-      id: "SM138501", name: "HARISH CHANDRA KUMAR", type: "active",
-      children: [
-        { id: "SM491066", name: "KALEEM AKHTAR",       type: "active", children: [] },
-        { id: "SM873277", name: "HARISH CHANDRA KUMAR",type: "gold",   children: [] },
-      ]
-    },
-    {
-      id: "SM649260", name: "MUNNA KUMAR", type: "active",
-      children: [
-        { id: "SM408648", name: "SURAJ KUMAR",  type: "active", children: [] },
-        { id: "SM943014", name: "VIKASH KUMAR", type: "active", children: [] },
-      ]
-    },
-  ]
-};
 
 const ActiveAvatar = ({ size = 56 }: { size?: number }) => (
   <svg width={size} height={size} viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
@@ -133,7 +115,11 @@ function collectEdges(layout: LayoutNode, out: { x1: number; y1: number; x2: num
   return out;
 }
 
-function TreeSVG({ root }: { root: TreeNode }) {
+function TreeSVG({ root }: { root: TreeNode | null }) {
+  if (!root) {
+    return <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>No data to display</div>;
+  }
+
   const treeWidth  = measureWidth(root);
   const depth      = getMaxDepth(root);
   const cx         = Math.max(treeWidth / 2 + 60, 500);
@@ -197,12 +183,43 @@ function TreeSVG({ root }: { root: TreeNode }) {
 export default function MotherTreePage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [memberId,     setMemberId]     = useState("");
-  const [treeRoot,     setTreeRoot]     = useState<TreeNode>(defaultTree);
+  const [treeRoot,     setTreeRoot]     = useState<TreeNode | null>(null);
+  const [loading,      setLoading]      = useState(false);
+  const [error,        setError]        = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const handleFilter = () => {
-    // In real app: fetch tree by memberId. Here we just reset to default.
-    setTreeRoot({ ...defaultTree });
+  const handleFilter = async () => {
+    if (!memberId.trim()) {
+      setError("Please enter a Member ID");
+      return;
+    }
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch("/api/user/placement-tree", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: memberId })
+      });
+
+      const data = await response.json();
+
+      if (!data.success) {
+        setError(data.error || "Failed to fetch placement tree");
+        setTreeRoot(null);
+      } else {
+        setTreeRoot(data.tree);
+        setError("");
+      }
+    } catch (err) {
+      const errorMsg = err instanceof Error ? err.message : "Something went wrong";
+      setError(errorMsg);
+      setTreeRoot(null);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -408,6 +425,22 @@ export default function MotherTreePage() {
           transform:translateY(-1px); 
         }
 
+        .filter-btn:disabled {
+          background:#ccc;
+          cursor:not-allowed;
+          transform:none;
+        }
+
+        .error-message {
+          color:#d32f2f;
+          font-size:12px;
+          margin-top:8px;
+          padding:8px 12px;
+          background:#ffebee;
+          border-radius:4px;
+          border-left:3px solid #d32f2f;
+        }
+
         /* LEFT PANEL + TREE PANEL */
         .tree-layout {
           display:flex; 
@@ -572,6 +605,21 @@ export default function MotherTreePage() {
             padding:30px 40px 40px;
           }
         }
+
+        .loading-spinner {
+          display:inline-block;
+          width:20px;
+          height:20px;
+          border:3px solid #f3f3f3;
+          border-top:3px solid #1976d2;
+          border-radius:50%;
+          animation:spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+          0% { transform:rotate(0deg); }
+          100% { transform:rotate(360deg); }
+        }
       `}</style>
 
       <div className="mt-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -594,7 +642,7 @@ export default function MotherTreePage() {
 
             {/* HEADER */}
             <div className="section-header">
-              <span className="section-title">Mother Tree</span>
+              <span className="section-title">Mother Tree (Placement Tree)</span>
             </div>
 
             {/* LEGEND ROW */}
@@ -608,12 +656,12 @@ export default function MotherTreePage() {
                 <span className="legend-label">Gold ID</span>
               </div>
               <div className="legend-item">
-                <div className="legend-box-red" />
-                <span className="legend-label">Close for<br/>Joining</span>
+                <div style={{ width: 40, height: 40, borderRadius: 8, background: '#ffcdd2' }} />
+                <span className="legend-label">Left Leg</span>
               </div>
               <div className="legend-item">
-                <div className="legend-box-green" />
-                <span className="legend-label">Open for<br/>Joining</span>
+                <div style={{ width: 40, height: 40, borderRadius: 8, background: '#c8e6c9' }} />
+                <span className="legend-label">Right Leg</span>
               </div>
             </div>
 
@@ -625,14 +673,22 @@ export default function MotherTreePage() {
                   <input
                     className="filter-input"
                     type="text"
-                    placeholder="Enter Member ID"
+                    placeholder="Enter Member ID (e.g., CLM2026001)"
                     value={memberId}
                     onChange={(e) => setMemberId(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleFilter()}
+                    suppressHydrationWarning
                   />
                 </div>
-                <button className="filter-btn" onClick={handleFilter}>Filter</button>
+                <button 
+                  className="filter-btn" 
+                  onClick={handleFilter}
+                  disabled={loading}
+                >
+                  {loading ? <span className="loading-spinner"></span> : "Filter"}
+                </button>
               </div>
+              {error && <div className="error-message">{error}</div>}
             </div>
 
             {/* TREE LAYOUT: sidebar + canvas */}
@@ -652,10 +708,10 @@ export default function MotherTreePage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="searched-label">Searched<br/>Team</p>
+                  <p className="searched-label">Searched<br/>ID</p>
                   <div className="team-row" style={{ marginTop: 4 }}>
                     <div className="team-dot" />
-                    <span className="team-id">{memberId || "Sm674643"}</span>
+                    <span className="team-id">{memberId || "---"}</span>
                   </div>
                 </div>
               </div>

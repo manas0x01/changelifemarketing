@@ -30,6 +30,7 @@ export interface IUser extends Document {
   sponsorName?: string;
   placementId?: string;
   placementName?: string;
+  placementPosition?: 'left' | 'right';
   role?: string;
   totalTeam?: {
     left: number;
@@ -205,6 +206,12 @@ const userSchema = new Schema<IUser>(
     placementName: {
       type: String,
       required: false,
+      trim: true,
+    },
+    placementPosition: {
+      type: String,
+      required: false,
+      enum: ['left', 'right'],
       trim: true,
     },
     role: {

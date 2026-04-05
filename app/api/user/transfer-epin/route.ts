@@ -66,7 +66,11 @@ export async function POST(req: Request) {
     
     recipientUser.ePins.push({
       pin: pinToTransfer.pin,
-      packageName: pinToTransfer.packageName
+      packageName: pinToTransfer.packageName,
+      transferredFrom: senderUser.username,
+      transferredFromName: senderUser.fullName || senderUser.username,
+      transferDate: new Date(),
+      remark: remark || undefined,
     });
 
     await recipientUser.save();

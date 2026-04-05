@@ -1,10 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 
-const packages = ["--Select Package--", "Agriculture Package", "Healthcare Package", "Sanitary Napkine"];
-const statuses  = ["--Select Status--", "Active", "Used", "Transferred", "Expired"];
 const pageSizes = [10, 20, 50, 100];
 
 interface EPin {
@@ -15,16 +14,21 @@ interface EPin {
   transferredTo: string;
   transferredToName: string;
   transferredDate: string;
+  usedDate?: string;
+  transferDate?: string;
+  transferredToId?: string;
 }
 
-// Sample data — shown after filter is applied
-const sampleData: EPin[] = [
-  { srNo: 1, ePin: "EP10023", package: "Agriculture Package",  status: "Active",      transferredTo: "--",       transferredToName: "--",         transferredDate: "--" },
-  { srNo: 2, ePin: "EP10024", package: "Healthcare Package",   status: "Used",        transferredTo: "SM123456", transferredToName: "Ravi Kumar",  transferredDate: "10-Jan-2026" },
-  { srNo: 3, ePin: "EP10025", package: "Sanitary Napkine",     status: "Transferred", transferredTo: "SM789012", transferredToName: "Priya Singh", transferredDate: "23-Oct-2025" },
-  { srNo: 4, ePin: "EP10026", package: "Agriculture Package",  status: "Expired",     transferredTo: "--",       transferredToName: "--",         transferredDate: "01-Oct-2025" },
-  { srNo: 5, ePin: "EP10027", package: "Healthcare Package",   status: "Active",      transferredTo: "--",       transferredToName: "--",         transferredDate: "--" },
-];
+// Get unique packages and statuses from data
+const getPackages = (data: EPin[]) => {
+  const pkgs = new Set(data.map(d => d.package));
+  return ["--Select Package--", ...Array.from(pkgs)];
+};
+
+const getStatuses = (data: EPin[]) => {
+  const stats = new Set(data.map(d => d.status));
+  return ["--Select Status--", ...Array.from(stats)];
+};
 
 const statusColor: Record<EPin["status"], string> = {
   Active:      "#26a69a",
@@ -34,6 +38,7 @@ const statusColor: Record<EPin["status"], string> = {
 };
 
 export default function MyEPinsPage() {
+  const { data: session, status } = useSession();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [selectedPkg,  setSelectedPkg]  = useState("--Select Package--");
   const [selectedStat, setSelectedStat] = useState("--Select Status--");
@@ -42,11 +47,56 @@ export default function MyEPinsPage() {
   const [pageSize,     setPageSize]     = useState(20);
   const [filtered,     setFiltered]     = useState<EPin[]>([]);
   const [hasFiltered,  setHasFiltered]  = useState(false);
+  const [allEPins,     setAllEPins]     = useState<EPin[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState<string | null>(null);
+  const [packages,     setPackages]     = useState<string[]>(["--Select Package--"]);
+  const [statuses,     setStatuses]     = useState<string[]>(["--Select Status--"]);
+
+  // Fetch E-Pins from database
+  useEffect(() => {
+    const fetchEPins = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("/api/user/get-epins");
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch E-Pins");
+        }
+        
+        const data = await response.json();
+        setAllEPins(data.ePins || []);
+        
+        // Update packages and statuses dynamically
+        setPackages(getPackages(data.ePins || []));
+        setStatuses(getStatuses(data.ePins || []));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        console.error("Error fetching E-Pins:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (status === "authenticated") {
+      fetchEPins();
+    }
+  }, [status]);
 
   const handleFilter = () => {
-    let data = [...sampleData];
+    let data = [...allEPins];
     if (selectedPkg  !== "--Select Package--") data = data.filter(d => d.package === selectedPkg);
     if (selectedStat !== "--Select Status--")  data = data.filter(d => d.status  === selectedStat);
+    if (fromDate) {
+      const from = new Date(fromDate);
+      data = data.filter(d => d.transferDate ? new Date(d.transferDate) >= from : true);
+    }
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
+      data = data.filter(d => d.transferDate ? new Date(d.transferDate) <= to : true);
+    }
     setFiltered(data.slice(0, pageSize));
     setHasFiltered(true);
   };
@@ -256,6 +306,21 @@ export default function MyEPinsPage() {
           border-top: 1px solid #f0f0f0;
           text-align: right;
         }
+
+        /* Skeleton Loading */
+        .skeleton-row { background: #f5f5f5; }
+        .skeleton-cell {
+          display: block;
+          height: 16px;
+          border-radius: 4px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: loading 1.5s infinite;
+        }
+        @keyframes loading {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
       `}</style>
 
       <div className="ep-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -272,6 +337,62 @@ export default function MyEPinsPage() {
           <span className="sep">/</span>
           <span className="current">My E-Pins</span>
         </div>
+
+        {/* Loading State - Skeleton Table */}
+        {loading && (
+          <div className="page-body">
+            <div className="main-card">
+              {/* HEADER */}
+              <div className="section-header">
+                <span className="section-header-title">My E-Pins</span>
+              </div>
+
+              <p className="note-text">Note : Please Use Filter To View This Report.</p>
+
+              {/* SKELETON TABLE */}
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Sr.No.</th>
+                      <th>E-Pin</th>
+                      <th>Package</th>
+                      <th>Status</th>
+                      <th>Used/Transferred To</th>
+                      <th>Used/Transferred To Name</th>
+                      <th>Used/Transferred Date</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...Array(5)].map((_, i) => (
+                      <tr key={i} className="skeleton-row">
+                        <td><div className="skeleton-cell" style={{ width: "40px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "90px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "80px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "70px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "110px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "120px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "100px" }}></div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="page-body">
+            <div className="main-card" style={{ padding: "20px", border: "1px solid #ef5350" }}>
+              <p style={{ color: "#d32f2f", fontSize: "14px" }}>Error: {error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        {!loading && !error && (
 
         <div className="page-body">
           <div className="main-card">
@@ -421,6 +542,7 @@ export default function MyEPinsPage() {
 
           </div>
         </div>
+        )}
       </div>
     </>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 
 const pageSizes = [10, 20, 50, 100];
@@ -17,15 +18,8 @@ interface Request {
   type: "Credit" | "Debit";
 }
 
-const sampleData: Request[] = [
-  { srNo: 1, requestNo: "REQ10023", date: "10-Jan-2026", memberId: "Sm674643", name: "ajay kumar", totalPins: 2,  totalAmount: "₹2,000", description: "Agriculture Package Purchase",  type: "Debit"  },
-  { srNo: 2, requestNo: "REQ10024", date: "23-Oct-2025", memberId: "SM956718", name: "ANKIT KUMAR", totalPins: 1, totalAmount: "₹1,000", description: "E-Pin Transfer Received",       type: "Credit" },
-  { srNo: 3, requestNo: "REQ10025", date: "01-Oct-2025", memberId: "Sm674643", name: "ajay kumar", totalPins: 3,  totalAmount: "₹3,000", description: "Healthcare Package Purchase",   type: "Debit"  },
-  { srNo: 4, requestNo: "REQ10026", date: "20-Sep-2025", memberId: "SM789012", name: "Priya Singh", totalPins: 1, totalAmount: "₹1,000", description: "E-Pin Transfer Received",       type: "Credit" },
-  { srNo: 5, requestNo: "REQ10027", date: "18-Sep-2025", memberId: "Sm674643", name: "ajay kumar", totalPins: 1,  totalAmount: "₹1,000", description: "Sanitary Napkine Purchase",    type: "Debit"  },
-];
-
 export default function MyRequestsPage() {
+  const { data: session, status } = useSession();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [fromDate,     setFromDate]     = useState("");
   const [toDate,       setToDate]       = useState("");
@@ -33,10 +27,49 @@ export default function MyRequestsPage() {
   const [pageSize,     setPageSize]     = useState(20);
   const [filtered,     setFiltered]     = useState<Request[]>([]);
   const [hasFiltered,  setHasFiltered]  = useState(false);
+  const [allRequests,  setAllRequests]  = useState<Request[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState<string | null>(null);
+
+  // Fetch pin requests from database
+  useEffect(() => {
+    const fetchRequests = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("/api/user/get-pin-requests");
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch requests");
+        }
+        
+        const data = await response.json();
+        setAllRequests(data.requests || []);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        console.error("Error fetching requests:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (status === "authenticated") {
+      fetchRequests();
+    }
+  }, [status]);
 
   const handleFilter = () => {
-    let data = [...sampleData];
+    let data = [...allRequests];
     if (selectType) data = data.filter(d => d.type === selectType);
+    if (fromDate) {
+      const from = new Date(fromDate);
+      data = data.filter(d => d.date !== "--" && new Date(d.date) >= from);
+    }
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
+      data = data.filter(d => d.date !== "--" && new Date(d.date) <= to);
+    }
     setFiltered(data.slice(0, pageSize));
     setHasFiltered(true);
   };
@@ -172,6 +205,19 @@ export default function MyRequestsPage() {
           padding:8px 16px; font-size:12.5px; color:#666;
           border-top:1px solid #f0f0f0; text-align:right;
         }
+
+        /* Skeleton Loading */
+        .skeleton-row { background:#f5f5f5; }
+        .skeleton-cell {
+          display:block; height:16px; border-radius:4px;
+          background:linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%);
+          background-size:200% 100%;
+          animation:loading 1.5s infinite;
+        }
+        @keyframes loading {
+          0% { background-position:200% 0; }
+          100% { background-position:-200% 0; }
+        }
       `}</style>
 
       <div className="mr-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -188,6 +234,66 @@ export default function MyRequestsPage() {
           <span className="sep">/</span>
           <span>My Requests</span>
         </div>
+
+        {/* Loading State - Skeleton Table */}
+        {loading && (
+          <div className="page-body">
+            <div className="main-card">
+              {/* HEADER */}
+              <div className="section-header">
+                <span className="section-header-title">My Requests</span>
+              </div>
+
+              <p className="note-text">Note : Please Use Filter To View This Report.</p>
+
+              {/* SKELETON TABLE */}
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Sr.No.</th>
+                      <th>Request No.</th>
+                      <th>Date</th>
+                      <th>Member ID</th>
+                      <th>Name</th>
+                      <th>Total Pins</th>
+                      <th>Total Amount</th>
+                      <th>Description</th>
+                      <th>Type</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...Array(5)].map((_, i) => (
+                      <tr key={i} className="skeleton-row">
+                        <td><div className="skeleton-cell" style={{ width: "40px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "100px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "90px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "80px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "120px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "60px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "90px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "100px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "70px" }}></div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="page-body">
+            <div className="main-card" style={{ padding: "20px", border: "1px solid #ef5350" }}>
+              <p style={{ color: "#d32f2f", fontSize: "14px" }}>Error: {error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        {!loading && !error && (
 
         <div className="page-body">
           <div className="main-card">
@@ -334,6 +440,7 @@ export default function MyRequestsPage() {
 
           </div>
         </div>
+        )}
       </div>
     </>
   );

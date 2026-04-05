@@ -1,12 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 
-const transferTypes = ["--Select Type--", "Self", "Received", "Sent"];
-const statuses      = ["--Select Status--", "Transferred", "Rejected", "Pending", "Approved"];
-const packages      = ["--Select Package--", "Agriculture Package", "Healthcare Package", "Sanitary Napkine"];
-const pageSizes     = [10, 20, 50, 100];
+const pageSizes = [10, 20, 50, 100];
 
 interface EPinRow {
   srNo: number;
@@ -21,39 +19,80 @@ interface EPinRow {
   status: "Transferred" | "Rejected" | "Pending" | "Approved";
 }
 
-const sampleData: EPinRow[] = [
-  { srNo: 1, reqNo: "REQ10031", fromUser: "SM956718", fromUserName: "ANKIT KUMAR",  transferType: "Received",    transferRejectDate: "10-Jan-2026", package: "Agriculture Package", quantity: 2, amount: "₹2,000", status: "Transferred" },
-  { srNo: 2, reqNo: "REQ10032", fromUser: "Sm674643", fromUserName: "ajay kumar",   transferType: "Sent",        transferRejectDate: "23-Oct-2025", package: "Healthcare Package",  quantity: 1, amount: "₹1,000", status: "Rejected"    },
-  { srNo: 3, reqNo: "REQ10033", fromUser: "SM789012", fromUserName: "Priya Singh",  transferType: "Received",    transferRejectDate: "01-Oct-2025", package: "Sanitary Napkine",    quantity: 3, amount: "₹3,000", status: "Approved"    },
-  { srNo: 4, reqNo: "REQ10034", fromUser: "Sm674643", fromUserName: "ajay kumar",   transferType: "Self",        transferRejectDate: "20-Sep-2025", package: "Agriculture Package", quantity: 1, amount: "₹1,000", status: "Pending"     },
-  { srNo: 5, reqNo: "REQ10035", fromUser: "SM112233", fromUserName: "Rahul Sharma", transferType: "Received",    transferRejectDate: "18-Sep-2025", package: "Healthcare Package",  quantity: 2, amount: "₹2,000", status: "Transferred" },
-];
-
-const statusColor: Record<EPinRow["status"], string> = {
-  Transferred: "#26a69a",
-  Rejected:    "#e53935",
-  Pending:     "#f57c00",
-  Approved:    "#1976d2",
-};
-
 export default function TransferredRejectedPage() {
+  const { data: session, status: sessionStatus } = useSession();
   const [dropdownOpen,  setDropdownOpen]  = useState(false);
-  const [transferType,  setTransferType]  = useState("--Select Type--");
-  const [status,        setStatus]        = useState("--Select Status--");
-  const [selectedPkg,   setSelectedPkg]   = useState("--Select Package--");
+  const [transferType,  setTransferType]  = useState("");
+  const [statusFilter,  setStatusFilter]  = useState("");
+  const [selectedPkg,   setSelectedPkg]   = useState("");
   const [fromDate,      setFromDate]      = useState("");
   const [toDate,        setToDate]        = useState("");
   const [pageSize,      setPageSize]      = useState(20);
   const [filtered,      setFiltered]      = useState<EPinRow[]>([]);
   const [hasFiltered,   setHasFiltered]   = useState(false);
+  const [allTransfers,  setAllTransfers]  = useState<EPinRow[]>([]);
+  const [loading,       setLoading]       = useState(true);
+  const [error,         setError]         = useState<string | null>(null);
+  const [packages,      setPackages]      = useState(new Set<string>());
+  const [types,         setTypes]         = useState(new Set<string>());
+
+  // Fetch transfer history
+  useEffect(() => {
+    const fetchTransfers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch("/api/user/get-transfer-history");
+        
+        if (!response.ok) {
+          throw new Error("Failed to fetch transfer history");
+        }
+        
+        const data = await response.json();
+        const transfers = data.transfers || [];
+        setAllTransfers(transfers);
+        
+        // Extract unique packages and types
+        const pkgs = new Set<string>(transfers.map((t: EPinRow) => t.package));
+        const typs = new Set<string>(transfers.map((t: EPinRow) => t.transferType));
+        setPackages(pkgs);
+        setTypes(typs);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An error occurred");
+        console.error("Error fetching transfers:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (sessionStatus === "authenticated") {
+      fetchTransfers();
+    }
+  }, [sessionStatus]);
 
   const handleFilter = () => {
-    let data = [...sampleData];
-    if (transferType !== "--Select Type--")    data = data.filter(d => d.transferType === transferType);
-    if (status       !== "--Select Status--")  data = data.filter(d => d.status       === status);
-    if (selectedPkg  !== "--Select Package--") data = data.filter(d => d.package      === selectedPkg);
+    let data = [...allTransfers];
+    if (transferType) data = data.filter(d => d.transferType === transferType);
+    if (statusFilter) data = data.filter(d => d.status === statusFilter);
+    if (selectedPkg) data = data.filter(d => d.package === selectedPkg);
+    if (fromDate) {
+      const from = new Date(fromDate);
+      data = data.filter(d => d.transferRejectDate !== "--" && new Date(d.transferRejectDate) >= from);
+    }
+    if (toDate) {
+      const to = new Date(toDate);
+      to.setHours(23, 59, 59, 999);
+      data = data.filter(d => d.transferRejectDate !== "--" && new Date(d.transferRejectDate) <= to);
+    }
     setFiltered(data.slice(0, pageSize));
     setHasFiltered(true);
+  };
+
+  const statusColor: Record<EPinRow["status"], string> = {
+    Transferred: "#26a69a",
+    Rejected:    "#e53935",
+    Pending:     "#f57c00",
+    Approved:    "#1976d2",
   };
 
   const handleExportCSV = () => {
@@ -174,6 +213,22 @@ export default function TransferredRejectedPage() {
 
         /* Record count */
         .record-count { padding:8px 16px; font-size:12.5px; color:#666; border-top:1px solid #f0f0f0; text-align:right; }
+
+        /* Skeleton Loader */
+        .skeleton-row { animation: pulse 1.5s ease-in-out infinite; }
+        .skeleton-cell { 
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: loading 1.5s infinite;
+          height: 16px;
+          border-radius: 4px;
+          margin: 4px 0;
+        }
+        @keyframes loading {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        .skeleton-table-row td { padding: 12px 14px; }
       `}</style>
 
       <div className="tr-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -190,6 +245,74 @@ export default function TransferredRejectedPage() {
           <span className="sep">/</span>
           <span>Transferred/Rejected</span>
         </div>
+
+        {/* Loading State with Skeleton */}
+        {loading && (
+          <div className="page-body">
+            <div className="main-card">
+              <div className="section-header">
+                <span className="section-title">Transferred/Rejected E-Pins</span>
+                <div className="header-actions">
+                  <button className="icon-btn" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                  </button>
+                  <button className="icon-btn" disabled>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+                  </button>
+                </div>
+              </div>
+
+              <p className="note-text">Loading data from database...</p>
+
+              <div className="table-wrap">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>Sr.No.</th>
+                      <th>Req.No.</th>
+                      <th>FromUser</th>
+                      <th>FromUser Name</th>
+                      <th>Transfer Type</th>
+                      <th>Transfer/Reject Date</th>
+                      <th>Package</th>
+                      <th>Quantity</th>
+                      <th>Amount</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[...Array(5)].map((_, i) => (
+                      <tr key={i} className="skeleton-row" style={{ background: "#f5f5f5" }}>
+                        <td><div className="skeleton-cell" style={{ width: "30px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "70px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "80px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "100px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "70px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "90px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "120px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "50px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "60px" }}></div></td>
+                        <td><div className="skeleton-cell" style={{ width: "80px" }}></div></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && !loading && (
+          <div className="page-body">
+            <div className="main-card" style={{ padding: "20px", border: "1px solid #ef5350" }}>
+              <p style={{ color: "#d32f2f", fontSize: "14px" }}>Error: {error}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Main Content */}
+        {!loading && !error && (
 
         <div className="page-body">
           <div className="main-card">
@@ -218,21 +341,27 @@ export default function TransferredRejectedPage() {
                 <div className="filter-group">
                   <label className="filter-label">Transfer Type :</label>
                   <select className="filter-select" value={transferType} onChange={(e) => setTransferType(e.target.value)}>
-                    {transferTypes.map(t => <option key={t}>{t}</option>)}
+                    <option value="">--Select Type--</option>
+                    {Array.from(types).map(t => <option key={t}>{t}</option>)}
                   </select>
                 </div>
 
                 <div className="filter-group">
                   <label className="filter-label">Status :</label>
-                  <select className="filter-select" value={status} onChange={(e) => setStatus(e.target.value)}>
-                    {statuses.map(s => <option key={s}>{s}</option>)}
+                  <select className="filter-select" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+                    <option value="">--Select Status--</option>
+                    <option value="Transferred">Transferred</option>
+                    <option value="Rejected">Rejected</option>
+                    <option value="Pending">Pending</option>
+                    <option value="Approved">Approved</option>
                   </select>
                 </div>
 
                 <div className="filter-group">
                   <label className="filter-label">Select Package :</label>
                   <select className="filter-select" value={selectedPkg} onChange={(e) => setSelectedPkg(e.target.value)}>
-                    {packages.map(p => <option key={p}>{p}</option>)}
+                    <option value="">--Select Package--</option>
+                    {Array.from(packages).map(p => <option key={p}>{p}</option>)}
                   </select>
                 </div>
 
@@ -321,6 +450,7 @@ export default function TransferredRejectedPage() {
 
           </div>
         </div>
+        )}
       </div>
     </>
   );

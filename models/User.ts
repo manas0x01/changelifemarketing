@@ -52,6 +52,12 @@ export interface IUser extends Document {
     pin: string;
     packageName: string;
     usedDate?: Date;
+    transferredFrom?: string;
+    transferredFromName?: string;
+    transferredTo?: string;
+    transferredToName?: string;
+    transferDate?: Date;
+    remark?: string;
   }[];
   createdAt: Date;
   updatedAt: Date;
@@ -281,6 +287,12 @@ const userSchema = new Schema<IUser>(
           pin: String,
           packageName: String,
           usedDate: Date,
+          transferredFrom: String,
+          transferredFromName: String,
+          transferredTo: String,
+          transferredToName: String,
+          transferDate: Date,
+          remark: String,
         },
       ],
       default: [],

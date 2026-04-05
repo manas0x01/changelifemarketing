@@ -1,16 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 
 type Step = "validate" | "transfer";
 
+interface Transfer {
+  date: string;
+  time: string;
+  ePin: string;
+  package: string;
+  transferredTo: string;
+  transferredToName: string;
+  status: "Success" | "Failed" | "Pending";
+  remark: string;
+}
+
 const packages = ["-- Select Package --", "Agriculture Package", "Healthcare Package", "Sanitary Napkine"];
 
 export default function TransferEPinPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [step,           setStep]           = useState<Step>("validate");
   const [txnPassword,    setTxnPassword]    = useState("");
   const [txnError,       setTxnError]       = useState("");
@@ -26,6 +38,31 @@ export default function TransferEPinPage() {
   const [remark,          setRemark]          = useState("");
   const [memberLoading,   setMemberLoading]   = useState(false);
   const [transferLoading, setTransferLoading] = useState(false);
+
+  // Transfer history states
+  const [transfers,       setTransfers]       = useState<Transfer[]>([]);
+  const [historyLoading,  setHistoryLoading]  = useState(false);
+
+  // Fetch transfer history
+  const fetchTransferHistory = async () => {
+    try {
+      setHistoryLoading(true);
+      const response = await fetch("/api/user/get-transfer-history");
+      const data = await response.json();
+      setTransfers(data.transfers || []);
+    } catch (error) {
+      console.error("Error fetching transfer history:", error);
+    } finally {
+      setHistoryLoading(false);
+    }
+  };
+
+  // Load history on mount
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchTransferHistory();
+    }
+  }, [status]);
 
   const handleProceed = async () => {
     if (!txnPassword.trim()) {
@@ -127,6 +164,9 @@ export default function TransferEPinPage() {
 
       // Success - show Sonner message and reset form
       toast.success(data.message || "E-Pin Sent Successfully! ✓");
+      
+      // Refresh transfer history
+      await fetchTransferHistory();
       
       // Reset form
       setPackageSelected("-- Select Package --");
@@ -343,6 +383,109 @@ export default function TransferEPinPage() {
           justify-content: center;
           padding-top: 4px;
         }
+
+        /* ── TRANSFER HISTORY TABLE ── */
+        .history-section {
+          width: 100%;
+          margin-top: 30px;
+        }
+
+        .history-card {
+          background: #fff;
+          border-radius: 10px;
+          overflow: hidden;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+          width: 100%;
+          max-width: 740px;
+          margin: 0 auto;
+        }
+
+        .history-header {
+          background: linear-gradient(90deg, #1976d2, #1565c0);
+          padding: 13px 20px;
+          font-size: 13px;
+          font-weight: 700;
+          color: #fff;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+        }
+
+        .history-body {
+          padding: 0;
+        }
+
+        .history-table {
+          width: 100%;
+          border-collapse: collapse;
+          font-size: 13px;
+        }
+
+        .history-table thead tr {
+          background: #3d6b9e;
+        }
+
+        .history-table thead th {
+          padding: 12px 14px;
+          text-align: left;
+          color: #fff;
+          font-weight: 600;
+          font-size: 12px;
+          white-space: nowrap;
+        }
+
+        .history-table tbody tr:nth-child(odd)  { background: #f9f9f9; }
+        .history-table tbody tr:nth-child(even) { background: #fff; }
+        .history-table tbody tr:hover { background: #f0f8ff; }
+
+        .history-table tbody td {
+          padding: 11px 14px;
+          color: #333;
+          border-bottom: 1px solid #eee;
+          font-size: 12px;
+        }
+
+        .status-success {
+          display: inline-block;
+          padding: 3px 10px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #fff;
+          background: #26a69a;
+        }
+
+        .history-empty {
+          text-align: center;
+          padding: 30px 20px;
+          color: #aaa;
+          font-size: 13px;
+        }
+
+        .history-loading {
+          text-align: center;
+          padding: 30px 20px;
+          color: #666;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 10px;
+        }
+
+        /* Skeleton Styles */
+        .skeleton-row { animation: pulse 1.5s ease-in-out infinite; }
+        .skeleton-cell { 
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: loading 1.5s infinite;
+          height: 16px;
+          border-radius: 4px;
+          margin: 4px 0;
+        }
+        @keyframes loading {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
       `}</style>
 
       <div className="ep-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -490,6 +633,91 @@ export default function TransferEPinPage() {
               </div>
             </div>
           )}
+
+          {/* ── TRANSFER HISTORY ── */}
+          <div className="history-section">
+            <div className="history-card">
+              <div className="history-header">Transfer History</div>
+              <div className="history-body">
+
+                {/* Loading State with Skeleton */}
+                {historyLoading && (
+                  <div>
+                    <table className="history-table">
+                      <thead>
+                        <tr>
+                          <th>Date</th>
+                          <th>Time</th>
+                          <th>E-Pin</th>
+                          <th>Package</th>
+                          <th>Transferred To</th>
+                          <th>Member Name</th>
+                          <th>Status</th>
+                          <th>Remark</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {[...Array(4)].map((_, i) => (
+                          <tr key={i} className="skeleton-row">
+                            <td><div className="skeleton-cell" style={{ width: "70px" }}></div></td>
+                            <td><div className="skeleton-cell" style={{ width: "60px" }}></div></td>
+                            <td><div className="skeleton-cell" style={{ width: "80px" }}></div></td>
+                            <td><div className="skeleton-cell" style={{ width: "120px" }}></div></td>
+                            <td><div className="skeleton-cell" style={{ width: "80px" }}></div></td>
+                            <td><div className="skeleton-cell" style={{ width: "100px" }}></div></td>
+                            <td><div className="skeleton-cell" style={{ width: "70px" }}></div></td>
+                            <td><div className="skeleton-cell" style={{ width: "60px" }}></div></td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* Empty State */}
+                {!historyLoading && transfers.length === 0 && (
+                  <div className="history-empty">
+                    <p>No transfers yet. Transfer your first E-Pin to see history here.</p>
+                  </div>
+                )}
+
+                {/* Data Loaded */}
+                {!historyLoading && transfers.length > 0 && (
+                  <table className="history-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>E-Pin</th>
+                        <th>Package</th>
+                        <th>Transferred To</th>
+                        <th>Member Name</th>
+                        <th>Status</th>
+                        <th>Remark</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transfers.map((transfer, idx) => (
+                        <tr key={idx}>
+                          <td>{transfer.date}</td>
+                          <td>{transfer.time}</td>
+                          <td>{transfer.ePin}</td>
+                          <td>{transfer.package}</td>
+                          <td>{transfer.transferredTo}</td>
+                          <td>{transfer.transferredToName}</td>
+                          <td>
+                            <span className="status-success">{transfer.status}</span>
+                          </td>
+                          <td>{transfer.remark}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+
+              </div>
+            </div>
+          </div>
 
         </div>
       </div>

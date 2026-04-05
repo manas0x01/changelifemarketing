@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
 type Step = "validate" | "transfer";
@@ -8,25 +10,139 @@ type Step = "validate" | "transfer";
 const packages = ["-- Select Package --", "Agriculture Package", "Healthcare Package", "Sanitary Napkine"];
 
 export default function TransferEPinPage() {
-  const [step,         setStep]         = useState<Step>("validate");
-  const [txnPassword,  setTxnPassword]  = useState("");
-  const [txnError,     setTxnError]     = useState("");
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [quantity,     setQuantity]     = useState("1");
-  const [toast,        setToast]        = useState(false);
+  const { data: session } = useSession();
+  const [step,           setStep]           = useState<Step>("validate");
+  const [txnPassword,    setTxnPassword]    = useState("");
+  const [txnError,       setTxnError]       = useState("");
+  const [loading,        setLoading]        = useState(false);
+  const [dropdownOpen,   setDropdownOpen]   = useState(false);
+  const [availablePins,  setAvailablePins]  = useState<any[]>([]);
 
-  const handleProceed = () => {
+  // Transfer form states
+  const [packageSelected, setPackageSelected] = useState("-- Select Package --");
+  const [memberId,        setMemberId]        = useState("");
+  const [memberName,      setMemberName]      = useState("");
+  const [selectedPin,     setSelectedPin]     = useState("");
+  const [remark,          setRemark]          = useState("");
+  const [memberLoading,   setMemberLoading]   = useState(false);
+  const [transferLoading, setTransferLoading] = useState(false);
+
+  const handleProceed = async () => {
     if (!txnPassword.trim()) {
       setTxnError("Please enter your transaction password.");
       return;
     }
+
+    setLoading(true);
     setTxnError("");
-    setStep("transfer");
+
+    try {
+      const response = await fetch("/api/user/verify-transaction-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transactionPassword: txnPassword }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setTxnError(data.error || "Verification failed");
+        setLoading(false);
+        return;
+      }
+      setAvailablePins(data.pins);
+      setStep("transfer");
+    } catch (error) {
+      setTxnError("An error occurred. Please try again.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleTransfer = () => {
-    setToast(true);
-    setTimeout(() => setToast(false), 3000);
+  // Fetch member name when member ID changes
+  const handleMemberIdChange = async (value: string) => {
+    setMemberId(value);
+    
+    if (!value.trim()) {
+      setMemberName("");
+      return;
+    }
+
+    setMemberLoading(true);
+    try {
+      const response = await fetch(`/api/user/get-member?id=${encodeURIComponent(value)}`);
+      const data = await response.json();
+
+      if (response.ok) {
+        setMemberName(data.memberName);
+      } else {
+        setMemberName("");
+      }
+    } catch (error) {
+      setMemberName("");
+    } finally {
+      setMemberLoading(false);
+    }
+  };
+
+  const handleTransfer = async () => {
+    // Validate all fields
+    if (!packageSelected || packageSelected === "-- Select Package --") {
+      toast.error("Please select a package");
+      return;
+    }
+    if (!memberId.trim()) {
+      toast.error("Please enter Member ID");
+      return;
+    }
+    if (!memberName) {
+      toast.error("Member not found. Please check the Member ID");
+      return;
+    }
+    if (!selectedPin) {
+      toast.error("Please select an E-Pin");
+      return;
+    }
+
+    setTransferLoading(true);
+
+    try {
+      const response = await fetch("/api/user/transfer-epin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          recipientMemberId: memberId,
+          pin: selectedPin,
+          package: packageSelected,
+          remark: remark
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        toast.error(data.error || "Transfer failed");
+        return;
+      }
+
+      // Success - show Sonner message and reset form
+      toast.success(data.message || "E-Pin Sent Successfully! ✓");
+      
+      // Reset form
+      setPackageSelected("-- Select Package --");
+      setMemberId("");
+      setMemberName("");
+      setSelectedPin("");
+      setRemark("");
+      setTxnPassword("");
+      setStep("validate");
+      setAvailablePins([]);
+
+    } catch (error) {
+      toast.error("An error occurred during transfer");
+    } finally {
+      setTransferLoading(false);
+    }
   };
 
   return (
@@ -138,8 +254,13 @@ export default function TransferEPinPage() {
           white-space: nowrap;
           flex-shrink: 0;
         }
-        .proceed-btn:hover { background: #1565c0; transform: translateY(-1px); }
-        .proceed-btn:active { transform: scale(0.98); }
+        .proceed-btn:hover:not(:disabled) { background: #1565c0; transform: translateY(-1px); }
+        .proceed-btn:active:not(:disabled) { transform: scale(0.98); }
+        .proceed-btn:disabled {
+          background: #90caf9;
+          cursor: not-allowed;
+          opacity: 0.8;
+        }
 
         /* ── TRANSFER FORM ── */
         .form-body { padding: 22px 20px 24px; }
@@ -222,21 +343,6 @@ export default function TransferEPinPage() {
           justify-content: center;
           padding-top: 4px;
         }
-
-        /* TOAST */
-        .toast {
-          position: fixed; bottom: 28px; right: 28px;
-          background: #26a69a; color: #fff;
-          padding: 12px 22px; border-radius: 8px;
-          font-size: 13.5px; font-weight: 500;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.18);
-          z-index: 999;
-          animation: fadeUp .3s ease;
-        }
-        @keyframes fadeUp {
-          from { opacity: 0; transform: translateY(10px); }
-          to   { opacity: 1; transform: translateY(0); }
-        }
       `}</style>
 
       <div className="ep-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -257,34 +363,38 @@ export default function TransferEPinPage() {
         <div className="page-body">
 
           {/* ── STEP 1: VALIDATE ── */}
-          <div className="center-card">
-            <div className="section-header">Fill The Following Details</div>
-            <div className="validate-body">
-              <span className="txn-label"><span className="req">*</span>Transaction Password :</span>
-              <div>
-                <div className="txn-row">
-                  <input
-                    className="txn-input"
-                    type="password"
-                    placeholder="Enter Transaction Password"
-                    value={txnPassword}
-                    onChange={(e) => setTxnPassword(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleProceed()}
-                    disabled={step === "transfer"}
-                  />
-                  {step === "validate" ? (
-                    <button className="proceed-btn" onClick={handleProceed}>Proceed</button>
-                  ) : (
-                    <span className="verified-badge">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                      Verified
-                    </span>
-                  )}
+          {step === "validate" && (
+            <div className="center-card">
+              <div className="section-header">Fill The Following Details</div>
+              <div className="validate-body">
+                <span className="txn-label"><span className="req">*</span>Transaction Password :</span>
+                <div>
+                  <div className="txn-row">
+                    <input
+                      className="txn-input"
+                      type="password"
+                      placeholder="Enter Transaction Password"
+                      value={txnPassword}
+                      onChange={(e) => setTxnPassword(e.target.value)}
+                      onKeyDown={(e) => e.key === "Enter" && handleProceed()}
+                      disabled={loading}
+                    />
+                    {step === "validate" ? (
+                      <button className="proceed-btn" onClick={handleProceed} disabled={loading}>
+                        {loading ? "Verifying..." : "Proceed"}
+                      </button>
+                    ) : (
+                      <span className="verified-badge">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        Verified
+                      </span>
+                    )}
+                  </div>
+                  {txnError && <div className="txn-error">{txnError}</div>}
                 </div>
-                {txnError && <div className="txn-error">{txnError}</div>}
               </div>
             </div>
-          </div>
+          )}
 
           {/* ── STEP 2: TRANSFER FORM ── */}
           {step === "transfer" && (
@@ -300,19 +410,22 @@ export default function TransferEPinPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Package :</label>
-                    <select className="form-select" defaultValue="-- Select Package --">
+                    <select 
+                      className="form-select" 
+                      value={packageSelected}
+                      onChange={(e) => setPackageSelected(e.target.value)}
+                    >
                       {packages.map(p => <option key={p}>{p}</option>)}
                     </select>
                   </div>
                   <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Quantity :</label>
+                    <label className="form-label">Notes :</label>
                     <input
                       className="form-input"
-                      type="number"
-                      min="1"
-                      max="99"
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value)}
+                      type="text"
+                      placeholder="Optional notes"
+                      value={remark}
+                      onChange={(e) => setRemark(e.target.value)}
                     />
                   </div>
                 </div>
@@ -325,6 +438,9 @@ export default function TransferEPinPage() {
                       className="form-input"
                       type="text"
                       placeholder="Enter Member ID"
+                      value={memberId}
+                      onChange={(e) => handleMemberIdChange(e.target.value)}
+                      disabled={transferLoading}
                     />
                   </div>
                   <div className="form-group">
@@ -332,7 +448,8 @@ export default function TransferEPinPage() {
                     <input
                       className="form-input"
                       type="text"
-                      placeholder="Auto-fetched"
+                      placeholder={memberLoading ? "Searching..." : "Auto-fetched"}
+                      value={memberName}
                       readOnly
                     />
                   </div>
@@ -342,26 +459,31 @@ export default function TransferEPinPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>E-Pin :</label>
-                    <input
-                      className="form-input"
-                      type="text"
-                      placeholder="Enter E-Pin"
-                    />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Remark :</label>
-                    <input
-                      className="form-input"
-                      type="text"
-                      placeholder="Optional remark"
-                    />
+                    <select 
+                      className="form-select" 
+                      value={selectedPin}
+                      onChange={(e) => setSelectedPin(e.target.value)}
+                      disabled={transferLoading}
+                    >
+                      <option value="">-- Select E-Pin --</option>
+                      {availablePins.map((pin, idx) => (
+                        <option key={idx} value={pin.pin}>
+                          {pin.pin} ({pin.packageName})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 </div>
 
                 {/* Submit */}
                 <div className="submit-wrap">
-                  <button className="proceed-btn" style={{ padding: "11px 36px", fontSize: 14 }} onClick={handleTransfer}>
-                    Transfer E-Pin
+                  <button 
+                    className="proceed-btn" 
+                    style={{ padding: "11px 36px", fontSize: 14 }} 
+                    onClick={handleTransfer}
+                    disabled={transferLoading}
+                  >
+                    {transferLoading ? "Transferring..." : "Transfer E-Pin"}
                   </button>
                 </div>
 
@@ -370,12 +492,6 @@ export default function TransferEPinPage() {
           )}
 
         </div>
-
-        {/* Toast */}
-        {toast && (
-          <div className="toast">✓ E-Pin transferred successfully!</div>
-        )}
-
       </div>
     </>
   );

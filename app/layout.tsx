@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import WhatsappChatbot from "@/components/WhatsappChatbot";
+import { Providers } from "./providers";
 
 export const metadata: Metadata = {
   title: "Change Life Marketing - Empowering Lives with Natural Health Products and Financial Opportunities",
@@ -21,8 +22,10 @@ export default function RootLayout({
         className="antialiased"
         suppressHydrationWarning
       >
-        {children}
-        <WhatsappChatbot />
+        <Providers>
+          {children}
+          <WhatsappChatbot />
+        </Providers>
       </body>
     </html>
   );

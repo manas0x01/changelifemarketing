@@ -76,10 +76,6 @@ export default function Login() {
     setLoading(true);
     
     try {
-      console.log("\n🔐 === LOGIN ATTEMPT (NextAuth) ===");
-      console.log("📤 Calling nextAuth signIn...");
-      console.log("   Username:", username);
-      
       const result = await signIn("credentials", {
         username,
         password,
@@ -98,11 +94,6 @@ export default function Login() {
         setLoading(false);
         return;
       }
-      
-      console.log("✅ Login successful!");
-      console.log("   NextAuth session created");
-      console.log("   Redirecting to dashboard...");
-      console.log("\n");
       
       setLoading(false);
       setTimeout(() => {

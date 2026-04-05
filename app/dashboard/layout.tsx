@@ -22,10 +22,17 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
   /* ── SIDEBAR SLIDE ANIMATION ── */
   .sidebar-wrap {
     width: 240px;
-    overflow: hidden;
+    overflow-y: auto;
+    overflow-x: hidden;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     flex-shrink: 0;
     position: relative;
+    max-height: 100vh;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .sidebar-wrap::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 
   .sidebar-wrap.collapsed {
@@ -62,6 +69,11 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
     flex: 1;
     overflow-y: auto;
     background: #f0f2f5;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .dashboard-content::-webkit-scrollbar {
+    display: none; /* Chrome, Safari and Opera */
   }
 
   /* ── DESKTOP: SIDEBAR VISIBLE BY DEFAULT ── */
@@ -95,6 +107,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       transform: translateX(-100%);
       transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       overflow-y: auto;
+      overflow-x: hidden;
     }
 
     .sidebar-wrap.collapsed {

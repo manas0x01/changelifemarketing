@@ -51,56 +51,13 @@ const mockIncomePlans: IncomePlans[] = [
   }
 ];
 
-// Mock Awards Data
 const mockAwards: AwardsandRewards[] = [
-  {
-    _id: '1',
-    rankLevel: 1,
-    rankName: 'Bronze Member',
-    requiredPairs: 1,
-    monetaryValue: 1000,
-    awardDescription: 'Starting your journey with us. Build your network and earn through direct sales.'
-  },
-  {
-    _id: '2',
-    rankLevel: 2,
-    rankName: 'Silver Member',
-    requiredPairs: 5,
-    monetaryValue: 5000,
-    awardDescription: 'Recognized performer building a solid downline. Enjoy increased commission rates.'
-  },
-  {
-    _id: '3',
-    rankLevel: 3,
-    rankName: 'Gold Member',
-    requiredPairs: 10,
-    monetaryValue: 15000,
-    awardDescription: 'Elite achiever with significant network growth. Access exclusive benefits and training.'
-  },
-  {
-    _id: '4',
-    rankLevel: 4,
-    rankName: 'Platinum Member',
-    requiredPairs: 25,
-    monetaryValue: 50000,
-    awardDescription: 'Top-tier performer with exceptional leadership. International recognition and incentives.'
-  },
-  {
-    _id: '5',
-    rankLevel: 5,
-    rankName: 'Diamond Member',
-    requiredPairs: 50,
-    monetaryValue: 150000,
-    awardDescription: 'Ultimate achievement in our organization. Lifetime benefits and executive privileges.'
-  },
-  {
-    _id: '6',
-    rankLevel: 6,
-    rankName: 'Crown Member',
-    requiredPairs: 100,
-    monetaryValue: 500000,
-    awardDescription: 'Highest honor reserved for visionary leaders. Global recognition and special rewards.'
-  }
+  { _id: '1', rankLevel: 1, rankName: 'Bronze Member', requiredPairs: 1, monetaryValue: 1000, awardDescription: 'Starting your journey with us. Build your network and earn through direct sales.' },
+  { _id: '2', rankLevel: 2, rankName: 'Silver Member', requiredPairs: 5, monetaryValue: 5000, awardDescription: 'Recognized performer building a solid downline. Enjoy increased commission rates.' },
+  { _id: '3', rankLevel: 3, rankName: 'Gold Member', requiredPairs: 10, monetaryValue: 15000, awardDescription: 'Elite achiever with significant network growth. Access exclusive benefits and training.' },
+  { _id: '4', rankLevel: 4, rankName: 'Platinum Member', requiredPairs: 25, monetaryValue: 50000, awardDescription: 'Top-tier performer with exceptional leadership. International recognition and incentives.' },
+  { _id: '5', rankLevel: 5, rankName: 'Diamond Member', requiredPairs: 50, monetaryValue: 150000, awardDescription: 'Ultimate achievement in our organization. Lifetime benefits and executive privileges.' },
+  { _id: '6', rankLevel: 6, rankName: 'Crown Member', requiredPairs: 100, monetaryValue: 500000, awardDescription: 'Highest honor reserved for visionary leaders. Global recognition and special rewards.' }
 ];
 
 export default function BusinessPlanPage() {
@@ -108,22 +65,22 @@ export default function BusinessPlanPage() {
   const [awards] = useState<AwardsandRewards[]>(mockAwards);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[#FFFFFF]">
       <Header />
 
       {/* Hero Section */}
-      <section className="bg-primary py-20">
+      <section className="bg-[#0A6E5A] py-20">
         <div className="max-w-400 mx-auto px-6 text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6 }}
           >
-            <TrendingUp className="w-16 h-16 text-secondary mx-auto mb-6" />
-            <h1 className="font-heading text-4xl md:text-6xl text-white-card-background mb-4">
+            <TrendingUp className="w-16 h-16 text-[#C9A84C] mx-auto mb-6" />
+            <h1 className="font-['Fraunces'] text-[2.25rem] md:text-[3.75rem] text-[#FFFFFF] mb-4">
               Business & Income Plan
             </h1>
-            <p className="font-paragraph text-lg text-white-card-background max-w-3xl mx-auto">
+            <p className="font-['Roboto'] text-[1.125rem] text-[#FFFFFF] max-w-3xl mx-auto">
               Discover multiple income streams and unlimited earning potential
             </p>
           </motion.div>
@@ -131,7 +88,7 @@ export default function BusinessPlanPage() {
       </section>
 
       {/* Income Plans Section */}
-      <section className="py-20 bg-white-card-background">
+      <section className="py-20 bg-[#FFFFFF]">
         <div className="max-w-400 mx-auto px-6">
           <div className="min-h-100">
             {incomePlans.length > 0 ? (
@@ -144,38 +101,38 @@ export default function BusinessPlanPage() {
                     viewport={{ once: true }}
                     transition={{ delay: index * 0.1 }}
                     className={`${
-                      index % 2 === 0 ? 'bg-white-card-background' : 'bg-primary'
+                      index % 2 === 0 ? 'bg-[#FFFFFF]' : 'bg-[#0A6E5A]'
                     } rounded-lg overflow-hidden border-4 ${
-                      index % 2 === 0 ? 'border-primary' : 'border-secondary'
+                      index % 2 === 0 ? 'border-[#0A6E5A]' : 'border-[#C9A84C]'
                     }`}
                   >
-                    <div className={`p-8 md:p-12 ${index % 2 === 0 ? '' : 'text-white-card-background'}`}>
+                    <div className={`p-8 md:p-12 ${index % 2 === 0 ? '' : 'text-[#FFFFFF]'}`}>
                       <div className="flex items-center gap-4 mb-6">
                         <div className={`w-16 h-16 rounded-full ${
-                          index % 2 === 0 ? 'bg-secondary' : 'bg-white-card-background'
+                          index % 2 === 0 ? 'bg-[#C9A84C]' : 'bg-[#FFFFFF]'
                         } flex items-center justify-center`}>
-                          <span className={`font-heading text-2xl ${
-                            index % 2 === 0 ? 'text-secondary-foreground' : 'text-primary'
+                          <span className={`font-['Fraunces'] text-[1.5rem] ${
+                            index % 2 === 0 ? 'text-[#FFFFFF]' : 'text-[#0A6E5A]'
                           }`}>
                             {String(index + 1).padStart(2, '0')}
                           </span>
                         </div>
                         <div>
-                          <h2 className={`font-heading text-3xl md:text-4xl ${
-                            index % 2 === 0 ? 'text-primary' : 'text-secondary'
+                          <h2 className={`font-['Fraunces'] text-[1.875rem] md:text-[2.25rem] ${
+                            index % 2 === 0 ? 'text-[#0A6E5A]' : 'text-[#C9A84C]'
                           }`}>
                             {plan.planName}
                           </h2>
                           {plan.isComingSoon && (
-                            <span className="inline-block bg-gold-accent text-white-card-background px-3 py-1 rounded text-sm font-paragraph font-semibold mt-2">
+                            <span className="inline-block bg-[#F5A623] text-[#FFFFFF] px-3 py-1 rounded text-[0.875rem] font-['Roboto'] font-semibold mt-2">
                               Coming Soon
                             </span>
                           )}
                         </div>
                       </div>
 
-                      <p className={`font-paragraph text-lg mb-6 ${
-                        index % 2 === 0 ? 'text-black' : 'text-white-card-background'
+                      <p className={`font-['Roboto'] text-[1.125rem] mb-6 ${
+                        index % 2 === 0 ? 'text-black' : 'text-[#FFFFFF]'
                       }`}>
                         {plan.shortDescription}
                       </p>
@@ -192,27 +149,26 @@ export default function BusinessPlanPage() {
                       )}
 
                       <div className={`${
-                        index % 2 === 0 ? 'bg-primary' : 'bg-white-card-background'
+                        index % 2 === 0 ? 'bg-[#0A6E5A]' : 'bg-[#FFFFFF]'
                       } p-6 rounded-lg mb-6`}>
-                        <h3 className={`font-heading text-xl mb-4 ${
-                          index % 2 === 0 ? 'text-secondary' : 'text-primary'
+                        <h3 className={`font-['Fraunces'] text-[1.25rem] mb-4 ${
+                          index % 2 === 0 ? 'text-[#C9A84C]' : 'text-[#0A6E5A]'
                         }`}>
                           Detailed Explanation:
                         </h3>
-                        <p className={'font-paragraph whitespace-pre-line text-secondary'
-                      }>
+                        <p className="font-['Roboto'] whitespace-pre-line text-[#C9A84C]">
                           {plan.detailedExplanation}
                         </p>
                       </div>
 
                       {plan.matchingPairDetails && (
                         <div className={`${
-                          index % 2 === 0 ? 'bg-secondary' : 'bg-deep-teal-dark'
+                          index % 2 === 0 ? 'bg-[#C9A84C]' : 'bg-[#1B7A6B]'
                         } p-6 rounded-lg mb-6`}>
-                          <h3 className="font-heading text-xl mb-4 text-secondary-foreground">
+                          <h3 className="font-['Fraunces'] text-[1.25rem] mb-4 text-[#FFFFFF]">
                             Matching Pair Details:
                           </h3>
-                          <p className="font-paragraph whitespace-pre-line text-secondary-foreground">
+                          <p className="font-['Roboto'] whitespace-pre-line text-[#FFFFFF]">
                             {plan.matchingPairDetails}
                           </p>
                         </div>
@@ -220,15 +176,12 @@ export default function BusinessPlanPage() {
 
                       {plan.incomePotential && (
                         <div className={`border-4 ${
-                          index % 2 === 0 ? 'border-secondary' : 'border-white-card-background'
+                          index % 2 === 0 ? 'border-[#C9A84C]' : 'border-[#FFFFFF]'
                         } p-6 rounded-lg`}>
-                          <h3 className={`font-heading text-2xl mb-4 ${
-                            index % 2 === 0 ? 'text-secondary' : 'text-secondary'
-                          }`}>
+                          <h3 className="font-['Fraunces'] text-[1.5rem] mb-4 text-[#C9A84C]">
                             Income Potential:
                           </h3>
-                          <p className={'font-paragraph text-xl whitespace-pre-line text-secondary'
-                }>
+                          <p className="font-['Roboto'] text-[1.25rem] whitespace-pre-line text-[#C9A84C]">
                             {plan.incomePotential}
                           </p>
                         </div>
@@ -243,7 +196,7 @@ export default function BusinessPlanPage() {
       </section>
 
       {/* Awards & Rewards Section */}
-      <section className="py-20 bg-primary">
+      <section className="py-20 bg-[#0A6E5A]">
         <div className="max-w-400 mx-auto px-6">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -252,11 +205,11 @@ export default function BusinessPlanPage() {
             transition={{ duration: 0.6 }}
             className="text-center mb-12"
           >
-            <Award className="w-16 h-16 text-secondary mx-auto mb-6" />
-            <h2 className="font-heading text-4xl md:text-5xl text-white-card-background mb-4">
+            <Award className="w-16 h-16 text-[#C9A84C] mx-auto mb-6" />
+            <h2 className="font-['Fraunces'] text-[2.25rem] md:text-[3rem] text-[#FFFFFF] mb-4">
               Awards & Rewards
             </h2>
-            <p className="font-paragraph text-lg text-white-card-background">
+            <p className="font-['Roboto'] text-[1.125rem] text-[#FFFFFF]">
               Exclusive rewards for Booster Plan achievers
             </p>
           </motion.div>
@@ -268,27 +221,17 @@ export default function BusinessPlanPage() {
                 whileInView={{ opacity: 1 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.6 }}
-                className="bg-white-card-background rounded-lg overflow-hidden"
+                className="bg-[#FFFFFF] rounded-lg overflow-hidden"
               >
                 <div className="overflow-x-auto">
                   <table className="w-full">
-                    <thead className="bg-secondary">
+                    <thead className="bg-[#C9A84C]">
                       <tr>
-                        <th className="font-heading text-lg text-secondary-foreground px-6 py-4 text-left">
-                          Rank Level
-                        </th>
-                        <th className="font-heading text-lg text-secondary-foreground px-6 py-4 text-left">
-                          Rank Name
-                        </th>
-                        <th className="font-heading text-lg text-secondary-foreground px-6 py-4 text-left">
-                          Required Pairs
-                        </th>
-                        <th className="font-heading text-lg text-secondary-foreground px-6 py-4 text-left">
-                          Award Description
-                        </th>
-                        <th className="font-heading text-lg text-secondary-foreground px-6 py-4 text-left">
-                          Monetary Value
-                        </th>
+                        <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Rank Level</th>
+                        <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Rank Name</th>
+                        <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Required Pairs</th>
+                        <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Award Description</th>
+                        <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Monetary Value</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -296,24 +239,24 @@ export default function BusinessPlanPage() {
                         <tr
                           key={award._id}
                           className={`${
-                            index % 2 === 0 ? 'bg-white-card-background' : 'bg-gray-50'
+                            index % 2 === 0 ? 'bg-[#FFFFFF]' : 'bg-gray-50'
                           } border-b border-gray-200`}
                         >
-                          <td className="font-paragraph px-6 py-4">
-                            <span className="inline-flex items-center justify-center w-10 h-10 bg-primary text-primary-foreground rounded-full font-semibold">
+                          <td className="font-['Roboto'] px-6 py-4">
+                            <span className="inline-flex items-center justify-center w-10 h-10 bg-[#0A6E5A] text-[#FFFFFF] rounded-full font-semibold">
                               {award.rankLevel}
                             </span>
                           </td>
-                          <td className="font-heading text-lg text-primary px-6 py-4">
+                          <td className="font-['Fraunces'] text-[1.125rem] text-[#0A6E5A] px-6 py-4">
                             {award.rankName}
                           </td>
-                          <td className="font-paragraph text-secondary px-6 py-4">
+                          <td className="font-['Roboto'] text-[#C9A84C] px-6 py-4">
                             {award.requiredPairs?.toLocaleString()} pairs
                           </td>
-                          <td className="font-paragraph text-secondary px-6 py-4">
+                          <td className="font-['Roboto'] text-[#C9A84C] px-6 py-4">
                             {award.awardDescription}
                           </td>
-                          <td className="font-heading text-xl text-secondary px-6 py-4">
+                          <td className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C] px-6 py-4">
                             {award.monetaryValue ? `₹${award.monetaryValue.toLocaleString()}` : '-'}
                           </td>
                         </tr>
@@ -326,6 +269,7 @@ export default function BusinessPlanPage() {
           </div>
         </div>
       </section>
+
       <Footer />
     </div>
   );

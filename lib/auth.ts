@@ -7,12 +7,15 @@ declare module "next-auth" {
   interface User {
     role?: string;
     username?: string;
+    fullName?: string;
   }
   interface Session {
-    user: User & {
+    user: {
       id?: string;
-      role?: string;
+      email?: string;
+      name?: string;
       username?: string;
+      role?: string;
     }
   }
 }
@@ -20,8 +23,10 @@ declare module "next-auth" {
 declare module "next-auth/jwt" {
   interface JWT {
     id?: string;
-    role?: string;
+    email?: string;
+    name?: string;
     username?: string;
+    role?: string;
   }
 }
 
@@ -57,6 +62,7 @@ export const authOptions: NextAuthOptions = {
           return {
             id: user._id.toString(),
             email: user.email,
+            name: user.fullName || user.username,
             username: user.username,
             role: user.role,
           };
@@ -76,22 +82,25 @@ export const authOptions: NextAuthOptions = {
   },
   jwt: {
     maxAge: 30 * 24 * 60 * 60, // 30 days
-    secret: process.env.NEXTAUTH_SECRET,
   },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.role = user.role;
+        token.email = user.email || undefined;
+        token.name = user.name || undefined;
         token.username = user.username;
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
-        session.user.role = token.role as string;
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
         session.user.username = token.username as string;
+        session.user.role = token.role as string;
       }
       return session;
     },

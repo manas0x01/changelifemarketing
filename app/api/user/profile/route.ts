@@ -1,71 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
-import { connectDB } from "@/lib/database";
-import User from "@/models/User";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { connectDB } from '@/lib/database';
+import { authOptions } from '@/lib/auth';
+import User from '@/models/User';
 
 export async function GET(req: NextRequest) {
   try {
-    console.log('🔐 Profile API - Getting session...');
-    
-    // Get NextAuth session
     const session = await getServerSession(authOptions);
-    
-    if (!session?.user?.username) {
-      console.error('❌ No valid session found');
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "Unauthorized - Please login" },
+        { success: false, message: 'Unauthorized' },
         { status: 401 }
       );
     }
 
-    console.log('✅ Session verified, username:', session.user.username);
-    
     await connectDB();
-    
-    // Find user by username from session
-    const user = await User.findOne({ username: session.user.username }).select("-password -otp -otpExpiry -transactionPassword");
-    
+
+    const user = await User.findOne(
+      { $or: [{ userId: session.user.id }, { username: session.user.id }] }
+    )
+      .select('userId username fullName email phone memberType registeredPackage joiningDate boosterDownlineMembers boosterIncome basicIncome')
+      .lean();
+
     if (!user) {
-      console.error("❌ User not found for username:", session.user.username);
       return NextResponse.json(
-        { error: "User not found" },
+        { success: false, message: 'User not found' },
         { status: 404 }
       );
     }
-    
-    console.log("✅ User found, returning profile data for:", session.user.username);
-    const profileData = {
-      personalDetails: [
-        { label: "Full Name", value: user.fullName || "N/A" },
-        { label: "Gender", value: user.gender || "N/A" },
-        { label: "Date of Birth", value: user.dateOfBirth ? new Date(user.dateOfBirth).toLocaleDateString() : "N/A" },
-        { label: "Mobile No.", value: user.mobileNo || "N/A" },
-        { label: "Pan No.", value: user.panNo || "N/A" },
-        { label: "Email", value: user.email || "N/A" },
-        { label: "State", value: user.state || "N/A" },
-        { label: "District", value: user.district || "N/A" },
-        { label: "City", value: user.city || "N/A" },
-        { label: "Address", value: user.address || "N/A" },
-        { label: "Pincode", value: user.pincode || "N/A" },
-      ],
-      bankDetails: [
-        { label: "Bank Name", value: user.bankName || "N/A" },
-        { label: "Branch Name", value: user.branchName || "N/A" },
-        { label: "Account No.", value: user.accountNo || "N/A" },
-        { label: "IFSC", value: user.ifsc || "N/A" },
-        { label: "Account Type", value: user.accountType || "N/A" },
-      ],
-      username: user.fullName || user.username || "User",
-      userId: user.username || user._id.toString(),
-      avatar: "/images/user.png",
-    };
 
-    return NextResponse.json(profileData, { status: 200 });
-  } catch (error) {
-    console.error("❌ Profile fetch error:", error);
     return NextResponse.json(
-      { error: "Failed to fetch profile" },
+      {
+        success: true,
+        data: user,
+      },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    console.error('[GET /api/user/profile]', err);
+    return NextResponse.json(
+      { success: false, message: err.message ?? 'Internal server error' },
       { status: 500 }
     );
   }

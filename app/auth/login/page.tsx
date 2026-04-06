@@ -81,26 +81,17 @@ export default function Login() {
         password,
         redirect: false,
       });
-      
-      console.log("📥 SignIn response received:");
-      console.log("   Status:", result?.status);
-      console.log("   Error:", result?.error);
-      console.log("   URL:", result?.url);
-      
       if (!result?.ok) {
-        console.log("❌ Login failed:", result?.error);
         setError(result?.error || "Login failed. Please try again.");
         generateCaptcha();
         setLoading(false);
         return;
       }
-      
       setLoading(false);
       setTimeout(() => {
         router.push("/dashboard");
       }, 100);
     } catch (err) {
-      console.error("❌ Error during login:", err);
       setError("An error occurred. Please try again.");
       generateCaptcha();
       setLoading(false);

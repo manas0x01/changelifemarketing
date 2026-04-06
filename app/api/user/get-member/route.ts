@@ -1,41 +1,44 @@
-import { connectDB } from "@/lib/database";
-import User from "@/models/User";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { connectDB } from '@/lib/database';
+import { authOptions } from '@/lib/auth';
+import User from '@/models/User';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const memberId = searchParams.get("id");
-
-    if (!memberId) {
-      return Response.json({ error: "Member ID is required" }, { status: 400 });
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      );
     }
 
     await connectDB();
 
-    // Find user by username or userId
-    let user = await User.findOne({ username: memberId });
-    if (!user) {
-      user = await User.findOne({ userId: memberId });
-    }
+    const user = await User.findById(session.user.id)
+      .select('userId username fullName email phone memberType registeredPackage joiningDate')
+      .lean();
 
     if (!user) {
-      return Response.json({ 
-        error: `Member ${memberId} not found` 
-      }, { status: 404 });
+      return NextResponse.json(
+        { success: false, message: 'User not found' },
+        { status: 404 }
+      );
     }
 
-    return Response.json({
-      success: true,
-      memberId: user.username || user.userId,
-      memberName: user.fullName || user.username,
-      email: user.email,
-      joiningDate: user.joiningDate
-    });
-
-  } catch (error) {
-    console.error("Fetch member error:", error);
-    return Response.json({ 
-      error: "An error occurred while fetching member details" 
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        success: true,
+        data: user,
+      },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    console.error('[GET /api/user/get-member]', err);
+    return NextResponse.json(
+      { success: false, message: err.message ?? 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

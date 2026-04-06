@@ -10,56 +10,6 @@ import Footer from '@/components/Footer';
 import { MessageCircle } from 'lucide-react';
 import TeamPromotersSection from '@/components/TeamPromotersSection';
 
-const MOCK_STATISTICS = [
-  { _id: '1', statisticName: 'Members Joined', statisticValue: 15000, description: 'Total number of members who have joined our platform since inception.', unit: 'members', displayOrder: 1 },
-  { _id: '2', statisticName: 'Products Available', statisticValue: 250, description: 'The total count of unique products currently available in our catalog.', unit: 'products', displayOrder: 2 },
-  { _id: '3', statisticName: 'States Active', statisticValue: 15, description: 'Number of states where our services are actively operational.', unit: 'states', displayOrder: 3 },
-  { _id: '4', statisticName: 'Income Distributed', statisticValue: 5000000, description: 'Cumulative income distributed to our partners and members.', unit: '₹', displayOrder: 4 },
-];
-
-const MOCK_LEGAL_DOCS = [
-  {
-    _id: '1',
-    documentName: 'Goods and Services Tax (GST) Certificate',
-    documentTypeLabel: 'GST',
-    description: 'Official registration certificate for Goods and Services Tax (GSTIN) for Company.',
-    thumbnailImage: '/images/gstcertificate.png',
-    documentUrl: '#',
-  },
-  {
-    _id: '2',
-    documentName: 'MSME Udyam Registration Certificate',
-    documentTypeLabel: 'MSME',
-    description: 'Certificate of registration under the Micro, Small and Medium Enterprises (MSME) Development Act, 2006.',
-    thumbnailImage: '/images/msmecertificate.png',
-    documentUrl: '#',
-  },
-  {
-    _id: '3',
-    documentName: 'Permanent Account Number (PAN) Card',
-    documentTypeLabel: 'PAN',
-    description: 'Official PAN card for Company, issued by the Indian Income Tax Department..',
-    thumbnailImage: '/images/pancard.png',
-    documentUrl: '#',
-  },
-  {
-    _id: '4',
-    documentName: 'Aadhar Card - Director Ajay Kumar',
-    documentTypeLabel: 'Aadhar',
-    description: 'Aadhar card of a key personnel for identity verification purposes.',
-    thumbnailImage: '/images/aadharcard.png',
-    documentUrl: '#',
-  },
-  {
-    _id: '5',
-    documentName: 'Certificate of Incorporation',
-    documentTypeLabel: 'Incorporation',
-    description: 'Official document certifying the legal formation and existence of Company.',
-    thumbnailImage: '/images/companyregistration.png',
-    documentUrl: '#',
-  }
-];
-
 const SectionHeading = ({ title, subtitle, align = 'center', light = false }: { title: string, subtitle?: string, align?: 'left' | 'center', light?: boolean }) => (
   <div className={`mb-16 ${align === 'center' ? 'text-center' : 'text-left'}`}>
     <motion.div
@@ -89,10 +39,10 @@ const SectionHeading = ({ title, subtitle, align = 'center', light = false }: { 
 );
 
 export default function HomePage() {
-  const [statistics, setStatistics] = useState(MOCK_STATISTICS);
-  const [legalDocs, setLegalDocs] = useState(MOCK_LEGAL_DOCS);
-  const [isLoadingStats, setIsLoadingStats] = useState(false);
-  const [isLoadingDocs, setIsLoadingDocs] = useState(false);
+  const [statistics, setStatistics] = useState<any[]>([]);
+  const [legalDocs, setLegalDocs] = useState<any[]>([]);
+  const [isLoadingStats, setIsLoadingStats] = useState(true);
+  const [isLoadingDocs, setIsLoadingDocs] = useState(true);
   const [counts, setCounts] = useState<Record<string, number>>({});
 
   const heroRef = useRef<HTMLDivElement>(null);
@@ -103,6 +53,34 @@ export default function HomePage() {
 
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"]);
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [statsRes, docsRes] = await Promise.all([
+          fetch('/api/statistics'),
+          fetch('/api/legal-docs')
+        ]);
+
+        if (statsRes.ok) {
+          const statsData = await statsRes.json();
+          setStatistics(statsData.data || []);
+          setIsLoadingStats(false);
+        }
+
+        if (docsRes.ok) {
+          const docsData = await docsRes.json();
+          setLegalDocs(docsData.data || []);
+          setIsLoadingDocs(false);
+        }
+      } catch (error) {
+        setIsLoadingStats(false);
+        setIsLoadingDocs(false);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const observer = new IntersectionObserver(

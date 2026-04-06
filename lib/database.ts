@@ -14,32 +14,24 @@ if (!cached.mongoose) {
 
 export async function connectDB() {
   if (cached.mongoose.conn) {
-    console.log('📦 Using cached MongoDB connection');
     return cached.mongoose.conn;
   }
-
   if (!cached.mongoose.promise) {
-    console.log('🔌 Establishing new MongoDB connection...');
     const opts = {
       bufferCommands: false,
     };
-
     cached.mongoose.promise = mongoose
       .connect(MONGODB_URI, opts)
       .then((mongoose) => {
-        console.log('✅ MongoDB connected successfully');
         return mongoose;
       });
   }
-
   try {
     cached.mongoose.conn = await cached.mongoose.promise;
   } catch (e) {
-    console.error('❌ MongoDB connection error:', e);
     cached.mongoose.promise = null;
     throw e;
   }
-
   return cached.mongoose.conn;
 }
 

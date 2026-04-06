@@ -3,9 +3,11 @@
 import { ReactNode } from "react";
 import Sidebar from "@/components/Sidebar";
 import { SidebarProvider, useSidebar } from "@/context/SidebarContext";
+import { usePageLoading } from "@/context/LoadingContext";
 
 function DashboardLayoutContent({ children }: { children: ReactNode }) {
   const { isOpen, toggleSidebar } = useSidebar();
+  const { isPageLoading } = usePageLoading();
 
   return (
     <>
@@ -17,6 +19,31 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
     height: 100vh;
     background: #f0f2f5;
     position: relative;
+  }
+
+  /* ── LOADING BAR ── */
+  .page-loading-bar {
+    position: fixed;
+    top: 52px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, #1de9b6, #00c853);
+    transform-origin: left;
+    animation: loadingPulse 1s ease-in-out infinite;
+    z-index: 999;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .page-loading-bar.active {
+    opacity: 1;
+  }
+
+  @keyframes loadingPulse {
+    0% { width: 30%; }
+    50% { width: 70%; }
+    100% { width: 30%; }
   }
 
   /* ── SIDEBAR SLIDE ANIMATION ── */
@@ -135,6 +162,9 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
     }
   }
 `}</style>
+
+      {/* Page Loading Bar */}
+      <div className={`page-loading-bar ${isPageLoading ? "active" : ""}`} />
 
       <div className="dashboard-wrapper">
         {/* Mobile Overlay */}

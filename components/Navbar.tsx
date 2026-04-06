@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { useSidebar } from "@/context/SidebarContext";
-import { useState, useEffect } from "react";
+import { useUser } from "@/context/UserContext";
+import { useCallback, memo } from "react";
 
 interface NavbarProps {
   dropdownOpen: boolean;
@@ -12,70 +13,26 @@ interface NavbarProps {
   setActivePage: (page: "dashboard" | "profile") => void;
 }
 
-export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }: NavbarProps) {
+function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }: NavbarProps) {
   const { toggleSidebar, isOpen } = useSidebar();
   const router = useRouter();
-  const [userData, setUserData] = useState<{ username: string; fullName: string } | null>(null);
+  const { userData } = useUser(); // Get user data from global context
 
-  // Fetch user data on mount
-  useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        console.log("🔵 [Navbar] Fetching user data from /api/user/update-profile...");
-        
-        const response = await fetch("/api/user/update-profile", {
-          method: "GET",
-          credentials: "include",
-        });
-
-        console.log("📥 [Navbar] Response received:", {
-          status: response.status,
-          statusText: response.statusText,
-          ok: response.ok,
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          console.log("✅ [Navbar] User data fetched successfully:", data);
-          
-          if (data.data) {
-            setUserData({
-              username: data.data.username,
-              fullName: data.data.fullName,
-            });
-            console.log("✅ [Navbar] User state updated:", {
-              username: data.data.username,
-              fullName: data.data.fullName,
-            });
-          }
-        } else {
-          console.warn("⚠️ [Navbar] Response not OK:", response.status);
-        }
-      } catch (error) {
-        console.error("❌ [Navbar] Failed to fetch user data:", error);
-      }
-    };
-
-    fetchUserData();
-  }, []);
-
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
-      console.log("🔵 [Navbar] Initiating logout with NextAuth...");
-      
-      // Use NextAuth's signOut function
-      await signOut({ 
-        redirect: false, 
+      await signOut({
+        redirect: false,
         callbackUrl: '/'
       });
-      
-      console.log("✅ [Navbar] Logout successful with NextAuth");
       setDropdownOpen(false);
       router.push('/');
     } catch (error) {
-      console.error('❌ [Navbar] Logout error:', error);
     }
-  };
+  }, [setDropdownOpen, router]);
+
+  const handleDropdownToggle = useCallback(() => {
+    setDropdownOpen(!dropdownOpen);
+  }, [dropdownOpen, setDropdownOpen]);
 
   return (
     <>
@@ -177,14 +134,14 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
           </div>
         </div>
         <div className="topnav-right">
-          <span className="user-name" onClick={() => setDropdownOpen(!dropdownOpen)}>
+          <span className="user-name" onClick={handleDropdownToggle}>
             {userData ? `${userData.fullName} ( ${userData.username} )` : 'Loading...'}
           </span>
           <img
             src="/images/user.png"
             alt="User Avatar"
             className="user-avatar"
-            onClick={() => setDropdownOpen(!dropdownOpen)}
+            onClick={handleDropdownToggle}
             style={{ cursor: 'pointer' }}
           />
 
@@ -215,3 +172,5 @@ export default function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }:
     </>
   );
 }
+
+export default memo(Navbar);

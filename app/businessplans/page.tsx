@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, Award, Gift, Clock } from 'lucide-react';
 import Header from '@/components/Header';
@@ -8,61 +8,39 @@ import Footer from '@/components/Footer';
 import { IncomePlans, AwardsandRewards } from '@/entities';
 import Image from 'next/image';
 
-const mockIncomePlans: IncomePlans[] = [
-  {
-    _id: '1',
-    planName: 'Direct Income',
-    shortDescription: 'Earn directly from products you sell to customers',
-    detailedExplanation: 'Direct Income is earned when you sell Change Life Marketing products directly to retail customers or distributors.\n\n• Earn 20-30% commission on all personal sales\n• No minimum monthly purchase requirement\n• Commissions credited weekly\n• Transparent commission structure\n• Lifetime customer relationships',
-    matchingPairDetails: 'Not applicable for Direct Income. Focus on building your customer base and personal sales volume.',
-    incomePotential: 'Monthly Income Potential: ₹5,000 - ₹50,000\n\nExample: Sell ₹10,000 of products = ₹2,000 - ₹3,000 commission',
-    isComingSoon: false,
-    diagramImage: ''
-  },
-  {
-    _id: '2',
-    planName: 'Binary Income (Booster Plan)',
-    shortDescription: 'Earn from building a binary network structure',
-    detailedExplanation: 'The Booster plan is our flagship income stream where you build a binary network.\n\n• Create pairs in your left and right legs\n• Earn commission on pair matching\n• Unlimited depth earning\n• Weekly bonus calculations\n• Fast track to leadership positions',
-    matchingPairDetails: 'A matching pair consists of:\n• Minimum ₹2,000 from left leg + Minimum ₹2,000 from right leg\n• Commission: ₹400 per matching pair\n• Unlimited pairs per week\n• Carryover from one week to next for spillover bonus',
-    incomePotential: 'Monthly Income Potential: ₹10,000 - ₹500,000+\n\nExample: 10 pairs/week = ₹4,000/week = ₹16,000/month\nWith spillover and bonuses, earn significantly more',
-    isComingSoon: false,
-    diagramImage: ''
-  },
-  {
-    _id: '3',
-    planName: 'Leadership Bonus',
-    shortDescription: 'Additional income for team leaders',
-    detailedExplanation: 'Once you achieve leadership ranks, earn additional bonuses.\n\n• Based on your organization size\n• 5% bonus on organization sales\n• Leadership level incentives\n• Team building rewards\n• Exclusive leader benefits',
-    matchingPairDetails: 'Leadership bonuses are calculated based on:\n• Your current rank level\n• Total organization volume\n• Active distributor count\n• Monthly bonus pool distribution',
-    incomePotential: 'Monthly Income Potential: ₹20,000 - ₹300,000\n\nBased on your team size and volume growth',
-    isComingSoon: false,
-    diagramImage: ''
-  },
-  {
-    _id: '4',
-    planName: 'Repurchase Bonus',
-    shortDescription: 'Recurring income from team purchases',
-    detailedExplanation: 'Earn bonus when your team members make monthly purchases.\n\n• 10% bonus on team purchases\n• Applied to every team member transaction\n• Automated monthly payouts\n• Builds passive recurring income\n• Incentivizes team loyalty',
-    matchingPairDetails: 'Repurchase bonus applies to:\n• First level direct members\n• First 2 levels through matching legs\n• Monthly purchase volumes\n• Minimum purchase requirement: ₹1,000',
-    incomePotential: 'Monthly Passive Income: ₹5,000 - ₹50,000\n\nExample: 50 team members × ₹2,000 avg purchase × 10% = ₹10,000/month',
-    isComingSoon: false,
-    diagramImage: ''
-  }
-];
+const mockIncomePlans: IncomePlans[] = [];
 
-const mockAwards: AwardsandRewards[] = [
-  { _id: '1', rankLevel: 1, rankName: 'Bronze Member', requiredPairs: 1, monetaryValue: 1000, awardDescription: 'Starting your journey with us. Build your network and earn through direct sales.' },
-  { _id: '2', rankLevel: 2, rankName: 'Silver Member', requiredPairs: 5, monetaryValue: 5000, awardDescription: 'Recognized performer building a solid downline. Enjoy increased commission rates.' },
-  { _id: '3', rankLevel: 3, rankName: 'Gold Member', requiredPairs: 10, monetaryValue: 15000, awardDescription: 'Elite achiever with significant network growth. Access exclusive benefits and training.' },
-  { _id: '4', rankLevel: 4, rankName: 'Platinum Member', requiredPairs: 25, monetaryValue: 50000, awardDescription: 'Top-tier performer with exceptional leadership. International recognition and incentives.' },
-  { _id: '5', rankLevel: 5, rankName: 'Diamond Member', requiredPairs: 50, monetaryValue: 150000, awardDescription: 'Ultimate achievement in our organization. Lifetime benefits and executive privileges.' },
-  { _id: '6', rankLevel: 6, rankName: 'Crown Member', requiredPairs: 100, monetaryValue: 500000, awardDescription: 'Highest honor reserved for visionary leaders. Global recognition and special rewards.' }
-];
+const mockAwards: AwardsandRewards[] = [];
 
 export default function BusinessPlanPage() {
-  const [incomePlans] = useState<IncomePlans[]>(mockIncomePlans);
-  const [awards] = useState<AwardsandRewards[]>(mockAwards);
+  const [incomePlans, setIncomePlans] = useState<IncomePlans[]>([]);
+  const [awards, setAwards] = useState<AwardsandRewards[]>([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [plansRes, awardsRes] = await Promise.all([
+          fetch('/api/income-plans'),
+          fetch('/api/awards')
+        ]);
+
+        if (plansRes.ok) {
+          const plansData = await plansRes.json();
+          setIncomePlans(plansData.data || []);
+        }
+
+        if (awardsRes.ok) {
+          const awardsData = await awardsRes.json();
+          setAwards(awardsData.data || []);
+        }
+      } catch (error) {
+        setIncomePlans([]);
+        setAwards([]);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[#FFFFFF]">

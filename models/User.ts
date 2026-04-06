@@ -25,12 +25,15 @@ export interface IUser extends Document {
   accountType?: string;
   nomineeName?: string;
   nomineeRelation?: string;
+  registeredPackage?: string;
+  registeredEPIN?: string;
   joiningDate?: string;
   sponsorId?: string;
   sponsorName?: string;
   placementId?: string;
   placementName?: string;
   placementPosition?: 'left' | 'right';
+  memberType?: 'gold' | 'active';
   role?: string;
   totalTeam?: {
     left: number;
@@ -48,9 +51,56 @@ export interface IUser extends Document {
     RG: number;
     totalGoldMatching: number;
   };
+  basicIncomeRecords?: {
+    srNo: number;
+    amount: number;
+    pairCount: number;
+    date: Date;
+    description: string;
+    status: string;
+  }[];
+  boosterIncomeRecords?: {
+    srNo: number;
+    amount: number;
+    pairCount: number;
+    date: Date;
+    description: string;
+    status: string;
+  }[];
+  successPayments?: {
+    srNo: number;
+    fromDate: Date;
+    toDate: Date;
+    silverBinary: number;
+    goldBinary: number;
+    total: number;
+    reimbursement: number;
+    tds: number;
+    netpay: number;
+  }[];
+  boosterCounting?: {
+    srNo: number;
+    RBV: number;
+    LBV: number;
+    RCarry: number;
+    LCarry: number;
+    matching: number;
+    date: Date;
+    fromMemberId: string;
+    product: string;
+    description: string;
+  }[];
+  boosterDownlineMembers?: {
+    srNo: number;
+    memberId: string;
+    name: string;
+    date: string;
+    position: 'left' | 'right';
+  }[];
   ePins?: {
     pin: string;
     packageName: string;
+    status: 'Active' | 'Used' | 'Transferred' | 'Expired';
     usedDate?: Date;
     transferredFrom?: string;
     transferredFromName?: string;
@@ -58,6 +108,47 @@ export interface IUser extends Document {
     transferredToName?: string;
     transferDate?: Date;
     remark?: string;
+  }[];
+  transferHistory?: {
+    srNo: number;
+    reqNo: string;
+    fromUser: string;
+    fromUserName: string;
+    transferType: string;
+    transferRejectDate: Date;
+    package: string;
+    quantity: number;
+    amount: string;
+    status: 'Transferred' | 'Rejected' | 'Pending' | 'Approved';
+  }[];
+  transferredEpins?: {
+    date: Date;
+    time: string;
+    ePin: string;
+    package: string;
+    transferredTo: string;
+    transferredToName: string;
+    status: 'Success' | 'Failed' | 'Pending';
+    remark?: string;
+  }[];
+  pinPurchaseHistory?: {
+    date: Date;
+    packageName: string;
+    quantity: number;
+    totalAmount: number;
+    paymentId: string;
+    status: 'Success' | 'Failed' | 'Pending';
+  }[];
+  pinRequests?: {
+    srNo: number;
+    requestNo: string;
+    date: Date;
+    memberId: string;
+    name: string;
+    totalPins: number;
+    totalAmount: string;
+    description: string;
+    type: 'Credit' | 'Debit';
   }[];
   createdAt: Date;
   updatedAt: Date;
@@ -189,6 +280,16 @@ const userSchema = new Schema<IUser>(
       default: 'Son',
       enum: ['Son', 'Daughter', 'Wife', 'Husband', 'Father', 'Mother', 'Brother', 'Sister', 'Other'],
     },
+    registeredPackage: {
+      type: String,
+      required: false,
+      trim: true,
+    },
+    registeredEPIN: {
+      type: String,
+      required: false,
+      trim: true,
+    },
     joiningDate: {
       type: String,
       required: false,
@@ -219,6 +320,12 @@ const userSchema = new Schema<IUser>(
       required: false,
       enum: ['left', 'right'],
       trim: true,
+    },
+    memberType: {
+      type: String,
+      required: false,
+      enum: ['gold', 'active'],
+      default: 'active',
     },
     role: {
       type: String,
@@ -281,11 +388,83 @@ const userSchema = new Schema<IUser>(
       },
       default: { LG: 0, RG: 0, totalGoldMatching: 0 },
     },
+    basicIncomeRecords: {
+      type: [
+        {
+          srNo: Number,
+          amount: Number,
+          pairCount: Number,
+          date: Date,
+          description: String,
+          status: String,
+        },
+      ],
+      default: [],
+    },
+    boosterIncomeRecords: {
+      type: [
+        {
+          srNo: Number,
+          amount: Number,
+          pairCount: Number,
+          date: Date,
+          description: String,
+          status: String,
+        },
+      ],
+      default: [],
+    },
+    successPayments: {
+      type: [
+        {
+          srNo: Number,
+          fromDate: Date,
+          toDate: Date,
+          silverBinary: Number,
+          goldBinary: Number,
+          total: Number,
+          reimbursement: Number,
+          tds: Number,
+          netpay: Number,
+        },
+      ],
+      default: [],
+    },
+    boosterCounting: {
+      type: [
+        {
+          srNo: Number,
+          RBV: Number,
+          LBV: Number,
+          RCarry: Number,
+          LCarry: Number,
+          matching: Number,
+          date: Date,
+          fromMemberId: String,
+          product: String,
+          description: String,
+        },
+      ],
+      default: [],
+    },
+    boosterDownlineMembers: {
+      type: [
+        {
+          srNo: Number,
+          memberId: String,
+          name: String,
+          date: String,
+          position: String,
+        },
+      ],
+      default: [],
+    },
     ePins: {
       type: [
         {
           pin: String,
           packageName: String,
+          status: String,
           usedDate: Date,
           transferredFrom: String,
           transferredFromName: String,
@@ -293,6 +472,67 @@ const userSchema = new Schema<IUser>(
           transferredToName: String,
           transferDate: Date,
           remark: String,
+        },
+      ],
+      default: [],
+    },
+    transferHistory: {
+      type: [
+        {
+          srNo: Number,
+          reqNo: String,
+          fromUser: String,
+          fromUserName: String,
+          transferType: String,
+          transferRejectDate: Date,
+          package: String,
+          quantity: Number,
+          amount: String,
+          status: String,
+        },
+      ],
+      default: [],
+    },
+    transferredEpins: {
+      type: [
+        {
+          date: Date,
+          time: String,
+          ePin: String,
+          package: String,
+          transferredTo: String,
+          transferredToName: String,
+          status: String,
+          remark: String,
+        },
+      ],
+      default: [],
+    },
+    pinPurchaseHistory: {
+      type: [
+        {
+          date: Date,
+          packageName: String,
+          quantity: Number,
+          totalAmount: Number,
+          paymentId: String,
+          status: String,
+        },
+      ],
+      default: [],
+    },
+    pinRequests: {
+      type: [
+        {
+          srNo: Number,
+          requestNo: String,
+          date: Date,
+          memberId: String,
+          name: String,
+          totalPins: Number,
+          totalAmount: String,
+          description: String,
+          type: String,
         },
       ],
       default: [],

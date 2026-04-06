@@ -27,9 +27,6 @@ async function sendConfirmationEmail(params: {
   amount: number;
   paymentId: string;
 }) {
-  // In production: call your backend API / EmailJS / SendGrid here
-  console.log("📧 Sending email to:", params.email, params);
-  // Simulated email content:
   return new Promise<void>((resolve) => setTimeout(resolve, 600));
 }
 
@@ -83,9 +80,6 @@ export default function BuyEPinPage() {
     setStep("paying");
 
     try {
-      // First, verify transaction password with backend
-      console.log('🔐 Verifying transaction password with backend...');
-      
       const verifyResponse = await fetch('/api/auth/verify-transaction-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,14 +87,11 @@ export default function BuyEPinPage() {
       });
 
       const verifyData = await verifyResponse.json();
-
       if (!verifyResponse.ok) {
         setFormError(verifyData.error || 'Transaction password verification failed');
         setStep("form");
         return;
       }
-
-      console.log('✅ Transaction password verified!');
 
       // If verification passed, proceed with Razorpay
       const loaded = await loadRazorpay();
@@ -154,7 +145,6 @@ export default function BuyEPinPage() {
       const rzp = new window.Razorpay(options);
       rzp.open();
     } catch (e) {
-      console.error('❌ Error:', e);
       setErrorMsg("Payment could not be initiated. Please try again.");
       setStep("error");
     }

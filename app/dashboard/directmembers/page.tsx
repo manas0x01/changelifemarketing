@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 
 const pageSizes = [10, 20, 50, 100];
@@ -14,16 +14,6 @@ interface Member {
   mobileNo: string;
 }
 
-const sampleData: Member[] = [
-  { srNo: 1, memberId: "SM112233", name: "Rahul Sharma",  directs: 3, joiningDate: "10-Jan-2026", mobileNo: "9876543210" },
-  { srNo: 2, memberId: "SM445566", name: "Priya Singh",   directs: 1, joiningDate: "23-Oct-2025", mobileNo: "8765432109" },
-  { srNo: 3, memberId: "SM778899", name: "Amit Verma",    directs: 5, joiningDate: "01-Oct-2025", mobileNo: "7654321098" },
-  { srNo: 4, memberId: "SM334455", name: "Sunita Devi",   directs: 0, joiningDate: "20-Sep-2025", mobileNo: "6543210987" },
-  { srNo: 5, memberId: "SM667788", name: "Vijay Kumar",   directs: 2, joiningDate: "18-Sep-2025", mobileNo: "9988776655" },
-  { srNo: 6, memberId: "SM990011", name: "Neha Gupta",    directs: 4, joiningDate: "05-Aug-2025", mobileNo: "8877665544" },
-  { srNo: 7, memberId: "SM223344", name: "Manoj Yadav",   directs: 1, joiningDate: "12-Jul-2025", mobileNo: "7766554433" },
-];
-
 export default function DirectMembersPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [fromDate,     setFromDate]     = useState("");
@@ -31,9 +21,65 @@ export default function DirectMembersPage() {
   const [pageSize,     setPageSize]     = useState(20);
   const [filtered,     setFiltered]     = useState<Member[]>([]);
   const [hasFiltered,  setHasFiltered]  = useState(false);
+  const [allMembers,   setAllMembers]   = useState<Member[]>([]);
+  const [loading,      setLoading]      = useState(true);
+  const [error,        setError]        = useState<string | null>(null);
+
+  // Fetch direct members from database on component mount
+  useEffect(() => {
+    const fetchDirectMembers = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await fetch('/api/user/get-direct-members');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch direct members');
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          setAllMembers(result.data || []);
+        } else {
+          setError(result.error || 'Failed to fetch members');
+        }
+      } catch (err) {
+        console.error('Error fetching direct members:', err);
+        setError(err instanceof Error ? err.message : 'An error occurred');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDirectMembers();
+  }, []);
 
   const handleFilter = () => {
-    setFiltered(sampleData.slice(0, pageSize));
+    if (allMembers.length === 0) {
+      setFiltered([]);
+      setHasFiltered(true);
+      return;
+    }
+
+    let result = [...allMembers];
+
+    // Apply date filtering if dates are provided
+    if (fromDate || toDate) {
+      result = result.filter((member) => {
+        const memberDate = new Date(member.joiningDate);
+        const from = fromDate ? new Date(fromDate) : null;
+        const to = toDate ? new Date(toDate) : null;
+
+        if (from && memberDate < from) return false;
+        if (to && memberDate > to) return false;
+        return true;
+      });
+    }
+
+    // Apply page size limit
+    result = result.slice(0, pageSize);
+    setFiltered(result);
     setHasFiltered(true);
   };
 
@@ -127,6 +173,9 @@ export default function DirectMembersPage() {
         }
         .filter-btn:hover { background:#1565c0; transform:translateY(-1px); }
         .filter-btn:active { transform:scale(0.98); }
+        .filter-btn:disabled {
+          background:#ccc; color:#999; cursor:not-allowed; transform:none;
+        }
 
         /* Page size right-aligned */
         .page-size-right { margin-left:auto; }
@@ -167,6 +216,39 @@ export default function DirectMembersPage() {
 
         /* Record count */
         .record-count { padding:8px 16px; font-size:12.5px; color:#666; border-top:1px solid #f0f0f0; text-align:right; }
+
+        /* SKELETON STYLES */
+        @keyframes skeletonShimmer {
+          0% {
+            background-position: -1000px 0;
+          }
+          100% {
+            background-position: 1000px 0;
+          }
+        }
+
+        .skeleton-row td {
+          padding:12px 16px !important;
+          border-bottom:1px solid #eee;
+        }
+
+        .skeleton-cell {
+          height:16px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 1000px 100%;
+          animation: skeletonShimmer 2s infinite;
+          border-radius:4px;
+        }
+
+        .skeleton-badge {
+          height:26px;
+          width:50px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 1000px 100%;
+          animation: skeletonShimmer 2s infinite;
+          border-radius:20px;
+          display:inline-block;
+        }
       `}</style>
 
       <div className="dm-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -203,6 +285,20 @@ export default function DirectMembersPage() {
             {/* NOTE */}
             <p className="note-text">Note : Please Use Filter To View This Report.</p>
 
+            {/* ERROR STATE */}
+            {error && (
+              <div style={{
+                background: '#ffebee',
+                color: '#c62828',
+                padding: '12px 16px',
+                borderLeft: '4px solid #c62828',
+                fontSize: '13px',
+                fontWeight: '500'
+              }}>
+                ⚠️ {error}
+              </div>
+            )}
+
             {/* FILTER ROW — exact layout: From Date | To Date | Filter | Page Size (right) */}
             <div className="filter-row">
               <div className="filter-group">
@@ -225,7 +321,7 @@ export default function DirectMembersPage() {
                 />
               </div>
 
-              <button className="filter-btn" onClick={handleFilter}>Filter</button>
+              <button className="filter-btn" onClick={handleFilter} disabled={loading || allMembers.length === 0}>Filter</button>
 
               {/* Page Size — pushed to right */}
               <div className="filter-group page-size-right">
@@ -254,7 +350,31 @@ export default function DirectMembersPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {hasFiltered && filtered.length > 0 ? (
+                  {loading ? (
+                    <>
+                      {[...Array(5)].map((_, i) => (
+                        <tr key={`skeleton-${i}`} className="skeleton-row">
+                          <td><div className="skeleton-cell" style={{ width: '30px' }}></div></td>
+                          <td><div className="skeleton-cell" style={{ width: '80px' }}></div></td>
+                          <td><div className="skeleton-cell" style={{ width: '120px' }}></div></td>
+                          <td><div className="skeleton-badge"></div></td>
+                          <td><div className="skeleton-cell" style={{ width: '100px' }}></div></td>
+                          <td><div className="skeleton-cell" style={{ width: '110px' }}></div></td>
+                        </tr>
+                      ))}
+                    </>
+                  ) : error ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <div className="empty-state">
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="#ccc">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                          </svg>
+                          <p>Error loading members: {error}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : hasFiltered && filtered.length > 0 ? (
                     filtered.map((row) => (
                       <tr key={row.srNo}>
                         <td>{row.srNo}</td>
@@ -269,6 +389,17 @@ export default function DirectMembersPage() {
                         <td>{row.mobileNo}</td>
                       </tr>
                     ))
+                  ) : !hasFiltered ? (
+                    <tr>
+                      <td colSpan={6}>
+                        <div className="empty-state">
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="#ccc">
+                            <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                          </svg>
+                          <p>{allMembers.length === 0 ? "You have no direct members yet." : "Please use the filter above to view your direct members."}</p>
+                        </div>
+                      </td>
+                    </tr>
                   ) : (
                     <tr>
                       <td colSpan={6}>
@@ -276,7 +407,7 @@ export default function DirectMembersPage() {
                           <svg width="40" height="40" viewBox="0 0 24 24" fill="#ccc">
                             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                           </svg>
-                          <p>{hasFiltered ? "No direct members found." : "Please use the filter above to view direct members."}</p>
+                          <p>No direct members found for the selected date range.</p>
                         </div>
                       </td>
                     </tr>
@@ -285,9 +416,9 @@ export default function DirectMembersPage() {
               </table>
             </div>
 
-            {hasFiltered && filtered.length > 0 && (
+            {hasFiltered && filtered.length > 0 && !loading && (
               <div className="record-count">
-                Showing {filtered.length} member{filtered.length !== 1 ? "s" : ""}
+                Showing {filtered.length} member{filtered.length !== 1 ? "s" : ""} (Total: {allMembers.length})
               </div>
             )}
 

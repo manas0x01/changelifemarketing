@@ -1,60 +1,48 @@
-import { getServerSession } from "next-auth";
-import { connectDB } from "@/lib/database";
-import User from "@/models/User";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { connectDB } from '@/lib/database';
+import { authOptions } from '@/lib/auth';
+import User from '@/models/User';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession();
-
-    if (!session || !session.user?.email) {
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { success: false, message: 'Unauthorized' },
         { status: 401 }
       );
     }
 
     await connectDB();
 
-    const user = await User.findOne({ email: session.user.email });
+    const user = await User.findById(session.user.id)
+      .select('transferHistory')
+      .lean();
 
     if (!user) {
       return NextResponse.json(
-        { error: "User not found" },
+        { success: false, message: 'User not found' },
         { status: 404 }
       );
     }
 
-    const transfers: any[] = [];
+    const history = user.transferHistory ?? [];
 
-    // Get all transfers sent by this user (where transferredTo/transferredToName is set)
-    (user.ePins || []).forEach((pin: any) => {
-      if (pin.transferredTo && pin.transferDate) {
-        transfers.push({
-          date: new Date(pin.transferDate).toLocaleDateString("en-IN"),
-          time: new Date(pin.transferDate).toLocaleTimeString("en-IN"),
-          ePin: pin.pin,
-          package: pin.packageName,
-          transferredTo: pin.transferredTo,
-          transferredToName: pin.transferredToName,
-          status: "Success",
-          remark: pin.remark || "--",
-        });
-      }
-    });
-
-    // Sort by most recent first
-    transfers.sort((a, b) => {
-      const dateA = new Date(`${a.date} ${a.time}`).getTime();
-      const dateB = new Date(`${b.date} ${b.time}`).getTime();
-      return dateB - dateA;
-    });
-
-    return NextResponse.json({ transfers });
-  } catch (error) {
-    console.error("Error fetching transfer history:", error);
     return NextResponse.json(
-      { error: "Internal server error" },
+      {
+        success: true,
+        data: {
+          transferHistory: history,
+          totalTransfers: history.length,
+        },
+      },
+      { status: 200 }
+    );
+  } catch (err: any) {
+    console.error('[GET /api/user/get-transfer-history]', err);
+    return NextResponse.json(
+      { success: false, message: err.message ?? 'Internal server error' },
       { status: 500 }
     );
   }

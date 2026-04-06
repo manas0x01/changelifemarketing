@@ -14,23 +14,10 @@ interface CycleRow {
 }
 
 interface EPin {
-    package: string;
+    pin: string;
+    packageName: string;
+    status: string;
 }
-
-{/* Mock Data */}
-const cycleHistory: CycleRow[] = [
-    { date: "10-Jan-2026", cycles: [{ label: "12 TO 12", moon: true }, { label: "12 TO 12", moon: false }], matches: [0, 1], cappings: [0, 0] },
-    { date: "23-Oct-2025", cycles: [{ label: "12 TO 12", moon: true }, { label: "12 TO 12", moon: false }], matches: [0, 1], cappings: [0, 0] },
-    { date: "01-Oct-2025", cycles: [{ label: "12 TO 12", moon: true }, { label: "12 TO 12", moon: false }], matches: [0, 1], cappings: [0, 0] },
-    { date: "20-Sep-2025", cycles: [{ label: "12 TO 12", moon: true }, { label: "12 TO 12", moon: false }], matches: [0, 1], cappings: [0, 5] },
-    { date: "18-Sep-2025", cycles: [{ label: "12 TO 12", moon: true }, { label: "12 TO 12", moon: false }], matches: [0, 1], cappings: [0, 1] },
-];
-
-const ePins: EPin[] = [
-    { package: "Agriculture Package" },
-    { package: "Healthcare Package" },
-    { package: "Sanitary Napkine" },
-];
 
 const TeamIcon = () => (
     <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.9">
@@ -85,74 +72,63 @@ export default function Dashboard() {
     const [boosterIncomeAmount, setBoosterIncomeAmount] = useState(0);
     const [boosterIncome, setBoosterIncome] = useState({ LG: 0, RG: 0, totalGoldMatching: 0 });
     const [userProfile, setUserProfile] = useState({ fullName: "N/A", userId: "N/A", mobileNo: "N/A", email: "N/A", joiningDate: "N/A" });
+    const [cycleHistory, setCycleHistory] = useState<CycleRow[]>([]);
+    const [ePins, setEPins] = useState<EPin[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             try {
-                const teamResponse = await fetch('/api/user/total-team', {
-                    method: 'GET',
-                    credentials: 'include',
-                });
+                setLoading(true);
                 
+                // Make all API calls in parallel using Promise.all
+                const [teamResponse, directResponse, directAmountResponse, incomeResponse, boosterResponse, boosterAmountResponse, profileResponse, ePinsResponse] = await Promise.all([
+                    fetch('/api/user/total-team', { method: 'GET', credentials: 'include' }),
+                    fetch('/api/user/total-direct', { method: 'GET', credentials: 'include' }),
+                    fetch('/api/user/total-direct-amount', { method: 'GET', credentials: 'include' }),
+                    fetch('/api/user/basic-income', { method: 'GET', credentials: 'include' }),
+                    fetch('/api/user/booster-income', { method: 'GET', credentials: 'include' }),
+                    fetch('/api/user/booster-income-amount', { method: 'GET', credentials: 'include' }),
+                    fetch('/api/user/get-profile', { method: 'GET', credentials: 'include' }),
+                    fetch('/api/user/get-epins', { method: 'GET', credentials: 'include' }),
+                ]);
+
+                // Process all responses
                 if (teamResponse.ok) {
                     const teamData = await teamResponse.json();
                     setTotalTeam(teamData.totalTeam || { left: 0, right: 0 });
                 }
-                const directResponse = await fetch('/api/user/total-direct', {
-                    method: 'GET',
-                    credentials: 'include',
-                });
-                
                 if (directResponse.ok) {
                     const directData = await directResponse.json();
                     setTotalDirect(directData.totalDirect || { left: 0, right: 0 });
                 }
-                const directAmountResponse = await fetch('/api/user/total-direct-amount', {
-                    method: 'GET',
-                    credentials: 'include',
-                });
-                
                 if (directAmountResponse.ok) {
                     const directAmountData = await directAmountResponse.json();
                     setTotalDirectAmount(directAmountData.totalDirectAmount || 0);
                 }
-                const incomeResponse = await fetch('/api/user/basic-income', {
-                    method: 'GET',
-                    credentials: 'include',
-                });
                 if (incomeResponse.ok) {
                     const incomeData = await incomeResponse.json();
                     setBasicIncome(incomeData.basicIncome || 0);
                 }
-                const boosterResponse = await fetch('/api/user/booster-income', {
-                    method: 'GET',
-                    credentials: 'include',
-                });
                 if (boosterResponse.ok) {
                     const boosterData = await boosterResponse.json();
                     setBoosterIncome(boosterData.boosterIncome || { LG: 0, RG: 0, totalGoldMatching: 0 });
                 }
-                const boosterAmountResponse = await fetch('/api/user/booster-income-amount', {
-                    method: 'GET',
-                    credentials: 'include',
-                });
                 if (boosterAmountResponse.ok) {
                     const boosterAmountData = await boosterAmountResponse.json();
                     setBoosterIncomeAmount(boosterAmountData.boosterIncomeAmount || 0);
                 }
-                const profileResponse = await fetch('/api/user/get-profile', {
-                    method: 'GET',
-                    credentials: 'include',
-                });
                 if (profileResponse.ok) {
                     const profileData = await profileResponse.json();
                     if (profileData.user) {
                         setUserProfile(profileData.user);
                     }
                 }
+                if (ePinsResponse.ok) {
+                    const ePinsData = await ePinsResponse.json();
+                    setEPins(ePinsData.ePins || []);
+                }
             } catch (error) {
-                console.error('Error fetching dashboard data:', error);
             } finally {
                 setLoading(false);
             }
@@ -553,35 +529,41 @@ export default function Dashboard() {
                                 <div className="section-card">
                                     <div className="section-header">Last Cycle History (Silver)</div>
                                     <div className="section-body" style={{ padding: 0 }}>
-                                        <table className="data-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Date</th>
-                                                    <th>Cycle</th>
-                                                    <th>Match</th>
-                                                    <th>Capping</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {cycleHistory.map((row, ri) =>
-                                                    row.cycles.map((cycle, ci) => (
-                                                        <tr key={`${ri}-${ci}`}>
-                                                            {ci === 0 && (
-                                                                <td rowSpan={2} style={{ fontWeight: 500 }}>{row.date}</td>
-                                                            )}
-                                                            <td>
-                                                                <div className="cycle-cell">
-                                                                    {cycle.label}
-                                                                    {cycle.moon ? <MoonIcon /> : <GearIcon />}
-                                                                </div>
-                                                            </td>
-                                                            <td>{row.matches[ci]}</td>
-                                                            <td>{row.cappings[ci]}</td>
-                                                        </tr>
-                                                    ))
-                                                )}
-                                            </tbody>
-                                        </table>
+                                        {cycleHistory.length === 0 ? (
+                                            <div style={{ padding: '20px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                                                No cycle history available
+                                            </div>
+                                        ) : (
+                                            <table className="data-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Date</th>
+                                                        <th>Cycle</th>
+                                                        <th>Match</th>
+                                                        <th>Capping</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {cycleHistory.map((row, ri) =>
+                                                        row.cycles.map((cycle, ci) => (
+                                                            <tr key={`${ri}-${ci}`}>
+                                                                {ci === 0 && (
+                                                                    <td rowSpan={2} style={{ fontWeight: 500 }}>{row.date}</td>
+                                                                )}
+                                                                <td>
+                                                                    <div className="cycle-cell">
+                                                                        {cycle.label}
+                                                                        {cycle.moon ? <MoonIcon /> : <GearIcon />}
+                                                                    </div>
+                                                                </td>
+                                                                <td>{row.matches[ci]}</td>
+                                                                <td>{row.cappings[ci]}</td>
+                                                            </tr>
+                                                        ))
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        )}
                                     </div>
                                 </div>
 
@@ -589,22 +571,42 @@ export default function Dashboard() {
                                 <div className="section-card">
                                     <div className="section-header">Available E-Pins</div>
                                     <div style={{ padding: 0 }}>
-                                        <table className="epin-table">
-                                            <thead>
-                                                <tr>
-                                                    <th>Package Name</th>
-                                                    <th>E-Pins</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {ePins.map((ep) => (
-                                                    <tr key={ep.package}>
-                                                        <td>{ep.package}</td>
-                                                        <td><span className="epin-view-link">View</span></td>
+                                        {ePins.length === 0 ? (
+                                            <div style={{ padding: '20px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
+                                                No E-Pins available. <a href="/dashboard/buypins" style={{ color: '#1976d2', textDecoration: 'underline', cursor: 'pointer' }}>Buy E-Pins</a>
+                                            </div>
+                                        ) : (
+                                            <table className="epin-table">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Package Name</th>
+                                                        <th>Status</th>
+                                                        <th>Action</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
+                                                </thead>
+                                                <tbody>
+                                                    {ePins.map((ep, idx) => (
+                                                        <tr key={idx}>
+                                                            <td>{ep.packageName}</td>
+                                                            <td>
+                                                                <span style={{
+                                                                    display: 'inline-block',
+                                                                    padding: '3px 10px',
+                                                                    borderRadius: '12px',
+                                                                    fontSize: '11px',
+                                                                    fontWeight: '600',
+                                                                    color: '#fff',
+                                                                    background: ep.status === 'Active' ? '#26a69a' : ep.status === 'Used' ? '#1976d2' : ep.status === 'Transferred' ? '#f57c00' : '#e53935'
+                                                                }}>
+                                                                    {ep.status}
+                                                                </span>
+                                                            </td>
+                                                            <td><span className="epin-view-link">View</span></td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
+                                        )}
                                     </div>
                                 </div>
                             </div>

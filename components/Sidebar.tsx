@@ -88,7 +88,7 @@ const menuItems: MenuItem[] = [
         <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
       </svg>
     ),
-    children: [{ label: "Silver Binary Income" }, { label: "Gold Counting" },{ label: "Gold Binary Income" }],
+    children: [{ label: "Basic Income" }, { label: "Booster Counting" },{ label: "Booster Income" }],
   },
   {
     id: "daily-payout",
@@ -99,7 +99,7 @@ const menuItems: MenuItem[] = [
         <line x1="2" y1="10" x2="22" y2="10"/>
       </svg>
     ),
-    children: [{ label: "Processed Payments" }, { label: "Reimbursement of Expenditure" },{ label: "TDS Charge" }],
+    children: [{ label: "Success Payments" }],
   },
   {
     id: "chat-support",
@@ -155,96 +155,61 @@ export default function Sidebar() {
 
   const handleLogout = async () => {
     try {
-      console.log("🔵 [Sidebar] Initiating logout with NextAuth...");
-      
-      // Use NextAuth's signOut function
-      await signOut({ 
-        redirect: false, 
+      await signOut({
+        redirect: false,
         callbackUrl: '/'
       });
-      
-      console.log("✅ [Sidebar] Logout successful with NextAuth");
       router.push('/');
     } catch (error) {
-      console.error('❌ [Sidebar] Logout error:', error);
     }
   };
 
   // Update active menu based on current pathname
   useEffect(() => {
-    if (pathname.includes("/dashboard/profile")) {
-      setActiveId("profile");
-      setActiveSubmenuId("profile-My Profile");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "profile"])));
-    } else if (pathname.includes("/dashboard/welcomekit")) {
-      setActiveId("profile");
-      setActiveSubmenuId("profile-Welcome Kit");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "profile"])));
-    } else if (pathname.includes("/dashboard/transferepin")) {
-      setActiveId("epin");
-      setActiveSubmenuId("epin-Transfer");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "epin"])));
-    } else if (pathname.includes("/dashboard/myepins")) {
-      setActiveId("epin");
-      setActiveSubmenuId("epin-My E-pins");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "epin"])));
-    } else if (pathname.includes("/dashboard/myrequests")) {
-      setActiveId("epin");
-      setActiveSubmenuId("epin-My Requests");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "epin"])));
-    } else if (pathname.includes("/dashboard/transferred")) {
-      setActiveId("epin");
-      setActiveSubmenuId("epin-Transferred/ Rejected");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "epin"])));
-    } else if (pathname.includes("/dashboard/directmembers")) {
-      setActiveId("my-network");
-      setActiveSubmenuId("my-network-Direct Members");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "my-network"])));
-    } else if (pathname.includes("/dashboard/downlinemembers")) {
-      setActiveId("my-network");
-      setActiveSubmenuId("my-network-Downline Members");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "my-network"])));
-    } else if (pathname.includes("/dashboard/mothertree")) {
-      setActiveId("my-network");
-      setActiveSubmenuId("my-network-Mother Tree");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "my-network"])));
-    } else if (pathname.includes("/dashboard/golddownlinemembers")) {
-      setActiveId("my-network");
-      setActiveSubmenuId("my-network-Gold Downline Members");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "my-network"])));
-    } else if (pathname.includes("/dashboard/silverbinaryincome")) {
-      setActiveId("reports");
-      setActiveSubmenuId("reports-Silver Binary Income");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "reports"])));
-    } else if (pathname.includes("/dashboard/goldcounting")) {
-      setActiveId("reports");
-      setActiveSubmenuId("reports-Gold Counting");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "reports"])));
-    } else if (pathname.includes("/dashboard/goldbinaryincome")) {
-      setActiveId("reports");
-      setActiveSubmenuId("reports-Gold Binary Income");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "reports"])));
-    } else if (pathname.includes("/dashboard/changepassword")) {
-      setActiveId("settings");
-      setActiveSubmenuId("settings-Change Password");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "settings"])));
-    } else if (pathname.includes("/dashboard/changetransactionpassword")) {
-      setActiveId("settings");
-      setActiveSubmenuId("settings-Change Transaction Password");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "settings"])));
-    } else if (pathname.includes("/dashboard/payouttdscharge")) {
-      setActiveId("daily-payout");
-      setActiveSubmenuId("daily-payout-TDS Charge");
-      setOpenMenus((prev) => Array.from(new Set([...prev, "daily-payout"])));
-    } else if (pathname.includes("/dashboard/registration")) {
-      setActiveId("registration");
+    // Route mapping with all pathname patterns
+    const routePatterns: Array<{
+      pattern: string;
+      activeId: string;
+      submenuId: string | null;
+      menuToOpen?: string;
+    }> = [
+      { pattern: "/dashboard/profile", activeId: "profile", submenuId: "profile-My Profile", menuToOpen: "profile" },
+      { pattern: "/dashboard/welcomekit", activeId: "profile", submenuId: "profile-Welcome Kit", menuToOpen: "profile" },
+      { pattern: "/dashboard/transferepin", activeId: "epin", submenuId: "epin-Transfer", menuToOpen: "epin" },
+      { pattern: "/dashboard/myepins", activeId: "epin", submenuId: "epin-My E-pins", menuToOpen: "epin" },
+      { pattern: "/dashboard/myrequests", activeId: "epin", submenuId: "epin-My Requests", menuToOpen: "epin" },
+      { pattern: "/dashboard/transferred", activeId: "epin", submenuId: "epin-Transferred/ Rejected", menuToOpen: "epin" },
+      { pattern: "/dashboard/directmembers", activeId: "my-network", submenuId: "my-network-Direct Members", menuToOpen: "my-network" },
+      { pattern: "/dashboard/teamnetwork", activeId: "my-network", submenuId: "my-network-Team Network", menuToOpen: "my-network" },
+      { pattern: "/dashboard/networktree", activeId: "my-network", submenuId: "my-network-Network Tree", menuToOpen: "my-network" },
+      { pattern: "/dashboard/booster", activeId: "my-network", submenuId: "my-network-Booster", menuToOpen: "my-network" },
+      { pattern: "/dashboard/basicincome", activeId: "reports", submenuId: "reports-Basic Income", menuToOpen: "reports" },
+      { pattern: "/dashboard/boostercounting", activeId: "reports", submenuId: "reports-Booster Counting", menuToOpen: "reports" },
+      { pattern: "/dashboard/boosterincome", activeId: "reports", submenuId: "reports-Booster Income", menuToOpen: "reports" },
+      { pattern: "/dashboard/changepassword", activeId: "settings", submenuId: "settings-Change Password", menuToOpen: "settings" },
+      { pattern: "/dashboard/changetransactionpassword", activeId: "settings", submenuId: "settings-Change Transaction Password", menuToOpen: "settings" },
+      { pattern: "/dashboard/registration", activeId: "registration", submenuId: null },
+    ];
+
+    const route = routePatterns.find(r => pathname.includes(r.pattern));
+    
+    if (route) {
+      setActiveId(route.activeId);
+      setActiveSubmenuId(route.submenuId);
+      if (route.menuToOpen) {
+        const menuToOpen = route.menuToOpen;
+        setOpenMenus((prev) => {
+          const newMenus = new Set(prev);
+          newMenus.add(menuToOpen);
+          return Array.from(newMenus);
+        });
+      }
     } else if (pathname === "/dashboard") {
       setActiveId("dashboard");
       setActiveSubmenuId(null);
     }
   }, [pathname]);
 
-  // Route mapping for menu items
   const routeMap: Record<string, string> = {
     "dashboard": "/dashboard",
     "registration": "/dashboard/registration",
@@ -271,7 +236,6 @@ export default function Sidebar() {
       toggleMenu(item.id);
     } else {
       setActiveId(item.id);
-      // Navigate to the corresponding route
       const route = routeMap[item.id];
       if (route) {
         router.push(route);
@@ -534,27 +498,23 @@ export default function Sidebar() {
                             } else if (item.id === "my-network" && child.label === "Direct Teams") {
                               router.push("/dashboard/directmembers");
                             } else if (item.id === "my-network" && child.label === "Team Network") {
-                              router.push("/dashboard/downlinemembers");
+                              router.push("/dashboard/teamnetwork");
                             } else if (item.id === "my-network" && child.label === "Network Tree") {
-                              router.push("/dashboard/mothertree");
+                              router.push("/dashboard/networktree");
                             } else if (item.id === "my-network" && child.label === "Booster") {
-                              router.push("/dashboard/golddownlinemembers");
-                            } else if (item.id === "reports" && child.label === "Silver Binary Income") {
-                              router.push("/dashboard/silverbinaryincome");
-                            } else if (item.id === "reports" && child.label === "Gold Counting") {
-                              router.push("/dashboard/goldcounting");
-                            } else if (item.id === "reports" && child.label === "Gold Binary Income") {
-                              router.push("/dashboard/goldbinaryincome");
+                              router.push("/dashboard/booster");
+                            } else if (item.id === "reports" && child.label === "Basic Income") {
+                              router.push("/dashboard/basicincome");
+                            } else if (item.id === "reports" && child.label === "Booster Counting") {
+                              router.push("/dashboard/boostercounting");
+                            } else if (item.id === "reports" && child.label === "Booster Income") {
+                              router.push("/dashboard/boosterincome");
                             } else if (item.id === "settings" && child.label === "Change Password") {
                               router.push("/dashboard/changepassword");
                             } else if (item.id === "settings" && child.label === "Change Transaction Password") {
                               router.push("/dashboard/changetransactionpassword");
-                            } else if (item.id === "daily-payout" && child.label === "Processed Payments") {
-                              router.push("/dashboard/payoutprocessed");
-                            } else if (item.id === "daily-payout" && child.label === "Reimbursement of Expenditure") {
-                              router.push("/dashboard/reimbursementofexpenditure");
-                            } else if (item.id === "daily-payout" && child.label === "TDS Charge") {
-                              router.push("/dashboard/payouttdscharge");
+                            } else if (item.id === "daily-payout" && child.label === "Success Payments") {
+                              router.push("/dashboard/successpayments");
                             }
                           }}
                         >

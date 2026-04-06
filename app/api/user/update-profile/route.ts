@@ -3,185 +3,161 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
+const requestCache = new Map<string, { timestamp: number; promise: Promise<Response> }>();
+
 export async function GET(req: Request) {
     try {
-        console.log("\n========== 🔵 [UpdateProfile-GET] START ==========");
-        
         const session = await getServerSession(authOptions);
-        console.log("📥 [UpdateProfile-GET] Session exists:", !!session);
-        console.log("📥 [UpdateProfile-GET] Full session:", JSON.stringify(session, null, 2));
-        
-        if (!session) {
-            console.error("❌ [UpdateProfile-GET] NO SESSION AT ALL");
-            return Response.json({
-                success: true,
-                data: {
-                    id: null,
-                    username: "",
-                    fullName: "",
-                    gender: "Male",
-                    email: "",
-                    phone: "",
-                    mobileNo: "",
-                    dateOfBirth: "",
-                    panNo: "",
-                    state: "Bihar",
-                    district: "Patna",
-                    city: "",
-                    address: "",
-                    pincode: "",
-                    bankName: "",
-                    branchName: "",
-                    accountNo: "",
-                    ifsc: "",
-                    accountType: "",
-                    nomineeName: "",
-                    nomineeRelation: "Son",
-                    joiningDate: "",
-                    sponsorId: "",
-                    sponsorName: "",
-                    placementId: "",
-                    placementName: "",
-                }
-            });
-        }
-        
-        if (!session?.user?.username) {
-            console.error("❌ [UpdateProfile-GET] No username in session");
-            console.log("   session.user:", session.user);
-            return Response.json({
-                success: true,
-                data: {
-                    id: null,
-                    username: "",
-                    fullName: "",
-                    gender: "Male",
-                    email: "",
-                    phone: "",
-                    mobileNo: "",
-                    dateOfBirth: "",
-                    panNo: "",
-                    state: "Bihar",
-                    district: "Patna",
-                    city: "",
-                    address: "",
-                    pincode: "",
-                    bankName: "",
-                    branchName: "",
-                    accountNo: "",
-                    ifsc: "",
-                    accountType: "",
-                    nomineeName: "",
-                    nomineeRelation: "Son",
-                    joiningDate: "",
-                    sponsorId: "",
-                    sponsorName: "",
-                    placementId: "",
-                    placementName: "",
-                }
-            });
+        const cacheKey = session?.user?.username || "anonymous";
+        const cachedRequest = requestCache.get(cacheKey);
+        if (cachedRequest && Date.now() - cachedRequest.timestamp < 2000) {
+            return cachedRequest.promise;
         }
 
-        console.log(`✅ [UpdateProfile-GET] Session username found: "${session.user.username}"`);
+        const responsePromise = (async () => {
+            if (!session) {
+                return Response.json({
+                    success: true,
+                    data: {
+                        id: null,
+                        username: "",
+                        fullName: "",
+                        gender: "Male",
+                        email: "",
+                        phone: "",
+                        mobileNo: "",
+                        dateOfBirth: "",
+                        panNo: "",
+                        state: "Bihar",
+                        district: "Patna",
+                        city: "",
+                        address: "",
+                        pincode: "",
+                        bankName: "",
+                        branchName: "",
+                        accountNo: "",
+                        ifsc: "",
+                        accountType: "",
+                        nomineeName: "",
+                        nomineeRelation: "Son",
+                        joiningDate: "",
+                        sponsorId: "",
+                        sponsorName: "",
+                        placementId: "",
+                        placementName: "",
+                    }
+                });
+            }
+            if (!session?.user?.username) {
+                return Response.json({
+                    success: true,
+                    data: {
+                        id: null,
+                        username: "",
+                        fullName: "",
+                        gender: "Male",
+                        email: "",
+                        phone: "",
+                        mobileNo: "",
+                        dateOfBirth: "",
+                        panNo: "",
+                        state: "Bihar",
+                        district: "Patna",
+                        city: "",
+                        address: "",
+                        pincode: "",
+                        bankName: "",
+                        branchName: "",
+                        accountNo: "",
+                        ifsc: "",
+                        accountType: "",
+                        nomineeName: "",
+                        nomineeRelation: "Son",
+                        joiningDate: "",
+                        sponsorId: "",
+                        sponsorName: "",
+                        placementId: "",
+                        placementName: "",
+                    }
+                });
+            }
 
-        console.log("🔵 [UpdateProfile-GET] Connecting to database...");
-        await connectDB();
-        console.log("✅ [UpdateProfile-GET] Database connected");
-        
-        console.log(`🔍 [UpdateProfile-GET] Querying user with username: "${session.user.username}"`);
-        const user = await User.findOne({ username: session.user.username }).select("-password -transactionPassword");
+            await connectDB();
+            const user = await User.findOne({ username: session.user.username }).select("-password -transactionPassword");
 
-        if (!user) {
-            console.error(`❌ [UpdateProfile-GET] User not found in database for username: "${session.user.username}"`);
-            console.log("🔍 [UpdateProfile-GET] Checking all users in database:");
-            const allUsers = await User.find({}).select("username fullName email");
-            console.log("   All users:", allUsers);
-            
+            if (!user) {
+                return Response.json({
+                    success: true,
+                    data: {
+                        id: null,
+                        username: "",
+                        fullName: "",
+                        gender: "Male",
+                        email: "",
+                        phone: "",
+                        mobileNo: "",
+                        dateOfBirth: "",
+                        panNo: "",
+                        state: "Bihar",
+                        district: "Patna",
+                        city: "",
+                        address: "",
+                        pincode: "",
+                        bankName: "",
+                        branchName: "",
+                        accountNo: "",
+                        ifsc: "",
+                        accountType: "",
+                        nomineeName: "",
+                        nomineeRelation: "Son",
+                        joiningDate: "",
+                        sponsorId: "",
+                        sponsorName: "",
+                        placementId: "",
+                        placementName: "",
+                    }
+                });
+            }
+
+            const responseData = {
+                id: user._id,
+                username: user.username || "",
+                fullName: user.fullName || "",
+                gender: user.gender || "Male",
+                email: user.email || "",
+                phone: user.phone || "",
+                mobileNo: user.mobileNo || "",
+                dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString() : "",
+                panNo: user.panNo || "",
+                state: user.state || "Bihar",
+                district: user.district || "Patna",
+                city: user.city || "",
+                address: user.address || "",
+                pincode: user.pincode || "",
+                bankName: user.bankName || "",
+                branchName: user.branchName || "",
+                accountNo: user.accountNo || "",
+                ifsc: user.ifsc || "",
+                accountType: user.accountType || "",
+                nomineeName: user.nomineeName || "",
+                nomineeRelation: user.nomineeRelation || "Son",
+                joiningDate: user.joiningDate || "",
+                sponsorId: user.sponsorId || "",
+                sponsorName: user.sponsorName || "",
+                placementId: user.placementId || "",
+                placementName: user.placementName || "",
+            };
+
             return Response.json({
                 success: true,
-                data: {
-                    id: null,
-                    username: "",
-                    fullName: "",
-                    gender: "Male",
-                    email: "",
-                    phone: "",
-                    mobileNo: "",
-                    dateOfBirth: "",
-                    panNo: "",
-                    state: "Bihar",
-                    district: "Patna",
-                    city: "",
-                    address: "",
-                    pincode: "",
-                    bankName: "",
-                    branchName: "",
-                    accountNo: "",
-                    ifsc: "",
-                    accountType: "",
-                    nomineeName: "",
-                    nomineeRelation: "Son",
-                    joiningDate: "",
-                    sponsorId: "",
-                    sponsorName: "",
-                    placementId: "",
-                    placementName: "",
-                }
+                data: responseData,
             });
-        }
+        })();
 
-        console.log(`✅ [UpdateProfile-GET] User found: ${user.username}`);
-        console.log(`🔍 [UpdateProfile-GET] User ID: ${user._id}`);
-        console.log(`🔍 [UpdateProfile-GET] User fullName: ${user.fullName}`);
-        console.log(`🔍 [UpdateProfile-GET] Placement data from database:`, {
-            joiningDate: user.joiningDate || "(EMPTY)",
-            sponsorId: user.sponsorId || "(EMPTY)",
-            sponsorName: user.sponsorName || "(EMPTY)",
-            placementId: user.placementId || "(EMPTY)",
-            placementName: user.placementName || "(EMPTY)",
-        });
-
-        const responseData = {
-            id: user._id,
-            username: user.username || "",
-            fullName: user.fullName || "",
-            gender: user.gender || "Male",
-            email: user.email || "",
-            phone: user.phone || "",
-            mobileNo: user.mobileNo || "",
-            dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString() : "",
-            panNo: user.panNo || "",
-            state: user.state || "Bihar",
-            district: user.district || "Patna",
-            city: user.city || "",
-            address: user.address || "",
-            pincode: user.pincode || "",
-            bankName: user.bankName || "",
-            branchName: user.branchName || "",
-            accountNo: user.accountNo || "",
-            ifsc: user.ifsc || "",
-            accountType: user.accountType || "",
-            nomineeName: user.nomineeName || "",
-            nomineeRelation: user.nomineeRelation || "Son",
-            joiningDate: user.joiningDate || "",
-            sponsorId: user.sponsorId || "",
-            sponsorName: user.sponsorName || "",
-            placementId: user.placementId || "",
-            placementName: user.placementName || "",
-        };
-
-        console.log(`📤 [UpdateProfile-GET] Sending response data:`, responseData);
-        console.log("========== ✅ [UpdateProfile-GET] END ==========\n");
-
-        return Response.json({
-            success: true,
-            data: responseData,
-        });
+        requestCache.set(cacheKey, { timestamp: Date.now(), promise: responsePromise });
+        setTimeout(() => requestCache.delete(cacheKey), 3000);
+        return responsePromise;
     } catch (error) {
-        console.error("❌ [UpdateProfile-GET] EXCEPTION:", error);
-        console.error("   Stack:", error instanceof Error ? error.stack : "no stack");
-        console.log("========== ❌ [UpdateProfile-GET] END (ERROR) ==========\n");
-        
         return Response.json({
             success: true,
             data: {
@@ -218,38 +194,16 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
     try {
-        console.log("🔵 [UpdateProfile-POST] Route called");
-        
         const session = await getServerSession(authOptions);
-        console.log("✅ [UpdateProfile-POST] Session check:", session ? "Present" : "Missing");
-        
-        if (session?.user) {
-            console.log("🔍 [UpdateProfile-POST] Session user:", {
-                username: session.user.username,
-                email: session.user.email,
-            });
-        }
-        
         if (!session?.user?.username) {
-            console.log('❌ [UpdateProfile-POST] No valid authentication found');
-            return Response.json({ 
-                error: "Unauthorized - Please login" 
+            return Response.json({
+                error: "Unauthorized - Please login"
             }, { status: 401 });
         }
 
         const profileData = await req.json();
-        console.log("📥 [UpdateProfile-POST] Profile data received:", {
-            fullName: profileData.fullName,
-            joiningDate: profileData.joiningDate,
-            sponsorId: profileData.sponsorId,
-            sponsorName: profileData.sponsorName,
-            placementId: profileData.placementId,
-            placementName: profileData.placementName,
-        });
-
         await connectDB();
 
-        // Validate mobile number format if provided (must be 10 digits)
         if (profileData.mobileNo && !/^\d{10}$/.test(profileData.mobileNo)) {
             return Response.json(
                 { error: "Mobile number must be 10 digits" },
@@ -257,7 +211,6 @@ export async function POST(req: Request) {
             );
         }
 
-        // Validate PAN number format if provided (ABCDE1234F format)
         if (profileData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(profileData.panNo)) {
             return Response.json(
                 { error: "PAN number format is invalid" },
@@ -265,9 +218,7 @@ export async function POST(req: Request) {
             );
         }
 
-        // Build update object - only include fields that are provided
         const updateData: any = {};
-        
         if (profileData.fullName !== undefined) updateData.fullName = profileData.fullName;
         if (profileData.gender !== undefined) updateData.gender = profileData.gender;
         if (profileData.phone !== undefined) updateData.phone = profileData.phone;
@@ -292,17 +243,6 @@ export async function POST(req: Request) {
         if (profileData.placementId !== undefined) updateData.placementId = profileData.placementId;
         if (profileData.placementName !== undefined) updateData.placementName = profileData.placementName;
 
-        console.log("🔍 [UpdateProfile-POST] Update data to be saved:", {
-            joiningDate: updateData.joiningDate,
-            sponsorId: updateData.sponsorId,
-            sponsorName: updateData.sponsorName,
-            placementId: updateData.placementId,
-            placementName: updateData.placementName,
-        });
-
-        // Update user (using username for consistency)
-        console.log(`📍 [UpdateProfile-POST] Looking up user by username: ${session.user.username}`);
-        
         const user = await User.findOneAndUpdate(
             { username: session.user.username },
             updateData,
@@ -310,21 +250,11 @@ export async function POST(req: Request) {
         ).select('-password -transactionPassword');
 
         if (!user) {
-            console.log(`❌ [UpdateProfile-POST] User not found: ${session.user.username}`);
             return Response.json(
                 { error: "User not found" },
                 { status: 404 }
             );
         }
-
-        console.log("✅ [UpdateProfile-POST] Profile updated successfully");
-        console.log("🔍 [UpdateProfile-POST] Updated placement data in DB:", {
-            joiningDate: user.joiningDate,
-            sponsorId: user.sponsorId,
-            sponsorName: user.sponsorName,
-            placementId: user.placementId,
-            placementName: user.placementName,
-        });
 
         return Response.json({
             success: true,
@@ -337,9 +267,8 @@ export async function POST(req: Request) {
             },
         });
     } catch (error) {
-        console.error("❌ Error updating profile:", error);
-        return Response.json({ 
-            error: "Failed to update profile" 
+        return Response.json({
+            error: "Failed to update profile"
         }, { status: 500 });
     }
 }

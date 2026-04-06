@@ -47,11 +47,8 @@ export default function ContactPage() {
         setIsSuccess(true);
         setFormData({ fullName: '', mobileNumber: '', email: '', message: '' });
         setTimeout(() => setIsSuccess(false), 5000);
-      } else {
-        console.error('Web3Form submission failed:', data);
       }
     } catch (error) {
-      console.error('Error submitting contact form:', error);
     } finally {
       setIsSubmitting(false);
     }

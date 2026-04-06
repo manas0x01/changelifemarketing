@@ -1,20 +1,321 @@
 "use client";
 
-import React from 'react';
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { ShoppingCart, Package } from 'lucide-react';
+import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import { Products, StarterPacks } from '@/entities';
+
+const MOCK_PRODUCTS: Products[] = [
+    {
+        _id: '1',
+        itemName: 'Sea Buckthorn Capsule',
+        productNameHindi: 'सी बकथॉर्न कैप्सूल',
+        itemPrice: 1299,
+        itemImage: '/images/seabuckthorncapsule.png',
+        bvValue: 60,
+        pvValue: 60,
+        keyBenefits: 'Highly beneficial for skin\nImproves digestion\nStrengthens immune system\nBeneficial for heart health\nGood for eye health\nRich in antioxidants and anti-inflammatory properties',
+        usageInstructions: 'Take 1 capsule daily in the morning after meals with warm water',
+    },
+    {
+        _id: '2',
+        itemName: 'Acidity Drops',
+        productNameHindi: 'एसिडिटी ड्रॉप्स',
+        itemPrice: 2500,
+        itemImage: '/images/aciditydrops.png',
+        bvValue: 60,
+        pvValue: 60,
+        keyBenefits: 'Provides relief from sour belching and chest burning\nHelps reduce gas and bloating\nEffective in indigestion and acidity\nSupports Acid Reflux (GERD) relief\nRelieves nausea and vomiting tendencies\nReduces burning sensation after meals',
+        usageInstructions: 'Take 5 drops on an empty stomach, three times a day with a glass of warm water',
+    },
+    {
+        _id: '3',
+        itemName: 'Multi Vitamin Capsule',
+        productNameHindi: 'मल्टी विटामिन कैप्सूल',
+        itemPrice: 2500,
+        itemImage: '/images/multivitamincapsule.png',
+        bvValue: 60,
+        pvValue: 60,
+        keyBenefits: 'Helps reduce weakness and fatigue\nStrengthens the immune system\nBeneficial for hair health\nSupports healthy skin\nHelps in strengthening bones\nGood for heart health and memory',
+        usageInstructions: 'Take 1 capsule daily in the morning after meals with warm water',
+    },
+    {
+        _id: '4',
+        itemName: 'Giloy Drops',
+        productNameHindi: 'गिलोय ड्रॉप्स',
+        itemPrice: 2500,
+        itemImage: '/images/giloydrops.png',
+        bvValue: 60,
+        pvValue: 60,
+        keyBenefits: 'Acts as a blood purifier\nImproves digestion and helps relieve gas and constipation\nBeneficial in fever management\nSupports blood sugar control\nHelps reduce inflammation and body pain\nDetoxifies the body',
+        usageInstructions: 'Take 5 drops on an empty stomach in the morning and evening with a glass of warm water',
+    },
+];
+
+const MOCK_STARTER_PACKS: StarterPacks[] = [
+    {
+        _id: '1',
+        itemName: 'Starter Product Pack No.01',
+        itemPrice: 1299,
+        itemImage: '/images/starterpack1.png',
+        itemDescription: 'Starter pack for beginners\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
+        totalBV: 100,
+        totalPV: 100,
+        binaryIncomeInfo: '1 Pair = ₹1000 (Gross)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
+    },
+    {
+        _id: '2',
+        itemName: 'Starter Product Pack No.02',
+        itemPrice: 1299,
+        itemImage: '/images/starterpack2.png',
+        itemDescription: 'Advanced starter pack for better earning\nNo joining fee required\nIncome based on product sales only\nSimple and scalable earning model',
+        totalBV: 160,
+        totalPV: 160,
+        binaryIncomeInfo: '1 Pair (80 PV + 80 PV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
+    }
+];
+
+const WA_NUMBER = '916204720770';
+
+const handleOrderNow = (product: Products) => {
+    const message = `Namaste! 👋\n\nMein isse product order karna chahta/chahti hoon:\n\n📦 *${product.itemName}*\nHindi: ${product.productNameHindi}\n💰 Price: ₹${product.itemPrice}\n📊 BV: ${product.bvValue} | PV: ${product.pvValue}\n\nMujhe isske baare mein more details chahiye. Kripaya mujhe process samjayiye.`;
+    window.open(
+        `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`,
+        '_blank'
+    );
+};
+
+const handleChoosePack = (pack: StarterPacks) => {
+    const message = `Namaste! 👋\n\nMein ye starter pack select karna chahta/chahti hoon:\n\n📦 *${pack.itemName}*\n💰 Price: ₹${pack.itemPrice}\n📊 Total BV: ${pack.totalBV} | Total PV: ${pack.totalPV}\n\nKripaya mujhe is pack ke baare mein sabhi details samjayiye aur registration process batayiye.`;
+    window.open(
+        `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`,
+        '_blank'
+    );
+};
 
 export default function ProductsPage() {
-  return (
-    <div className="min-h-screen bg-white">
-      <Header />
-      <section className="py-20">
-        <div className="max-w-6xl mx-auto px-6">
-          <h1 className="text-4xl font-bold mb-8">Our Products</h1>
-          <p className="text-gray-600">Explore our range of natural health products.</p>
+    const [products, setProducts] = useState<Products[]>([]);
+    const [starterPacks, setStarterPacks] = useState<StarterPacks[]>([]);
+    const [isLoadingProducts, setIsLoadingProducts] = useState(true);
+    const [isLoadingPacks, setIsLoadingPacks] = useState(true);
+
+    useEffect(() => {
+        loadProducts();
+        loadStarterPacks();
+    }, []);
+
+    const loadProducts = async () => {
+        try {
+            setProducts(MOCK_PRODUCTS);
+        } catch (error) {
+            console.error('Error loading products:', error);
+            setProducts(MOCK_PRODUCTS);
+        } finally {
+            setIsLoadingProducts(false);
+        }
+    };
+
+    const loadStarterPacks = async () => {
+        try {
+            setStarterPacks(MOCK_STARTER_PACKS);
+        } catch (error) {
+            console.error('Error loading starter packs:', error);
+            setStarterPacks(MOCK_STARTER_PACKS);
+        } finally {
+            setIsLoadingPacks(false);
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-[#FFFFFF]">
+            <Header />
+
+            {/* Hero Section */}
+            <section className="bg-[#0A6E5A] py-20">
+                <div className="max-w-400 mx-auto px-6 text-center">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        <h1 className="font-['Fraunces'] text-[2.25rem] md:text-[3.75rem] text-[#FFFFFF] mb-4">
+                            Natural Health Products
+                        </h1>
+                        <p className="font-['Roboto'] text-[1.125rem] text-[#FFFFFF] max-w-3xl mx-auto">
+                            Premium quality natural products for a healthier lifestyle
+                        </p>
+                    </motion.div>
+                </div>
+            </section>
+
+            {/* Products Section */}
+            <section className="py-20 bg-[#FFFFFF]">
+                <div className="max-w-400 mx-auto px-6">
+                    <div className="min-h-100">
+                        {isLoadingProducts ? null : products.length > 0 ? (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                transition={{ duration: 0.6 }}
+                                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+                            >
+                                {products.map((product) => (
+                                    <motion.div
+                                        key={product._id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        className="bg-[#FFFFFF] border-2 border-[#0A6E5A] rounded-lg overflow-hidden hover:shadow-2xl transition-shadow"
+                                    >
+                                        <div className="bg-[#0A6E5A] p-4 text-center">
+                                            <h3 className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C] mb-1">{product.itemName}</h3>
+                                            <p className="font-['Roboto'] text-[0.875rem] text-[#FFFFFF]">{product.productNameHindi}</p>
+                                        </div>
+
+                                        <div className="p-4">
+                                            <Image
+                                                src={product.itemImage || ''}
+                                                alt={product.itemName || 'Product'}
+                                                className="w-full h-48 object-cover rounded-lg mb-4"
+                                                width={300}
+                                                height={200}
+                                            />
+
+                                            <div className="flex justify-between items-center mb-4">
+                                                <span className="font-['Fraunces'] text-[1.5rem] text-[#C9A84C]">₹{product.itemPrice}</span>
+                                                <div className="flex gap-2">
+                                                    <span className="bg-[#0A6E5A] text-[#FFFFFF] px-3 py-1 rounded text-[0.875rem] font-['Roboto'] font-semibold">
+                                                        {product.bvValue} BV
+                                                    </span>
+                                                    <span className="bg-[#C9A84C] text-[#FFFFFF] px-3 py-1 rounded text-[0.875rem] font-['Roboto'] font-semibold">
+                                                        {product.pvValue} PV
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="mb-4">
+                                                <h4 className="font-['Fraunces'] text-[1.125rem] text-[#0A6E5A] mb-2">Key Benefits:</h4>
+                                                <p className="font-['Roboto'] text-[0.875rem] text-[#333333] whitespace-pre-line">
+                                                    {product.keyBenefits}
+                                                </p>
+                                            </div>
+
+                                            <div className="mb-4">
+                                                <h4 className="font-['Fraunces'] text-[1.125rem] text-[#0A6E5A] mb-2">Usage Instructions:</h4>
+                                                <p className="font-['Roboto'] text-[0.875rem] text-[#333333]">
+                                                    {product.usageInstructions}
+                                                </p>
+                                            </div>
+
+                                            <button onClick={() => handleOrderNow(product)} className="w-full bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors flex items-center justify-center gap-2">
+                                                <ShoppingCart className="w-5 h-5" />
+                                                Order Now
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        ) : null}
+                    </div>
+                </div>
+            </section>
+
+            {/* Starter Packs Section */}
+            <section className="py-20 bg-[#0A6E5A]">
+                <div className="max-w-400 mx-auto px-6">
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                        className="text-center mb-12"
+                    >
+                        <h2 className="font-['Fraunces'] text-[2.25rem] md:text-[3rem] text-[#FFFFFF] mb-4">
+                            Starter Product Packs
+                        </h2>
+                        <p className="font-['Roboto'] text-[1.125rem] text-[#FFFFFF]">
+                            Choose your perfect starter pack and begin your journey
+                        </p>
+                    </motion.div>
+
+                    <div className="min-h-100">
+                        {isLoadingPacks ? null : starterPacks.length > 0 ? (
+                            <motion.div
+                                initial={{ opacity: 0 }}
+                                whileInView={{ opacity: 1 }}
+                                viewport={{ once: true }}
+                                transition={{ duration: 0.6 }}
+                                className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto"
+                            >
+                                {starterPacks.map((pack, index) => (
+                                    <motion.div
+                                        key={pack._id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        whileInView={{ opacity: 1, y: 0 }}
+                                        viewport={{ once: true }}
+                                        transition={{ delay: index * 0.1 }}
+                                        className="bg-[#FFFFFF] rounded-lg overflow-hidden border-4 border-[#C9A84C]"
+                                    >
+                                        <div className="bg-[#C9A84C] p-6 text-center">
+                                            <Package className="w-12 h-12 text-[#FFFFFF] mx-auto mb-3" />
+                                            <h3 className="font-['Fraunces'] text-[1.875rem] text-[#FFFFFF] mb-2">{pack.itemName}</h3>
+                                            <p className="font-['Fraunces'] text-[2.25rem] text-[#FFFFFF]">₹{pack.itemPrice}</p>
+                                        </div>
+
+                                        <div className="p-8">
+                                            <Image
+                                                src={pack.itemImage || ''}
+                                                alt={pack.itemName || 'Starter Pack'}
+                                                className="w-full h-64 object-cover rounded-lg mb-6"
+                                                width={400}
+                                                height={300}
+                                            />
+
+                                            <div className="mb-6">
+                                                <h4 className="font-['Fraunces'] text-[1.25rem] text-[#0A6E5A] mb-3">Pack Includes:</h4>
+                                                <p className="font-['Roboto'] text-[#333333] whitespace-pre-line">
+                                                    {pack.itemDescription}
+                                                </p>
+                                            </div>
+
+                                            <div className="bg-[#0A6E5A] p-6 rounded-lg mb-6">
+                                                <div className="grid grid-cols-2 gap-4 mb-4">
+                                                    <div className="text-center">
+                                                        <p className="font-['Roboto'] text-[0.875rem] text-[#FFFFFF] mb-1">Total BV</p>
+                                                        <p className="font-['Fraunces'] text-[1.875rem] text-[#C9A84C]">{pack.totalBV}</p>
+                                                    </div>
+                                                    <div className="text-center">
+                                                        <p className="font-['Roboto'] text-[0.875rem] text-[#FFFFFF] mb-1">Total PV</p>
+                                                        <p className="font-['Fraunces'] text-[1.875rem] text-[#C9A84C]">{pack.totalPV}</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-[#FFFFFF] border-2 border-[#C9A84C] p-6 rounded-lg mb-6">
+                                                <h4 className="font-['Fraunces'] text-[1.25rem] text-[#0A6E5A] mb-3">Binary Income Info:</h4>
+                                                <p className="font-['Roboto'] text-[#333333] whitespace-pre-line mb-4">
+                                                    {pack.binaryIncomeInfo}
+                                                </p>
+                                                <p className="font-['Roboto'] text-[0.875rem] text-[#333333] italic">
+                                                    * Income based on product sales only. No joining fee charged.
+                                                </p>
+                                            </div>
+
+                                            <button onClick={() => handleChoosePack(pack)} className="w-full bg-[#C9A84C] text-[#FFFFFF] px-6 py-4 rounded-lg font-['Roboto'] font-semibold text-[1.125rem] hover:bg-[#F5A623] transition-colors">
+                                                Choose This Pack
+                                            </button>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </motion.div>
+                        ) : null}
+                    </div>
+                </div>
+            </section>
+            <Footer />
         </div>
-      </section>
-      <Footer />
-    </div>
-  );
+    );
 }

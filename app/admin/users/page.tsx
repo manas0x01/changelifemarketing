@@ -56,7 +56,7 @@ interface Pagination {
 interface Summary {
   totalUsers: number;
   totalAdmin: number;
-  totalGold: number;
+  totalBooster: number;
   totalActive: number;
   totalIncome: number;
 }
@@ -743,7 +743,7 @@ export default function AdminUsersPage() {
         {summary && (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <StatCard icon={Users}     label="Total Users"    value={summary.totalUsers.toLocaleString('en-IN')} />
-            <StatCard icon={Crown}     label="Gold Members"   value={summary.totalGold.toLocaleString('en-IN')}  color="gold" />
+            <StatCard icon={Crown}     label="Booster Members"   value={summary.totalBooster.toLocaleString('en-IN')}  color="gold" />
             <StatCard icon={UserCheck} label="Active Members" value={summary.totalActive.toLocaleString('en-IN')} />
             <StatCard icon={IndianRupee} label="Total Income" value={`₹${summary.totalIncome.toLocaleString('en-IN')}`} color="gold" />
           </div>
@@ -761,6 +761,7 @@ export default function AdminUsersPage() {
                 onChange={(e) => handleSearch(e.target.value)}
                 placeholder="Search by name, ID, email, phone, city…"
                 className="w-full pl-10 pr-4 py-2.5 border border-[#0A6E5A]/15 focus:border-[#0A6E5A] focus:outline-none font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 bg-[#F8FAF9] transition-colors"
+                suppressHydrationWarning={true}
               />
               {search && (
                 <button onClick={() => handleSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
@@ -773,6 +774,7 @@ export default function AdminUsersPage() {
             <button
               onClick={() => setShowFilter(!showFilter)}
               className={`flex items-center gap-2 px-4 py-2.5 border font-['Roboto'] text-[0.8rem] font-medium transition-all ${showFilter ? 'bg-[#0A6E5A] text-[#FFFFFF] border-[#0A6E5A]' : 'border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}
+              suppressHydrationWarning={true}
             >
               <Filter className="w-4 h-4" />
               Filters
@@ -783,6 +785,7 @@ export default function AdminUsersPage() {
             <button
               onClick={() => fetchUsers()}
               className="flex items-center gap-2 px-4 py-2.5 border border-[#0A6E5A]/20 text-[#0A6E5A] font-['Roboto'] text-[0.8rem] hover:bg-[#0A6E5A]/5 transition-colors"
+              suppressHydrationWarning={true}
             >
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               <span className="hidden sm:inline">Refresh</span>
@@ -792,6 +795,7 @@ export default function AdminUsersPage() {
             <button
               onClick={exportCSV}
               className="flex items-center gap-2 px-4 py-2.5 bg-[#C9A84C] text-[#FFFFFF] font-['Roboto'] text-[0.8rem] font-medium hover:bg-[#C9A84C]/90 transition-colors"
+              suppressHydrationWarning={true}
             >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export CSV</span>
@@ -801,6 +805,7 @@ export default function AdminUsersPage() {
             <button
               onClick={() => setShowAddUserModal(true)}
               className="flex items-center gap-2 px-4 py-2.5 bg-[#0A6E5A] text-[#FFFFFF] font-['Roboto'] text-[0.8rem] font-medium hover:bg-[#0A6E5A]/90 transition-colors"
+              suppressHydrationWarning={true}
             >
               <Users className="w-4 h-4" />
               <span className="hidden sm:inline">Add User</span>

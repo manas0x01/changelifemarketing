@@ -1,11 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
 import Navbar from "@/components/Navbar";
 
-// ── Steps ─────────────────────────────────────────────────────────────────────
-type Step = "validate" | "sponsor" | "register";
+type Step = "sponsor" | "register";
 
 const indianStates = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
@@ -26,9 +25,9 @@ const nomineeRels    = ["-- Select --","Son","Daughter","Wife","Husband","Father
 const accountTypes   = ["-- Select --","Saving","Current","Salary","NRI","Joint"];
 
 export default function NewRegisterPage() {
-  const [step,         setStep]         = useState<Step>("validate");
-  const [txnPassword,  setTxnPassword]  = useState("");
-  const [txnError,     setTxnError]     = useState("");
+  const [step,         setStep]         = useState<Step>("sponsor");
+  const [hasPins,      setHasPins]      = useState<boolean | null>(null);
+  const [pinError,     setPinError]     = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activePage,   setActivePage]   = useState<"dashboard" | "profile">("dashboard");
   const [gender,       setGender]       = useState<"Male"|"Female">("Male");
@@ -47,11 +46,6 @@ export default function NewRegisterPage() {
   const [placementName, setPlacementName] = useState("");
   const [position,     setPosition]     = useState("-- Select --");
   const [pkg,          setPkg]          = useState("-- Select Package --");
-  const [epin,         setEpin]         = useState("");
-  const [epinError,    setEpinError]    = useState("");
-  const [availableEPins, setAvailableEPins] = useState<string[]>([]);
-  const [epinValidated, setEpinValidated] = useState(false);
-
   // Step 3: Registration Form Fields
   const [fullName,     setFullName]     = useState("");
   const [userId,       setUserId]       = useState("CLM");
@@ -80,31 +74,31 @@ export default function NewRegisterPage() {
   const [nomineeRelError,  setNomineeRelError]  = useState("");
   const [accountTypeError, setAccountTypeError] = useState("");
 
-  const handleProceed = async () => {
-    if (!txnPassword.trim()) {
-      setTxnError("Please enter your transaction password.");
-      return;
-    }
-    
-    setTxnError("");
-    
-    try {
-      const verifyResponse = await fetch('/api/auth/verify-transaction-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactionPassword: txnPassword }),
-        credentials: 'include',
-      });
-      const verifyData = await verifyResponse.json();
-
-      if (!verifyResponse.ok) {
-        setTxnError(verifyData.error || 'Transaction password verification failed');
-        return;
+  useEffect(() => {
+    const checkPinAvailability = async () => {
+      try {
+        const res = await fetch('/api/auth/check-pin-availability');
+        const data = await res.json();
+        
+        if (!data.hasPins) {
+          setHasPins(false);
+          setPinError(data.message || 'First Buy The Pin Then Create A Account');
+          toast.error(data.message || 'No pins available');
+        } else {
+          setHasPins(true);
+        }
+      } catch (error) {
+        setHasPins(false);
+        setPinError('Error checking pin availability');
+        toast.error('Error checking pin availability');
       }
-      setStep("sponsor");
-    } catch (error) {
-      setTxnError("An error occurred. Please try again.");
-    }
+    };
+
+    checkPinAvailability();
+  }, []);
+
+  const handleProceed = async () => {
+    setStep("sponsor");
   };
 
   const handleValidateSponsor = async () => {
@@ -116,35 +110,28 @@ export default function NewRegisterPage() {
     setSponsorError("");
     
     try {
-      // Fetch sponsor details and E-Pins availability
-      const response = await fetch('/api/user/check-epins', {
+      // Check if sponsor has pins
+      const pinCheckRes = await fetch('/api/user/check-epins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sponsorId: sponsorId }),
+        body: JSON.stringify({ sponsorId: sponsorId.trim() }),
         credentials: 'include',
       });
 
-      const data = await response.json();
+      const pinData = await pinCheckRes.json();
 
-      if (!response.ok) {
-        setSponsorError(data.error || "Sponsor ID not found. Please try again.");
+      if (!pinCheckRes.ok || !pinData.availableEPins || pinData.availableEPins.length === 0) {
+        setSponsorError("First Buy The Pins And Then Create A Account");
+        toast.error("Sponsor has no pins available");
         return;
       }
 
-      // Check if E-Pins are available
-      if (!data.availableEPins || data.availableEPins.length === 0) {
-        toast.error("No E-Pins Available! First Buy The E-Pin Then Registration");
-        setSponsorError("No E-Pins available. Please purchase E-Pins first.");
-        return;
-      }
-
-      // E-Pins are available, proceed with validation
-      // Fetch sponsor name from database
+      // Fetch sponsor name
       try {
         const nameResponse = await fetch('/api/user/get-name', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: sponsorId }),
+          body: JSON.stringify({ userId: sponsorId.trim() }),
           credentials: 'include',
         });
         const nameData = await nameResponse.json();
@@ -152,33 +139,13 @@ export default function NewRegisterPage() {
       } catch (err) {
         setSponsorName("");
       }
-      
-      // Extract just the pin strings from the API response
-      const pinStrings = data.availableEPins?.map((ePin: any) => {
-        if (typeof ePin === 'string') {
-          return ePin;
-        } else if (typeof ePin === 'object' && ePin.pin) {
-          return ePin.pin;
-        }
-        return ePin;
-      }) || [];
-      
-      setAvailableEPins(pinStrings);
+
       setSponsorValidated(true);
-      setEpin("");
-      setEpinError("");
-      setEpinValidated(false);
-      toast.success(`Sponsor validated! ${data.availableEPins.length} E-Pin(s) available.`);
+      toast.success("✓ Sponsor validated!");
     } catch (error) {
       setSponsorError("An error occurred. Please try again.");
       toast.error("Error validating sponsor");
     }
-  };
-
-  const handleEpinChange = (value: string) => {
-    setEpin(value);
-    setEpinValidated(false);
-    setEpinError("");
   };
 
   const handlePlacementIdChange = async (value: string) => {
@@ -204,32 +171,6 @@ export default function NewRegisterPage() {
       }
     } else {
       setPlacementName("");
-    }
-  };
-
-  const handleValidateEpin = () => {
-    if (!epin.trim()) {
-      setEpinError("Please enter an E-Pin");
-      return;
-    }
-
-    // Check if E-Pin exists in available E-Pins
-    let isValid = false;
-    if (Array.isArray(availableEPins)) {
-      availableEPins.forEach((pin) => {
-        if (typeof pin === 'string' && pin === epin.trim()) {
-          isValid = true;
-        }
-      });
-    }
-    
-    if (isValid) {
-      setEpinValidated(true);
-      setEpinError("");
-      toast.success("✓ E-Pin validated!");
-    } else {
-      setEpinError("❌ E-Pin not found in database. Please check and try again.");
-      setEpinValidated(false);
     }
   };
 
@@ -278,14 +219,6 @@ export default function NewRegisterPage() {
     }
     if (!pkg || pkg === "-- Select Package --") {
       toast.error("Please select a package");
-      return;
-    }
-    if (!epin.trim()) {
-      toast.error("Please enter an E-Pin");
-      return;
-    }
-    if (!epinValidated) {
-      toast.error("Please validate E-Pin first");
       return;
     }
     setStep("register");
@@ -354,7 +287,6 @@ export default function NewRegisterPage() {
         placementId,
         position,
         package: pkg,
-        epin,
         fullName,
         gender,
         mobileNo,
@@ -631,35 +563,26 @@ export default function NewRegisterPage() {
 
         <div className="page-body">
 
-          {/* ══ STEP 1: VALIDATE TRANSACTION PASSWORD ══ */}
-          {step === "validate" && (
-          <div className="section-card">
-            <div className="section-header">Validate Transaction Password</div>
-            <div className="validate-body">
-              <span className="txn-label"><span className="req">*</span>TRANSACTION PASSWORD :</span>
-              <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
-                <div className="txn-input-wrap">
-                  <input
-                    className="txn-input"
-                    type="password"
-                    placeholder="ENTER TRANSACTION PASSWORD"
-                    value={txnPassword}
-                    onChange={(e) => setTxnPassword(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleProceed()}
-                    suppressHydrationWarning={true}
-                  />
-                  <button className="proceed-btn" onClick={handleProceed} suppressHydrationWarning={true}>
-                    PROCEED
+          {/* ══ PIN AVAILABILITY CHECK ══ */}
+          {hasPins === false && (
+          <div className="section-card" style={{ background: '#fff3cd', borderLeft: '4px solid #ff9800' }}>
+            <div className="section-header" style={{ background: '#ff9800' }}>Pin Availability Required</div>
+            <div className="validate-body" style={{ padding: '28px 20px' }}>
+              <div style={{ textAlign: 'center', width: '100%' }}>
+                <div style={{ fontSize: '16px', fontWeight: 600, color: '#d32f2f', marginBottom: '12px' }}>❌ No Available Pins</div>
+                <div style={{ fontSize: '14px', color: '#333', marginBottom: '20px' }}>{pinError}</div>
+                <a href="/products" style={{ textDecoration: 'none' }}>
+                  <button className="proceed-btn" style={{ background: '#ff9800' }}>
+                    BUY PIN NOW
                   </button>
-                </div>
-                {txnError && <div className="txn-error">{txnError}</div>}
+                </a>
               </div>
             </div>
           </div>
           )}
 
           {/* ══ STEP 2: SPONSOR & PACKAGE ══ */}
-          {step === "sponsor" && (
+          {hasPins && step === "sponsor" && (
             <div className="section-card">
               <div className="section-header">Fill The Sponsor Details</div>
               <div className="form-body">
@@ -767,42 +690,6 @@ export default function NewRegisterPage() {
                       </div>
                     </div>
 
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label className="form-label"><span className="req">*</span>E-Pin :</label>
-                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                          <div style={{ flex: 1 }}>
-                            <input
-                              className="form-input"
-                              type="text"
-                              placeholder="Enter E-Pin"
-                              value={epin}
-                              onChange={(e) => handleEpinChange(e.target.value)}
-                              onKeyDown={(e) => e.key === "Enter" && handleValidateEpin()}
-                              disabled={epinValidated}
-                              suppressHydrationWarning
-                            />
-                            {epinError && <div className="txn-error">{epinError}</div>}
-                          </div>
-                          {!epinValidated ? (
-                            <button 
-                              className="proceed-btn" 
-                              onClick={handleValidateEpin}
-                              style={{ marginTop: 0 }}
-                              suppressHydrationWarning
-                            >
-                              VALIDATE
-                            </button>
-                          ) : (
-                            <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                              Verified
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
                     <div className="submit-wrap" style={{ paddingTop: "20px" }}>
                       <button className="proceed-btn" onClick={handleSponsorSubmit}>
                         NEXT
@@ -816,7 +703,7 @@ export default function NewRegisterPage() {
           )}
 
           {/* ══ STEP 3: REGISTRATION FORM ══ */}
-          {step === "register" && (
+          {hasPins && step === "register" && (
             <div className="section-card">
               <div className="section-header">New Member Registration</div>
               <div className="form-body">
@@ -863,9 +750,8 @@ export default function NewRegisterPage() {
                       <option>{pkg}</option>
                     </select>
                   </div>
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>E-Pin :</label>
-                    <input className="form-input" type="text" value={epin} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
+                  <div className="form-group" style={{ visibility: "hidden" }}>
+                    <label className="form-label">Placeholder</label>
                   </div>
                 </div>
 

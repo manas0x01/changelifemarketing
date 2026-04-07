@@ -116,7 +116,7 @@ export async function GET(req: NextRequest) {
           _id:           null,
           totalUsers:    { $sum: 1 },
           totalAdmin:    { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
-          totalGold:     { $sum: { $cond: [{ $eq: ['$memberType', 'gold'] }, 1, 0] } },
+          totalBooster:     { $sum: { $cond: [{ $eq: ['$memberType', 'gold'] }, 1, 0] } },
           totalActive:   { $sum: { $cond: [{ $eq: ['$memberType', 'active'] }, 1, 0] } },
           totalIncome:   { $sum: { $add: ['$basicIncome', '$boosterIncomeAmount'] } },
         },
@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
         summary: summary ?? {
           totalUsers: 0,
           totalAdmin: 0,
-          totalGold:  0,
+          totalBooster:  0,
           totalActive: 0,
           totalIncome: 0,
         },

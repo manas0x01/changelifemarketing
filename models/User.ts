@@ -40,7 +40,7 @@ export interface IUser extends Document {
   totalDirect?: { left: number; right: number };
   basicIncome?: number;
   boosterIncomeAmount?: number;
-  boosterIncome?: { LG: number; RG: number; totalGoldMatching: number };
+  boosterIncome?: { LG: number; RG: number; totalBoosterMatching: number };
   basicIncomeRecords?: {
     srNo: number; amount: number; pairCount: number;
     date: Date; description: string; status: string;
@@ -150,7 +150,7 @@ const userSchema = new Schema<IUser>(
     totalDirectAmount: { type: Number, default: 0 },
     basicIncome: { type: Number, default: 0 },
     boosterIncomeAmount: { type: Number, default: 0 },
-    boosterIncome: { type: { LG: { type: Number, default: 0 }, RG: { type: Number, default: 0 }, totalGoldMatching: { type: Number, default: 0 } }, default: { LG: 0, RG: 0, totalGoldMatching: 0 } },
+    boosterIncome: { type: { LG: { type: Number, default: 0 }, RG: { type: Number, default: 0 }, totalBoosterMatching: { type: Number, default: 0 } }, default: { LG: 0, RG: 0, totalBoosterMatching: 0 } },
     basicIncomeRecords: { type: [{ srNo: Number, amount: Number, pairCount: Number, date: Date, description: String, status: String }], default: [] },
     boosterIncomeRecords: { type: [{ srNo: Number, amount: Number, pairCount: Number, date: Date, description: String, status: String }], default: [] },
     successPayments: { type: [{ srNo: Number, fromDate: Date, toDate: Date, silverBinary: Number, goldBinary: Number, total: Number, reimbursement: Number, tds: Number, netpay: Number }], default: [] },

@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
         if (!session || !session.user?.username) {
             return NextResponse.json({
                 success: true,
-                boosterIncome: { LG: 0, RG: 0, totalGoldMatching: 0 }
+                boosterIncome: { LG: 0, RG: 0, totalBoosterMatching: 0 }
             });
         }
         await connectDB();
@@ -18,17 +18,17 @@ export async function GET(request: NextRequest) {
         if (!user) {
             return NextResponse.json({
                 success: true,
-                boosterIncome: { LG: 0, RG: 0, totalGoldMatching: 0 }
+                boosterIncome: { LG: 0, RG: 0, totalBoosterMatching: 0 }
             });
         }
         return NextResponse.json({
             success: true,
-            boosterIncome: user.boosterIncome || { LG: 0, RG: 0, totalGoldMatching: 0 }
+            boosterIncome: user.boosterIncome || { LG: 0, RG: 0, totalBoosterMatching: 0 }
         });
     } catch (error) {
         return NextResponse.json({
             success: true,
-            boosterIncome: { LG: 0, RG: 0, totalGoldMatching: 0 }
+            boosterIncome: { LG: 0, RG: 0, totalBoosterMatching: 0 }
         });
     }
 }

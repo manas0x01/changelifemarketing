@@ -5,40 +5,40 @@ export async function GET() {
         _id: '1',
         rankName: 'Gold',
         rankLevel: 1,
-        requiredPairs: 5,
+        requiredPairs: 5-5,
         award: 'Bag + Business Kit'
       },
       {
         _id: '2',
         rankName: 'Super Gold',
         rankLevel: 2,
-        requiredPairs: 15,
-        award: '₹150 - Silver recognition plaque and a bonus cash reward.'
+        requiredPairs: 10-10,
+        award: 'Smart Watch'
       },
       {
         _id: '3',
-        rankName: 'Gold Associate',
+        rankName: 'Gold Star',
         rankLevel: 3,
-        requiredPairs: 30,
-        award: '₹300 - Gold-plated trophy and a luxury brand gift voucher.'
+        requiredPairs: 25-25,
+        award: 'Suit Length'
       },
       {
         _id: '4',
-        rankName: 'Platinum Associate',
+        rankName: 'Pearl ex',
         rankLevel: 4,
-        requiredPairs: 60,
-        award: '₹600 - Exclusive Platinum ring and an invitation to the annual leadership retreat.'
+        requiredPairs: 50-50,
+        award: 'Mixi-Grinder'
       },
       {
         _id: '5',
-        rankName: 'Ruby Director',
+        rankName: 'Emerald',
         rankLevel: 5,
-        requiredPairs: 120,
-        award: '₹1200 - Ruby Director custom watch and a significant cash bonus.'
+        requiredPairs: 100-100,
+        award: 'Fridge ( Refrigerator )'
       },
       {
         _id: '6',
-        rankName: 'Emerald Director',
+        rankName: 'Ruby',
         rankLevel: 6,
         requiredPairs: 250,
         award: '₹2500 - All-expenses-paid luxury vacation for two.'

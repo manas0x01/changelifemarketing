@@ -100,7 +100,7 @@ export default function Dashboard() {
   const [totalDirectAmount, setTotalDirectAmount] = useState(0);
   const [basicIncome, setBasicIncome] = useState(0);
   const [boosterIncomeAmount, setBoosterIncomeAmount] = useState(0);
-  const [boosterIncome, setBoosterIncome] = useState({ LG: 0, RG: 0, totalGoldMatching: 0 });
+  const [boosterIncome, setBoosterIncome] = useState({ LG: 0, RG: 0, totalBoosterMatching: 0 });
   const [totalIncome, setTotalIncome] = useState(0);
   const [userProfile, setUserProfile] = useState({
     fullName: "N/A", userId: "N/A", username: "N/A", mobileNo: "N/A", email: "N/A", joiningDate: "N/A",
@@ -157,7 +157,7 @@ export default function Dashboard() {
         }
         if (boosterResponse.ok) {
           const d = await boosterResponse.json();
-          setBoosterIncome(d.boosterIncome || { LG: 0, RG: 0, totalGoldMatching: 0 });
+          setBoosterIncome(d.boosterIncome || { LG: 0, RG: 0, totalBoosterMatching: 0 });
         }
         if (boosterAmountResponse.ok) {
           const d = await boosterAmountResponse.json();
@@ -396,7 +396,7 @@ export default function Dashboard() {
                       ) : card.title === "Basic Income" && showBasicIncomeInfo ? (
                         <span className="stat-card-link">₹ {basicIncome}</span>
                       ) : card.title === "Booster Income" && showBoosterIncomeInfo ? (
-                        <span className="stat-card-link">₹ {boosterIncomeAmount} | LG : {boosterIncome.LG} | RG : {boosterIncome.RG} | Matching : {boosterIncome.totalGoldMatching}</span>
+                        <span className="stat-card-link">₹ {boosterIncomeAmount} | LG : {boosterIncome.LG} | RG : {boosterIncome.RG} | Matching : {boosterIncome.totalBoosterMatching}</span>
                       ) : card.title === "Total Direct" && showTotalDirectInfo ? (
                         <span className="stat-card-link">₹ {totalDirectAmount} | Left : {totalDirect.left} | Right : {totalDirect.right}</span>
                       ) : card.title === "Total Income" ? (

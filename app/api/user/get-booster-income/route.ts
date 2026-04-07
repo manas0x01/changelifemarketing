@@ -30,7 +30,7 @@ export async function GET(req: Request) {
       return Response.json({ error: "User not found" }, { status: 404 });
     }
     
-    const boosterIncomeData = user.boosterIncome || { LG: 0, RG: 0, totalGoldMatching: 0 };
+    const boosterIncomeData = user.boosterIncome || { LG: 0, RG: 0, totalBoosterMatching: 0 };
 
     const incomeRecords: IncomeRow[] = [
       {

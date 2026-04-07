@@ -160,7 +160,22 @@ const userSchema = new Schema<IUser>(
     transferHistory: { type: [{ srNo: Number, reqNo: String, fromUser: String, fromUserName: String, transferType: String, transferRejectDate: Date, package: String, quantity: Number, amount: String, status: String }], default: [] },
     transferredEpins: { type: [{ date: Date, time: String, ePin: String, package: String, transferredTo: String, transferredToName: String, status: String, remark: String }], default: [] },
     pinPurchaseHistory: { type: [{ date: Date, packageName: String, quantity: Number, totalAmount: Number, paymentId: String, status: String }], default: [] },
-    pinRequests: { type: [{ srNo: Number, requestNo: String, date: Date, memberId: String, name: String, totalPins: Number, totalAmount: String, description: String, type: String }], default: [] },
+    pinRequests: {
+      type: [
+        {
+          srNo: { type: Number, required: true },
+          requestNo: { type: String, required: true },
+          date: { type: Date, required: true },
+          memberId: { type: String, required: true },
+          name: { type: String, required: true },
+          totalPins: { type: Number, required: true },
+          totalAmount: { type: String, required: true },
+          description: { type: String, required: true },
+          type: { type: String, enum: ['Credit', 'Debit'], required: true },
+        },
+      ],
+      default: [],
+    },
     totalIncome: { type: Number, default: 0 },
     utrNumber: { type: String, required: false, trim: true },
     bankAccountDetails: {

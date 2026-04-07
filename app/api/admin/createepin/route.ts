@@ -19,6 +19,7 @@ async function isPinUnique(pin: string): Promise<boolean> {
   ).lean();
   return !conflict;
 }
+
 async function generateUniquePins(count: number): Promise<string[]> {
   const pins: string[] = [];
   let attempts = 0;

@@ -6,6 +6,7 @@ import { ShoppingCart, Package } from 'lucide-react';
 import Image from 'next/image';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import OrderDialog from '@/components/OrderDialog';
 import { Products, StarterPacks } from '@/entities';
 
 const MOCK_PRODUCTS: Products[] = [
@@ -78,29 +79,18 @@ const MOCK_STARTER_PACKS: StarterPacks[] = [
     }
 ];
 
-const WA_NUMBER = '916204720770';
-
-const handleOrderNow = (product: Products) => {
-    const message = `Namaste! 👋\n\nMein isse product order karna chahta/chahti hoon:\n\n📦 *${product.itemName}*\nHindi: ${product.productNameHindi}\n💰 Price: ₹${product.itemPrice}\n📊 BV: ${product.bvValue} | PV: ${product.pvValue}\n\nMujhe isske baare mein more details chahiye. Kripaya mujhe process samjayiye.`;
-    window.open(
-        `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`,
-        '_blank'
-    );
-};
-
-const handleChoosePack = (pack: StarterPacks) => {
-    const message = `Namaste! 👋\n\nMein ye starter pack select karna chahta/chahti hoon:\n\n📦 *${pack.itemName}*\n💰 Price: ₹${pack.itemPrice}\n📊 Total BV: ${pack.totalBV} | Total PV: ${pack.totalPV}\n\nKripaya mujhe is pack ke baare mein sabhi details samjayiye aur registration process batayiye.`;
-    window.open(
-        `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(message)}`,
-        '_blank'
-    );
-};
-
 export default function ProductsPage() {
     const [products, setProducts] = useState<Products[]>([]);
     const [starterPacks, setStarterPacks] = useState<StarterPacks[]>([]);
     const [isLoadingProducts, setIsLoadingProducts] = useState(true);
     const [isLoadingPacks, setIsLoadingPacks] = useState(true);
+    const [isOrderDialogOpen, setIsOrderDialogOpen] = useState(false);
+    const [selectedItem, setSelectedItem] = useState<{
+        id: string;
+        name: string | undefined;
+        price: number | undefined;
+        type: 'product' | 'pack';
+    } | null>(null);
 
     useEffect(() => {
         loadProducts();
@@ -125,6 +115,26 @@ export default function ProductsPage() {
         } finally {
             setIsLoadingPacks(false);
         }
+    };
+
+    const handleOrderNow = (product: Products) => {
+        setSelectedItem({
+            id: product._id,
+            name: product.itemName,
+            price: product.itemPrice,
+            type: 'product',
+        });
+        setIsOrderDialogOpen(true);
+    };
+
+    const handleChoosePack = (pack: StarterPacks) => {
+        setSelectedItem({
+            id: pack._id,
+            name: pack.itemName,
+            price: pack.itemPrice,
+            type: 'pack',
+        });
+        setIsOrderDialogOpen(true);
     };
 
     return (
@@ -177,7 +187,7 @@ export default function ProductsPage() {
                                             <Image
                                                 src={product.itemImage || ''}
                                                 alt={product.itemName || 'Product'}
-                                                className="w-full h-48 object-cover rounded-lg mb-4"
+                                                className="w-full h-48 object-contain rounded-lg mb-4"
                                                 width={300}
                                                 height={200}
                                             />
@@ -267,7 +277,7 @@ export default function ProductsPage() {
                                             <Image
                                                 src={pack.itemImage || ''}
                                                 alt={pack.itemName || 'Starter Pack'}
-                                                className="w-full h-64 object-cover rounded-lg mb-6"
+                                                className="w-full h-64 object-contain rounded-lg mb-6"
                                                 width={400}
                                                 height={300}
                                             />
@@ -314,6 +324,21 @@ export default function ProductsPage() {
                 </div>
             </section>
             <Footer />
+
+            {/* Order Dialog */}
+            {selectedItem && (
+                <OrderDialog
+                    isOpen={isOrderDialogOpen}
+                    onClose={() => {
+                        setIsOrderDialogOpen(false);
+                        setSelectedItem(null);
+                    }}
+                    itemName={selectedItem.name}
+                    itemPrice={selectedItem.price}
+                    orderType={selectedItem.type}
+                    itemId={selectedItem.id}
+                />
+            )}
         </div>
     );
 }

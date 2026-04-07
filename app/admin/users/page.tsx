@@ -11,6 +11,7 @@ import {
   UserCheck, UserX, Crown, Package, IndianRupee,
 } from 'lucide-react';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -62,6 +63,205 @@ interface Summary {
 
 type SortField = 'createdAt' | 'updatedAt' | 'username' | 'fullName' | 'joiningDate' | 'basicIncome' | 'boosterIncomeAmount';
 type SortOrder = 'asc' | 'desc';
+
+const AddUserModal = ({ onClose, onSuccess }: {
+  onClose: () => void;
+  onSuccess: () => void;
+}) => {
+  const [formData, setFormData] = useState({
+    username: '',
+    password: '',
+    email: '',
+    fullName: '',
+    mobileNo: '',
+    role: 'user',
+    memberType: 'active',
+  });
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!formData.username || !formData.password) {
+      toast.error('Username and password are required');
+      return;
+    }
+    if (formData.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    if (formData.mobileNo && formData.mobileNo.length !== 10) {
+      toast.error('Mobile number must be 10 digits');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const res = await fetch('/api/admin/users/add', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
+
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message);
+
+      toast.success('User created successfully');
+      onClose();
+      onSuccess();
+    } catch (error: any) {
+      toast.error(error.message ?? 'Failed to create user');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A6E5A]/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0, y: 20 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.9, opacity: 0, y: 20 }}
+        transition={{ type: 'spring', damping: 20 }}
+        className="bg-[#FFFFFF] w-full max-w-md shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="bg-[#0A6E5A] px-6 py-5 flex items-center justify-between">
+          <h3 className="font-['Fraunces'] text-[1.25rem] text-[#FFFFFF]">Add New User</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#FFFFFF]/10 hover:bg-[#FFFFFF]/20 flex items-center justify-center transition-colors">
+            <X className="w-4 h-4 text-[#FFFFFF]" />
+          </button>
+        </div>
+
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto">
+          {/* Username */}
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Username *</label>
+            <input
+              type="text"
+              name="username"
+              value={formData.username}
+              onChange={handleChange}
+              placeholder="Enter username"
+              className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors"
+            />
+          </div>
+
+          {/* Password */}
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Password (min 8 chars) *</label>
+            <input
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter password"
+              className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors"
+            />
+          </div>
+
+          {/* Full Name */}
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Full Name</label>
+            <input
+              type="text"
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              placeholder="Enter full name"
+              className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors"
+            />
+          </div>
+
+          {/* Email */}
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Email</label>
+            <input
+              type="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              placeholder="Enter email"
+              className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors"
+            />
+          </div>
+
+          {/* Mobile Number */}
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Mobile Number (10 digits)</label>
+            <input
+              type="text"
+              name="mobileNo"
+              value={formData.mobileNo}
+              onChange={handleChange}
+              placeholder="Enter mobile number"
+              maxLength={10}
+              className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors"
+            />
+          </div>
+
+          {/* Role */}
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Role</label>
+            <select
+              name="role"
+              value={formData.role}
+              onChange={handleChange}
+              className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors"
+            >
+              <option value="user">User</option>
+              <option value="moderator">Moderator</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+
+          {/* Member Type */}
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Member Type</label>
+            <select
+              name="memberType"
+              value={formData.memberType}
+              onChange={handleChange}
+              className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors"
+            >
+              <option value="active">Active</option>
+              <option value="gold">Gold</option>
+            </select>
+          </div>
+        </form>
+
+        {/* Footer */}
+        <div className="px-6 pb-6 flex gap-3 border-t border-[#0A6E5A]/10">
+          <button onClick={onClose} className="flex-1 py-3 border border-[#0A6E5A]/20 font-['Roboto'] text-[0.875rem] text-[#0A6E5A] hover:bg-[#0A6E5A]/5 transition-colors mt-4">
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={loading}
+            className="flex-1 py-3 bg-[#0A6E5A] font-['Roboto'] text-[0.875rem] text-[#FFFFFF] hover:bg-[#0A6E5A]/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 mt-4"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+            {loading ? 'Creating...' : 'Create User'}
+          </button>
+        </div>
+      </motion.div>
+    </motion.div>
+  );
+};
 
 const StatCard = ({ icon: Icon, label, value, sub, color = 'green' }: {
   icon: React.ElementType;
@@ -400,6 +600,7 @@ export default function AdminUsersPage() {
   const [editUser,   setEditUser]   = useState<UserRecord | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserRecord | null>(null);
   const [viewUser,   setViewUser]   = useState<UserRecord | null>(null);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
   const searchRef = useRef<NodeJS.Timeout | undefined>(undefined);
   const fetchUsers = useCallback(async (overrides?: Partial<{
     search: string; roleFilter: string; typeFilter: string;
@@ -594,6 +795,15 @@ export default function AdminUsersPage() {
             >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Export CSV</span>
+            </button>
+
+            {/* Add User */}
+            <button
+              onClick={() => setShowAddUserModal(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#0A6E5A] text-[#FFFFFF] font-['Roboto'] text-[0.8rem] font-medium hover:bg-[#0A6E5A]/90 transition-colors"
+            >
+              <Users className="w-4 h-4" />
+              <span className="hidden sm:inline">Add User</span>
             </button>
           </div>
 
@@ -968,6 +1178,7 @@ export default function AdminUsersPage() {
 
       {/* ── Modals ── */}
       <AnimatePresence>
+        {showAddUserModal && <AddUserModal onClose={() => setShowAddUserModal(false)} onSuccess={() => fetchUsers()} />}
         {editUser   && <EditModal   user={editUser}   onClose={() => setEditUser(null)}   onSave={handleSaveEdit} />}
         {deleteUser && <DeleteModal user={deleteUser} onClose={() => setDeleteUser(null)} onConfirm={handleDelete} />}
         {viewUser   && <UserDrawer  user={viewUser}   onClose={() => setViewUser(null)} />}

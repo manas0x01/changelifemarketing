@@ -377,6 +377,7 @@ export default function AdminCreateEPinPage() {
                       placeholder="Search by User ID, name, username or phone…"
                       className="w-full pl-10 pr-10 py-3 border border-[#0A6E5A]/15 focus:border-[#0A6E5A] focus:outline-none font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 bg-[#F8FAF9] transition-colors"
                       autoComplete="off"
+                      suppressHydrationWarning={true}
                     />
                     <div className="absolute right-3 top-1/2 -translate-y-1/2">
                       {searchLoading

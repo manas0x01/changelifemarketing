@@ -113,7 +113,7 @@ export default function Header() {
           {/* CTA Button */}
           <div className="hidden lg:block">
             <Link href="/auth/login">
-              <button className="bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors">
+              <button suppressHydrationWarning={true} className="bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors">
                 Login
               </button>
             </Link>
@@ -182,7 +182,7 @@ export default function Header() {
             )}
             
             <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
-              <button className="w-full bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors">
+              <button suppressHydrationWarning={true} className="w-full bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors">
                 Login
               </button>
             </Link>

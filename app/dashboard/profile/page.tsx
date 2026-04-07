@@ -28,10 +28,6 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        
-        console.log("🔍 Fetching profile with NextAuth session...");
-
-        // Send request with credentials - NextAuth session will be in cookies
         const response = await fetch("/api/user/profile", {
           method: "GET",
           headers: {
@@ -39,12 +35,7 @@ export default function ProfilePage() {
           },
           credentials: "include",
         });
-
-        console.log("📥 Profile response status:", response.status);
-        console.log("📥 Response content-type:", response.headers.get("content-type"));
-
         if (!response.ok) {
-          // Try to parse as JSON, fallback to text
           let errorData;
           const contentType = response.headers.get("content-type");
           
@@ -56,24 +47,37 @@ export default function ProfilePage() {
               errorData = { error: text?.substring(0, 200) || "Unknown error" };
             }
           } catch (parseErr) {
-            console.error("❌ Error parsing response:", parseErr);
             errorData = { error: "Failed to parse server response" };
           }
-          
-          console.error("❌ Profile API error:", errorData);
           throw new Error(errorData.error || "Failed to fetch profile");
         }
         
-        const data = await response.json();
-        console.log("✅ Profile data received successfully");
-        setProfileData(data);
+        const apiResponse = await response.json();
+        const user = apiResponse.data;
+        const transformedData: ProfileData = {
+          username: user.username || "N/A",
+          userId: user.userId || user._id || "N/A",
+          avatar: "/images/user.png",
+          personalDetails: [
+            { label: "Full Name", value: user.fullName || "N/A" },
+            { label: "Email", value: user.email || "N/A" },
+            { label: "Phone", value: user.mobileNo || user.phone || "N/A" },
+            { label: "Member Type", value: user.memberType || "N/A" },
+            { label: "Package", value: user.registeredPackage || "N/A" },
+            { label: "Joining Date", value: user.joiningDate || "N/A" },
+          ],
+          bankDetails: [
+            { label: "Bank Name", value: user.bankName || "N/A" },
+            { label: "Account Number", value: user.accountNo || "N/A" },
+            { label: "IFSC Code", value: user.ifsc || "N/A" },
+            { label: "Account Type", value: user.accountType || "N/A" },
+          ],
+        };
+        
+        setProfileData(transformedData);
         setError(null);
       } catch (err) {
-        console.error("❌ Profile fetch error:", err);
-        
-        // If authentication fails, redirect to login
-        if (err instanceof Error && err.message.includes("Unauthorized")) {
-          console.log("🔐 Redirecting to login...");
+      if (err instanceof Error && err.message.includes("Unauthorized")) {
           router.push("/auth/login");
           return;
         }

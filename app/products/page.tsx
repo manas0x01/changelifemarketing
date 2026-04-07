@@ -111,7 +111,6 @@ export default function ProductsPage() {
         try {
             setProducts(MOCK_PRODUCTS);
         } catch (error) {
-            console.error('Error loading products:', error);
             setProducts(MOCK_PRODUCTS);
         } finally {
             setIsLoadingProducts(false);
@@ -122,7 +121,6 @@ export default function ProductsPage() {
         try {
             setStarterPacks(MOCK_STARTER_PACKS);
         } catch (error) {
-            console.error('Error loading starter packs:', error);
             setStarterPacks(MOCK_STARTER_PACKS);
         } finally {
             setIsLoadingPacks(false);

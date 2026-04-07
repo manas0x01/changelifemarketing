@@ -20,19 +20,15 @@ export async function DELETE(req: NextRequest) {
         { status: 401 }
       );
     }
-
     await connectDB();
-
     const { searchParams } = new URL(req.url);
     const id = searchParams.get('id');
-
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, message: 'Invalid or missing user ID.' },
         { status: 400 }
       );
     }
-
     const deleted = await User.findByIdAndDelete(id);
     if (!deleted) {
       return NextResponse.json(
@@ -40,13 +36,11 @@ export async function DELETE(req: NextRequest) {
         { status: 404 }
       );
     }
-
     return NextResponse.json(
       { success: true, message: 'User deleted successfully.' },
       { status: 200 }
     );
   } catch (err) {
-    console.error('[DELETE /api/admin/users]', err);
     return NextResponse.json(
       { success: false, message: 'Internal server error.' },
       { status: 500 }

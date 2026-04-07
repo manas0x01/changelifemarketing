@@ -1,5 +1,3 @@
-// app/api/user/withdraw/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { connectDB } from '@/lib/database';
@@ -29,13 +27,10 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    // ── Get user by username ──
     const user = await User.findOne({ username: session.user.username });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-
     const userBalance = user.totalIncome || 0;
     if (Number(amount) > userBalance) {
       return NextResponse.json(
@@ -43,17 +38,12 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    // ── Check bank details ──
-    const bank = user.bankAccountDetails;
-    if (!bank?.accountNumber || !bank?.accountHolderName) {
+    if (!user.accountNo || !user.fullName) {
       return NextResponse.json(
         { error: "Bank details not found. Please update your profile first." },
         { status: 400 }
       );
     }
-
-    // ── Check for pending request ──
     const pendingExists = await WithdrawRequest.findOne({ 
       userId: user.userId, 
       status: 'Pending' 
@@ -64,12 +54,14 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
     const requestNo = generateRequestNo();
     const currentIncome = user.totalIncome || 0;
     const remainingBalance = currentIncome - Number(amount);
-
-    // ── Update user's totalIncome ──
+    let validAccountType = user.accountType || 'Savings';
+    if (validAccountType === 'Saving') {
+      validAccountType = 'Savings';
+      user.accountType = 'Savings';
+    }
     user.totalIncome = remainingBalance;
     if (!user.withdrawRequests) user.withdrawRequests = [];
     user.withdrawRequests.push({
@@ -79,10 +71,8 @@ export async function POST(req: NextRequest) {
       requestDate: new Date(),
     });
     await user.save();
-
-    // ── Create withdraw request in separate collection ──
-    await WithdrawRequest.create({
-      userId:       user.userId,
+    const withdrawRequestData = {
+      userId:       user.username,
       userName:     user.username,
       userFullName: user.fullName || user.username,
       mobileNo:     user.mobileNo || user.phone || '',
@@ -91,13 +81,14 @@ export async function POST(req: NextRequest) {
       status:       'Pending',
       requestDate:  new Date(),
       bankDetails: {
-        accountHolderName: bank.accountHolderName,
-        accountNumber:     bank.accountNumber,
-        ifscCode:          bank.ifscCode || '',
-        bankName:          bank.bankName || '',
+        accountHolderName: user.fullName,
+        accountNumber:     user.accountNo,
+        ifscCode:          user.ifsc || '',
+        bankName:          user.bankName || '',
+        accountType:       validAccountType || 'Savings',
       },
-    });
-
+    };
+    await WithdrawRequest.create(withdrawRequestData);
     return NextResponse.json({
       success: true,
       message: `Withdrawal request of ₹${amount} submitted successfully`,
@@ -105,28 +96,21 @@ export async function POST(req: NextRequest) {
       remainingBalance,
     });
   } catch (error: any) {
-    console.error('[USER_WITHDRAW_POST]', error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
-// ── GET: User's withdrawal history ──
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-
     const session = await getServerSession(authOptions);
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-
-    // ── Get user by username ──
     const user = await User.findOne({ username: session.user.username });
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
-
-    // ── Get user's withdrawal requests ──
     const requests = await WithdrawRequest.find({ userId: user.userId })
       .sort({ requestDate: -1 })
       .lean();
@@ -136,7 +120,6 @@ export async function GET(req: NextRequest) {
       count: requests.length,
     });
   } catch (error: any) {
-    console.error('[USER_WITHDRAW_GET]', error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

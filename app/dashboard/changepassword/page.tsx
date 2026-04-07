@@ -51,7 +51,6 @@ export default function ChangePasswordPage() {
       setLoading(false);
     } catch (err) {
       setError("An error occurred while changing the password");
-      console.error(err);
       setLoading(false);
     }
   };

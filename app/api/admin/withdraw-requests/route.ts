@@ -12,7 +12,6 @@ export async function GET(req: NextRequest) {
     if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
-
     const { searchParams } = new URL(req.url);
     const status   = searchParams.get('status') || 'all';
     const search   = searchParams.get('search') || '';
@@ -57,8 +56,6 @@ export async function GET(req: NextRequest) {
         },
       ]),
     ]);
-
-    // ── Format summary ──
     const summary: Record<string, { count: number; amount: number }> = {
       Pending:  { count: 0, amount: 0 },
       Approved: { count: 0, amount: 0 },
@@ -83,7 +80,6 @@ export async function GET(req: NextRequest) {
       summary,
     });
   } catch (error: any) {
-    console.error('[ADMIN_WITHDRAW_GET]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

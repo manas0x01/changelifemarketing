@@ -21,7 +21,6 @@ export async function GET(req: Request) {
             basicIncomeRecords: user.basicIncomeRecords || [],
         });
     } catch (error) {
-        console.error("Error fetching basic income:", error);
         return Response.json(
             { success: false, message: "Internal server error" },
             { status: 500 }

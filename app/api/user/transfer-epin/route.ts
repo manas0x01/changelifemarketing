@@ -13,7 +13,6 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
-
     const body = await req.json();
     const { transferredTo, pinsToTransfer } = body;
 
@@ -23,9 +22,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
     await connectDB();
-
     const sender = await User.findById(session.user.id);
     const receiver = await User.findOne({
       $or: [{ userId: transferredTo }, { username: transferredTo }],
@@ -37,10 +34,6 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-
-    // Transfer logic would go here
-    // For now, return success
-
     return NextResponse.json(
       {
         success: true,
@@ -53,7 +46,6 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (err: any) {
-    console.error('[POST /api/user/transfer-epin]', err);
     return NextResponse.json(
       { success: false, message: err.message ?? 'Internal server error' },
       { status: 500 }

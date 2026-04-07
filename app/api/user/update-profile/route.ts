@@ -3,160 +3,85 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
-const requestCache = new Map<string, { timestamp: number; promise: Promise<Response> }>();
-
 export async function GET(req: Request) {
     try {
         const session = await getServerSession(authOptions);
-        const cacheKey = session?.user?.username || "anonymous";
-        const cachedRequest = requestCache.get(cacheKey);
-        if (cachedRequest && Date.now() - cachedRequest.timestamp < 2000) {
-            return cachedRequest.promise;
-        }
-
-        const responsePromise = (async () => {
-            if (!session) {
-                return Response.json({
-                    success: true,
-                    data: {
-                        id: null,
-                        username: "",
-                        fullName: "",
-                        gender: "Male",
-                        email: "",
-                        phone: "",
-                        mobileNo: "",
-                        dateOfBirth: "",
-                        panNo: "",
-                        state: "Bihar",
-                        district: "Patna",
-                        city: "",
-                        address: "",
-                        pincode: "",
-                        bankName: "",
-                        branchName: "",
-                        accountNo: "",
-                        ifsc: "",
-                        accountType: "",
-                        nomineeName: "",
-                        nomineeRelation: "Son",
-                        joiningDate: "",
-                        sponsorId: "",
-                        sponsorName: "",
-                        placementId: "",
-                        placementName: "",
-                    }
-                });
-            }
-            if (!session?.user?.username) {
-                return Response.json({
-                    success: true,
-                    data: {
-                        id: null,
-                        username: "",
-                        fullName: "",
-                        gender: "Male",
-                        email: "",
-                        phone: "",
-                        mobileNo: "",
-                        dateOfBirth: "",
-                        panNo: "",
-                        state: "Bihar",
-                        district: "Patna",
-                        city: "",
-                        address: "",
-                        pincode: "",
-                        bankName: "",
-                        branchName: "",
-                        accountNo: "",
-                        ifsc: "",
-                        accountType: "",
-                        nomineeName: "",
-                        nomineeRelation: "Son",
-                        joiningDate: "",
-                        sponsorId: "",
-                        sponsorName: "",
-                        placementId: "",
-                        placementName: "",
-                    }
-                });
-            }
-
-            await connectDB();
-            const user = await User.findOne({ username: session.user.username }).select("-password -transactionPassword");
-
-            if (!user) {
-                return Response.json({
-                    success: true,
-                    data: {
-                        id: null,
-                        username: "",
-                        fullName: "",
-                        gender: "Male",
-                        email: "",
-                        phone: "",
-                        mobileNo: "",
-                        dateOfBirth: "",
-                        panNo: "",
-                        state: "Bihar",
-                        district: "Patna",
-                        city: "",
-                        address: "",
-                        pincode: "",
-                        bankName: "",
-                        branchName: "",
-                        accountNo: "",
-                        ifsc: "",
-                        accountType: "",
-                        nomineeName: "",
-                        nomineeRelation: "Son",
-                        joiningDate: "",
-                        sponsorId: "",
-                        sponsorName: "",
-                        placementId: "",
-                        placementName: "",
-                    }
-                });
-            }
-
-            const responseData = {
-                id: user._id,
-                username: user.username || "",
-                fullName: user.fullName || "",
-                gender: user.gender || "Male",
-                email: user.email || "",
-                phone: user.phone || "",
-                mobileNo: user.mobileNo || "",
-                dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString() : "",
-                panNo: user.panNo || "",
-                state: user.state || "Bihar",
-                district: user.district || "Patna",
-                city: user.city || "",
-                address: user.address || "",
-                pincode: user.pincode || "",
-                bankName: user.bankName || "",
-                branchName: user.branchName || "",
-                accountNo: user.accountNo || "",
-                ifsc: user.ifsc || "",
-                accountType: user.accountType || "",
-                nomineeName: user.nomineeName || "",
-                nomineeRelation: user.nomineeRelation || "Son",
-                joiningDate: user.joiningDate || "",
-                sponsorId: user.sponsorId || "",
-                sponsorName: user.sponsorName || "",
-                placementId: user.placementId || "",
-                placementName: user.placementName || "",
-            };
-
+        const defaultData = {
+            id: null,
+            username: "",
+            fullName: "",
+            gender: "Male",
+            email: "",
+            phone: "",
+            mobileNo: "",
+            dateOfBirth: "",
+            panNo: "",
+            state: "Bihar",
+            district: "Patna",
+            city: "",
+            address: "",
+            pincode: "",
+            bankName: "",
+            branchName: "",
+            accountNo: "",
+            ifsc: "",
+            accountType: "",
+            nomineeName: "",
+            nomineeRelation: "Son",
+            joiningDate: "",
+            sponsorId: "",
+            sponsorName: "",
+            placementId: "",
+            placementName: "",
+        };
+        if (!session?.user?.username) {
             return Response.json({
                 success: true,
-                data: responseData,
+                data: defaultData,
             });
-        })();
+        }
+        await connectDB();
+        const user = await User.findOne({ username: session.user.username }).select("-password -transactionPassword");
 
-        requestCache.set(cacheKey, { timestamp: Date.now(), promise: responsePromise });
-        setTimeout(() => requestCache.delete(cacheKey), 3000);
-        return responsePromise;
+        if (!user) {
+            return Response.json({
+                success: true,
+                data: defaultData,
+            });
+        }
+        const responseData = {
+            id: user._id,
+            username: user.username || "",
+            fullName: user.fullName || "",
+            gender: user.gender || "Male",
+            email: user.email || "",
+            phone: user.phone || "",
+            mobileNo: user.mobileNo || "",
+            dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString() : "",
+            panNo: user.panNo || "",
+            state: user.state || "Bihar",
+            district: user.district || "Patna",
+            city: user.city || "",
+            address: user.address || "",
+            pincode: user.pincode || "",
+            bankName: user.bankName || "",
+            branchName: user.branchName || "",
+            accountNo: user.accountNo || "",
+            ifsc: user.ifsc || "",
+            accountType: user.accountType || "",
+            nomineeName: user.nomineeName || "",
+            nomineeRelation: user.nomineeRelation || "Son",
+            joiningDate: user.joiningDate || "",
+            sponsorId: user.sponsorId || "",
+            sponsorName: user.sponsorName || "",
+            placementId: user.placementId || "",
+            placementName: user.placementName || "",
+        };
+
+        return Response.json({
+            success: true,
+            data: responseData,
+        });
     } catch (error) {
         return Response.json({
             success: true,

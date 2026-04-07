@@ -35,7 +35,6 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (err: any) {
-    console.error('[GET /api/user/get-member]', err);
     return NextResponse.json(
       { success: false, message: err.message ?? 'Internal server error' },
       { status: 500 }

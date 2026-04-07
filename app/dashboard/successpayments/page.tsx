@@ -37,17 +37,28 @@ export default function SuccessPaymentsPage() {
         setLoading(true);
         setError(null);
         const response = await fetch("/api/user/get-success-payments");
-        
         if (!response.ok) {
           throw new Error("Failed to fetch success payments");
         }
+        const result = await response.json();
+        let payments = [];
+        if (Array.isArray(result)) {
+          payments = result;
+        } else if (result?.data?.payments && Array.isArray(result.data.payments)) {
+          payments = result.data.payments;
+        } else if (result?.payments && Array.isArray(result.payments)) {
+          payments = result.payments;
+        } else if (result?.data && Array.isArray(result.data)) {
+          payments = result.data;
+        }
+        if (!Array.isArray(payments)) {
+          throw new Error(`Invalid response format - expected array, got ${typeof payments}`);
+        }
         
-        const payments = await response.json();
         setAllPayments(payments);
         setData(payments);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching success payments:", err);
       } finally {
         setLoading(false);
       }
@@ -61,7 +72,7 @@ export default function SuccessPaymentsPage() {
     setFiltered(true);
   };
 
-  const totalNetPay = data.reduce((s, r) => s + r.netpay, 0);
+  const totalNetPay = Array.isArray(data) ? data.reduce((s, r) => s + r.netpay, 0) : 0;
 
   const handleExportCSV = () => {
     const header = "Sr.No.,From Date,To Date,Silver Binary,Gold Binary,Total,Reimbursement of Expenditure,TDS,Netpay";

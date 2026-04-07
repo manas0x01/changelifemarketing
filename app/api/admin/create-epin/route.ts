@@ -4,9 +4,6 @@ import { connectDB } from '@/lib/database';
 import { authOptions } from '@/lib/auth';
 import User from '@/models/User';
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-/** Generate a cryptographically random EPin of given length */
 function generatePin(length = 12): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no ambiguous chars
   let pin = '';
@@ -16,7 +13,6 @@ function generatePin(length = 12): string {
   return pin;
 }
 
-/** Check uniqueness of a pin across ALL users */
 async function isPinUnique(pin: string): Promise<boolean> {
   const conflict = await User.findOne(
     { 'ePins.pin': pin },
@@ -24,32 +20,23 @@ async function isPinUnique(pin: string): Promise<boolean> {
   ).lean();
   return !conflict;
 }
-
-/** Generate N unique pins with retry logic */
 async function generateUniquePins(count: number): Promise<string[]> {
   const pins: string[] = [];
   let attempts = 0;
   const MAX_ATTEMPTS = count * 20;
-
   while (pins.length < count && attempts < MAX_ATTEMPTS) {
     attempts++;
     const candidate = generatePin(12);
     if (pins.includes(candidate)) continue;
     if (await isPinUnique(candidate)) pins.push(candidate);
   }
-
   if (pins.length < count) {
     throw new Error('Could not generate enough unique EPins. Please try again.');
   }
   return pins;
 }
-
-// ─── POST /api/admin/create-epin ─────────────────────────────────────────────
-// Body: { userId, packageName, quantity, customPins?, remark? }
-
 export async function POST(req: NextRequest) {
   try {
-    // ── Auth ───────────────────────────────────────────────────────────────
     const session = await getServerSession(authOptions);
     if (!session || session.user?.role !== 'admin') {
       return NextResponse.json(
@@ -57,20 +44,15 @@ export async function POST(req: NextRequest) {
         { status: 401 }
       );
     }
-
     await connectDB();
-
     const body = await req.json();
     const { userId, packageName, quantity, customPins, remark } = body;
-
-    // ── Validate ───────────────────────────────────────────────────────────
     if (!userId || typeof userId !== 'string' || !userId.trim()) {
       return NextResponse.json(
         { success: false, message: 'userId is required.' },
         { status: 400 }
       );
     }
-
     const VALID_PACKAGES = ['Silver', 'Gold', 'Diamond', 'Platinum'];
     if (!packageName || !VALID_PACKAGES.includes(packageName)) {
       return NextResponse.json(
@@ -89,8 +71,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    // ── Find User ──────────────────────────────────────────────────────────
     const user = await User.findOne({
       $or: [
         { userId: userId.trim() },
@@ -104,19 +84,14 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-
-    // ── Build EPin Objects ─────────────────────────────────────────────────
     let pins: string[];
-
     if (customPins && Array.isArray(customPins) && customPins.length > 0) {
-      // Admin provided custom pins — validate them
       if (customPins.length !== qty) {
         return NextResponse.json(
           { success: false, message: `customPins count (${customPins.length}) must match quantity (${qty}).` },
           { status: 400 }
         );
       }
-      // Check each custom pin is unique
       for (const cp of customPins) {
         if (typeof cp !== 'string' || cp.length < 6) {
           return NextResponse.json(
@@ -135,7 +110,6 @@ export async function POST(req: NextRequest) {
     } else {
       pins = await generateUniquePins(qty);
     }
-
     const now = new Date();
     const newEPins = pins.map((pin) => ({
       pin,
@@ -143,8 +117,6 @@ export async function POST(req: NextRequest) {
       status: 'Active' as const,
       remark: remark?.trim() || `Assigned by admin on ${now.toLocaleDateString('en-IN')}`,
     }));
-
-    // ── Purchase History Entry ─────────────────────────────────────────────
     const purchaseEntry = {
       date:        now,
       packageName,
@@ -153,8 +125,6 @@ export async function POST(req: NextRequest) {
       paymentId:   `ADMIN-${Date.now()}`,
       status:      'Success' as const,
     };
-
-    // ── Pin Request Log ────────────────────────────────────────────────────
     const existingReqs = user.pinRequests?.length ?? 0;
     const pinRequestEntry = {
       srNo:        existingReqs + 1,
@@ -167,8 +137,6 @@ export async function POST(req: NextRequest) {
       description: `Admin credited ${qty}x ${packageName} EPin(s)${remark ? `: ${remark}` : ''}.`,
       type:        'Credit' as const,
     };
-
-    // ── Atomic Update ──────────────────────────────────────────────────────
     await User.findByIdAndUpdate(
       user._id,
       {
@@ -203,7 +171,6 @@ export async function POST(req: NextRequest) {
       { status: 200 }
     );
   } catch (err: any) {
-    console.error('[POST /api/admin/create-epin]', err);
     return NextResponse.json(
       { success: false, message: err.message ?? 'Internal server error.' },
       { status: 500 }

@@ -34,8 +34,6 @@ export async function POST(req: Request) {
             password,
             transactionPassword,
         } = registrationData;
-
-        // Validate required fields
         if (!fullName?.trim()) {
             return Response.json({ error: "Full name is required" }, { status: 400 });
         }
@@ -48,35 +46,24 @@ export async function POST(req: Request) {
         if (!transactionPassword?.trim()) {
             return Response.json({ error: "Transaction password is required" }, { status: 400 });
         }
-
         await connectDB();
-
-        // Check if mobile number already exists
         const existingUser = await User.findOne({ mobileNo });
         if (existingUser) {
             return Response.json({ error: "Mobile number already registered" }, { status: 400 });
         }
-
-        // Check if sponsor exists and has available E-Pins
         const sponsor = await User.findOne({
             $or: [
                 { username: sponsorId },
                 { userId: sponsorId },
             ]
         });
-
         if (!sponsor) {
             return Response.json({ error: "Sponsor ID not found" }, { status: 404 });
         }
-
-        // Check available E-Pins
         const availableEPin = sponsor.ePins?.find((pin: any) => pin.pin === epin && !pin.usedDate);
         if (!availableEPin) {
             return Response.json({ error: "E-Pin not available or already used" }, { status: 400 });
         }
-
-        // Generate sequential userId with CLM2026 prefix
-        // Find the highest existing userId
         const lastUser = await User.findOne({ userId: /^CLM2026/ }).sort({ userId: -1 });
         let nextSequence = 1;
         
@@ -86,14 +73,9 @@ export async function POST(req: Request) {
                 nextSequence = parseInt(match[1]) + 1;
             }
         }
-        
         const autoUserId = `CLM2026${nextSequence}`;
-        
-        // Use provided userId or auto-generated one
         const finalUserId = userId && userId !== "CLM" ? userId : autoUserId;
         const username = finalUserId; // Username is same as userId
-        
-        // Check if userId already exists
         const existingUserId = await User.findOne({ userId: finalUserId });
         if (existingUserId) {
             return Response.json({ error: "User ID already exists" }, { status: 400 });

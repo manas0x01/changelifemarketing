@@ -38,12 +38,8 @@ export default function TransferEPinPage() {
   const [remark,          setRemark]          = useState("");
   const [memberLoading,   setMemberLoading]   = useState(false);
   const [transferLoading, setTransferLoading] = useState(false);
-
-  // Transfer history states
   const [transfers,       setTransfers]       = useState<Transfer[]>([]);
   const [historyLoading,  setHistoryLoading]  = useState(false);
-
-  // Fetch transfer history
   const fetchTransferHistory = async () => {
     try {
       setHistoryLoading(true);
@@ -51,7 +47,6 @@ export default function TransferEPinPage() {
       const data = await response.json();
       setTransfers(data.transfers || []);
     } catch (error) {
-      console.error("Error fetching transfer history:", error);
     } finally {
       setHistoryLoading(false);
     }

@@ -45,7 +45,6 @@ export default function DirectMembersPage() {
           setError(result.error || 'Failed to fetch members');
         }
       } catch (err) {
-        console.error('Error fetching direct members:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);

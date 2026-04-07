@@ -52,28 +52,21 @@ export default function MyEPinsPage() {
   const [error,        setError]        = useState<string | null>(null);
   const [packages,     setPackages]     = useState<string[]>(["--Select Package--"]);
   const [statuses,     setStatuses]     = useState<string[]>(["--Select Status--"]);
-
-  // Fetch E-Pins from database
   useEffect(() => {
     const fetchEPins = async () => {
       try {
         setLoading(true);
         setError(null);
         const response = await fetch("/api/user/get-epins");
-        
         if (!response.ok) {
           throw new Error("Failed to fetch E-Pins");
         }
-        
         const data = await response.json();
         setAllEPins(data.ePins || []);
-        
-        // Update packages and statuses dynamically
         setPackages(getPackages(data.ePins || []));
         setStatuses(getStatuses(data.ePins || []));
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching E-Pins:", err);
       } finally {
         setLoading(false);
       }

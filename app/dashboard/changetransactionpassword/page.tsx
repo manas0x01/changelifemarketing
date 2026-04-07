@@ -48,7 +48,6 @@ export default function ChangeTransactionPasswordPage() {
         setError(data.message || "Failed to change transaction password.");
       }
     } catch (error) {
-      console.error("Error:", error);
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);

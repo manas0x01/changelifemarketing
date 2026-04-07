@@ -86,13 +86,14 @@ export interface IUser extends Document {
     totalPins: number; totalAmount: string; description: string; type: 'Credit' | 'Debit';
   }[];
   totalIncome?: number;
+  utrNumber?: string;
   bankAccountDetails?: {
     accountHolderName?: string;
     accountNumber?: string;
     ifscCode?: string;
     bankName?: string;
   };
-  // ── NEW: Withdraw Requests History (User ke andar hi track hoga) ──
+
   withdrawRequests?: {
     requestNo: string;
     amount: number;
@@ -131,7 +132,7 @@ const userSchema = new Schema<IUser>(
     branchName: { type: String, required: false, trim: true },
     accountNo: { type: String, required: false, trim: true },
     ifsc: { type: String, required: false, trim: true, uppercase: true },
-    accountType: { type: String, required: false, enum: ['Savings', 'Current', 'Business'] },
+    accountType: { type: String, required: false, enum: ['Savings', 'Saving', 'Current', 'Business'] },
     nomineeName: { type: String, required: false, trim: true },
     nomineeRelation: { type: String, required: false, default: 'Son', enum: ['Son', 'Daughter', 'Wife', 'Husband', 'Father', 'Mother', 'Brother', 'Sister', 'Other'] },
     registeredPackage: { type: String, required: false, trim: true },
@@ -161,6 +162,7 @@ const userSchema = new Schema<IUser>(
     pinPurchaseHistory: { type: [{ date: Date, packageName: String, quantity: Number, totalAmount: Number, paymentId: String, status: String }], default: [] },
     pinRequests: { type: [{ srNo: Number, requestNo: String, date: Date, memberId: String, name: String, totalPins: Number, totalAmount: String, description: String, type: String }], default: [] },
     totalIncome: { type: Number, default: 0 },
+    utrNumber: { type: String, required: false, trim: true },
     bankAccountDetails: {
       type: {
         accountHolderName: { type: String, default: '' },

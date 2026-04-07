@@ -14,8 +14,6 @@ import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface UserRecord {
   _id: string;
   username: string;
@@ -64,8 +62,6 @@ interface Summary {
 
 type SortField = 'createdAt' | 'updatedAt' | 'username' | 'fullName' | 'joiningDate' | 'basicIncome' | 'boosterIncomeAmount';
 type SortOrder = 'asc' | 'desc';
-
-// ─── Sub-components ───────────────────────────────────────────────────────────
 
 const StatCard = ({ icon: Icon, label, value, sub, color = 'green' }: {
   icon: React.ElementType;
@@ -134,8 +130,6 @@ const SortIcon = ({ field, current, order }: { field: string; current: string; o
   return order === 'asc' ? <ArrowUp className="w-3 h-3 text-[#C9A84C]" /> : <ArrowDown className="w-3 h-3 text-[#C9A84C]" />;
 };
 
-// ─── Edit Modal ───────────────────────────────────────────────────────────────
-
 const EditModal = ({ user, onClose, onSave }: {
   user: UserRecord;
   onClose: () => void;
@@ -200,7 +194,6 @@ const EditModal = ({ user, onClose, onSave }: {
               ))}
             </div>
           </div>
-
           <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-2">Member Type</label>
             <div className="grid grid-cols-2 gap-2">
@@ -240,8 +233,6 @@ const EditModal = ({ user, onClose, onSave }: {
     </motion.div>
   );
 };
-
-// ─── Delete Confirm Modal ─────────────────────────────────────────────────────
 
 const DeleteModal = ({ user, onClose, onConfirm }: {
   user: UserRecord;
@@ -289,8 +280,6 @@ const DeleteModal = ({ user, onClose, onConfirm }: {
   );
 };
 
-// ─── User Detail Drawer ───────────────────────────────────────────────────────
-
 const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }) => {
   const income = (user.basicIncome ?? 0) + (user.boosterIncomeAmount ?? 0);
   const team   = (user.totalTeam?.left ?? 0) + (user.totalTeam?.right ?? 0);
@@ -316,7 +305,6 @@ const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }
             <X className="w-4 h-4 text-[#FFFFFF]" />
           </button>
         </div>
-
         <div className="px-6 py-6 space-y-6">
           {/* Badges */}
           <div className="flex gap-2">
@@ -339,7 +327,6 @@ const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }
               </div>
             ))}
           </div>
-
           {/* Info Sections */}
           {[
             {
@@ -395,8 +382,6 @@ const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }
   );
 };
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function AdminUsersPage() {
   const [users,      setUsers]      = useState<UserRecord[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
@@ -404,8 +389,6 @@ export default function AdminUsersPage() {
   const [loading,    setLoading]    = useState(true);
   const [error,      setError]      = useState('');
   const [toast,      setToast]      = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
-
-  // Filters
   const [search,     setSearch]     = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
@@ -414,16 +397,10 @@ export default function AdminUsersPage() {
   const [sortBy,     setSortBy]     = useState<SortField>('createdAt');
   const [sortOrder,  setSortOrder]  = useState<SortOrder>('desc');
   const [showFilter, setShowFilter] = useState(false);
-
-  // Modals
   const [editUser,   setEditUser]   = useState<UserRecord | null>(null);
   const [deleteUser, setDeleteUser] = useState<UserRecord | null>(null);
   const [viewUser,   setViewUser]   = useState<UserRecord | null>(null);
-
   const searchRef = useRef<NodeJS.Timeout | undefined>(undefined);
-
-  // ── Fetch ─────────────────────────────────────────────────────────────────
-
   const fetchUsers = useCallback(async (overrides?: Partial<{
     search: string; roleFilter: string; typeFilter: string;
     page: number; sortBy: SortField; sortOrder: SortOrder;

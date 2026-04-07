@@ -20,22 +20,15 @@ export default function EditBankPage() {
     accountType: "-- Select --",
     panNo: "",
   });
-
-  // UI states
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-
-  // Fetch bank details on mount
   useEffect(() => {
     const fetchBankDetails = async () => {
       try {
         setLoading(true);
         setError(null);
-
-        console.log("🏦 Fetching bank details...");
-
         const response = await fetch("/api/user/update-profile", {
           method: "GET",
           headers: {
@@ -43,12 +36,7 @@ export default function EditBankPage() {
           },
           credentials: "include",
         });
-
-        console.log("📥 Bank details response status:", response.status);
-        console.log("📥 Response content-type:", response.headers.get("content-type"));
-
         if (!response.ok) {
-          // Try to parse as JSON, fallback to text
           let errorData;
           const contentType = response.headers.get("content-type");
           
@@ -60,14 +48,9 @@ export default function EditBankPage() {
               errorData = { error: text?.substring(0, 200) || "Unknown error" };
             }
           } catch (parseErr) {
-            console.error("❌ Error parsing response:", parseErr);
             errorData = { error: "Failed to parse server response" };
           }
-          
-          console.error("❌ Bank details fetch error:", errorData);
-          
           if (response.status === 401) {
-            console.log("🔐 Unauthorized - redirecting to login");
             router.push("/auth/login");
             return;
           }
@@ -76,7 +59,6 @@ export default function EditBankPage() {
         }
 
         const data = await response.json();
-        console.log("✅ Bank details fetched:", data);
 
         if (data.data) {
           setBankData({
@@ -91,7 +73,6 @@ export default function EditBankPage() {
 
         setError(null);
       } catch (err) {
-        console.error("❌ Error fetching bank details:", err);
         setError(err instanceof Error ? err.message : "An error occurred");
       } finally {
         setLoading(false);
@@ -100,37 +81,26 @@ export default function EditBankPage() {
 
     fetchBankDetails();
   }, [router]);
-
-  // Handle input change
   const handleInputChange = (field: keyof typeof bankData, value: string) => {
     setBankData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
-
-  // Handle update
   const handleUpdate = async () => {
     try {
       setSaving(true);
       setError(null);
-
-      console.log("💾 Saving bank details...");
-      console.log("📋 Bank data:", bankData);
-
-      // Validation - format only if provided
       if (bankData.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankData.ifsc)) {
         setError("Invalid IFSC code format (e.g., CBIN0284349)");
         setSaving(false);
         return;
       }
-
       if (bankData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(bankData.panNo)) {
         setError("Invalid PAN number format");
         setSaving(false);
         return;
       }
-
       const response = await fetch("/api/user/update-profile", {
         method: "POST",
         headers: {
@@ -139,12 +109,7 @@ export default function EditBankPage() {
         body: JSON.stringify(bankData),
         credentials: "include",
       });
-
-      console.log("📥 Update response status:", response.status);
-      console.log("📥 Response content-type:", response.headers.get("content-type"));
-
       if (!response.ok) {
-        // Try to parse as JSON, fallback to text
         let errorData;
         const contentType = response.headers.get("content-type");
         
@@ -156,21 +121,14 @@ export default function EditBankPage() {
             errorData = { error: text?.substring(0, 200) || "Unknown error" };
           }
         } catch (parseErr) {
-          console.error("❌ Error parsing response:", parseErr);
           errorData = { error: "Failed to parse server response" };
         }
-        
-        console.error("❌ Update error:", errorData);
         throw new Error(errorData.error || "Failed to update bank details");
       }
-
       const data = await response.json();
-      console.log("✅ Bank details updated successfully");
-
       setSuccess(true);
       setTimeout(() => setSuccess(false), 2500);
     } catch (err) {
-      console.error("❌ Error updating bank details:", err);
       setError(err instanceof Error ? err.message : "An error occurred");
     } finally {
       setSaving(false);
@@ -368,10 +326,8 @@ export default function EditBankPage() {
           setDropdownOpen={setDropdownOpen}
           setActivePage={() => {}}
         />
-
         {/* Green bar */}
         <div className="green-bar" />
-
         {/* ── BREADCRUMB ── */}
         <div className="breadcrumb-row">
           <div className="breadcrumb-left">
@@ -386,12 +342,10 @@ export default function EditBankPage() {
           </div>
           <Link href="/dashboard/profile" className="return-btn">Return to Profile</Link>
         </div>
-
         {/* ── MAIN CARD ── */}
         <div className="page-body">
           <div className="section-card">
             <div className="section-header">Edit Bank Details</div>
-
             <div className="form-body">
               {loading ? (
                 <>

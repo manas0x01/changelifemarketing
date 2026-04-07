@@ -47,7 +47,6 @@ export default function MyRequestsPage() {
         setAllRequests(data.requests || []);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching requests:", err);
       } finally {
         setLoading(false);
       }

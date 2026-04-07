@@ -85,7 +85,6 @@ export async function GET(req: Request) {
 
     return Response.json({ data: incomeRecords });
   } catch (error) {
-    console.error("Error fetching booster income:", error);
     return Response.json(
       { error: error instanceof Error ? error.message : "Error fetching data" },
       { status: 500 }

@@ -13,20 +13,14 @@ interface TreeNode {
 
 async function buildPlacementTree(userId: string): Promise<TreeNode | null> {
   try {
-    // Try to find by userId first, then by username
     let rootUser = await User.findOne({ userId }).lean();
-    
     if (!rootUser) {
       rootUser = await User.findOne({ username: userId }).lean();
     }
-    
     if (!rootUser) {
       return null;
     }
-
-    // Determine user type based on booster income
     const userType = (rootUser.boosterIncomeAmount ?? 0) > 0 ? 'gold' : 'active';
-
     const treeNode: TreeNode = {
       id: rootUser.userId || rootUser.username,
       name: rootUser.fullName || rootUser.username,
@@ -34,13 +28,9 @@ async function buildPlacementTree(userId: string): Promise<TreeNode | null> {
       type: userType,
       children: []
     };
-
-    // Recursively fetch children with left/right positioning
     async function fetchChildren(parentUserId: string) {
       const children = await User.find({ placementId: parentUserId }).lean();
-
       const result: TreeNode[] = [];
-
       for (const child of children) {
         const childType = (child.boosterIncomeAmount ?? 0) > 0 ? 'gold' : 'active';
         const childNode: TreeNode = {
@@ -51,13 +41,10 @@ async function buildPlacementTree(userId: string): Promise<TreeNode | null> {
           position: child.placementPosition as 'left' | 'right' | undefined,
           children: []
         };
-
-        // Recursively fetch grandchildren
         const grandchildren = await fetchChildren(child.userId || child.username);
         if (grandchildren.length > 0) {
           childNode.children = grandchildren;
         }
-
         result.push(childNode);
       }
 

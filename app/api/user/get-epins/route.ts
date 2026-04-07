@@ -24,8 +24,6 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
-
-    // Map E-Pins with status and transfer information
     const ePins = (user.ePins || []).map((pin: any, index: number) => ({
       srNo: index + 1,
       ePin: pin.pin,
@@ -41,7 +39,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ ePins });
   } catch (error) {
-    console.error("Error fetching E-Pins:", error);
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

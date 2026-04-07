@@ -5,8 +5,6 @@ import User from '@/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-
 interface QueryFilter {
   role?: string;
   memberType?: string;
@@ -47,7 +45,6 @@ export async function DELETE(req: NextRequest) {
       { status: 200 }
     );
   } catch (err) {
-    console.error('[DELETE /api/admin/users]', err);
     return NextResponse.json(
       { success: false, message: 'Internal server error.' },
       { status: 500 }
@@ -57,7 +54,6 @@ export async function DELETE(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    // ── Auth Guard ──────────────────────────────────────────────────────────
     const session = await getServerSession(authOptions);
     if (!session || session.user?.role !== 'admin') {
       return NextResponse.json(
@@ -65,10 +61,7 @@ export async function GET(req: NextRequest) {
         { status: 401 }
       );
     }
-
     await connectDB();
-
-    // ── Query Params ────────────────────────────────────────────────────────
     const { searchParams } = new URL(req.url);
     const page        = Math.max(1, parseInt(searchParams.get('page')    ?? '1',  10));
     const limit       = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
@@ -78,8 +71,6 @@ export async function GET(req: NextRequest) {
     const sortBy      = searchParams.get('sortBy')              ?? 'createdAt';
     const sortOrder   = searchParams.get('sortOrder') === 'asc' ? 1 : -1;
     const skip        = (page - 1) * limit;
-
-    // ── Build Filter ────────────────────────────────────────────────────────
     const filter: QueryFilter = {};
 
     if (role)       filter.role       = role;
@@ -99,15 +90,11 @@ export async function GET(req: NextRequest) {
         { state:     regex },
       ];
     }
-
-    // ── Allowed Sort Fields (whitelist to prevent injection) ────────────────
     const allowedSorts = new Set([
       'createdAt', 'updatedAt', 'username', 'fullName',
       'joiningDate', 'basicIncome', 'boosterIncomeAmount',
     ]);
     const safeSort = allowedSorts.has(sortBy) ? sortBy : 'createdAt';
-
-    // ── Query ───────────────────────────────────────────────────────────────
     const [users, total] = await Promise.all([
       User.find(filter)
         .select(
@@ -123,8 +110,6 @@ export async function GET(req: NextRequest) {
         .lean(),
       User.countDocuments(filter),
     ]);
-
-    // ── Summary Stats (one lightweight aggregation) ─────────────────────────
     const [summary] = await User.aggregate([
       {
         $group: {
@@ -161,7 +146,6 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (err) {
-    console.error('[GET /api/admin/users]', err);
     return NextResponse.json(
       { success: false, message: 'Internal server error.' },
       { status: 500 }
@@ -178,52 +162,42 @@ export async function PATCH(req: NextRequest) {
         { status: 401 }
       );
     }
-
     await connectDB();
-
     const body = await req.json();
     const { id, role, memberType } = body;
-
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, message: 'Invalid or missing user ID.' },
         { status: 400 }
       );
     }
-
     const allowedRoles       = ['user', 'admin', 'moderator'];
     const allowedMemberTypes = ['gold', 'active'];
-
     const update: Record<string, string> = {};
     if (role       && allowedRoles.includes(role))             update.role       = role;
     if (memberType && allowedMemberTypes.includes(memberType)) update.memberType = memberType;
-
     if (Object.keys(update).length === 0) {
       return NextResponse.json(
         { success: false, message: 'No valid fields to update.' },
         { status: 400 }
       );
     }
-
     const updated = await User.findByIdAndUpdate(
       id,
       { $set: update },
       { new: true, runValidators: true }
     ).select('username userId fullName role memberType');
-
     if (!updated) {
       return NextResponse.json(
         { success: false, message: 'User not found.' },
         { status: 404 }
       );
     }
-
     return NextResponse.json(
       { success: true, message: 'User updated successfully.', data: updated },
       { status: 200 }
     );
   } catch (err) {
-    console.error('[PATCH /api/admin/users]', err);
     return NextResponse.json(
       { success: false, message: 'Internal server error.' },
       { status: 500 }

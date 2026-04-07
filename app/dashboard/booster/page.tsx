@@ -45,7 +45,6 @@ export default function BoosterMembersPage() {
           setError(result.error || 'Failed to fetch members');
         }
       } catch (err) {
-        console.error('Error fetching booster members:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);

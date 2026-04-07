@@ -174,8 +174,11 @@ export default function Dashboard() {
         if (totalIncomeResponse.ok) {
           const d = await totalIncomeResponse.json();
           setTotalIncome(d.totalIncome || 0);
-          setBankDetails(d.bankAccountDetails || {
-            accountHolderName: "", accountNumber: "", ifscCode: "", bankName: "",
+          setBankDetails({
+            accountHolderName: d.fullName || "", 
+            accountNumber: d.accountNo || "", 
+            ifscCode: d.ifsc || "", 
+            bankName: d.bankName || "",
           });
         }
       } catch (error: any) {
@@ -185,8 +188,6 @@ export default function Dashboard() {
     };
     fetchDashboardData();
   }, []);
-
-  // ── WITHDRAW HANDLER ──
   const handleWithdraw = async () => {
     setWithdrawError("");
     setWithdrawSuccess("");
@@ -575,29 +576,32 @@ export default function Dashboard() {
       <Dialog open={withdrawOpen} onOpenChange={(open: boolean) => { setWithdrawOpen(open); setWithdrawError(""); setWithdrawSuccess(""); }}>
         <DialogContent style={{
           fontFamily: "'Poppins', sans-serif",
-          maxWidth: 480,
+          maxWidth: "min(95vw, 480px)",
+          width: "100%",
           background: "linear-gradient(135deg, #ffffff 0%, #f8f9fb 100%)",
           border: "1px solid #e0e0e0",
           borderRadius: 16,
-          padding: "28px 32px",
+          padding: "clamp(20px, 5vw, 32px)",
           boxShadow: "0 10px 40px rgba(0, 0, 0, 0.12)",
-          zIndex: 9999
+          zIndex: 9999,
+          maxHeight: "90vh",
+          overflowY: "auto",
         }}>
           <DialogHeader>
             <DialogTitle style={{
-              fontSize: 22,
+              fontSize: "clamp(18px, 5vw, 22px)",
               fontWeight: 800,
               color: "#1a1a2e",
               marginBottom: 8,
               background: "linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)",
               backgroundClip: "text",
               WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent"
+              WebkitTextFillColor: "transparent",
             }}>
               💸 Withdraw Request
             </DialogTitle>
             <DialogDescription style={{
-              fontSize: 13,
+              fontSize: "clamp(12px, 3vw, 13px)",
               color: "#666",
               fontWeight: 500
             }}>
@@ -607,48 +611,47 @@ export default function Dashboard() {
 
           <div style={{ marginTop: 8 }}>
             <div className="dialog-field">
-              <label>Username</label>
-              <div className="val">{userProfile.username}</div>
+              <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Username</label>
+              <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{userProfile.username}</div>
             </div>
 
             <div className="dialog-divider" />
 
             {/* Bank Details */}
-            <div style={{ marginBottom: 14, fontSize: 11.5, fontWeight: 700, color: "#7C3AED", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "14px" }}>🏦</span>
+            <div style={{ marginBottom: 14, fontSize: "clamp(10px, 2.5vw, 11.5px)", fontWeight: 700, color: "#7C3AED", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>🏦</span>
               Bank Account Details
             </div>
             {bankDetails.accountHolderName || bankDetails.accountNumber ? (
               <>
                 <div className="dialog-field">
-                  <label>Account Holder Name</label>
-                  <div className="val">{bankDetails.accountHolderName || "—"}</div>
+                  <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Account Holder Name</label>
+                  <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{bankDetails.accountHolderName || "—"}</div>
                 </div>
                 <div className="dialog-field">
-                  <label>Account Number</label>
-                  <div className="val">{bankDetails.accountNumber || "—"}</div>
+                  <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Account Number</label>
+                  <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{bankDetails.accountNumber || "—"}</div>
                 </div>
                 <div className="dialog-field">
-                  <label>IFSC Code</label>
-                  <div className="val">{bankDetails.ifscCode || "—"}</div>
+                  <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>IFSC Code</label>
+                  <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{bankDetails.ifscCode || "—"}</div>
                 </div>
                 <div className="dialog-field">
-                  <label>Bank Name</label>
-                  <div className="val">{bankDetails.bankName || "—"}</div>
+                  <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Bank Name</label>
+                  <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{bankDetails.bankName || "—"}</div>
                 </div>
               </>
             ) : (
-              <div style={{ fontSize: 13, color: "#e53935", marginBottom: 10 }}>
+              <div style={{ fontSize: "clamp(11px, 2.5vw, 13px)", color: "#e53935", marginBottom: 10 }}>
                 ⚠️ Bank details not added. Please update your profile first.
               </div>
             )}
 
             <div className="dialog-divider" />
-
             {/* Total Income */}
             <div className="dialog-field" style={{ textAlign: "center" }}>
-              <label style={{ textAlign: "center", display: "block" }}>Total Earned Income</label>
-              <div className="income-badge">₹ {totalIncome.toLocaleString("en-IN")}</div>
+              <label style={{ textAlign: "center", display: "block", fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Total Earned Income</label>
+              <div className="income-badge" style={{ fontSize: "clamp(14px, 4vw, 18px)", padding: "clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)" }}>₹ {totalIncome.toLocaleString("en-IN")}</div>
             </div>
 
             <div className="dialog-divider" />
@@ -656,13 +659,13 @@ export default function Dashboard() {
             {/* Amount Input */}
             <div className="dialog-field">
               <Label htmlFor="withdrawAmount" style={{
-                fontSize: 11.5,
+                fontSize: "clamp(10px, 2.5vw, 11.5px)",
                 fontWeight: 700,
                 color: "#555",
                 textTransform: "uppercase",
                 letterSpacing: "0.3px"
               }}>
-                Enter Withdrawal Amount <span style={{ color: "#999", fontWeight: 400, textTransform: "none" }}>(Min ₹800)</span>
+                Enter Withdrawal Amount <span style={{ color: "#999", fontWeight: 400, textTransform: "none", fontSize: "clamp(9px, 2vw, 11px)" }}>(Min ₹800)</span>
               </Label>
               <Input
                 id="withdrawAmount"
@@ -675,34 +678,37 @@ export default function Dashboard() {
                 style={{
                   marginTop: 8,
                   fontFamily: "'Poppins', sans-serif",
-                  fontSize: 15,
+                  fontSize: "clamp(13px, 3.5vw, 15px)",
                   fontWeight: 600,
-                  padding: "12px 14px",
+                  padding: "clamp(8px, 2.5vw, 12px) clamp(10px, 2.5vw, 14px)",
                   border: "2px solid #e0e0e0",
                   borderRadius: 8,
                   color: "#1a1a2e",
-                  transition: "all 0.3s"
+                  transition: "all 0.3s",
+                  width: "100%",
+                  boxSizing: "border-box"
                 }}
               />
-              {withdrawError && <div className="error-msg">⚠️ {withdrawError}</div>}
-              {withdrawSuccess && <div className="success-msg">✅ {withdrawSuccess}</div>}
+              {withdrawError && <div className="error-msg" style={{ fontSize: "clamp(11px, 2.5vw, 12.5px)" }}>⚠️ {withdrawError}</div>}
+              {withdrawSuccess && <div className="success-msg" style={{ fontSize: "clamp(11px, 2.5vw, 12.5px)" }}>✅ {withdrawSuccess}</div>}
             </div>
           </div>
 
-          <DialogFooter style={{ gap: 12, marginTop: 20, paddingTop: 20, borderTop: "1px solid #e0e0e0" }}>
+          <DialogFooter style={{ gap: "clamp(8px, 2vw, 12px)", marginTop: 20, paddingTop: 20, borderTop: "1px solid #e0e0e0", flexDirection: "column-reverse" }}>
             <Button
               variant="outline"
               onClick={() => setWithdrawOpen(false)}
               style={{
                 fontFamily: "'Poppins', sans-serif",
-                fontSize: 14,
+                fontSize: "clamp(12px, 3vw, 14px)",
                 fontWeight: 600,
                 color: "#7C3AED",
                 border: "2px solid #7C3AED",
                 borderRadius: 8,
-                padding: "10px 24px",
+                padding: "clamp(8px, 2vw, 10px) clamp(16px, 4vw, 24px)",
                 cursor: "pointer",
-                transition: "all 0.3s"
+                transition: "all 0.3s",
+                width: "100%"
               }}
             >
               Cancel
@@ -712,17 +718,18 @@ export default function Dashboard() {
               disabled={withdrawLoading}
               style={{
                 fontFamily: "'Poppins', sans-serif",
-                fontSize: 14,
+                fontSize: "clamp(12px, 3vw, 14px)",
                 fontWeight: 700,
                 background: "linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)",
                 color: "#fff",
                 border: "none",
                 borderRadius: 8,
-                padding: "10px 32px",
+                padding: "clamp(8px, 2vw, 10px) clamp(16px, 4vw, 32px)",
                 cursor: withdrawLoading ? "not-allowed" : "pointer",
                 opacity: withdrawLoading ? 0.7 : 1,
                 boxShadow: "0 4px 12px rgba(124, 58, 237, 0.3)",
-                transition: "all 0.3s"
+                transition: "all 0.3s",
+                width: "100%"
               }}
             >
               {withdrawLoading ? "Processing..." : "Submit Request"}

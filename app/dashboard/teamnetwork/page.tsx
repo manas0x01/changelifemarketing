@@ -47,7 +47,6 @@ export default function TeamNetworkPage() {
           setError(result.error || 'Failed to fetch members');
         }
       } catch (err) {
-        console.error('Error fetching team network members:', err);
         setError(err instanceof Error ? err.message : 'An error occurred');
       } finally {
         setLoading(false);

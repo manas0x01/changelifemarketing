@@ -51,15 +51,12 @@ export default function TransferredRejectedPage() {
         const data = await response.json();
         const transfers = data.transfers || [];
         setAllTransfers(transfers);
-        
-        // Extract unique packages and types
         const pkgs = new Set<string>(transfers.map((t: EPinRow) => t.package));
         const typs = new Set<string>(transfers.map((t: EPinRow) => t.transferType));
         setPackages(pkgs);
         setTypes(typs);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
-        console.error("Error fetching transfers:", err);
       } finally {
         setLoading(false);
       }

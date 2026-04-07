@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from "@/lib/database";
 import WithdrawRequest from '@/models/WithdrawRequest';
@@ -13,16 +12,11 @@ export async function PATCH(
   try {
     const { id } = await params;
     await connectDB();
-
-    // ── Admin Auth Guard ──
     const session = await getServerSession(authOptions);
     if (!session?.user || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
-
     const { status, adminRemark, utrNumber, paymentMode } = await req.json();
-
-    // ── Validate input ──
     if (!['Approved', 'Rejected'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status. Must be Approved or Rejected.' }, { status: 400 });
     }
@@ -32,8 +26,6 @@ export async function PATCH(
     if (status === 'Approved' && !utrNumber?.trim()) {
       return NextResponse.json({ error: 'UTR Number is required for approval.' }, { status: 400 });
     }
-
-    // ── Find request ──
     const withdrawReq = await WithdrawRequest.findById(id);
     if (!withdrawReq) {
       return NextResponse.json({ error: 'Withdraw request not found.' }, { status: 404 });
@@ -44,10 +36,7 @@ export async function PATCH(
         { status: 400 }
       );
     }
-
     const processedDate = new Date();
-
-    // ── Update withdraw request ──
     withdrawReq.status        = status;
     withdrawReq.processedDate = processedDate;
     withdrawReq.processedBy   = session.user?.username || session.user?.email || 'admin';
@@ -55,16 +44,12 @@ export async function PATCH(
     if (utrNumber)   withdrawReq.utrNumber   = utrNumber.trim();
     if (paymentMode) withdrawReq.paymentMode = paymentMode;
     await withdrawReq.save();
-
-    // ── If Rejected: refund amount back to user ──
     if (status === 'Rejected') {
       await User.findOneAndUpdate(
         { userId: withdrawReq.userId },
         { $inc: { totalIncome: withdrawReq.amount } }
       );
     }
-
-    // ── Sync status in user's embedded withdrawRequests array ──
     await User.findOneAndUpdate(
       {
         userId: withdrawReq.userId,
@@ -87,7 +72,6 @@ export async function PATCH(
       status,
     });
   } catch (error: any) {
-    console.error('[ADMIN_WITHDRAW_PATCH]', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

@@ -45,7 +45,6 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (err: any) {
-    console.error('[GET /api/user/get-gold-downline-members]', err);
     return NextResponse.json(
       { success: false, message: err.message ?? 'Internal server error' },
       { status: 500 }

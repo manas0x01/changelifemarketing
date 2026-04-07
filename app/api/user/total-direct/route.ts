@@ -13,9 +13,7 @@ export async function GET(req: NextRequest) {
         { status: 401 }
       );
     }
-
     await connectDB();
-
     const user = await User.findById(session.user.id)
       .select('totalDirect totalDirectAmount')
       .lean();
@@ -26,7 +24,6 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
-
     return NextResponse.json(
       {
         success: true,
@@ -39,7 +36,6 @@ export async function GET(req: NextRequest) {
       { status: 200 }
     );
   } catch (err: any) {
-    console.error('[GET /api/user/total-direct]', err);
     return NextResponse.json(
       { success: false, message: err.message ?? 'Internal server error' },
       { status: 500 }

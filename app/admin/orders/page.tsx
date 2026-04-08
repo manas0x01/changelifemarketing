@@ -67,7 +67,7 @@ const StatusBadge = ({ status }: { status: OrderStatus }) => {
   const cfg = S[status];
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[0.62rem] font-['Roboto'] font-bold uppercase tracking-wider border ${cfg.color} ${cfg.bg} ${cfg.border}`}>
-      <cfg.Icon className="w-3 h-3" />{cfg.label}
+      <cfg.Icon className="w-3 h-3" />{cfg.label}TDS
     </span>
   );
 };
@@ -330,7 +330,7 @@ export default function AdminOrdersPage() {
     setTimeout(() => setToast(null), 3500);
   };
 
-    {/* Status Change */}
+  {/* Status Change */}
   const handleStatusChange = async (id: string, status: OrderStatus) => {
     try {
       const res  = await fetch(`/api/admin/orders?id=${id}`, {

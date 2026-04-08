@@ -34,6 +34,56 @@ export interface IUser extends Document {
   placementPosition?: 'left' | 'right';
   memberType?: 'gold' | 'active';
   role?: string;
+  basicRank?: string; // User rank for basic income eligibility
+  boosterStatus?: {
+    isBoosterLeft?: boolean;
+    isBoosterRight?: boolean;
+    boosterQualificationDateLeft?: Date;
+    boosterQualificationDateRight?: Date;
+    pairsCompletedLeft?: number;
+    pairsCompletedRight?: number;
+  };
+  boosterMatchingIncome?: number;
+  boosterMatchingRecords?: {
+    srNo: number;
+    date: Date;
+    fromLeftBoosterId?: string;
+    fromLeftBoosterName?: string;
+    fromRightBoosterId?: string;
+    fromRightBoosterName?: string;
+    pairsMatched: number;
+    grossIncome: number;
+    carryForwardPairs: number;
+    sessionType: 'morning' | 'evening';
+    tdsDeducted: number;
+    serviceChargeDeducted: number;
+    netIncome: number;
+    status: 'Completed' | 'Pending';
+  }[];
+  boosterCarryForward?: {
+    date: Date;
+    sessionType: 'morning' | 'evening';
+    pairsCarried: number;
+    reason: string;
+  }[];
+  directMembers?: {
+    memberId: string;
+    name: string;
+    joinDate: Date;
+    position: 'left' | 'right';
+  }[];
+  sessionBasedIncome?: {
+    sessionDate: Date;
+    sessionType: 'morning' | 'evening';
+    leftMembersInSession: number;
+    rightMembersInSession: number;
+    pairsInSession: number;
+    grossIncome: number;
+    netIncome: number;
+    tdsDeducted: number;
+    serviceChargeDeducted: number;
+    status: 'Completed' | 'Pending';
+  }[];
   totalTeam?: { left: number; right: number };
   totalDirectAmount?: number;
   totalDirect?: { left: number; right: number };
@@ -47,6 +97,35 @@ export interface IUser extends Document {
   boosterIncomeRecords?: {
     srNo: number; amount: number; pairCount: number;
     date: Date; description: string; status: string;
+  }[];
+  awardIncome?: number;
+  awardIncomeRecords?: {
+    srNo: number; amount: number; awardName: string;
+    date: Date; description: string; status: string;
+  }[];
+  repurchaseIncome?: number;
+  repurchaseIncomeRecords?: {
+    srNo: number; amount: number; repurchaseAmount: number; commission: number;
+    date: Date; description: string; status: string;
+  }[];
+  currentAwardRank?: number; // Current rank achievement (1-13)
+  awardRankStatus?: {
+    rank: number;
+    leftBoostersForRank: number; // Boosters used for CURRENT rank targeting
+    rightBoostersForRank: number; // Boosters used for CURRENT rank targeting
+    achievementDate?: Date;
+    awardReceivedName?: string; // Name of award received at this rank
+  };
+  awardRankRecords?: {
+    srNo: number;
+    rank: number;
+    rankName: string;
+    achievedDate: Date;
+    leftBoostersUsed: number;
+    rightBoostersUsed: number;
+    awardName: string;
+    awardValue?: number; // In rupees for cash rewards
+    status: 'Awarded' | 'Pending';
   }[];
   successPayments?: {
     srNo: number; fromDate: Date; toDate: Date; silverBinary: number;
@@ -142,6 +221,23 @@ const userSchema = new Schema<IUser>(
     placementPosition: { type: String, required: false, enum: ['left', 'right'], trim: true },
     memberType: { type: String, required: false, enum: ['gold', 'active'], default: 'active' },
     role: { type: String, required: false, default: 'user', enum: ['user', 'admin', 'moderator'] },
+    basicRank: { type: String, required: false, default: 'unranked' },
+    boosterStatus: { 
+      type: { 
+        isBoosterLeft: { type: Boolean, default: false }, 
+        isBoosterRight: { type: Boolean, default: false },
+        boosterQualificationDateLeft: { type: Date, required: false },
+        boosterQualificationDateRight: { type: Date, required: false },
+        pairsCompletedLeft: { type: Number, default: 0 },
+        pairsCompletedRight: { type: Number, default: 0 }
+      }, 
+      default: { isBoosterLeft: false, isBoosterRight: false, pairsCompletedLeft: 0, pairsCompletedRight: 0 }
+    },
+    boosterMatchingIncome: { type: Number, default: 0 },
+    boosterMatchingRecords: { type: [{ srNo: Number, date: Date, fromLeftBoosterId: String, fromLeftBoosterName: String, fromRightBoosterId: String, fromRightBoosterName: String, pairsMatched: Number, grossIncome: Number, carryForwardPairs: Number, sessionType: String, tdsDeducted: Number, serviceChargeDeducted: Number, netIncome: Number, status: String }], default: [] },
+    boosterCarryForward: { type: [{ date: Date, sessionType: String, pairsCarried: Number, reason: String }], default: [] },
+    directMembers: { type: [{ memberId: String, name: String, joinDate: Date, position: String }], default: [] },
+    sessionBasedIncome: { type: [{ sessionDate: Date, sessionType: String, leftMembersInSession: Number, rightMembersInSession: Number, pairsInSession: Number, grossIncome: Number, netIncome: Number, tdsDeducted: Number, serviceChargeDeducted: Number, status: String }], default: [] },
     totalTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     totalDirect: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     totalDirectAmount: { type: Number, default: 0 },
@@ -150,6 +246,37 @@ const userSchema = new Schema<IUser>(
     boosterIncome: { type: { LG: { type: Number, default: 0 }, RG: { type: Number, default: 0 }, totalBoosterMatching: { type: Number, default: 0 } }, default: { LG: 0, RG: 0, totalBoosterMatching: 0 } },
     basicIncomeRecords: { type: [{ srNo: Number, amount: Number, pairCount: Number, date: Date, description: String, status: String }], default: [] },
     boosterIncomeRecords: { type: [{ srNo: Number, amount: Number, pairCount: Number, date: Date, description: String, status: String }], default: [] },
+    awardIncome: { type: Number, default: 0 },
+    awardIncomeRecords: { type: [{ srNo: Number, amount: Number, awardName: String, date: Date, description: String, status: String }], default: [] },
+    currentAwardRank: { type: Number, required: false, default: 0 },
+    awardRankStatus: {
+      type: {
+        rank: { type: Number, default: 0 },
+        leftBoostersForRank: { type: Number, default: 0 },
+        rightBoostersForRank: { type: Number, default: 0 },
+        achievementDate: { type: Date, required: false },
+        awardReceivedName: { type: String, required: false },
+      },
+      default: { rank: 0, leftBoostersForRank: 0, rightBoostersForRank: 0 },
+    },
+    awardRankRecords: {
+      type: [
+        {
+          srNo: { type: Number, required: true },
+          rank: { type: Number, required: true },
+          rankName: { type: String, required: true },
+          achievedDate: { type: Date, required: true },
+          leftBoostersUsed: { type: Number, required: true },
+          rightBoostersUsed: { type: Number, required: true },
+          awardName: { type: String, required: true },
+          awardValue: { type: Number, required: false },
+          status: { type: String, enum: ['Awarded', 'Pending'], default: 'Awarded' },
+        },
+      ],
+      default: [],
+    },
+    repurchaseIncome: { type: Number, default: 0 },
+    repurchaseIncomeRecords: { type: [{ srNo: Number, amount: Number, repurchaseAmount: Number, commission: Number, date: Date, description: String, status: String }], default: [] },
     successPayments: { type: [{ srNo: Number, fromDate: Date, toDate: Date, silverBinary: Number, goldBinary: Number, total: Number, reimbursement: Number, tds: Number, netpay: Number }], default: [] },
     boosterCounting: { type: [{ srNo: Number, RBV: Number, LBV: Number, RCarry: Number, LCarry: Number, matching: Number, date: Date, fromMemberId: String, product: String, description: String }], default: [] },
     boosterDownlineMembers: { type: [{ srNo: Number, memberId: String, name: String, date: String, position: String }], default: [] },

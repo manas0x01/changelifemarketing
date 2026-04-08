@@ -32,7 +32,6 @@ export async function POST(req: Request) {
             ifsc,
             accountType,
             password,
-            transactionPassword,
         } = registrationData;
         if (!fullName?.trim()) {
             return Response.json({ error: "Full name is required" }, { status: 400 });
@@ -42,9 +41,6 @@ export async function POST(req: Request) {
         }
         if (!password?.trim()) {
             return Response.json({ error: "Password is required" }, { status: 400 });
-        }
-        if (!transactionPassword?.trim()) {
-            return Response.json({ error: "Transaction password is required" }, { status: 400 });
         }
         await connectDB();
         const existingUser = await User.findOne({ mobileNo });
@@ -85,7 +81,6 @@ export async function POST(req: Request) {
             username,
             userId: finalUserId,
             password,
-            transactionPassword,
             fullName,
             gender,
             mobileNo,
@@ -106,7 +101,7 @@ export async function POST(req: Request) {
             accountType,
             sponsorId,
             placementId,
-            placementPosition: position,
+            placementPosition: position.toLowerCase(),
             role: "user",
             joiningDate: new Date().toISOString().split("T")[0],
         });

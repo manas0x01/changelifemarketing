@@ -13,6 +13,7 @@ interface ProfileData {
   username: string;
   userId: string;
   avatar: string;
+  fullName: string;
 }
 
 export default function ProfilePage() {
@@ -58,6 +59,7 @@ export default function ProfilePage() {
           username: user.username || "N/A",
           userId: user.userId || user._id || "N/A",
           avatar: "/images/user.png",
+          fullName: user.fullName || "N/A",
           personalDetails: [
             { label: "Full Name", value: user.fullName || "N/A" },
             { label: "Email", value: user.email || "N/A" },
@@ -459,7 +461,7 @@ export default function ProfilePage() {
                   className="hero-avatar" 
                 />
                 <span className="hero-username">
-                  {profileData?.username || "User"} ({profileData?.userId || "ID"})
+                  {profileData?.fullName || "User"} ({profileData?.username || "ID"})
                 </span>
               </>
             )}

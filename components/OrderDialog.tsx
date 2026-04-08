@@ -302,20 +302,20 @@ export default function OrderDialog({
             </div>
 
             {/* Submit Button */}
-            <div className="flex gap-3 pt-4">
+            <div className="flex gap-3 pt-6">
               <Button
                 type="button"
                 variant="outline"
                 onClick={onClose}
                 disabled={isLoading || isFetchingUser}
-                className="flex-1 border-2 border-[#0A6E5A] text-[#0A6E5A] hover:bg-[#0A6E5A] hover:text-[#FFFFFF]"
+                className="flex-1 border-2 border-[#0A6E5A] text-[#0A6E5A] hover:bg-[#0A6E5A] hover:text-[#FFFFFF] py-6 text-[1rem] font-semibold"
               >
                 Cancel
               </Button>
               <Button
                 type="submit"
                 disabled={isLoading || isFetchingUser}
-                className="flex-1 bg-[#C9A84C] hover:bg-[#0A6E5A] text-[#FFFFFF] font-semibold"
+                className="flex-1 bg-[#C9A84C] hover:bg-[#0A6E5A] text-[#FFFFFF] font-semibold py-6 text-[1rem]"
               >
                 {isLoading || isFetchingUser ? 'Processing...' : 'Place Order'}
               </Button>

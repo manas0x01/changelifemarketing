@@ -27,6 +27,8 @@ export default function Header() {
     { name: 'Create Epin', path: '/admin/createepin' },
     { name: 'Users', path: '/admin/users' },
     { name: 'Withdraw Requests', path: '/admin/withdrawrequests' },
+    { name: 'Achievers', path: '/admin/achievers' },
+    {name:'Orders', path: '/admin/orders'},
   ];
 
   const isActive = (path: string) => {

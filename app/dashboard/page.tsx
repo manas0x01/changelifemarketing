@@ -24,7 +24,8 @@ interface CycleRow {
 }
 interface EPin {
   pin: string;
-  packageName: string;
+  ePin: string;
+  package: string;
   status: string;
 }
 interface BankDetails {
@@ -470,13 +471,13 @@ export default function Dashboard() {
                         <tbody>
                           {ePins.map((ep, idx) => (
                             <tr key={idx}>
-                              <td>{ep.packageName}</td>
+                              <td>{ep.package}</td>
                               <td>
                                 <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '600', color: '#fff', background: ep.status === 'Active' ? '#26a69a' : ep.status === 'Used' ? '#1976d2' : ep.status === 'Transferred' ? '#f57c00' : '#e53935' }}>
                                   {ep.status}
                                 </span>
                               </td>
-                              <td><span className="epin-view-link">View</span></td>
+                              <td><Link href="/dashboard/myepins" className="epin-view-link">View</Link></td>
                             </tr>
                           ))}
                         </tbody>

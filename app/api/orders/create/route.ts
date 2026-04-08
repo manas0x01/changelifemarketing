@@ -1,18 +1,28 @@
-import { connectDB } from '@/lib/database';
-import Order from '@/models/Order';
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { connectDB } from "@/lib/database";
+import Order from '@/models/Order';
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
+    const session = await getServerSession(authOptions);
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized. Please login to place an order.' }, { status: 401 });
+    }
+
     await connectDB();
 
-    const body = await request.json();
+    const body = await req.json();
+
     const {
       userId,
       username,
       name,
       mobileNumber,
       transactionDetails,
+      orderType,
       productId,
       productName,
       productPrice,
@@ -20,65 +30,78 @@ export async function POST(request: NextRequest) {
       packName,
       packPrice,
       quantity = 1,
-      orderType,
     } = body;
 
-    // Validation
-    if (!name || !mobileNumber || !transactionDetails || !orderType) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+    // ── Validation ──
+    if (!name || !name.trim()) {
+      return NextResponse.json({ error: 'Full name is required.' }, { status: 400 });
     }
 
-    // Validate mobile number format
-    if (!/^[0-9]{10}$/.test(mobileNumber)) {
-      return NextResponse.json(
-        { error: 'Invalid mobile number. Must be 10 digits.' },
-        { status: 400 }
-      );
+    if (!mobileNumber || !/^[0-9]{10}$/.test(mobileNumber)) {
+      return NextResponse.json({ error: 'A valid 10-digit mobile number is required.' }, { status: 400 });
     }
 
-    // Check if orderType is valid
-    if (!['product', 'pack'].includes(orderType)) {
-      return NextResponse.json(
-        { error: 'Invalid order type. Must be product or pack.' },
-        { status: 400 }
-      );
+    if (!transactionDetails || !transactionDetails.trim()) {
+      return NextResponse.json({ error: 'Transaction details are required.' }, { status: 400 });
     }
 
-    // Create order
-    const newOrder = new Order({
+    if (!orderType || !['product', 'pack'].includes(orderType)) {
+      return NextResponse.json({ error: 'Invalid order type.' }, { status: 400 });
+    }
+
+    if (orderType === 'product' && (!productId || !productName || productPrice == null)) {
+      return NextResponse.json({ error: 'Product details are incomplete.' }, { status: 400 });
+    }
+
+    if (orderType === 'pack' && (!packId || !packName || packPrice == null)) {
+      return NextResponse.json({ error: 'Pack details are incomplete.' }, { status: 400 });
+    }
+
+    // ── Create Order ──
+    const orderData: Record<string, unknown> = {
       userId: userId || null,
       username: username || null,
-      name,
+      name: name.trim(),
       mobileNumber,
-      transactionDetails,
-      productId: orderType === 'product' ? productId : null,
-      productName: orderType === 'product' ? productName : null,
-      productPrice: orderType === 'product' ? productPrice : null,
-      packId: orderType === 'pack' ? packId : null,
-      packName: orderType === 'pack' ? packName : null,
-      packPrice: orderType === 'pack' ? packPrice : null,
-      quantity,
+      transactionDetails: transactionDetails.trim(),
       orderType,
+      quantity,
       status: 'pending',
-    });
+    };
 
-    await newOrder.save();
+    if (orderType === 'product') {
+      orderData.productId = productId;
+      orderData.productName = productName;
+      orderData.productPrice = productPrice;
+    } else {
+      orderData.packId = packId;
+      orderData.packName = packName;
+      orderData.packPrice = packPrice;
+    }
+
+    const order = await Order.create(orderData);
 
     return NextResponse.json(
       {
-        message: 'Order created successfully',
-        order: newOrder,
+        success: true,
+        message: 'Order placed successfully! We will contact you soon.',
+        orderId: order._id.toString(),
+        order: {
+          id: order._id.toString(),
+          status: order.status,
+          orderType: order.orderType,
+          createdAt: order.createdAt,
+        },
       },
       { status: 201 }
     );
-  } catch (error) {
-    console.error('Error creating order:', error);
-    return NextResponse.json(
-      { error: 'Failed to create order' },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    console.error('[POST /api/orders/create]', error);
+
+    if (error instanceof Error && error.name === 'ValidationError') {
+      return NextResponse.json({ error: 'Validation failed. Please check your input.' }, { status: 400 });
+    }
+
+    return NextResponse.json({ error: 'Internal server error. Please try again.' }, { status: 500 });
   }
 }

@@ -77,6 +77,18 @@ function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }: NavbarProps) {
           color: #333;
           cursor: pointer;
         }
+        .skeleton-loader {
+          height: 14px;
+          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background-size: 200% 100%;
+          animation: loading 1.5s infinite;
+          border-radius: 4px;
+          width: 120px;
+        }
+        @keyframes loading {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
         .user-avatar {
           width: 36px;
           height: 36px;
@@ -134,9 +146,15 @@ function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }: NavbarProps) {
           </div>
         </div>
         <div className="topnav-right">
-          <span className="user-name" onClick={handleDropdownToggle}>
-            {userData ? `${userData.fullName} ( ${userData.username} )` : 'Loading...'}
-          </span>
+          {userData ? (
+            <>
+              <span className="user-name" onClick={handleDropdownToggle}>
+                {userData.fullName} ( {userData.username} )
+              </span>
+            </>
+          ) : (
+            <div className="skeleton-loader" />
+          )}
           <img
             src="/images/user.png"
             alt="User Avatar"
@@ -145,7 +163,7 @@ function Navbar({ dropdownOpen, setDropdownOpen, setActivePage }: NavbarProps) {
             style={{ cursor: 'pointer' }}
           />
 
-          {dropdownOpen && (
+          {dropdownOpen && userData && (
             <div className="dropdown">
               <div className="dropdown-header">Welcome, {userData?.username || 'User'}</div>
               <Link href="/dashboard/profile">

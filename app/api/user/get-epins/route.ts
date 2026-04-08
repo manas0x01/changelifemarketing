@@ -24,18 +24,34 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
-    const ePins = (user.ePins || []).map((pin: any, index: number) => ({
-      srNo: index + 1,
-      ePin: pin.pin,
-      package: pin.packageName,
-      status: pin.usedDate ? "Used" : (pin.transferDate ? "Transferred" : "Active"),
-      transferredTo: pin.transferredTo || "--",
-      transferredToName: pin.transferredToName || "--",
-      transferredDate: pin.transferDate ? new Date(pin.transferDate).toLocaleDateString("en-IN") : "--",
-      usedDate: pin.usedDate,
-      transferDate: pin.transferDate,
-      remark: pin.remark || "",
-    }));
+    const ePins = (user.ePins || []).map((pin: any, index: number) => {
+      let displayTo = "--";
+      let displayToName = "--";
+      let displayDate = "--";
+
+      if (pin.usedDate) {
+        // For Used E-Pins, show the date it was used
+        displayDate = new Date(pin.usedDate).toLocaleDateString("en-IN");
+      } else if (pin.transferDate) {
+        // For Transferred E-Pins, show transfer details
+        displayTo = pin.transferredTo || "--";
+        displayToName = pin.transferredToName || "--";
+        displayDate = new Date(pin.transferDate).toLocaleDateString("en-IN");
+      }
+
+      return {
+        srNo: index + 1,
+        ePin: pin.pin,
+        package: pin.packageName,
+        status: pin.usedDate ? "Used" : (pin.transferDate ? "Transferred" : "Active"),
+        transferredTo: displayTo,
+        transferredToName: displayToName,
+        transferredDate: displayDate,
+        usedDate: pin.usedDate,
+        transferDate: pin.transferDate,
+        remark: pin.remark || "",
+      };
+    });
 
     return NextResponse.json({ ePins });
   } catch (error) {

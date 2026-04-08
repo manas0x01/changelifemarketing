@@ -46,6 +46,8 @@ export default function NewRegisterPage() {
   const [placementName, setPlacementName] = useState("");
   const [position,     setPosition]     = useState("-- Select --");
   const [pkg,          setPkg]          = useState("-- Select Package --");
+  const [availableEPins, setAvailableEPins] = useState<string[]>([]);
+  const [selectedEPin, setSelectedEPin] = useState("");
   // Step 3: Registration Form Fields
   const [fullName,     setFullName]     = useState("");
   const [userId,       setUserId]       = useState("CLM");
@@ -67,10 +69,8 @@ export default function NewRegisterPage() {
   const [accountType,  setAccountType]  = useState("-- Select --");
   const [password,     setPassword]     = useState("");
   const [confirmPwd,   setConfirmPwd]   = useState("");
-  const [txnPwd,       setTxnPwd]       = useState("");
   const [passwordError,    setPasswordError]    = useState("");
   const [confirmPwdError,  setConfirmPwdError]  = useState("");
-  const [txnPwdError,      setTxnPwdError]      = useState("");
   const [nomineeRelError,  setNomineeRelError]  = useState("");
   const [accountTypeError, setAccountTypeError] = useState("");
 
@@ -140,6 +140,18 @@ export default function NewRegisterPage() {
         setSponsorName("");
       }
 
+      // Extract pin strings and set the first one as selected
+      const pinStrings = pinData.availableEPins?.map((ePin: any) => {
+        if (typeof ePin === 'string') {
+          return ePin;
+        } else if (typeof ePin === 'object' && ePin.pin) {
+          return ePin.pin;
+        }
+        return ePin;
+      }) || [];
+
+      setAvailableEPins(pinStrings);
+      setSelectedEPin(pinStrings[0] || "");
       setSponsorValidated(true);
       toast.success("✓ Sponsor validated!");
     } catch (error) {
@@ -272,12 +284,7 @@ export default function NewRegisterPage() {
     }
     setPasswordError("");
     setConfirmPwdError("");
-    if (!txnPwd.trim()) {
-      setTxnPwdError("Transaction password is required");
-      toast.error("Transaction password is required");
-      return;
-    }
-    setTxnPwdError("");
+
     setIsSubmitting(true);
 
     try {
@@ -287,6 +294,7 @@ export default function NewRegisterPage() {
         placementId,
         position,
         package: pkg,
+        epin: selectedEPin,
         fullName,
         gender,
         mobileNo,
@@ -304,7 +312,6 @@ export default function NewRegisterPage() {
         accountNo,
         ifsc: ifscCode,
         password,
-        transactionPassword: txnPwd,
       };
 
       // Only add optional fields if they have valid values
@@ -984,27 +991,7 @@ export default function NewRegisterPage() {
                   </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Transaction Password :</label>
-                    <input 
-                      className="form-input" 
-                      type="password" 
-                      placeholder="Create Transaction Password" 
-                      value={txnPwd} 
-                      onChange={(e) => {
-                        setTxnPwd(e.target.value);
-                        setTxnPwdError("");
-                      }}
-                      style={{ borderColor: txnPwdError ? "#e53935" : "" }}
-                      suppressHydrationWarning 
-                    />
-                    {txnPwdError && <div className="txn-error">{txnPwdError}</div>}
-                  </div>
-                  <div className="form-group" style={{ visibility: "hidden" }}>
-                    <label className="form-label">Placeholder</label>
-                  </div>
-                </div>
+
 
                 {/* Submit */}
                 <div className="submit-wrap">

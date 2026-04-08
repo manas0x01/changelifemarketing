@@ -15,9 +15,8 @@ export interface AwardsandRewards {
   _updatedDate?: Date;
   rankName?: string;
   rankLevel?: number;
-  requiredPairs?: number;
-  awardDescription?: string;
-  monetaryValue?: number;
+  requiredPairs?: string;
+  award?: string;
 }
 
 export interface CompanyStatistics {

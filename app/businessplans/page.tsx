@@ -208,8 +208,7 @@ export default function BusinessPlanPage() {
                         <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Rank Level</th>
                         <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Rank Name</th>
                         <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Required Pairs</th>
-                        <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Award Description</th>
-                        <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Monetary Value</th>
+                        <th className="font-['Fraunces'] text-[1.125rem] text-[#FFFFFF] px-6 py-4 text-left">Award</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -229,13 +228,10 @@ export default function BusinessPlanPage() {
                             {award.rankName}
                           </td>
                           <td className="font-['Roboto'] text-[#C9A84C] px-6 py-4">
-                            {award.requiredPairs?.toLocaleString()} pairs
+                            {award.requiredPairs}
                           </td>
                           <td className="font-['Roboto'] text-[#C9A84C] px-6 py-4">
-                            {award.awardDescription}
-                          </td>
-                          <td className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C] px-6 py-4">
-                            {award.monetaryValue ? `₹${award.monetaryValue.toLocaleString()}` : '-'}
+                            {award.award}
                           </td>
                         </tr>
                       ))}

@@ -150,7 +150,6 @@ export default function AboutPage() {
                 </motion.div>
 
                 <div className="h-px w-full bg-[#0A6E5A]/10"></div>
-
                 <div className="grid sm:grid-cols-2 gap-8">
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -189,10 +188,8 @@ export default function AboutPage() {
       {/* CORE VALUES SECTION */}
       <section className="py-32 bg-[#0A6E5A] relative overflow-hidden">
         <div className="absolute inset-0 opacity-10 pointer-events-none" style={{ backgroundImage: 'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)', backgroundSize: '4rem 4rem' }}></div>
-
         <div className="max-w-480 mx-auto px-6 md:px-12 relative z-10">
           <SectionHeading title="Our Core Values" subtitle="The principles that guide everything we do" light />
-
           <div className="grid md:grid-cols-3 gap-12">
             {[
               { icon: Target, title: "Member Success", description: "Your success is our success. We're committed to providing tools, training, and support for sustainable growth." },
@@ -223,14 +220,14 @@ export default function AboutPage() {
 
       {/* AWARDS & RECOGNITION SECTION */}
       <section className="py-32 bg-[#FFFFFF]">
-        <div className="max-w-480 mx-auto px-6 md:px-12">
+        <div className="max-w-370 mx-auto px-6 md:px-12">
           <SectionHeading
             title="Ranks & Recognition"
             subtitle="Celebrating the achievements of our top performers"
           />
 
           <div className="min-h-100">
-            {awards.length > 0 ? (
+            {awards?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {awards.map((award, index) => (
                   <motion.div
@@ -239,37 +236,45 @@ export default function AboutPage() {
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
                     transition={{ duration: 0.6, delay: index * 0.1 }}
-                    className="bg-[#FFFFFF] border border-[#0A6E5A]/10 hover:border-[#C9A84C]/50 transition-colors p-8 rounded-sm group"
+                    className="bg-white border border-[#0A6E5A]/10 hover:border-[#C9A84C]/50 transition-all duration-300 p-8 rounded-xl group hover:shadow-xl"
                   >
+                    {/* Header */}
                     <div className="flex items-start gap-4 mb-6">
-                      <div className="w-12 h-12 rounded-full bg-[#C9A84C]/20 flex items-center justify-center shrink-0">
+                      <div className="w-12 h-12 rounded-full bg-[#C9A84C]/20 flex items-center justify-center shrink-0 group-hover:scale-110 transition">
                         <Award className="w-6 h-6 text-[#C9A84C]" />
                       </div>
+
                       <div>
-                        <h3 className="font-['Fraunces'] text-[1.5rem] text-[#0A6E5A]">{award.rankName}</h3>
-                        <p className="font-['Roboto'] text-[0.875rem] text-[#C9A84C] font-semibold uppercase tracking-wider mt-1">Level {award.rankLevel}</p>
+                        <h3 className="font-['Fraunces'] text-xl text-[#0A6E5A]">
+                          {award.rankName}
+                        </h3>
+                        <p className="font-['Roboto'] text-xs text-[#C9A84C] font-semibold uppercase tracking-wider mt-1">
+                          Level {award.rankLevel}
+                        </p>
                       </div>
                     </div>
 
-                    <div className="space-y-4 mb-6 border-y border-[#0A6E5A]/10 py-6">
-                      <div className="flex justify-between items-center">
-                        <span className="font-['Roboto'] text-[#333333]/60 text-[0.875rem]">Required Pairs</span>
-                        <span className="font-['Fraunces'] text-[1.5rem] text-[#0A6E5A]">{award.requiredPairs}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <span className="font-['Roboto'] text-[#333333]/60 text-[0.875rem]">Monetary Value</span>
-                        <span className="font-['Fraunces'] text-[1.5rem] text-[#C9A84C]">₹{award.monetaryValue?.toLocaleString()}</span>
-                      </div>
+                    {/* Required Pairs */}
+                    <div className="mb-6 border-y border-[#0A6E5A]/10 py-4 flex justify-between items-center">
+                      <span className="text-sm text-[#333]/60">
+                        Required Pairs
+                      </span>
+                      <span className="font-['Fraunces'] text-lg text-[#0A6E5A]">
+                        {award.requiredPairs}
+                      </span>
                     </div>
 
-                    <p className="font-['Roboto'] text-[#333333]/70 text-[0.875rem] leading-relaxed">
-                      {award.awardDescription}
+                    {/* Reward */}
+                    <p className="text-sm text-[#333]/70 leading-relaxed">
+                      🎁 {award.award}
                     </p>
                   </motion.div>
                 ))}
               </div>
             ) : (
-              <div className="text-center text-[#333333]/50 py-12">No rank information available at this time.</div>
+              <div className="text-center text-[#333]/50 py-12">
+                No rank information available at this time.
+              </div>
             )}
           </div>
         </div>

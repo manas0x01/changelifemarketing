@@ -5,92 +5,92 @@ export async function GET() {
         _id: '1',
         rankName: 'Gold',
         rankLevel: 1,
-        requiredPairs: 5-5,
+        requiredPairs: '5-5',
         award: 'Bag + Business Kit'
       },
       {
         _id: '2',
         rankName: 'Super Gold',
         rankLevel: 2,
-        requiredPairs: 10-10,
+        requiredPairs: '10-10',
         award: 'Smart Watch'
       },
       {
         _id: '3',
         rankName: 'Gold Star',
         rankLevel: 3,
-        requiredPairs: 25-25,
+        requiredPairs: '25-25',
         award: 'Suit Length'
       },
       {
         _id: '4',
         rankName: 'Pearl ex',
         rankLevel: 4,
-        requiredPairs: 50-50,
+        requiredPairs: '50-50',
         award: 'Mixi-Grinder'
       },
       {
         _id: '5',
         rankName: 'Emerald',
         rankLevel: 5,
-        requiredPairs: 100-100,
+        requiredPairs: '100-100',
         award: 'Fridge ( Refrigerator )'
       },
       {
         _id: '6',
         rankName: 'Ruby',
         rankLevel: 6,
-        requiredPairs: 250,
-        award: '₹2500 - All-expenses-paid luxury vacation for two.'
+        requiredPairs: '200-200',
+        award: 'Mobile'
       },
       {
         _id: '7',
-        rankName: 'Diamond Director',
+        rankName: 'Platinum',
         rankLevel: 7,
-        requiredPairs: 500,
-        award: '₹5000 - Custom Diamond Director pendant and a substantial car allowance.'
+        requiredPairs: '500-500',
+        award: 'Laptop'
       },
       {
         _id: '8',
-        rankName: 'Blue Diamond Director',
+        rankName: 'Diamond',
         rankLevel: 8,
-        requiredPairs: 1000,
-        award: '₹10000 - Luxury timepiece and a down payment for a new home.'
+        requiredPairs: '1000-1000',
+        award: 'Bike'
       },
       {
         _id: '9',
-        rankName: 'Black Diamond Director',
+        rankName: 'Double Diamond',
         rankLevel: 9,
-        requiredPairs: 2000,
-        award: '₹20000 - Exclusive Black Diamond ring and a significant investment portfolio contribution.'
+        requiredPairs: '2000-2000',
+        award: '1.5 Lakh Gift'
       },
       {
         _id: '10',
-        rankName: 'Crown Diamond Director',
+        rankName: 'Black Diamond',
         rankLevel: 10,
-        requiredPairs: 4000,
-        award: '₹40000 - Custom-designed Crown Diamond trophy and a luxury car of choice.'
+        requiredPairs: '4000-4000',
+        award: '2.5 Lakh Gift'
       },
       {
         _id: '11',
-        rankName: 'Presidential Diamond',
+        rankName: 'Blue Diamond',
         rankLevel: 11,
-        requiredPairs: 8000,
-        award: '₹80000 - Lifetime achievement award and a substantial cash prize for financial freedom.'
+        requiredPairs: '8000-8000',
+        award: '5 Lakh ₹'
       },
       {
         _id: '12',
-        rankName: 'Ambassador',
+        rankName: 'Royal Diamond',
         rankLevel: 12,
-        requiredPairs: 15000,
-        award: '₹150000 - Global recognition trip and a personalized philanthropic fund.'
+        requiredPairs: '16000-16000',
+        award: '7.5 Lakh ₹'
       },
       {
         _id: '13',
-        rankName: 'Global Ambassador',
+        rankName: 'Crown Diamond',
         rankLevel: 13,
-        requiredPairs: 30000,
-        award: '₹300000 - Ultimate legacy award, a custom estate, and a private jet experience.'
+        requiredPairs: '32000-32000',
+        award: '10 Lakh ₹'
       }
     ];
 

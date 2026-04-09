@@ -147,22 +147,23 @@ export function validateTimeMatching(
 }
 
 /**
- * Rank Information (13 Ranks Total)
+ * Rank Information (13 Ranks Total) with Awards
+ * Based on Booster Pair Requirements (Left-Right)
  */
 export const RANK_CONFIG = [
-  { rank: 1, name: 'Bronze', leftBooters: 5, rightBoosters: 5, award: 'Business Kit' },
-  { rank: 2, name: 'Silver', leftBooters: 10, rightBoosters: 10, award: 'Silver Award' },
-  { rank: 3, name: 'Gold', leftBooters: 15, rightBoosters: 15, award: 'Gold Award' },
-  { rank: 4, name: 'Platinum', leftBooters: 20, rightBoosters: 20, award: 'Platinum Award' },
-  { rank: 5, name: 'Diamond', leftBooters: 25, rightBoosters: 25, award: 'Diamond Award' },
-  { rank: 6, name: 'Ruby', leftBooters: 30, rightBoosters: 30, award: 'Ruby Award' },
-  { rank: 7, name: 'Pearl', leftBooters: 35, rightBoosters: 35, award: 'Pearl Award' },
-  { rank: 8, name: 'Emerald', leftBooters: 40, rightBoosters: 40, award: 'Emerald Award' },
-  { rank: 9, name: 'Sapphire', leftBooters: 45, rightBoosters: 45, award: 'Sapphire Award' },
-  { rank: 10, name: 'Topaz', leftBooters: 50, rightBoosters: 50, award: 'Topaz Award' },
-  { rank: 11, name: 'Onyx', leftBooters: 55, rightBoosters: 55, award: 'Onyx Award' },
-  { rank: 12, name: 'Jade', leftBooters: 60, rightBoosters: 60, award: 'Jade Award' },
-  { rank: 13, name: 'Legend', leftBooters: 65, rightBoosters: 65, award: 'Legend Award' },
+  { rank: 1, name: 'Gold', leftBooters: 5, rightBoosters: 5, award: 'Bag + Business Kit' },
+  { rank: 2, name: 'Super Gold', leftBooters: 10, rightBoosters: 10, award: 'Smart Watch' },
+  { rank: 3, name: 'Gold Star', leftBooters: 25, rightBoosters: 25, award: 'Suit Length' },
+  { rank: 4, name: 'Pearl ex', leftBooters: 50, rightBoosters: 50, award: 'Mixi-Grinder' },
+  { rank: 5, name: 'Emerald', leftBooters: 100, rightBoosters: 100, award: 'Fridge (Refrigerator)' },
+  { rank: 6, name: 'Ruby', leftBooters: 200, rightBoosters: 200, award: 'Mobile' },
+  { rank: 7, name: 'Platinum', leftBooters: 500, rightBoosters: 500, award: 'Laptop' },
+  { rank: 8, name: 'Diamond', leftBooters: 1000, rightBoosters: 1000, award: 'Bike' },
+  { rank: 9, name: 'Double Diamond', leftBooters: 2000, rightBoosters: 2000, award: '₹1.5 Lakh Gift' },
+  { rank: 10, name: 'Black Diamond', leftBooters: 4000, rightBoosters: 4000, award: '₹2.5 Lakh Gift' },
+  { rank: 11, name: 'Blue Diamond', leftBooters: 8000, rightBoosters: 8000, award: '₹5 Lakh' },
+  { rank: 12, name: 'Royal Diamond', leftBooters: 16000, rightBoosters: 16000, award: '₹7.5 Lakh' },
+  { rank: 13, name: 'Crown Diamond', leftBooters: 32000, rightBoosters: 32000, award: '₹10 Lakh' },
 ];
 
 /**

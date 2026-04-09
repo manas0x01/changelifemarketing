@@ -15,17 +15,18 @@ export async function GET() {
     }
     
     const user = await User.findOne({ username: session.user.username }).select(
-      "basicIncome boosterIncomeAmount userId fullName bankName accountNo ifsc accountType"
+      "basicIncome boosterIncomeAmount totalDirectAmount userId fullName bankName accountNo ifsc accountType"
     );
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Calculate total income dynamically
+    // Calculate total income dynamically: Basic + Booster + Direct
     const basicIncome = user.basicIncome || 0;
     const boosterIncomeAmount = user.boosterIncomeAmount || 0;
-    const calculatedTotalIncome = basicIncome + boosterIncomeAmount;
+    const totalDirectAmount = user.totalDirectAmount || 0;
+    const calculatedTotalIncome = basicIncome + boosterIncomeAmount + totalDirectAmount;
 
     return NextResponse.json({
       totalIncome: calculatedTotalIncome,

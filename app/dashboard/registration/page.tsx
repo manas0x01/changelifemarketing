@@ -591,12 +591,11 @@ export default function NewRegisterPage() {
           </div>
           )}
 
-          {/* ══ STEP 2: SPONSOR & PACKAGE ══ */}
+          {/* STEP 2: SPONSOR & PACKAGE */}
           {hasPins && step === "sponsor" && (
             <div className="section-card">
               <div className="section-header">Fill The Sponsor Details</div>
               <div className="form-body">
-
                 {/* Sponsor Validation Section */}
                 <div className="form-row">
                   <div className="form-group">

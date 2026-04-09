@@ -116,19 +116,18 @@ export async function POST(req: Request) {
             await sponsor.save();
         }
 
-        // ✅ ADD NEW MEMBER TO PLACEMENT PARENT'S boosterDownlineMembers ARRAY
+        // ✅ ADD NEW MEMBER TO PLACEMENT PARENT'S boosterDownlineMembers & directMembers ARRAYS
         if (placementId) {
             const placementParent = await User.findOne({
                 $or: [
                     { username: placementId },
-                    { userId: placementId },
-                    { _id: placementId }
+                    { userId: placementId }
                 ]
             });
 
             if (placementParent) {
-                // Create member record for boosterDownlineMembers array
-                const memberRecord = {
+                // ── Add to boosterDownlineMembers ──
+                const boosterMemberRecord = {
                     srNo: (placementParent.boosterDownlineMembers?.length || 0) + 1,
                     memberId: newUser.userId || newUser.username || newUser._id.toString(),
                     name: newUser.fullName || newUser.username || 'N/A',
@@ -136,11 +135,25 @@ export async function POST(req: Request) {
                     position: (position.toLowerCase() === 'left' ? 'left' : 'right') as 'left' | 'right'
                 };
 
-                // Add to boosterDownlineMembers array
                 if (!placementParent.boosterDownlineMembers) {
                     placementParent.boosterDownlineMembers = [];
                 }
-                placementParent.boosterDownlineMembers.push(memberRecord);
+                placementParent.boosterDownlineMembers.push(boosterMemberRecord);
+
+                // ── Add to directMembers (for basic income validation) ──
+                // ✅ CRITICAL FOR POINTS 3-5 VALIDATION
+                const directMemberRecord = {
+                    memberId: newUser.userId || newUser.username || newUser._id.toString(),
+                    name: newUser.fullName || newUser.username || 'N/A',
+                    joinDate: new Date(),  // Current timestamp - MUST include hours/minutes for session detection
+                    position: (position.toLowerCase() === 'left' ? 'left' : 'right') as 'left' | 'right'
+                };
+
+                if (!placementParent.directMembers) {
+                    placementParent.directMembers = [];
+                }
+                placementParent.directMembers.push(directMemberRecord);
+
                 await placementParent.save();
             }
         }

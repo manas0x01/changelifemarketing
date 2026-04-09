@@ -163,10 +163,8 @@ export default function Sidebar() {
     } catch (error) {
     }
   };
-
-  // Update active menu based on current pathname
+  
   useEffect(() => {
-    // Route mapping with all pathname patterns
     const routePatterns: Array<{
       pattern: string;
       activeId: string;

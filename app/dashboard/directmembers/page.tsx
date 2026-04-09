@@ -66,12 +66,20 @@ export default function DirectMembersPage() {
     // Apply date filtering if dates are provided
     if (fromDate || toDate) {
       result = result.filter((member) => {
-        const memberDate = new Date(member.joiningDate);
+        // Parse DD/MM/YYYY format from joiningDate string
+        const [day, month, year] = member.joiningDate.split('/').map(Number);
+        const memberDate = new Date(year, month - 1, day);
+        
         const from = fromDate ? new Date(fromDate) : null;
         const to = toDate ? new Date(toDate) : null;
 
         if (from && memberDate < from) return false;
-        if (to && memberDate > to) return false;
+        if (to) {
+          // Include current day by setting to end of day
+          const toEndOfDay = new Date(to);
+          toEndOfDay.setHours(23, 59, 59, 999);
+          if (memberDate > toEndOfDay) return false;
+        }
         return true;
       });
     }

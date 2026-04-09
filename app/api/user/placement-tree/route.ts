@@ -1,4 +1,6 @@
 import { connectDB } from '@/lib/database';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
 import User from '@/models/User';
 import { NextRequest, NextResponse } from 'next/server';
 
@@ -20,7 +22,8 @@ async function buildPlacementTree(userId: string): Promise<TreeNode | null> {
     if (!rootUser) {
       return null;
     }
-    const userType = (rootUser.boosterIncomeAmount ?? 0) > 0 ? 'gold' : 'active';
+    // Use memberType field: 'gold' or 'active' (default: 'active')
+    const userType = (rootUser.memberType || 'active') as 'gold' | 'active';
     const treeNode: TreeNode = {
       id: rootUser.userId || rootUser.username,
       name: rootUser.fullName || rootUser.username,
@@ -32,7 +35,8 @@ async function buildPlacementTree(userId: string): Promise<TreeNode | null> {
       const children = await User.find({ placementId: parentUserId }).lean();
       const result: TreeNode[] = [];
       for (const child of children) {
-        const childType = (child.boosterIncomeAmount ?? 0) > 0 ? 'gold' : 'active';
+        // Use memberType field instead of boosterIncomeAmount
+        const childType = (child.memberType || 'active') as 'gold' | 'active';
         const childNode: TreeNode = {
           id: child.userId || child.username,
           name: child.fullName || child.username,
@@ -61,6 +65,15 @@ async function buildPlacementTree(userId: string): Promise<TreeNode | null> {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify session authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.username) {
+      return NextResponse.json(
+        { success: false, error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
     await connectDB();
 
     const body = await request.json();

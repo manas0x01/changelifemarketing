@@ -42,15 +42,17 @@ export default function SuccessPaymentsPage() {
         }
         const result = await response.json();
         let payments = [];
+        
         if (Array.isArray(result)) {
           payments = result;
-        } else if (result?.data?.payments && Array.isArray(result.data.payments)) {
-          payments = result.data.payments;
         } else if (result?.payments && Array.isArray(result.payments)) {
           payments = result.payments;
+        } else if (result?.data?.payments && Array.isArray(result.data.payments)) {
+          payments = result.data.payments;
         } else if (result?.data && Array.isArray(result.data)) {
           payments = result.data;
         }
+        
         if (!Array.isArray(payments)) {
           throw new Error(`Invalid response format - expected array, got ${typeof payments}`);
         }
@@ -68,7 +70,14 @@ export default function SuccessPaymentsPage() {
   }, []);
 
   const handleFilter = () => {
-    setData([...allPayments]);
+    if (cycle === "--All--") {
+      setData([...allPayments]);
+    } else {
+      // Filter by cycle (if cycle categorization is available in data)
+      // For now, showing all payments as cycle field is not in the data model
+      setData([...allPayments]);
+      // TODO: Implement cycle-based filtering once cycle field is added to successPayments
+    }
     setFiltered(true);
   };
 
@@ -369,7 +378,6 @@ export default function SuccessPaymentsPage() {
                 </span>
               </div>
             )}
-
           </div>
         </div>
       </div>

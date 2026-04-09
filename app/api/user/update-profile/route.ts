@@ -33,6 +33,7 @@ export async function GET(req: Request) {
             sponsorName: "",
             placementId: "",
             placementName: "",
+            createdAt: new Date().toISOString(),
         };
         if (!session?.user?.username) {
             return Response.json({
@@ -76,6 +77,7 @@ export async function GET(req: Request) {
             sponsorName: user.sponsorName || "",
             placementId: user.placementId || "",
             placementName: user.placementName || "",
+            createdAt: user.createdAt ? user.createdAt.toISOString() : new Date().toISOString(),
         };
 
         return Response.json({
@@ -136,9 +138,16 @@ export async function POST(req: Request) {
             );
         }
 
+        if (profileData.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(profileData.ifsc)) {
+            return Response.json(
+                { error: "IFSC code format is invalid (e.g., CBIN0284349)" },
+                { status: 400 }
+            );
+        }
+
         if (profileData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(profileData.panNo)) {
             return Response.json(
-                { error: "PAN number format is invalid" },
+                { error: "PAN number format is invalid (e.g., ABCDE1234F)" },
                 { status: 400 }
             );
         }

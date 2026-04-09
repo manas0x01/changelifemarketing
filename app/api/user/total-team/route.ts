@@ -7,7 +7,7 @@ import User from '@/models/User';
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.username) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
         { status: 401 }
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
 
-    const user = await User.findById(session.user.id)
+    const user = await User.findOne({ username: session.user.username })
       .select('totalTeam')
       .lean();
 
@@ -30,10 +30,9 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: {
-          leftTeam: user.totalTeam?.left ?? 0,
-          rightTeam: user.totalTeam?.right ?? 0,
-          totalTeam: (user.totalTeam?.left ?? 0) + (user.totalTeam?.right ?? 0),
+        totalTeam: {
+          left: user.totalTeam?.left ?? 0,
+          right: user.totalTeam?.right ?? 0,
         },
       },
       { status: 200 }

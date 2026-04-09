@@ -6,23 +6,27 @@ import User from '@/models/User';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    const { searchParams } = new URL(req.url);
+    const memberId = searchParams.get('id');
+
+    if (!memberId) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized' },
-        { status: 401 }
+        { success: false, error: 'Member ID is required' },
+        { status: 400 }
       );
     }
 
     await connectDB();
 
-    const user = await User.findById(session.user.id)
-      .select('userId username fullName email phone memberType registeredPackage joiningDate')
+    const user = await User.findOne({
+      $or: [{ userId: memberId }, { username: memberId }],
+    })
+      .select('fullName userId')
       .lean();
 
     if (!user) {
       return NextResponse.json(
-        { success: false, message: 'User not found' },
+        { success: false, error: 'Member not found' },
         { status: 404 }
       );
     }
@@ -30,7 +34,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: user,
+        memberName: user.fullName || 'N/A',
       },
       { status: 200 }
     );

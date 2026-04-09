@@ -6,6 +6,7 @@ import { connectDB } from "@/lib/database";
 interface IncomeRow {
   srNo: number;
   amount: string;
+  rawAmount: number; // ✅ For calculations
   pairCount: number;
   date: string;
   description: string;
@@ -16,77 +17,62 @@ export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session?.user?.email) {
-      return Response.json({ error: "Not authenticated" }, { status: 401 });
+    if (!session?.user?.username) {
+      return Response.json({ 
+        success: false,
+        error: "Not authenticated",
+        data: []
+      }, { status: 401 });
     }
 
     await connectDB();
 
-    const user = await User.findOne({ email: session.user.email }).select(
-      "boosterIncome username"
+    const user = await User.findOne({ username: session.user.username }).select(
+      "boosterIncome boosterIncomeRecords boosterMatchingRecords"
     );
 
     if (!user) {
-      return Response.json({ error: "User not found" }, { status: 404 });
+      return Response.json({ 
+        success: false,
+        error: "User not found",
+        data: []
+      }, { status: 404 });
     }
     
+    // ✅ Use actual boosterIncomeRecords from database, not mock data
+    const records = (user.boosterIncomeRecords || user.boosterMatchingRecords || []);
+    
+    const formattedRecords: IncomeRow[] = records.map((record: any) => ({
+      srNo: record.srNo || 0,
+      amount: `₹${record.amount ? record.amount.toLocaleString('en-IN') : '0'}`,
+      rawAmount: record.amount || 0, // ✅ Raw number for calculations
+      pairCount: record.pairCount || record.pairsMatched || 0,
+      date: record.date ? new Date(record.date).toLocaleDateString('en-IN', {
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit'
+      }) : '--',
+      description: record.description || 'Booster Income',
+      status: record.status || 'Pending',
+    }));
+
     const boosterIncomeData = user.boosterIncome || { LG: 0, RG: 0, totalBoosterMatching: 0 };
 
-    const incomeRecords: IncomeRow[] = [
-      {
-        srNo: 1,
-        amount: "₹1,000",
-        pairCount: 2,
-        date: "10-Jan-2026",
-        description: "Booster Income",
-        status: "Paid",
-      },
-      {
-        srNo: 2,
-        amount: "₹2,500",
-        pairCount: 5,
-        date: "23-Oct-2025",
-        description: "Booster Income",
-        status: "Paid",
-      },
-      {
-        srNo: 3,
-        amount: "₹1,000",
-        pairCount: 2,
-        date: "01-Oct-2025",
-        description: "Booster Income",
-        status: "Pending",
-      },
-      {
-        srNo: 4,
-        amount: "₹3,000",
-        pairCount: 6,
-        date: "20-Sep-2025",
-        description: "Booster Income",
-        status: "Paid",
-      },
-      {
-        srNo: 5,
-        amount: "₹500",
-        pairCount: 1,
-        date: "18-Sep-2025",
-        description: "Booster Income",
-        status: "Hold",
-      },
-      {
-        srNo: 6,
-        amount: "₹2,000",
-        pairCount: 4,
-        date: "05-Aug-2025",
-        description: "Booster Income",
-        status: "Paid",
-      },
-    ];
-
-    return Response.json({ data: incomeRecords });
+    return Response.json({ 
+      success: true,
+      data: formattedRecords,
+      boosterIncome: boosterIncomeData,
+      totalRecords: formattedRecords.length,
+      message: formattedRecords.length === 0 ? "No booster income records found" : "Records fetched successfully"
+    });
   } catch (error) {
+    console.error('Error in get-booster-income:', error);
     return Response.json(
-      { error: error instanceof Error ? error.message : "Error fetching data" },
+      { 
+        success: false,
+        error: error instanceof Error ? error.message : "Error fetching data",
+        data: []
+      },
       { status: 500 }
     );
   }

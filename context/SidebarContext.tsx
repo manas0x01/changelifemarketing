@@ -10,14 +10,16 @@ interface SidebarContextType {
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
-  const [isOpen, setIsOpen] = useState(true);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {
-    // Check if device is mobile on mount
+    // Initialize after hydration to prevent mismatch
+    setIsMounted(true);
+    
+    // Check if device is mobile
     const checkMobile = () => {
       const isMobileDevice = window.innerWidth <= 768;
-      setIsMobile(isMobileDevice);
       // Close sidebar for mobile, open for desktop
       setIsOpen(!isMobileDevice);
     };
@@ -32,6 +34,11 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   const toggleSidebar = () => {
     setIsOpen((prev) => !prev);
   };
+
+  // Prevent rendering children until hydration is complete
+  if (!isMounted) {
+    return null;
+  }
 
   return (
     <SidebarContext.Provider value={{ isOpen, toggleSidebar }}>

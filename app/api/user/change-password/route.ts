@@ -13,8 +13,8 @@ export async function POST(req: Request) {
         if (!oldPassword || !newPassword) {
             return Response.json({ success: false, error: "Old password and new password are required" }, { status: 400 });
         }
-        if (newPassword.length < 6) {
-            return Response.json({ success: false, error: "New password must be at least 6 characters" }, { status: 400 });
+        if (newPassword.length < 8) {
+            return Response.json({ success: false, error: "New password must be at least 8 characters" }, { status: 400 });
         }
         if (oldPassword === newPassword) {
             return Response.json({ success: false, error: "New password must be different from old password" }, { status: 400 });

@@ -7,14 +7,14 @@ import User from '@/models/User';
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.username) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
         { status: 401 }
       );
     }
     await connectDB();
-    const user = await User.findById(session.user.id)
+    const user = await User.findOne({ username: session.user.username })
       .select('totalDirect totalDirectAmount')
       .lean();
 
@@ -27,11 +27,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json(
       {
         success: true,
-        data: {
-          leftDirect: user.totalDirect?.left ?? 0,
-          rightDirect: user.totalDirect?.right ?? 0,
-          totalDirectAmount: user.totalDirectAmount ?? 0,
+        totalDirect: {
+          left: user.totalDirect?.left ?? 0,
+          right: user.totalDirect?.right ?? 0,
         },
+        totalDirectAmount: user.totalDirectAmount ?? 0,
       },
       { status: 200 }
     );

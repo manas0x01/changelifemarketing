@@ -81,15 +81,24 @@ export default function MyEPinsPage() {
     let data = [...allEPins];
     if (selectedPkg  !== "--Select Package--") data = data.filter(d => d.package === selectedPkg);
     if (selectedStat !== "--Select Status--")  data = data.filter(d => d.status  === selectedStat);
+    
+    // Filter by date range using ISO transferDate field
     if (fromDate) {
       const from = new Date(fromDate);
-      data = data.filter(d => d.transferDate ? new Date(d.transferDate) >= from : true);
+      data = data.filter(d => {
+        if (!d.transferDate) return true; // Include items without dates
+        return new Date(d.transferDate) >= from;
+      });
     }
     if (toDate) {
       const to = new Date(toDate);
       to.setHours(23, 59, 59, 999);
-      data = data.filter(d => d.transferDate ? new Date(d.transferDate) <= to : true);
+      data = data.filter(d => {
+        if (!d.transferDate) return true; // Include items without dates
+        return new Date(d.transferDate) <= to;
+      });
     }
+    
     setFiltered(data.slice(0, pageSize));
     setHasFiltered(true);
   };

@@ -34,7 +34,8 @@ export default function BoosterMembersPage() {
         const response = await fetch('/api/user/get-booster-downline-members');
         
         if (!response.ok) {
-          throw new Error('Failed to fetch booster members');
+          const errorData = await response.json();
+          throw new Error(errorData.message || errorData.error || 'Failed to fetch booster members');
         }
 
         const result = await response.json();
@@ -42,7 +43,7 @@ export default function BoosterMembersPage() {
         if (result.success) {
           setAllMembers(result.data || []);
         } else {
-          setError(result.error || 'Failed to fetch members');
+          setError(result.message || result.error || 'Failed to fetch members');
         }
       } catch (err) {
         setError(err instanceof Error ? err.message : 'An error occurred');
@@ -82,8 +83,8 @@ export default function BoosterMembersPage() {
     }
     
     // Apply page size limit
-    data = data.slice(0, pageSize);
-    setFiltered(data);
+    const sliced = data.slice(0, pageSize);
+    setFiltered(sliced);
     setHasFiltered(true);
   };
 
@@ -310,6 +311,11 @@ export default function BoosterMembersPage() {
                 fontWeight: '500'
               }}>
                 ⚠️ {error}
+                {error.includes('Not qualified') && (
+                  <div style={{ fontSize: '12px', marginTop: '4px', opacity: 0.9 }}>
+                    You need 12 basic pairs to unlock booster member placement.
+                  </div>
+                )}
               </div>
             )}
 

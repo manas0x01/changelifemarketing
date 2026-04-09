@@ -167,16 +167,22 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       <div className={`page-loading-bar ${isPageLoading ? "active" : ""}`} />
 
       <div className="dashboard-wrapper">
-        {/* Mobile Overlay */}
+        {/* Mobile Overlay - shows when sidebar is open */}
         {isOpen && (
           <div 
             className="sidebar-overlay active"
             onClick={() => toggleSidebar()}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') toggleSidebar();
+            }}
+            aria-label="Close sidebar"
           />
         )}
 
         {/* Sidebar with slide */}
-        <div className={`sidebar-wrap ${!isOpen ? "collapsed" : ""}`}>
+        <div className={`sidebar-wrap ${isOpen ? "" : "collapsed"}`}>
           <Sidebar />
         </div>
 

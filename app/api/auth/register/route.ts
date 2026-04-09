@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import { calculateAndUpdateUserMetrics } from "@/lib/calculateUserMetrics";
 
 export async function POST(req: Request) {
     try {
@@ -113,6 +114,62 @@ export async function POST(req: Request) {
         if (pinIndex !== -1) {
             sponsor.ePins![pinIndex].usedDate = new Date();
             await sponsor.save();
+        }
+
+        // ✅ ADD NEW MEMBER TO PLACEMENT PARENT'S boosterDownlineMembers ARRAY
+        if (placementId) {
+            const placementParent = await User.findOne({
+                $or: [
+                    { username: placementId },
+                    { userId: placementId },
+                    { _id: placementId }
+                ]
+            });
+
+            if (placementParent) {
+                // Create member record for boosterDownlineMembers array
+                const memberRecord = {
+                    srNo: (placementParent.boosterDownlineMembers?.length || 0) + 1,
+                    memberId: newUser.userId || newUser.username || newUser._id.toString(),
+                    name: newUser.fullName || newUser.username || 'N/A',
+                    date: newUser.joiningDate || new Date().toISOString().split('T')[0],
+                    position: (position.toLowerCase() === 'left' ? 'left' : 'right') as 'left' | 'right'
+                };
+
+                // Add to boosterDownlineMembers array
+                if (!placementParent.boosterDownlineMembers) {
+                    placementParent.boosterDownlineMembers = [];
+                }
+                placementParent.boosterDownlineMembers.push(memberRecord);
+                await placementParent.save();
+            }
+        }
+
+        // ── AUTO-CALCULATE METRICS ──
+        // Update metrics for all affected users
+        try {
+            // 1. Calculate metrics for new user
+            await calculateAndUpdateUserMetrics(newUser._id);
+
+            // 2. Calculate metrics for placement parent (to update their team count & income)
+            if (placementId) {
+                const placementParent = await User.findOne({
+                    $or: [
+                        { username: placementId },
+                        { userId: placementId },
+                        { _id: placementId }
+                    ]
+                });
+                if (placementParent) {
+                    await calculateAndUpdateUserMetrics(placementParent._id);
+                }
+            }
+
+            // 3. Calculate metrics for sponsor
+            await calculateAndUpdateUserMetrics(sponsor._id);
+        } catch (calcError) {
+            console.error('Error calculating metrics after registration:', calcError);
+            // Don't fail registration if metrics calculation fails
         }
 
         return Response.json({

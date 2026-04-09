@@ -1,15 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 
-const PIN_COST   = 1299;          // ₹ per pin
-const RAZORPAY_KEY = "rzp_test_YourKeyHere"; // Replace with your Razorpay Key ID
+const PIN_COST   = 1299;  
+const RAZORPAY_KEY = "rzp_test_YourKeyHere";
 
 const packages = [
-  { id: "agri",    name: "Agriculture Package",  icon: "🌾" },
-  { id: "health",  name: "Healthcare Package",   icon: "🏥" },
-  { id: "sanit",   name: "Sanitary Napkine",     icon: "✨" },
+  { id: "basic",    name: "Basic Package",  icon: "📦" },
 ];
 
 declare global {
@@ -30,7 +29,6 @@ async function sendConfirmationEmail(params: {
   return new Promise<void>((resolve) => setTimeout(resolve, 600));
 }
 
-/* ─── Load Razorpay Script ──────────────────────────────── */
 function loadRazorpay(): Promise<boolean> {
   return new Promise((resolve) => {
     if (window.Razorpay) { resolve(true); return; }
@@ -42,27 +40,52 @@ function loadRazorpay(): Promise<boolean> {
   });
 }
 
-/* ─── Main Component ────────────────────────────────────── */
 export default function BuyEPinPage() {
+  const { data: session } = useSession();
   const [selectedPkg,   setSelectedPkg]   = useState(packages[0].id);
   const [numPins,       setNumPins]       = useState(1);
-  const [txnPassword,   setTxnPassword]   = useState("");
   const [step,          setStep]          = useState<"form" | "paying" | "success" | "error">("form");
   const [paymentId,     setPaymentId]     = useState("");
   const [errorMsg,      setErrorMsg]      = useState("");
   const [formError,     setFormError]     = useState("");
   const [dropdownOpen,  setDropdownOpen]  = useState(false);
   const [activePage,    setActivePage]    = useState<"dashboard" | "profile">("dashboard");
+  const [userData,      setUserData]      = useState({ userName: "", memberId: "", email: "" });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!session) {
+      window.location.href = '/auth/login';
+      return;
+    }
+    const fetchUserData = async () => {
+      try {
+        const res = await fetch('/api/user/get-profile', {
+          method: 'GET',
+          credentials: 'include',
+        });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.user) {
+            setUserData({
+              userName: data.user.fullName || session.user?.name || "User",
+              memberId: data.user.userId || "N/A",
+              email: data.user.email || session.user?.email || "",
+            });
+          }
+        }
+      } catch (error: any) {
+        console.error('Error fetching user data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchUserData();
+  }, [session]);
 
   const totalAmount = numPins * PIN_COST;
   const pkg         = packages.find(p => p.id === selectedPkg)!;
-
-  // User info (in real app, from auth context)
-  const user = {
-    userName: "ajay kumar",
-    memberId: "Sm674643",
-    email:    "ajaysharmamlm71@gmail.com",
-  };
+  const user        = userData;
 
   const handlePinChange = (val: number) => {
     if (val < 1) val = 1;
@@ -72,28 +95,9 @@ export default function BuyEPinPage() {
 
   const handleBuy = async () => {
     setFormError("");
-    if (!txnPassword.trim()) {
-      setFormError("Please enter your transaction password.");
-      return;
-    }
-
     setStep("paying");
 
     try {
-      const verifyResponse = await fetch('/api/auth/verify-transaction-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ transactionPassword: txnPassword }),
-      });
-
-      const verifyData = await verifyResponse.json();
-      if (!verifyResponse.ok) {
-        setFormError(verifyData.error || 'Transaction password verification failed');
-        setStep("form");
-        return;
-      }
-
-      // If verification passed, proceed with Razorpay
       const loaded = await loadRazorpay();
       if (!loaded) {
         setErrorMsg("Razorpay failed to load. Please check your internet connection.");
@@ -103,7 +107,7 @@ export default function BuyEPinPage() {
 
       const options = {
         key:          RAZORPAY_KEY,
-        amount:       totalAmount * 100,   // paise
+        amount:       totalAmount * 100, 
         currency:     "INR",
         name:         "Swamini Life",
         description:  `Buy ${numPins} E-Pin(s) — ${pkg.name}`,
@@ -112,18 +116,46 @@ export default function BuyEPinPage() {
           const pid = response.razorpay_payment_id;
           setPaymentId(pid);
 
-          // Send confirmation email
-          await sendConfirmationEmail({
-            userName:    user.userName,
-            email:       user.email,
-            memberId:    user.memberId,
-            packageName: pkg.name,
-            pins:        numPins,
-            amount:      totalAmount,
-            paymentId:   pid,
-          });
+          try {
+            const orderResponse = await fetch('/api/orders/create', {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: user.userName,
+                mobileNumber: "",
+                transactionDetails: `Razorpay Payment ID: ${pid} - ${numPins} E-Pin(s) of ${pkg.name}`,
+                orderType: 'pack',
+                packId: pkg.id,
+                packName: pkg.name,
+                packPrice: totalAmount,
+                quantity: numPins,
+              }),
+            });
 
-          setStep("success");
+            if (orderResponse.ok) {
+              const orderData = await orderResponse.json();
+              console.log('Order created:', orderData.orderId);
+            } else if (orderResponse.status === 401) {
+              window.location.href = '/auth/login';
+              return;
+            }
+            await sendConfirmationEmail({
+              userName:    user.userName,
+              email:       user.email,
+              memberId:    user.memberId,
+              packageName: pkg.name,
+              pins:        numPins,
+              amount:      totalAmount,
+              paymentId:   pid,
+            });
+
+            setStep("success");
+          } catch (err: any) {
+            console.error('Error processing payment:', err);
+            setErrorMsg('Payment recorded but order processing failed. Please contact support.');
+            setStep("error");
+          }
         },
         prefill: {
           name:  user.userName,
@@ -477,7 +509,7 @@ export default function BuyEPinPage() {
                   Confirmation email with pin details has been sent to <strong style={{marginLeft:3}}>{user.email}</strong>
                 </div>
 
-                <button className="buy-again-btn" onClick={() => { setStep("form"); setTxnPassword(""); setNumPins(1); }}>
+                <button className="buy-again-btn" onClick={() => { setStep("form"); setNumPins(1); }}>
                   Buy More Pins
                 </button>
               </div>
@@ -550,26 +582,6 @@ export default function BuyEPinPage() {
                     </div>
                   </div>
                 </div>
-
-                {/* Transaction Password */}
-                <div className="form-group">
-                  <label className="form-label"><span className="req">*</span>Transaction Password :</label>
-                  <input
-                    className="form-input"
-                    type="password"
-                    placeholder="Enter Transaction Password"
-                    value={txnPassword}
-                    onChange={(e) => { setTxnPassword(e.target.value); setFormError(""); }}
-                    onKeyDown={(e) => e.key === "Enter" && handleBuy()}
-                  />
-                </div>
-
-                {formError && (
-                  <div className="form-error">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="#c62828"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
-                    {formError}
-                  </div>
-                )}
 
                 {/* Buy Button */}
                 <button className="buy-btn" onClick={handleBuy}>

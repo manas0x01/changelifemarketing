@@ -13,6 +13,7 @@ interface EPinRow {
   fromUserName: string;
   transferType: string;
   transferRejectDate: string;
+  transferRejectDateISO?: string | null;
   package: string;
   quantity: number;
   amount: string;
@@ -35,6 +36,16 @@ export default function TransferredRejectedPage() {
   const [error,         setError]         = useState<string | null>(null);
   const [packages,      setPackages]      = useState(new Set<string>());
   const [types,         setTypes]         = useState(new Set<string>());
+
+  const handleClearFilters = () => {
+    setTransferType("");
+    setStatusFilter("");
+    setSelectedPkg("");
+    setFromDate("");
+    setToDate("");
+    setFiltered([]);
+    setHasFiltered(false);
+  };
 
   // Fetch transfer history
   useEffect(() => {
@@ -72,14 +83,14 @@ export default function TransferredRejectedPage() {
     if (transferType) data = data.filter(d => d.transferType === transferType);
     if (statusFilter) data = data.filter(d => d.status === statusFilter);
     if (selectedPkg) data = data.filter(d => d.package === selectedPkg);
-    if (fromDate) {
-      const from = new Date(fromDate);
-      data = data.filter(d => d.transferRejectDate !== "--" && new Date(d.transferRejectDate) >= from);
-    }
-    if (toDate) {
-      const to = new Date(toDate);
-      to.setHours(23, 59, 59, 999);
-      data = data.filter(d => d.transferRejectDate !== "--" && new Date(d.transferRejectDate) <= to);
+    if (fromDate || toDate) {
+      data = data.filter((d) => {
+        const dateISO = d.transferRejectDateISO;
+        if (!dateISO || dateISO === null) return false;
+        if (fromDate && dateISO < fromDate) return false;
+        if (toDate && dateISO > toDate) return false;
+        return true;
+      });
     }
     setFiltered(data.slice(0, pageSize));
     setHasFiltered(true);
@@ -373,6 +384,7 @@ export default function TransferredRejectedPage() {
                 </div>
 
                 <button className="filter-btn" onClick={handleFilter}>Filter</button>
+                <button className="filter-btn" style={{ background: "#666" }} onClick={handleClearFilters}>Clear Filters</button>
               </div>
 
               {/* Row 2: Page Size */}

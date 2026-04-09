@@ -22,12 +22,6 @@ interface CycleRow {
   matches: number[];
   cappings: number[];
 }
-interface EPin {
-  pin: string;
-  ePin: string;
-  package: string;
-  status: string;
-}
 interface BankDetails {
   accountHolderName: string;
   accountNumber: string;
@@ -110,7 +104,6 @@ export default function Dashboard() {
     accountHolderName: "", accountNumber: "", ifscCode: "", bankName: "",
   });
   const [cycleHistory, setCycleHistory] = useState<CycleRow[]>([]);
-  const [ePins, setEPins] = useState<EPin[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Withdraw dialog states
@@ -127,7 +120,7 @@ export default function Dashboard() {
         const [
           teamResponse, directResponse, directAmountResponse,
           incomeResponse, boosterResponse, boosterAmountResponse,
-          profileResponse, ePinsResponse, totalIncomeResponse,
+          profileResponse, totalIncomeResponse,
         ] = await Promise.all([
           fetch('/api/user/total-team', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/total-direct', { method: 'GET', credentials: 'include' }),
@@ -136,9 +129,15 @@ export default function Dashboard() {
           fetch('/api/user/booster-income', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/booster-income-amount', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/get-profile', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/get-epins', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/total-income', { method: 'GET', credentials: 'include' }),
         ]);
+
+        // Check for 401 errors and redirect to login
+        if (teamResponse.status === 401 || directResponse.status === 401 || 
+            incomeResponse.status === 401 || profileResponse.status === 401) {
+          window.location.href = '/auth/login';
+          return;
+        }
 
         if (teamResponse.ok) {
           const d = await teamResponse.json();
@@ -168,10 +167,6 @@ export default function Dashboard() {
           const d = await profileResponse.json();
           if (d.user) setUserProfile({ ...d.user, username: d.user.username || "N/A" });
         }
-        if (ePinsResponse.ok) {
-          const d = await ePinsResponse.json();
-          setEPins(d.ePins || []);
-        }
         if (totalIncomeResponse.ok) {
           const d = await totalIncomeResponse.json();
           setTotalIncome(d.totalIncome || 0);
@@ -183,6 +178,7 @@ export default function Dashboard() {
           });
         }
       } catch (error: any) {
+        console.error('Dashboard data fetch error:', error);
       } finally {
         setLoading(false);
       }
@@ -213,15 +209,23 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: amt }),
       });
+
+      // Handle 401 - redirect to login
+      if (res.status === 401) {
+        window.location.href = '/auth/login';
+        return;
+      }
+
       const data = await res.json();
       if (!res.ok) {
-        setWithdrawError(data.error || "Withdrawal failed.");
+        setWithdrawError(data.error || data.message || "Withdrawal failed.");
       } else {
         setWithdrawSuccess(data.message || "Withdrawal request submitted!");
         setTotalIncome(data.remainingBalance ?? totalIncome - amt);
         setWithdrawAmount("");
       }
-    } catch {
+    } catch (error: any) {
+      console.error('Withdraw error:', error);
       setWithdrawError("Network error. Please try again.");
     } finally {
       setWithdrawLoading(false);
@@ -456,35 +460,6 @@ export default function Dashboard() {
                     )}
                   </div>
                 </div>
-
-                {/* Available E-Pins */}
-                <div className="section-card">
-                  <div className="section-header">Available E-Pins</div>
-                  <div style={{ padding: 0 }}>
-                    {ePins.length === 0 ? (
-                      <div style={{ padding: '20px', textAlign: 'center', color: '#999', fontSize: '13px' }}>
-                        No E-Pins available. <a href="/dashboard/buypins" style={{ color: '#1976d2', textDecoration: 'underline' }}>Buy E-Pins</a>
-                      </div>
-                    ) : (
-                      <table className="epin-table">
-                        <thead><tr><th>Package Name</th><th>Status</th><th>Action</th></tr></thead>
-                        <tbody>
-                          {ePins.map((ep, idx) => (
-                            <tr key={idx}>
-                              <td>{ep.package}</td>
-                              <td>
-                                <span style={{ display: 'inline-block', padding: '3px 10px', borderRadius: '12px', fontSize: '11px', fontWeight: '600', color: '#fff', background: ep.status === 'Active' ? '#26a69a' : ep.status === 'Used' ? '#1976d2' : ep.status === 'Transferred' ? '#f57c00' : '#e53935' }}>
-                                  {ep.status}
-                                </span>
-                              </td>
-                              <td><Link href="/dashboard/myepins" className="epin-view-link">View</Link></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    )}
-                  </div>
-                </div>
               </div>
 
               {/* ── PROFILE + INSIGHT ── */}
@@ -534,7 +509,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* ── MESSAGE ── */}
+              {/* MESSAGE */}
               <div className="bottom-grid" style={{ marginTop: 22 }}>
                 <div className="section-card">
                   <div className="section-header">Message</div>
@@ -606,7 +581,7 @@ export default function Dashboard() {
               color: "#666",
               fontWeight: 500
             }}>
-              Submit your withdrawal request. Minimum ₹800
+              Submit your withdrawal request. Minimum ₹1000
             </DialogDescription>
           </DialogHeader>
 
@@ -666,12 +641,12 @@ export default function Dashboard() {
                 textTransform: "uppercase",
                 letterSpacing: "0.3px"
               }}>
-                Enter Withdrawal Amount <span style={{ color: "#999", fontWeight: 400, textTransform: "none", fontSize: "clamp(9px, 2vw, 11px)" }}>(Min ₹800)</span>
+                Enter Withdrawal Amount <span style={{ color: "#999", fontWeight: 400, textTransform: "none", fontSize: "clamp(9px, 2vw, 11px)" }}>(Min ₹1000)</span>
               </Label>
               <Input
                 id="withdrawAmount"
                 type="number"
-                min={800}
+                min={1000}
                 max={totalIncome}
                 placeholder="e.g. 1000"
                 value={withdrawAmount}

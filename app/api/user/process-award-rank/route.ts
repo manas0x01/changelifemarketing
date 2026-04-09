@@ -82,15 +82,16 @@ export async function POST(req: Request) {
     const previousRank = currentRank;
     const rankProgressions = [];
 
-    // Check Rank 1 to 13 progression
+    {/* Check Rank 1 to 13 Progression */}
     for (let rankNum = 1; rankNum <= 13; rankNum++) {
-      // Skip if already achieved
+
+      {/* Skip If Already Achieved */}
       if (rankNum <= currentRank) continue;
 
       const rankRequirements = AWARD_RANKS[rankNum as keyof typeof AWARD_RANKS];
       if (!rankRequirements) break;
-
-      // Calculate total pairs needed for this rank (cumulative L+R)
+ 
+      {/* Calculate Total Pairs Needed For This Rank (Cumulative L+R) */}
       const totalPairsNeeded = rankRequirements.leftRequired + rankRequirements.rightRequired;
 
       if (totalBoosterPairs >= totalPairsNeeded) {

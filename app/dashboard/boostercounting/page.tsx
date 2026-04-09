@@ -29,17 +29,26 @@ export default function BoosterCountingReportPage() {
   const [filtered, setFiltered] = useState<ReportRow[]>([]);
   const [hasFiltered, setHasFiltered] = useState(false);
   const [allData, setAllData] = useState<ReportRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const res = await fetch('/api/user/booster-counting-records');
-        if (res.ok) {
-          const data = await res.json();
-          setAllData(data.data || []);
+        if (!res.ok) throw new Error('Failed to fetch data');
+        const result = await res.json();
+        if (result.success && result.data) {
+          setAllData(result.data);
+        } else {
+          setError(result.error || result.message || 'Failed to fetch records');
         }
-      } catch (error) {
-        setAllData([]);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Error fetching data');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -47,7 +56,31 @@ export default function BoosterCountingReportPage() {
   }, []);
 
   const handleFilter = () => {
-    setFiltered(allData.slice(0, pageSize));
+    let data = [...allData];
+    
+    // ✅ Apply date range filtering if dates are provided
+    if (fromDate || toDate) {
+      data = data.filter((record) => {
+        // Parse DD/MM/YYYY format from API response
+        const [day, month, year] = record.date.split('/');
+        const recordDate = new Date(`${year}-${month}-${day}`);
+        
+        const from = fromDate ? new Date(fromDate) : null;
+        const to = toDate ? new Date(toDate) : null;
+        
+        if (from && recordDate < from) return false;
+        if (to) {
+          // Include entire last day (set to end of day)
+          to.setHours(23, 59, 59, 999);
+          if (recordDate > to) return false;
+        }
+        return true;
+      });
+    }
+    
+    // ✅ Apply page size limit
+    const sliced = data.slice(0, pageSize);
+    setFiltered(sliced);
     setHasFiltered(true);
   };
 
@@ -72,6 +105,12 @@ export default function BoosterCountingReportPage() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         * { margin:0; padding:0; box-sizing:border-box; }
+
+        /* ✅ Skeleton animation */
+        @keyframes skeletonShimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
 
         .gc-root { font-family:'Poppins',sans-serif; background:#f0f2f5; min-height:100vh; }
 
@@ -239,6 +278,20 @@ export default function BoosterCountingReportPage() {
             {/* NOTE */}
             <p className="note-text">Note : Please use filters to view report.</p>
 
+            {/* ERROR STATE */}
+            {error && (
+              <div style={{
+                background: '#ffebee',
+                color: '#c62828',
+                padding: '12px 16px',
+                borderLeft: '4px solid #c62828',
+                fontSize: '13px',
+                fontWeight: '500'
+              }}>
+                ⚠️ {error}
+              </div>
+            )}
+
             {/* FILTER ROW — From Date | To Date | Filter | Page Size(right) */}
             <div className="filter-row">
               <div className="filter-group">
@@ -293,7 +346,37 @@ export default function BoosterCountingReportPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {hasFiltered && filtered.length > 0 ? (
+                  {loading ? (
+                    // ✅ Skeleton loaders
+                    <>
+                      {[...Array(5)].map((_, i) => (
+                        <tr key={`skeleton-${i}`} style={{ animation: 'skeletonShimmer 2s infinite' }}>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                          <td><div style={{ height: '16px', background: 'linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%)', backgroundSize: '1000px 100%', borderRadius: '4px' }}></div></td>
+                        </tr>
+                      ))}
+                    </>
+                  ) : error ? (
+                    // ✅ Error state
+                    <tr>
+                      <td colSpan={10}>
+                        <div className="empty-state">
+                          <svg width="40" height="40" viewBox="0 0 24 24" fill="#ccc">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                          </svg>
+                          <p>Error: {error}</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : hasFiltered && filtered.length > 0 ? (
                     <>
                       {filtered.map((row) => (
                         <tr key={row.srNo}>

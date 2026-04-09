@@ -13,6 +13,7 @@ interface Member {
   placementId: string;
   joiningDate: string;
   position: string;
+  joiningDateISO?: string | null;
 }
 
 export default function TeamNetworkPage() {
@@ -27,7 +28,6 @@ export default function TeamNetworkPage() {
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState<string | null>(null);
 
-  // Fetch team network members from database on component mount
   useEffect(() => {
     const fetchTeamNetworkMembers = async () => {
       try {
@@ -64,36 +64,41 @@ export default function TeamNetworkPage() {
     }
 
     let data = [...allMembers];
-    
-    // Apply position filter
+
     if (position) {
       data = data.filter(d => d.position === position);
     }
-    
-    // Apply date filtering if dates are provided
     if (fromDate || toDate) {
       data = data.filter((member) => {
-        const memberDate = new Date(member.joiningDate);
-        const from = fromDate ? new Date(fromDate) : null;
-        const to = toDate ? new Date(toDate) : null;
+        const memberDateISO = member.joiningDateISO;
+        if (!memberDateISO) return false;
+        
+        const from = fromDate ? fromDate : null;
+        const to = toDate ? toDate : null;
 
-        if (from && memberDate < from) return false;
-        if (to && memberDate > to) return false;
+        if (from && memberDateISO < from) return false;
+        if (to && memberDateISO > to) return false;
         return true;
       });
     }
-    
-    // Apply page size limit
     data = data.slice(0, pageSize);
     setFiltered(data);
     setHasFiltered(true);
   };
 
+  const handleClearFilters = () => {
+    setFromDate("");
+    setToDate("");
+    setPosition("");
+    setFiltered([]);
+    setHasFiltered(false);
+  };
+
   const handleExportCSV = () => {
     if (!filtered.length) return;
-    const header = "Sr.No.,Member ID,Name,Sponsor ID,Placement ID,Joining Date,Position";
+    const header = "Sr.No.,Member ID,Name,Sponsor ID,Placement ID,Position,Joining Date";
     const rows   = filtered.map(r =>
-      `${r.srNo},${r.memberId},${r.name},${r.sponsorId},${r.placementId},${r.joiningDate},${r.position}`
+      `${r.srNo},${r.memberId},${r.name},${r.sponsorId},${r.placementId},${r.position},${r.joiningDate}`
     ).join("\n");
     const blob = new Blob([header + "\n" + rows], { type: "text/csv" });
     const url  = URL.createObjectURL(blob);
@@ -359,6 +364,11 @@ export default function TeamNetworkPage() {
               {/* Filter button */}
               <button className="filter-btn" onClick={handleFilter} disabled={loading || allMembers.length === 0}>Filter</button>
 
+              {/* Clear Filters button */}
+              <button className="filter-btn" onClick={handleClearFilters} style={{ background: '#999' }}>
+                Clear Filters
+              </button>
+
               {/* Page Size */}
               <div className="filter-group">
                 <label className="filter-label">Page Size</label>
@@ -382,6 +392,7 @@ export default function TeamNetworkPage() {
                     <th>Name</th>
                     <th>Sponsor ID</th>
                     <th>Placement ID</th>
+                    <th>Position</th>
                     <th>Joining Date</th>
                   </tr>
                 </thead>
@@ -395,13 +406,14 @@ export default function TeamNetworkPage() {
                           <td><div className="skeleton-cell" style={{ width: '120px' }}></div></td>
                           <td><div className="skeleton-cell" style={{ width: '80px' }}></div></td>
                           <td><div className="skeleton-cell" style={{ width: '80px' }}></div></td>
+                          <td><div className="skeleton-cell" style={{ width: '60px' }}></div></td>
                           <td><div className="skeleton-cell" style={{ width: '100px' }}></div></td>
                         </tr>
                       ))}
                     </>
                   ) : error ? (
                     <tr>
-                      <td colSpan={6}>
+                      <td colSpan={7}>
                         <div className="empty-state">
                           <svg width="40" height="40" viewBox="0 0 24 24" fill="#ccc">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -418,12 +430,21 @@ export default function TeamNetworkPage() {
                         <td>{row.name}</td>
                         <td>{row.sponsorId}</td>
                         <td>{row.placementId}</td>
+                        <td>
+                          {row.position && row.position !== 'N/A' ? (
+                            <span className={`pos-badge pos-${row.position.toLowerCase()}`}>
+                              {row.position}
+                            </span>
+                          ) : (
+                            'N/A'
+                          )}
+                        </td>
                         <td>{row.joiningDate}</td>
                       </tr>
                     ))
                   ) : !hasFiltered ? (
                     <tr>
-                      <td colSpan={6}>
+                      <td colSpan={7}>
                         <div className="empty-state">
                           <svg width="42" height="42" viewBox="0 0 24 24" fill="#ccc">
                             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
@@ -434,7 +455,7 @@ export default function TeamNetworkPage() {
                     </tr>
                   ) : (
                     <tr>
-                      <td colSpan={6}>
+                      <td colSpan={7}>
                         <div className="empty-state">
                           <svg width="42" height="42" viewBox="0 0 24 24" fill="#ccc">
                             <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>

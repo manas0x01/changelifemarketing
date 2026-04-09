@@ -10,6 +10,7 @@ interface Request {
   srNo: number;
   requestNo: string;
   date: string;
+  dateISO?: string | null; // For filtering
   memberId: string;
   name: string;
   totalPins: number;
@@ -31,7 +32,6 @@ export default function MyRequestsPage() {
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState<string | null>(null);
 
-  // Fetch pin requests from database
   useEffect(() => {
     const fetchRequests = async () => {
       try {
@@ -42,7 +42,6 @@ export default function MyRequestsPage() {
         if (!response.ok) {
           throw new Error("Failed to fetch requests");
         }
-        
         const data = await response.json();
         setAllRequests(data.requests || []);
       } catch (err) {
@@ -59,16 +58,29 @@ export default function MyRequestsPage() {
 
   const handleFilter = () => {
     let data = [...allRequests];
-    if (selectType) data = data.filter(d => d.type === selectType);
+    
+    // Apply type filter
+    if (selectType) {
+      data = data.filter(d => d.type === selectType);
+    }
+    
+    // Apply date range filtering
     if (fromDate) {
       const from = new Date(fromDate);
-      data = data.filter(d => d.date !== "--" && new Date(d.date) >= from);
+      data = data.filter(d => {
+        if (!d.dateISO) return true; // Include items without dates
+        return new Date(d.dateISO) >= from;
+      });
     }
     if (toDate) {
       const to = new Date(toDate);
       to.setHours(23, 59, 59, 999);
-      data = data.filter(d => d.date !== "--" && new Date(d.date) <= to);
+      data = data.filter(d => {
+        if (!d.dateISO) return true; // Include items without dates
+        return new Date(d.dateISO) <= to;
+      });
     }
+    
     setFiltered(data.slice(0, pageSize));
     setHasFiltered(true);
   };

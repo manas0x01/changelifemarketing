@@ -25,7 +25,7 @@ export default function EditProfilePage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activePage, setActivePage] = useState<"dashboard" | "profile">("profile");
   
-  // Form data states
+  // Form data states (personal info only - bank details edited in editbank)
   const [formData, setFormData] = useState({
     fullName: "",
     gender: "Male" as "Male" | "Female",
@@ -39,11 +39,6 @@ export default function EditProfilePage() {
     city: "Patna",
     address: "",
     pincode: "",
-    bankName: "",
-    branchName: "",
-    accountNo: "",
-    ifsc: "",
-    accountType: "",
     nomineeName: "",
     nomineeRelation: "Son",
     joiningDate: "",
@@ -89,33 +84,41 @@ export default function EditProfilePage() {
         });
 
         if (!response.ok) {
-          // Try to parse as JSON, fallback to text
-          let errorData;
-          const contentType = response.headers.get("content-type");
-          
-          try {
-            if (contentType?.includes("application/json")) {
-              errorData = await response.json();
-            } else {
-              const text = await response.text();
-              errorData = { error: text?.substring(0, 200) || "Unknown error" };
-            }
-          } catch (parseErr) {
-            errorData = { error: "Failed to parse server response" };
-          }
-          
+          // Handle specific status codes
           if (response.status === 401) {
             router.push("/auth/login");
             return;
           }
           
-          throw new Error(errorData.error || "Failed to fetch profile");
+          // Try to parse error response
+          let errorMessage = "Failed to fetch profile";
+          try {
+            const contentType = response.headers.get("content-type");
+            if (contentType?.includes("application/json")) {
+              const errorData = await response.json();
+              errorMessage = errorData.error || errorData.message || errorMessage;
+            } else {
+              const text = await response.text();
+              errorMessage = text?.substring(0, 200) || errorMessage;
+            }
+          } catch (parseErr) {
+            // Keep default error message if parsing fails
+          }
+          
+          throw new Error(errorMessage);
         }
 
         const data = await response.json();
 
         if (data.data) {
-          setFormData(data.data);
+          // Only set personal info fields, exclude bank details
+          const personalData = { ...data.data };
+          delete (personalData as any).bankName;
+          delete (personalData as any).branchName;
+          delete (personalData as any).accountNo;
+          delete (personalData as any).ifsc;
+          delete (personalData as any).accountType;
+          setFormData(personalData);
 
           // Parse date of birth
           if (data.data.dateOfBirth) {
@@ -166,7 +169,7 @@ export default function EditProfilePage() {
 
           const newPlacementData = {
             memberId: data.data.userId || data.data.username || "",
-            joiningDate: data.data.joiningDate || "",
+            joiningDate: data.data.joiningDate ? new Date(data.data.joiningDate).toLocaleDateString('en-GB') : "",
             sponsorId: data.data.sponsorId || "",
             sponsorName: sponsorName,
             placementId: data.data.placementId || "",
@@ -217,27 +220,35 @@ export default function EditProfilePage() {
     try {
       setSaving(true);
       setError(null);
+      // Validate mobile number
       if (formData.mobileNo.trim() && !/^\d{10}$/.test(formData.mobileNo)) {
         setError("Mobile number must be 10 digits");
         setSaving(false);
         return;
       }
+      // Validate PAN number format
       if (formData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo)) {
         setError("Invalid PAN number format");
         setSaving(false);
         return;
       }
+      // Remove bank-related fields before sending (edited in editbank page)
+      const sendData = { ...formData };
+      delete (sendData as any).bankName;
+      delete (sendData as any).branchName;
+      delete (sendData as any).accountNo;
+      delete (sendData as any).ifsc;
+      delete (sendData as any).accountType;
       const response = await fetch("/api/user/update-profile", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(sendData),
         credentials: "include",
       });
 
       if (!response.ok) {
-        // Try to parse as JSON, fallback to text
         let errorData;
         const contentType = response.headers.get("content-type");
         

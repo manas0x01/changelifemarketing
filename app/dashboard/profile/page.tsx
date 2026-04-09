@@ -55,6 +55,18 @@ export default function ProfilePage() {
         
         const apiResponse = await response.json();
         const user = apiResponse.data;
+        
+        // Format joining date to DD/MM/YYYY
+        const formatDate = (dateString: string) => {
+          if (!dateString) return "N/A";
+          const date = new Date(dateString);
+          if (isNaN(date.getTime())) return dateString;
+          const day = String(date.getDate()).padStart(2, '0');
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const year = date.getFullYear();
+          return `${day}/${month}/${year}`;
+        };
+        
         const transformedData: ProfileData = {
           username: user.username || "N/A",
           userId: user.userId || user._id || "N/A",
@@ -66,7 +78,7 @@ export default function ProfilePage() {
             { label: "Phone", value: user.mobileNo || user.phone || "N/A" },
             { label: "Member Type", value: user.memberType || "N/A" },
             { label: "Package", value: user.registeredPackage || "N/A" },
-            { label: "Joining Date", value: user.joiningDate || "N/A" },
+            { label: "Joining Date", value: formatDate(user.joiningDate) },
           ],
           bankDetails: [
             { label: "Bank Name", value: user.bankName || "N/A" },

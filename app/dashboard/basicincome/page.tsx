@@ -9,6 +9,7 @@ const pageSizes = [10, 20, 50, 100];
 interface IncomeRow {
   srNo: number;
   amount: string;
+  rawAmount: number; // ✅ For calculations
   pairCount: number;
   date: string;
   description: string;
@@ -57,14 +58,39 @@ export default function BasicIncomePage() {
 
   const handleFilter = () => {
     let data = [...allIncomeRecords];
-    if (status !== "--All--") data = data.filter(d => d.status === status);
+    
+    // ✅ Filter by status
+    if (status !== "--All--") {
+      data = data.filter(d => d.status === status);
+    }
+    
+    // ✅ Apply date range filtering if dates are provided
+    if (fromDate || toDate) {
+      data = data.filter((record) => {
+        // Parse DD/MM/YYYY format from API response
+        const [day, month, year] = record.date.split('/');
+        const recordDate = new Date(`${year}-${month}-${day}`);
+        
+        const from = fromDate ? new Date(fromDate) : null;
+        const to = toDate ? new Date(toDate) : null;
+        
+        if (from && recordDate < from) return false;
+        if (to) {
+          // Include entire last day (set to end of day)
+          to.setHours(23, 59, 59, 999);
+          if (recordDate > to) return false;
+        }
+        return true;
+      });
+    }
+    
+    // ✅ Apply page size limit
     const sliced = data.slice(0, pageSize);
     setFiltered(sliced);
     setHasFiltered(true);
-    const total = sliced.reduce((sum, r) => {
-      const num = parseFloat(r.amount.replace(/[₹,]/g, ""));
-      return sum + (isNaN(num) ? 0 : num);
-    }, 0);
+    
+    // ✅ Calculate total using rawAmount field
+    const total = sliced.reduce((sum, r) => sum + (r.rawAmount || 0), 0);
     setTotalAmount(total);
   };
 

@@ -20,7 +20,7 @@ export default function ChangePasswordPage() {
 
     if (!oldPassword.trim()) { setError("Please enter your old password."); setLoading(false); return; }
     if (!newPassword.trim()) { setError("Please enter a new password."); setLoading(false); return; }
-    if (newPassword.length < 6) { setError("New password must be at least 6 characters."); setLoading(false); return; }
+    if (newPassword.length < 8) { setError("New password must be at least 8 characters."); setLoading(false); return; }
     if (newPassword !== rePassword) { setError("New passwords do not match."); setLoading(false); return; }
 
     try {
@@ -123,6 +123,14 @@ export default function ChangePasswordPage() {
           background:#fff;
           outline:none;
           transition:border-color .18s, box-shadow .18s;
+          -webkit-autofill:none;
+        }
+        .form-input:-webkit-autofill,
+        .form-input:-webkit-autofill:hover,
+        .form-input:-webkit-autofill:focus,
+        .form-input:-webkit-autofill:active {
+          -webkit-box-shadow: 0 0 0 30px white inset !important;
+          -webkit-text-fill-color: #333 !important;
         }
         .form-input::placeholder { color:#c0c0c0; }
         .form-input:focus {

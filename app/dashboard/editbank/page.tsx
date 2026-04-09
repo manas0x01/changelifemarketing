@@ -10,8 +10,6 @@ const accountTypes = ["-- Select --", "Saving", "Current", "Salary", "NRI", "Joi
 export default function EditBankPage() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-
-  // Form data states - ONLY bank fields
   const [bankData, setBankData] = useState({
     bankName: "",
     ifsc: "",
@@ -57,9 +55,7 @@ export default function EditBankPage() {
           
           throw new Error(errorData.error || "Failed to fetch bank details");
         }
-
         const data = await response.json();
-
         if (data.data) {
           setBankData({
             bankName: data.data.bankName || "",
@@ -70,7 +66,6 @@ export default function EditBankPage() {
             panNo: data.data.panNo || "",
           });
         }
-
         setError(null);
       } catch (err) {
         setError(err instanceof Error ? err.message : "An error occurred");
@@ -78,7 +73,6 @@ export default function EditBankPage() {
         setLoading(false);
       }
     };
-
     fetchBankDetails();
   }, [router]);
   const handleInputChange = (field: keyof typeof bankData, value: string) => {
@@ -91,28 +85,40 @@ export default function EditBankPage() {
     try {
       setSaving(true);
       setError(null);
+      // Validate account type is not default placeholder
+      if (bankData.accountType === "-- Select --") {
+        setError("Please select an account type");
+        setSaving(false);
+        return;
+      }
+      // Validate IFSC code if provided
       if (bankData.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankData.ifsc)) {
         setError("Invalid IFSC code format (e.g., CBIN0284349)");
         setSaving(false);
         return;
       }
+      // Validate PAN if provided
       if (bankData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(bankData.panNo)) {
-        setError("Invalid PAN number format");
+        setError("Invalid PAN number format (e.g., ABCDE1234F)");
         setSaving(false);
         return;
       }
+      // Convert "-- Select --" to empty string for accountType
+      const submitData = {
+        ...bankData,
+        accountType: bankData.accountType === "-- Select --" ? "" : bankData.accountType
+      };
       const response = await fetch("/api/user/update-profile", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(bankData),
+        body: JSON.stringify(submitData),
         credentials: "include",
       });
       if (!response.ok) {
         let errorData;
         const contentType = response.headers.get("content-type");
-        
         try {
           if (contentType?.includes("application/json")) {
             errorData = await response.json();
@@ -134,7 +140,6 @@ export default function EditBankPage() {
       setSaving(false);
     }
   };
-
   return (
     <>
       <style>{`
@@ -147,9 +152,6 @@ export default function EditBankPage() {
           background: #f0f2f5;
           min-height: 100vh;
         }
-
-
-
         /* ── GREEN BAR ── */
         .green-bar { height: 8px; background: linear-gradient(90deg, #00c853, #1de9b6); }
 
@@ -185,7 +187,6 @@ export default function EditBankPage() {
           white-space: nowrap;
         }
         .return-btn:hover { background: #455a64; }
-
         /* ── PAGE BODY ── */
         .page-body { padding: 0 20px 30px; }
 
@@ -205,7 +206,6 @@ export default function EditBankPage() {
           letter-spacing: 0.8px;
           text-transform: uppercase;
         }
-
         /* ── FORM BODY ── */
         .form-body { padding: 24px 20px 20px; }
 

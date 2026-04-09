@@ -15,7 +15,8 @@ const indianStates = [
 ];
 
 const days   = Array.from({ length: 31 }, (_, i) => String(i + 1));
-const months = ["January","February","March","April","May","June",
+const months = ["01","02","03","04","05","06","07","08","09","10","11","12"];
+const monthNames = ["January","February","March","April","May","June",
                  "July","August","September","October","November","December"];
 const years  = Array.from({ length: 60 }, (_, i) => String(2005 - i));
 
@@ -32,7 +33,7 @@ export default function NewRegisterPage() {
   const [activePage,   setActivePage]   = useState<"dashboard" | "profile">("dashboard");
   const [gender,       setGender]       = useState<"Male"|"Female">("Male");
   const [dobDay,       setDobDay]       = useState("1");
-  const [dobMonth,     setDobMonth]     = useState("January");
+  const [dobMonth,     setDobMonth]     = useState("01");
   const [dobYear,      setDobYear]      = useState("1995");
   const [state,        setState]        = useState("Bihar");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -242,6 +243,10 @@ export default function NewRegisterPage() {
       toast.error("Please validate User ID first");
       return;
     }
+    if (!selectedEPin) {
+      toast.error("Please select an E-Pin to proceed");
+      return;
+    }
     if (!fullName.trim()) {
       toast.error("Full name is required");
       return;
@@ -299,7 +304,7 @@ export default function NewRegisterPage() {
         gender,
         mobileNo,
         email,
-        dateOfBirth: `${dobDay}-${dobMonth}-${dobYear}`,
+        dateOfBirth: `${String(dobDay).padStart(2, '0')}-${dobMonth}-${dobYear}`,
         panNo,
         state,
         district,
@@ -313,8 +318,6 @@ export default function NewRegisterPage() {
         ifsc: ifscCode,
         password,
       };
-
-      // Only add optional fields if they have valid values
       if (nomineeRel && nomineeRel !== "-- Select --") {
         registrationData.nomineeRelation = nomineeRel;
       }
@@ -578,7 +581,7 @@ export default function NewRegisterPage() {
               <div style={{ textAlign: 'center', width: '100%' }}>
                 <div style={{ fontSize: '16px', fontWeight: 600, color: '#d32f2f', marginBottom: '12px' }}>❌ No Available Pins</div>
                 <div style={{ fontSize: '14px', color: '#333', marginBottom: '20px' }}>{pinError}</div>
-                <a href="/products" style={{ textDecoration: 'none' }}>
+                <a href="/dashboard/buypins" style={{ textDecoration: 'none' }}>
                   <button className="proceed-btn" style={{ background: '#ff9800' }}>
                     BUY PIN NOW
                   </button>
@@ -763,7 +766,6 @@ export default function NewRegisterPage() {
                 </div>
 
                 <div className="sub-header">Personal Information</div>
-
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>User ID :</label>
@@ -846,7 +848,7 @@ export default function NewRegisterPage() {
                     <label className="form-label">Date of Birth :</label>
                     <div className="dob-split">
                       <select className="form-select" value={dobDay} onChange={e => setDobDay(e.target.value)}>
-                        {days.map(d => <option key={d}>{d}</option>)}
+                        {days.map(d => <option key={d}>{String(d).padStart(2, '0')}</option>)}
                       </select>
                       <select className="form-select" value={dobMonth} onChange={e => setDobMonth(e.target.value)}>
                         {months.map(m => <option key={m}>{m}</option>)}

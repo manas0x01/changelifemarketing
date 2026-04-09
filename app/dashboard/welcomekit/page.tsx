@@ -7,8 +7,9 @@ import { useRouter } from "next/navigation";
 
 export default function WelcomeKitPage() {
   const router = useRouter();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [userData, setUserData] = useState({
     fullName: "",
     username: "",
@@ -22,38 +23,42 @@ export default function WelcomeKitPage() {
   const idRef      = useRef<HTMLDivElement>(null);
   const visitRef   = useRef<HTMLDivElement>(null);
 
-  // Fetch user data on mount
   useEffect(() => {
     const fetchUserData = async () => {
       try {
+        setLoading(true);
+        setError(null);
         const response = await fetch("/api/user/update-profile", {
           method: "GET",
           credentials: "include",
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          if (data.data) {
-            // Format date
-            let dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-            if (data.data.createdAt) {
-              dateStr = new Date(data.data.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
-            }
-
-            setUserData({
-              fullName: data.data.fullName || "",
-              username: data.data.username || "",
-              mobileNo: data.data.mobileNo || "",
-              email: data.data.email || "",
-              address: data.data.address || "Jaysingpur, Taluka: Shirol, Dist: Kolhapur Pin code: 416 101",
-              createdAt: dateStr,
-            });
+        if (!response.ok) {
+          if (response.status === 401) {
+            router.push("/auth/login");
+            return;
           }
-        } else if (response.status === 401) {
-          router.push("/auth/login");
+          throw new Error("Failed to fetch user data");
         }
-      } catch (error) {
-        console.error("Failed to fetch user data:", error);
+
+        const data = await response.json();
+        if (data.data) {
+          let dateStr = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+          if (data.data.createdAt) {
+            dateStr = new Date(data.data.createdAt).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+          }
+
+          setUserData({
+            fullName: data.data.fullName || "",
+            username: data.data.username || "",
+            mobileNo: data.data.mobileNo || "",
+            email: data.data.email || "",
+            address: data.data.address || "",
+            createdAt: dateStr,
+          });
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Failed to load welcome kit");
       } finally {
         setLoading(false);
       }
@@ -466,6 +471,18 @@ export default function WelcomeKitPage() {
             <div style={{ textAlign: 'center', padding: '40px', color: '#666', fontSize: '16px' }}>
               Loading your profile data...
             </div>
+          ) : error ? (
+            <div style={{
+              textAlign: 'center',
+              padding: '40px',
+              color: '#d32f2f',
+              fontSize: '16px',
+              background: '#ffebee',
+              borderRadius: '8px',
+              border: '1px solid #ef5350'
+            }}>
+              ❌ {error}
+            </div>
           ) : (
             <>
           {/* ══════════════════════════════
@@ -491,7 +508,7 @@ export default function WelcomeKitPage() {
               <div className="cert-content">
                 {/* Logo */}
                 <div className="cert-logo">
-                  <img src="/images/changelifemarketinglogo.png" alt="Change Life Marketing" style={{ maxWidth: '140px', height: 'auto' }} />
+                  <img src="/images/changelifemarketinglogo.png" alt="Change Life Marketing" style={{ maxWidth: '140px', height: 'auto' }} suppressHydrationWarning />
                 </div>
 
                 <div className="cert-heading">Certificate of Membership</div>
@@ -557,11 +574,11 @@ export default function WelcomeKitPage() {
               <div className="id-top-section">
                 {/* Logo */}
                 <div className="id-logo">
-                  <img src="/images/changelifemarketinglogo.png" alt="Change Life Marketing" style={{ maxWidth: '120px', height: 'auto' }} />
+                  <img src="/images/changelifemarketinglogo.png" alt="Change Life Marketing" style={{ maxWidth: '120px', height: 'auto' }} suppressHydrationWarning />
                 </div>
 
                 {/* Avatar */}
-                <img src="/images/user.png" alt="User Profile" className="id-avatar" />
+                <img src="/images/user.png" alt="User Profile" className="id-avatar" suppressHydrationWarning />
 
                 {/* Info */}
                 <div className="id-info">
@@ -612,13 +629,13 @@ export default function WelcomeKitPage() {
               {/* Logo top-right */}
               <div className="visit-top">
                 <div className="visit-logo">
-                  <img src="/images/changelifemarketinglogo.png" alt="Change Life Marketing" style={{ maxWidth: '110px', height: 'auto' }} />
+                  <img src="/images/changelifemarketinglogo.png" alt="Change Life Marketing" style={{ maxWidth: '110px', height: 'auto' }} suppressHydrationWarning />
                 </div>
               </div>
 
               {/* Avatar + Member Info */}
               <div className="visit-body">
-                <img src="/images/user.png" alt="User Profile" className="visit-avatar" />
+                <img src="/images/user.png" alt="User Profile" className="visit-avatar" suppressHydrationWarning />
                 <div className="visit-member-info">
                   <span className="visit-member-id">{userData.username || "N/A"}</span>
                   <span className="visit-member-mobile">{userData.mobileNo || "N/A"}</span>

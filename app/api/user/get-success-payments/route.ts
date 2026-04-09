@@ -7,7 +7,7 @@ import User from '@/models/User';
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.id) {
+    if (!session?.user?.username) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
         { status: 401 }
@@ -16,7 +16,7 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
 
-    const user = await User.findById(session.user.id)
+    const user = await User.findOne({ username: session.user.username })
       .select('successPayments')
       .lean();
 
@@ -29,13 +29,18 @@ export async function GET(req: NextRequest) {
 
     const payments = user.successPayments ?? [];
 
+    // Format dates to DD/MM/YYYY
+    const formattedPayments = payments.map((payment: any) => ({
+      ...payment,
+      fromDate: payment.fromDate ? new Date(payment.fromDate).toLocaleDateString('en-GB') : 'N/A',
+      toDate: payment.toDate ? new Date(payment.toDate).toLocaleDateString('en-GB') : 'N/A',
+    }));
+
     return NextResponse.json(
       {
         success: true,
-        data: {
-          payments,
-          totalPayments: payments.length,
-        },
+        payments: formattedPayments,
+        totalPayments: formattedPayments.length,
       },
       { status: 200 }
     );

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 
 interface TreeNode {
@@ -115,7 +116,7 @@ function collectEdges(layout: LayoutNode, out: { x1: number; y1: number; x2: num
   return out;
 }
 
-function TreeSVG({ root }: { root: TreeNode | null }) {
+function TreeSVG({ root, onNodeHover, onNodeLeave }: { root: TreeNode | null; onNodeHover?: (nodeId: string, event: React.MouseEvent) => void; onNodeLeave?: () => void }) {
   if (!root) {
     return <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>No data to display</div>;
   }
@@ -148,7 +149,12 @@ function TreeSVG({ root }: { root: TreeNode | null }) {
         const { node, x, y } = ln;
         const isGold = node.type === "gold";
         return (
-          <g key={node.id}>
+          <g 
+            key={node.id}
+            onMouseEnter={(e: any) => onNodeHover?.(node.userId || node.id, e)}
+            onMouseLeave={() => onNodeLeave?.()}
+            style={{ cursor: 'pointer' }}
+          >
             {/* Avatar circle */}
             <circle cx={x} cy={y} r={AVATAR_R} fill="#fff" stroke={isGold ? "#ffc107" : "#2196f3"} strokeWidth="2.5"/>
             <foreignObject x={x - AVATAR_R} y={y - AVATAR_R} width={AVATAR_R * 2} height={AVATAR_R * 2}>
@@ -179,18 +185,23 @@ function TreeSVG({ root }: { root: TreeNode | null }) {
   );
 }
 
-// ── Main Page ─────────────────────────────────────────────────────────────────
 export default function NetworkTreePage() {
+  const { data: session } = useSession();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [memberId,     setMemberId]     = useState("");
   const [treeRoot,     setTreeRoot]     = useState<TreeNode | null>(null);
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState("");
+  const [autoLoaded,   setAutoLoaded]   = useState(false);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [hoveredTree, setHoveredTree] = useState<TreeNode | null>(null);
+  const [hoveredLoading, setHoveredLoading] = useState(false);
+  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const handleFilter = async () => {
     if (!memberId.trim()) {
-      setError("Please enter a Member ID");
+      setError("Please enter a Username");
       return;
     }
 
@@ -221,6 +232,72 @@ export default function NetworkTreePage() {
       setLoading(false);
     }
   };
+
+  const handleNodeHover = async (nodeId: string, event: React.MouseEvent) => {
+    setHoveredNodeId(nodeId);
+    setHoveredLoading(true);
+    
+    const rect = (event.target as Element).getBoundingClientRect();
+    setHoverPosition({ x: rect.left, y: rect.bottom + 10 });
+
+    try {
+      const response = await fetch("/api/user/placement-tree", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: nodeId })
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setHoveredTree(data.tree);
+      }
+    } catch (err) {
+      console.error("Error fetching hover tree:", err);
+      setHoveredTree(null);
+    } finally {
+      setHoveredLoading(false);
+    }
+  };
+
+  const handleNodeLeave = () => {
+    setHoveredNodeId(null);
+    setHoveredTree(null);
+  };
+
+  useEffect(() => {
+    if (session?.user?.username && !autoLoaded) {
+      setMemberId(session.user.username);
+      setAutoLoaded(true);
+      const fetchTree = async () => {
+        setLoading(true);
+        try {
+          const response = await fetch("/api/user/placement-tree", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ userId: session.user.username })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            setTreeRoot(data.tree);
+            setError("");
+          } else {
+            setError(data.error || "Failed to fetch placement tree");
+            setTreeRoot(null);
+          }
+        } catch (err) {
+          const errorMsg = err instanceof Error ? err.message : "Something went wrong";
+          setError(errorMsg);
+          setTreeRoot(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      fetchTree();
+    }
+  }, [session?.user?.username, autoLoaded]);
 
   return (
     <>
@@ -620,6 +697,71 @@ export default function NetworkTreePage() {
           0% { transform:rotate(0deg); }
           100% { transform:rotate(360deg); }
         }
+
+        /* HOVER TREE POPUP */
+        .hover-tree-popup {
+          animation: popupSlideIn 0.2s ease-out;
+        }
+
+        @keyframes popupSlideIn {
+          from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .hover-tree-card {
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+          overflow: hidden;
+          max-width: 500px;
+          max-height: 400px;
+          border: 2px solid #26a69a;
+        }
+
+        .hover-tree-header {
+          background: linear-gradient(90deg, #26a69a, #1de9b6);
+          padding: 10px 14px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+        }
+
+        .hover-tree-title {
+          font-size: 12px;
+          font-weight: 700;
+          color: #fff;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          margin: 0;
+        }
+
+        .hover-loading-spinner {
+          display: inline-block;
+          width: 14px;
+          height: 14px;
+          border: 2px solid rgba(255, 255, 255, 0.3);
+          border-top: 2px solid #fff;
+          border-radius: 50%;
+          animation: spin 0.8s linear infinite;
+        }
+
+        .hover-tree-content {
+          padding: 10px;
+          background: #f9f9f9;
+          overflow: auto;
+          max-height: 340px;
+        }
+
+        .hover-tree-content svg {
+          max-width: 100%;
+          height: auto;
+        }
       `}</style>
 
       <div className="mt-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -653,7 +795,7 @@ export default function NetworkTreePage() {
               </div>
               <div className="legend-item">
                 <GoldAvatar size={40} />
-                <span className="legend-label">Gold ID</span>
+                <span className="legend-label">Booster ID</span>
               </div>
               <div className="legend-item">
                 <div style={{ width: 40, height: 40, borderRadius: 8, background: '#ffcdd2' }} />
@@ -669,11 +811,11 @@ export default function NetworkTreePage() {
             <div className="filter-area">
               <div className="filter-inner">
                 <div className="filter-group">
-                  <label className="filter-label">Member ID :</label>
+                  <label className="filter-label">Username :</label>
                   <input
                     className="filter-input"
                     type="text"
-                    placeholder="Enter Member ID (e.g., CLM2026001)"
+                    placeholder="Enter Username (e.g., john_doe)"
                     value={memberId}
                     onChange={(e) => setMemberId(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleFilter()}
@@ -708,7 +850,7 @@ export default function NetworkTreePage() {
                   </svg>
                 </div>
                 <div>
-                  <p className="searched-label">Searched<br/>ID</p>
+                  <p className="searched-label">Searched<br/>Username</p>
                   <div className="team-row" style={{ marginTop: 4 }}>
                     <div className="team-dot" />
                     <span className="team-id">{memberId || "---"}</span>
@@ -719,13 +861,37 @@ export default function NetworkTreePage() {
               {/* TREE CANVAS */}
               <div className="tree-canvas-wrap" ref={scrollRef}>
                 <div className="tree-canvas-inner">
-                  <TreeSVG root={treeRoot} />
+                  <TreeSVG root={treeRoot} onNodeHover={handleNodeHover} onNodeLeave={handleNodeLeave} />
                 </div>
               </div>
 
             </div>
           </div>
         </div>
+
+        {/* HOVER TREE POPUP */}
+        {hoveredTree && (
+          <div 
+            className="hover-tree-popup"
+            style={{
+              position: 'fixed',
+              left: `${hoverPosition.x}px`,
+              top: `${hoverPosition.y}px`,
+              zIndex: 1000
+            }}
+            onMouseLeave={handleNodeLeave}
+          >
+            <div className="hover-tree-card">
+              <div className="hover-tree-header">
+                <p className="hover-tree-title">{hoveredNodeId}'s Network</p>
+                {hoveredLoading && <span className="hover-loading-spinner"></span>}
+              </div>
+              <div className="hover-tree-content">
+                <TreeSVG root={hoveredTree} onNodeHover={() => {}} onNodeLeave={() => {}} />
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </>
   );

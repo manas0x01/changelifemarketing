@@ -9,14 +9,20 @@ export async function GET(request: NextRequest) {
     await connectDB();
     const session = await getServerSession(authOptions);
 
-    if (!session || !session.user?.username) {
-      return NextResponse.json(
-        { hasPins: false, message: 'Not authenticated' },
-        { status: 401 }
-      );
+    // For registration page (unauthenticated users), check if ANY admin/system has available pins
+    // For logged-in users, check their personal pins
+    let user;
+    
+    if (session?.user?.username) {
+      // Authenticated user - check their pins
+      user = await User.findOne({ username: session.user.username }).select('ePins');
+    } else {
+      // Unauthenticated user (registration page) - check if system has any available pins
+      // Look for any user with available pins in the system
+      user = await User.findOne({ 
+        'ePins.usedDate': { $exists: false } 
+      }).select('ePins');
     }
-
-    const user = await User.findOne({ username: session.user.username }).select('ePins');
 
     if (!user || !user.ePins || user.ePins.length === 0) {
       return NextResponse.json({
@@ -25,8 +31,8 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    // Check for active/available pins
-    const availablePins = user.ePins.filter((pin: any) => pin.status === 'Active' || pin.status === 'Transferred');
+    // Check for available pins (status Active or Transferred, and not used yet)
+    const availablePins = user.ePins.filter((pin: any) => !pin.usedDate && (pin.status === 'Active' || pin.status === 'Transferred'));
     
     if (availablePins.length === 0) {
       return NextResponse.json({

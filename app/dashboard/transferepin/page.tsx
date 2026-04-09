@@ -10,6 +10,7 @@ type Step = "validate" | "transfer";
 
 interface Transfer {
   date: string;
+  dateISO?: string | null;
   time: string;
   ePin: string;
   package: string;
@@ -29,8 +30,6 @@ export default function TransferEPinPage() {
   const [loading,        setLoading]        = useState(false);
   const [dropdownOpen,   setDropdownOpen]   = useState(false);
   const [availablePins,  setAvailablePins]  = useState<any[]>([]);
-
-  // Transfer form states
   const [packageSelected, setPackageSelected] = useState("-- Select Package --");
   const [memberId,        setMemberId]        = useState("");
   const [memberName,      setMemberName]      = useState("");
@@ -45,14 +44,18 @@ export default function TransferEPinPage() {
       setHistoryLoading(true);
       const response = await fetch("/api/user/get-transfer-history");
       const data = await response.json();
-      setTransfers(data.transfers || []);
+      if (response.ok && data.transfers) {
+        setTransfers(data.transfers);
+      } else {
+        setTransfers([]);
+      }
     } catch (error) {
+      setTransfers([]);
     } finally {
       setHistoryLoading(false);
     }
   };
 
-  // Load history on mount
   useEffect(() => {
     if (status === "authenticated") {
       fetchTransferHistory();
@@ -78,11 +81,11 @@ export default function TransferEPinPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        setTxnError(data.error || "Verification failed");
+        setTxnError(data.error || data.message || "Verification failed");
         setLoading(false);
         return;
       }
-      setAvailablePins(data.pins);
+      setAvailablePins(data.pins || []);
       setStep("transfer");
     } catch (error) {
       setTxnError("An error occurred. Please try again.");
@@ -91,7 +94,6 @@ export default function TransferEPinPage() {
     }
   };
 
-  // Fetch member name when member ID changes
   const handleMemberIdChange = async (value: string) => {
     setMemberId(value);
     
@@ -105,8 +107,8 @@ export default function TransferEPinPage() {
       const response = await fetch(`/api/user/get-member?id=${encodeURIComponent(value)}`);
       const data = await response.json();
 
-      if (response.ok) {
-        setMemberName(data.memberName);
+      if (response.ok && data.success) {
+        setMemberName(data.memberName || "");
       } else {
         setMemberName("");
       }
@@ -118,7 +120,6 @@ export default function TransferEPinPage() {
   };
 
   const handleTransfer = async () => {
-    // Validate all fields
     if (!packageSelected || packageSelected === "-- Select Package --") {
       toast.error("Please select a package");
       return;
@@ -145,7 +146,7 @@ export default function TransferEPinPage() {
         body: JSON.stringify({
           recipientMemberId: memberId,
           pin: selectedPin,
-          package: packageSelected,
+          packageSelected: packageSelected,
           remark: remark
         }),
       });
@@ -153,17 +154,11 @@ export default function TransferEPinPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        toast.error(data.error || "Transfer failed");
+        toast.error(data.error || data.message || "Transfer failed");
         return;
       }
-
-      // Success - show Sonner message and reset form
       toast.success(data.message || "E-Pin Sent Successfully! ✓");
-      
-      // Refresh transfer history
       await fetchTransferHistory();
-      
-      // Reset form
       setPackageSelected("-- Select Package --");
       setMemberId("");
       setMemberName("");
@@ -449,6 +444,26 @@ export default function TransferEPinPage() {
           background: #26a69a;
         }
 
+        .status-failed {
+          display: inline-block;
+          padding: 3px 10px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #fff;
+          background: #e53935;
+        }
+
+        .status-pending {
+          display: inline-block;
+          padding: 3px 10px;
+          border-radius: 20px;
+          font-size: 11px;
+          font-weight: 600;
+          color: #fff;
+          background: #fb8c00;
+        }
+
         .history-empty {
           text-align: center;
           padding: 30px 20px;
@@ -628,6 +643,54 @@ export default function TransferEPinPage() {
               </div>
             </div>
           )}
+
+          {/* ── TRANSFER HISTORY ── */}
+          <div className="history-section">
+            <div className="history-card">
+              <div className="history-header">Transfer History</div>
+              <div className="history-body">
+                {historyLoading ? (
+                  <div className="history-loading">
+                    <Loader2 size={16} className="animate-spin" />
+                    Loading...
+                  </div>
+                ) : transfers.length === 0 ? (
+                  <div className="history-empty">No E-Pin transfers found</div>
+                ) : (
+                  <table className="history-table">
+                    <thead>
+                      <tr>
+                        <th>Date</th>
+                        <th>Time</th>
+                        <th>E-Pin</th>
+                        <th>Package</th>
+                        <th>Transferred To</th>
+                        <th>Status</th>
+                        <th>Remark</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {transfers.map((t, idx) => (
+                        <tr key={idx}>
+                          <td>{t.date}</td>
+                          <td>{t.time}</td>
+                          <td>{t.ePin}</td>
+                          <td>{t.package}</td>
+                          <td>{t.transferredToName}</td>
+                          <td>
+                            <span className={`status-${t.status.toLowerCase()}`}>
+                              {t.status}
+                            </span>
+                          </td>
+                          <td>{t.remark}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </div>
+          </div>
 
         </div>
       </div>

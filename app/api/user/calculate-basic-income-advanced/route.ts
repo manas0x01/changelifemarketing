@@ -89,14 +89,13 @@ export async function POST(req: Request) {
       m.joinDate >= sessionStart &&
       m.joinDate < sessionEnd
     );
-
-    // Calculate pairs only from same session members
-    const pairsThisSession = Math.min(
+    
+    const possiblePairsThisSession = Math.min(
       leftMembersThisSession.length,
       rightMembersThisSession.length
     );
 
-    if (pairsThisSession <= 0) {
+    if (possiblePairsThisSession <= 0) {
       return Response.json({
         success: true,
         message: "No new pairs in this session",
@@ -113,7 +112,7 @@ export async function POST(req: Request) {
       });
     }
 
-    // Check daily income cap
+    // Check today's income cap
     const todayIncome = (user.sessionBasedIncome || [])
       .filter(s => s.sessionDate >= dayStart && s.sessionDate <= dayEnd)
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
@@ -126,44 +125,65 @@ export async function POST(req: Request) {
       )
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
 
-    // Calculate income for this session
+    // ✅ NET INCOME PER PAIR (after deductions)
+    const NET_INCOME_PER_PAIR = GROSS_PAIR_INCOME - 
+      ((GROSS_PAIR_INCOME * TDS_PERCENTAGE) / 100) - 
+      ((GROSS_PAIR_INCOME * SERVICE_CHARGE_PERCENTAGE) / 100);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 🎯 APPLY SESSION CAP (Max ₹1000 per 12-hour session)
+    // ═══════════════════════════════════════════════════════════════════════
+    const remainingSessionCap = SESSION_CAP - sessionIncomeToday;
+    const maxPairsForSessionCap = Math.floor(remainingSessionCap / NET_INCOME_PER_PAIR);
+    
+    // ═══════════════════════════════════════════════════════════════════════
+    // 🎯 APPLY DAILY CAP (Max ₹2000 per 24 hours)
+    // ═══════════════════════════════════════════════════════════════════════
+    const remainingDailyCap = DAILY_CAP - todayIncome;
+    const maxPairsForDailyCap = Math.floor(remainingDailyCap / NET_INCOME_PER_PAIR);
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // 🎯 FINAL PAIRS TO CREDIT = MIN(possible, session_cap, daily_cap)
+    // ═══════════════════════════════════════════════════════════════════════
+    const pairsThisSession = Math.min(
+      possiblePairsThisSession,
+      maxPairsForSessionCap,
+      maxPairsForDailyCap
+    );
+
+    // If no pairs can be credited even with 1 pair
+    if (pairsThisSession <= 0) {
+      const sessionLimitReached = maxPairsForSessionCap <= 0;
+      const dailyLimitReached = maxPairsForDailyCap <= 0;
+
+      return Response.json({
+        success: false,
+        message: sessionLimitReached 
+          ? `Session cap reached. Maximum ₹${SESSION_CAP} per session`
+          : `Daily cap reached. Maximum ₹${DAILY_CAP} per day`,
+        data: {
+          possiblePairs: possiblePairsThisSession,
+          sessionStatus: {
+            currentIncome: sessionIncomeToday,
+            remainingCapacity: remainingSessionCap,
+            maxPairsFit: maxPairsForSessionCap,
+          },
+          dailyStatus: {
+            currentIncome: todayIncome,
+            remainingCapacity: remainingDailyCap,
+            maxPairsFit: maxPairsForDailyCap,
+          },
+          creditablePairs: 0,
+          reason: sessionLimitReached ? 'session_cap_exceeded' : 'daily_cap_exceeded'
+        }
+      }, { status: 400 });
+    }
+
+    // Calculate income for credited pairs
     const grossIncome = pairsThisSession * GROSS_PAIR_INCOME;
     const tdsAmount = (grossIncome * TDS_PERCENTAGE) / 100;
     const serviceChargeAmount = (grossIncome * SERVICE_CHARGE_PERCENTAGE) / 100;
-    const netIncome = grossIncome - tdsAmount - serviceChargeAmount;
-
-    // Check session cap
-    if (sessionIncomeToday + netIncome > SESSION_CAP) {
-      const remainingSessionCap = SESSION_CAP - sessionIncomeToday;
-      return Response.json({
-        success: false,
-        message: `Session cap exceeded. Maximum ₹${SESSION_CAP} per session`,
-        data: {
-          sessionType: currentSession,
-          currentSessionIncome: sessionIncomeToday,
-          sessionCap: SESSION_CAP,
-          remainingCapacity: remainingSessionCap,
-          attemptedIncome: netIncome,
-          status: "Session limit reached"
-        }
-      }, { status: 400 });
-    }
-
-    // Check daily cap
-    if (todayIncome + netIncome > DAILY_CAP) {
-      const remainingDailyCap = DAILY_CAP - todayIncome;
-      return Response.json({
-        success: false,
-        message: `Daily cap exceeded. Maximum ₹${DAILY_CAP} per day`,
-        data: {
-          todayIncome,
-          dailyCap: DAILY_CAP,
-          remainingCapacity: remainingDailyCap,
-          attemptedIncome: netIncome,
-          status: "Daily limit reached"
-        }
-      }, { status: 400 });
-    }
+    const netIncome = pairsThisSession * NET_INCOME_PER_PAIR;
 
     // Create session income record
     const sessionRecord = {
@@ -204,11 +224,13 @@ export async function POST(req: Request) {
       data: {
         sessionType: currentSession,
         pairsProcessed: pairsThisSession,
+        pairsAvailable: possiblePairsThisSession,
+        excessPairs: possiblePairsThisSession - pairsThisSession, // Pairs that didn't fit in cap
         breakdown: {
           grossPerPair: GROSS_PAIR_INCOME,
           tdsPerPair: (GROSS_PAIR_INCOME * TDS_PERCENTAGE) / 100,
           serviceChargePerPair: (GROSS_PAIR_INCOME * SERVICE_CHARGE_PERCENTAGE) / 100,
-          netPerPair: GROSS_PAIR_INCOME - (GROSS_PAIR_INCOME * (TDS_PERCENTAGE + SERVICE_CHARGE_PERCENTAGE)) / 100,
+          netPerPair: NET_INCOME_PER_PAIR,
         },
         totalBreakdown: {
           grossIncome,
@@ -216,10 +238,27 @@ export async function POST(req: Request) {
           serviceChargeDeducted: serviceChargeAmount,
           netIncome,
         },
+        cappingStatus: {
+          possiblePairs: possiblePairsThisSession,
+          sessionCap: {
+            limit: SESSION_CAP,
+            currentIncome: sessionIncomeToday,
+            remainingCapacity: remainingSessionCap,
+            maxPairsFit: maxPairsForSessionCap,
+            status: maxPairsForSessionCap > 0 ? '✅ Available' : '❌ CAPPED',
+          },
+          dailyCap: {
+            limit: DAILY_CAP,
+            currentIncome: todayIncome,
+            remainingCapacity: remainingDailyCap,
+            maxPairsFit: maxPairsForDailyCap,
+            status: maxPairsForDailyCap > 0 ? '✅ Available' : '❌ CAPPED',
+          },
+        },
         currentStatus: {
           basicIncome: updatedBasicIncome,
-          sessionIncomeToday: sessionIncomeToday + netIncome,
-          dailyIncomeToday: todayIncome + netIncome,
+          sessionIncomeAfter: sessionIncomeToday + netIncome,
+          dailyIncomeAfter: todayIncome + netIncome,
           sessionCap: SESSION_CAP,
           dailyCap: DAILY_CAP,
         },
@@ -228,7 +267,10 @@ export async function POST(req: Request) {
           rightMembersInSession: rightMembersThisSession.length,
           sessionStart: sessionStart.toISOString(),
           sessionEnd: sessionEnd.toISOString(),
-        }
+        },
+        note: pairsThisSession < possiblePairsThisSession 
+          ? `⚠️ Only ${pairsThisSession} pair(s) credited due to session/daily caps. ${possiblePairsThisSession - pairsThisSession} pair(s) cannot earn in this session.`
+          : '✅ All available pairs credited'
       }
     }, { status: 200 });
 

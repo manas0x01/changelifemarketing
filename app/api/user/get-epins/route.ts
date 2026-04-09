@@ -39,7 +39,9 @@ export async function GET(req: NextRequest) {
         displayToName = pin.transferredToName || "--";
         displayDate = new Date(pin.transferDate).toLocaleDateString("en-IN");
       } else if (pin.usedDate) {
-        // For Used E-Pins, show the date it was used
+        // For Used E-Pins, show who used it
+        displayTo = pin.usedByUsername || "--";
+        displayToName = pin.usedByName || "--";
         displayDate = new Date(pin.usedDate).toLocaleDateString("en-IN");
       }
 

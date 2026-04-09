@@ -82,11 +82,10 @@ export default function MyEPinsPage() {
     if (selectedPkg  !== "--Select Package--") data = data.filter(d => d.package === selectedPkg);
     if (selectedStat !== "--Select Status--")  data = data.filter(d => d.status  === selectedStat);
     
-    // Filter by date range using ISO transferDate field
     if (fromDate) {
       const from = new Date(fromDate);
       data = data.filter(d => {
-        if (!d.transferDate) return true; // Include items without dates
+        if (!d.transferDate) return true; 
         return new Date(d.transferDate) >= from;
       });
     }

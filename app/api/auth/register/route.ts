@@ -1,7 +1,8 @@
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import { calculateAndUpdateUserMetrics } from "@/lib/calculateUserMetrics";
+import { calculateAndUpdateUserMetrics } from "@/lib/calculateMetrics";
+import { autoCalculateBasicIncome } from "@/lib/autoCalculateBasicIncome";
 
 export async function POST(req: Request) {
     try {
@@ -113,6 +114,9 @@ export async function POST(req: Request) {
         const pinIndex = sponsor.ePins!.findIndex((pin: any) => pin.pin === epin);
         if (pinIndex !== -1) {
             sponsor.ePins![pinIndex].usedDate = new Date();
+            sponsor.ePins![pinIndex].status = 'Used';
+            sponsor.ePins![pinIndex].usedByUsername = newUser.username;
+            sponsor.ePins![pinIndex].usedByName = fullName;
             await sponsor.save();
         }
 
@@ -161,10 +165,25 @@ export async function POST(req: Request) {
         // ── AUTO-CALCULATE METRICS ──
         // Update metrics for all affected users
         try {
-            // 1. Calculate metrics for new user
+            // 1. Calculate basic income for placement parent (if pair is formed)
+            if (placementId) {
+                const placementParent = await User.findOne({
+                    $or: [
+                        { username: placementId },
+                        { userId: placementId },
+                        { _id: placementId }
+                    ]
+                });
+                if (placementParent) {
+                    // Auto-calculate basic income if pair is complete in same session
+                    await autoCalculateBasicIncome(placementParent._id);
+                }
+            }
+
+            // 2. Calculate metrics for new user
             await calculateAndUpdateUserMetrics(newUser._id);
 
-            // 2. Calculate metrics for placement parent (to update their team count & income)
+            // 3. Calculate metrics for placement parent (to update their team count & income)
             if (placementId) {
                 const placementParent = await User.findOne({
                     $or: [
@@ -178,7 +197,7 @@ export async function POST(req: Request) {
                 }
             }
 
-            // 3. Calculate metrics for sponsor
+            // 4. Calculate metrics for sponsor
             await calculateAndUpdateUserMetrics(sponsor._id);
         } catch (calcError) {
             console.error('Error calculating metrics after registration:', calcError);

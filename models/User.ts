@@ -85,7 +85,6 @@ export interface IUser extends Document {
     status: 'Completed' | 'Pending';
   }[];
   totalTeam?: { left: number; right: number };
-  totalDirectAmount?: number;
   totalDirect?: { left: number; right: number };
   basicIncome?: number;
   boosterIncomeAmount?: number;
@@ -141,8 +140,10 @@ export interface IUser extends Document {
   ePins?: {
     pin: string; packageName: string;
     status: 'Active' | 'Used' | 'Transferred' | 'Expired';
-    usedDate?: Date; transferredFrom?: string; transferredFromName?: string;
-    transferredTo?: string; transferredToName?: string; transferDate?: Date; remark?: string;
+    usedDate?: Date; usedByUsername?: string; usedByName?: string;
+    transferredFrom?: string; transferredFromName?: string;
+    transferredTo?: string; transferredToName?: string; transferDate?: Date; 
+    remark?: string;
   }[];
   transferHistory?: {
     srNo: number; reqNo: string; fromUser: string; fromUserName: string;
@@ -240,7 +241,6 @@ const userSchema = new Schema<IUser>(
     sessionBasedIncome: { type: [{ sessionDate: Date, sessionType: String, leftMembersInSession: Number, rightMembersInSession: Number, pairsInSession: Number, grossIncome: Number, netIncome: Number, tdsDeducted: Number, serviceChargeDeducted: Number, status: String }], default: [] },
     totalTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     totalDirect: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
-    totalDirectAmount: { type: Number, default: 0 },
     basicIncome: { type: Number, default: 0 },
     boosterIncomeAmount: { type: Number, default: 0 },
     boosterIncome: { type: { LG: { type: Number, default: 0 }, RG: { type: Number, default: 0 }, totalBoosterMatching: { type: Number, default: 0 } }, default: { LG: 0, RG: 0, totalBoosterMatching: 0 } },

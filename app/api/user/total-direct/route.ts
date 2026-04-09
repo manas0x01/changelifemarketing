@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     }
     await connectDB();
     const user = await User.findOne({ username: session.user.username })
-      .select('totalDirect totalDirectAmount')
+      .select('totalDirect')
       .lean();
 
     if (!user) {
@@ -31,7 +31,6 @@ export async function GET(req: NextRequest) {
           left: user.totalDirect?.left ?? 0,
           right: user.totalDirect?.right ?? 0,
         },
-        totalDirectAmount: user.totalDirectAmount ?? 0,
       },
       { status: 200 }
     );

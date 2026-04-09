@@ -92,7 +92,6 @@ export default function Dashboard() {
   // Data states
   const [totalTeam, setTotalTeam] = useState({ left: 0, right: 0 });
   const [totalDirect, setTotalDirect] = useState({ left: 0, right: 0 });
-  const [totalDirectAmount, setTotalDirectAmount] = useState(0);
   const [basicIncome, setBasicIncome] = useState(0);
   const [boosterIncomeAmount, setBoosterIncomeAmount] = useState(0);
   const [boosterIncome, setBoosterIncome] = useState({ LG: 0, RG: 0, totalBoosterMatching: 0 });
@@ -118,13 +117,12 @@ export default function Dashboard() {
       try {
         setLoading(true);
         const [
-          teamResponse, directResponse, directAmountResponse,
+          teamResponse, directResponse,
           incomeResponse, boosterResponse, boosterAmountResponse,
           profileResponse, totalIncomeResponse,
         ] = await Promise.all([
           fetch('/api/user/total-team', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/total-direct', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/total-direct-amount', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/basic-income', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/booster-income', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/booster-income-amount', { method: 'GET', credentials: 'include' }),
@@ -146,10 +144,6 @@ export default function Dashboard() {
         if (directResponse.ok) {
           const d = await directResponse.json();
           setTotalDirect(d.totalDirect || { left: 0, right: 0 });
-        }
-        if (directAmountResponse.ok) {
-          const d = await directAmountResponse.json();
-          setTotalDirectAmount(d.totalDirectAmount || 0);
         }
         if (incomeResponse.ok) {
           const d = await incomeResponse.json();
@@ -403,7 +397,7 @@ export default function Dashboard() {
                       ) : card.title === "Booster Income" && showBoosterIncomeInfo ? (
                         <span className="stat-card-link">₹ {boosterIncomeAmount} | LG : {boosterIncome.LG} | RG : {boosterIncome.RG} | Matching : {boosterIncome.totalBoosterMatching}</span>
                       ) : card.title === "Total Direct" && showTotalDirectInfo ? (
-                        <span className="stat-card-link">₹ {totalDirectAmount} | Left : {totalDirect.left} | Right : {totalDirect.right}</span>
+                        <span className="stat-card-link">Left : {totalDirect.left} | Right : {totalDirect.right}</span>
                       ) : card.title === "Total Income" ? (
                         showTotalIncomeInfo ? (
                           <div>

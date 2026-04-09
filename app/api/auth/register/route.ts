@@ -105,10 +105,21 @@ export async function POST(req: Request) {
             placementId,
             placementPosition: position.toLowerCase(),
             role: "user",
+            basicRank: "basic", // Default rank for new users
             joiningDate: new Date().toISOString().split("T")[0],
         });
 
+        console.log("\n🔵 REGISTRATION - USER CREATED:", {
+            userId: finalUserId,
+            username,
+            basicRank: "basic",
+            placementId,
+            position: position.toLowerCase(),
+            email,
+        });
+
         await newUser.save();
+        console.log("✅ User saved to database:", finalUserId);
 
         // Mark E-Pin as used
         const pinIndex = sponsor.ePins!.findIndex((pin: any) => pin.pin === epin);
@@ -130,6 +141,12 @@ export async function POST(req: Request) {
             });
 
             if (placementParent) {
+                console.log("\n🟡 ADDING MEMBER TO PARENT:", {
+                    parentId: placementId,
+                    newMemberId: newUser.userId,
+                    position: position.toLowerCase(),
+                });
+
                 // ── Add to boosterDownlineMembers ──
                 const boosterMemberRecord = {
                     srNo: (placementParent.boosterDownlineMembers?.length || 0) + 1,
@@ -143,6 +160,7 @@ export async function POST(req: Request) {
                     placementParent.boosterDownlineMembers = [];
                 }
                 placementParent.boosterDownlineMembers.push(boosterMemberRecord);
+                console.log("✅ Added to boosterDownlineMembers");
 
                 // ── Add to directMembers (for basic income validation) ──
                 // ✅ CRITICAL FOR POINTS 3-5 VALIDATION
@@ -157,8 +175,14 @@ export async function POST(req: Request) {
                     placementParent.directMembers = [];
                 }
                 placementParent.directMembers.push(directMemberRecord);
+                console.log("✅ Added to directMembers:", {
+                    totalLeft: placementParent.directMembers.filter(m => m.position === 'left').length,
+                    totalRight: placementParent.directMembers.filter(m => m.position === 'right').length,
+                    joinDate: directMemberRecord.joinDate,
+                });
 
                 await placementParent.save();
+                console.log("✅ Parent user updated in database");
             }
         }
 
@@ -167,16 +191,22 @@ export async function POST(req: Request) {
         try {
             // 1. Calculate basic income for placement parent (if pair is formed)
             if (placementId) {
+                console.log("\n🟣 CALLING AUTO-CALCULATE BASIC INCOME:");
                 const placementParent = await User.findOne({
                     $or: [
                         { username: placementId },
-                        { userId: placementId },
-                        { _id: placementId }
+                        { userId: placementId }
                     ]
                 });
                 if (placementParent) {
+                    console.log("📊 Parent details:", {
+                        userId: placementParent.userId,
+                        basicRank: placementParent.basicRank,
+                        currentBasicIncome: placementParent.basicIncome || 0,
+                    });
                     // Auto-calculate basic income if pair is complete in same session
-                    await autoCalculateBasicIncome(placementParent._id);
+                    const autoCalcResult = await autoCalculateBasicIncome(placementParent._id);
+                    console.log("📤 Auto-calc result:", autoCalcResult);
                 }
             }
 
@@ -188,8 +218,7 @@ export async function POST(req: Request) {
                 const placementParent = await User.findOne({
                     $or: [
                         { username: placementId },
-                        { userId: placementId },
-                        { _id: placementId }
+                        { userId: placementId }
                     ]
                 });
                 if (placementParent) {

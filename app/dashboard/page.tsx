@@ -104,8 +104,6 @@ export default function Dashboard() {
   });
   const [cycleHistory, setCycleHistory] = useState<CycleRow[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Withdraw dialog states
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawError, setWithdrawError] = useState("");

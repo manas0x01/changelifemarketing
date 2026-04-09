@@ -60,14 +60,16 @@ export async function POST(req: Request) {
       return Response.json({ success: false, message: "User not found" }, { status: 404 });
     }
 
-    // Check rank requirement
+    // Check rank requirement - allow 'basic' and all other ranks
     if (user.basicRank === 'unranked' || !user.basicRank) {
       return Response.json({
         success: false,
-        message: "User must achieve basic rank to earn basic income",
+        message: "User must have a rank to earn basic income (Default: 'basic')",
         data: { currentRank: user.basicRank || 'unranked' }
       }, { status: 403 });
     }
+
+    // ✅ User has valid rank ('basic' or higher), can earn income
 
     // Get current session info
     const now = new Date();
@@ -89,7 +91,7 @@ export async function POST(req: Request) {
       m.joinDate >= sessionStart &&
       m.joinDate < sessionEnd
     );
-    
+
     const possiblePairsThisSession = Math.min(
       leftMembersThisSession.length,
       rightMembersThisSession.length

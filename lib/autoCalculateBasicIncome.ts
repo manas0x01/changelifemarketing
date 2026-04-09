@@ -56,17 +56,23 @@ function getTodayBoundaries() {
  */
 export async function autoCalculateBasicIncome(placementParentId: any) {
   try {
+    console.log("\n⚪ AUTO-CALC START for placement parent:", placementParentId);
     const user = await User.findById(placementParentId);
     if (!user) {
-      console.warn(`User not found: ${placementParentId}`);
+      console.warn(`❌ User not found: ${placementParentId}`);
       return { success: false, message: 'User not found' };
     }
 
-    // Check rank requirement
+    console.log("📋 Found user:", user.username, "Rank:", user.basicRank);
+
+    // Check rank requirement - allow 'basic' and all other ranks
     if (user.basicRank === 'unranked' || !user.basicRank) {
-      console.log(`User ${user.username} not ranked, skipping basic income calculation`);
+      console.log(`❌ User ${user.username} not ranked (unranked), skipping basic income calculation`);
       return { success: false, message: 'User not ranked' };
     }
+
+    console.log(`✅ User ${user.username} has rank '${user.basicRank}', can earn income`);
+    // ✅ User has a valid rank ('basic' or higher), can earn income
 
     const now = new Date();
     const currentSession = getSessionType(now);
@@ -88,6 +94,15 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
       m.joinDate < sessionEnd
     );
 
+    console.log("📈 Session analysis:", {
+      currentSession,
+      sessionStart: sessionStart.toISOString(),
+      sessionEnd: sessionEnd.toISOString(),
+      leftMembersThisSession: leftMembersThisSession.length,
+      rightMembersThisSession: rightMembersThisSession.length,
+      totalDirectMembers: directMembers.length,
+    });
+
     // Calculate pairs from this session
     const possiblePairsThisSession = Math.min(
       leftMembersThisSession.length,
@@ -95,9 +110,11 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
     );
 
     if (possiblePairsThisSession <= 0) {
-      console.log(`${user.username}: No complete pairs in current session`);
+      console.log(`❌ ${user.username}: No complete pairs in current session`);
       return { success: false, message: 'No pairs in session' };
     }
+
+    console.log(`✅ Found ${possiblePairsThisSession} possible pairs!`);
 
     // Check if we've already calculated basic income for this session
     const existingSessionIncome = (user.sessionBasedIncome || [])
@@ -108,9 +125,10 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
       );
 
     if (existingSessionIncome.length > 0) {
-      console.log(`${user.username}: Basic income already calculated for this session`);
+      console.log(`⚠️ ${user.username}: Basic income already calculated for this session`);
       return { success: false, message: 'Already calculated for this session' };
     }
+    console.log(`✅ No previous income in this session`);
 
     // Check session cap
     const sessionIncomeToday = (user.sessionBasedIncome || [])
@@ -125,6 +143,13 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
     const todayIncome = (user.sessionBasedIncome || [])
       .filter(s => s.sessionDate >= dayStart && s.sessionDate <= dayEnd)
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
+
+    console.log("💰 Income caps:", {
+      sessionIncomeToday,
+      SESSION_CAP,
+      todayIncome,
+      DAILY_CAP,
+    });
 
     // ✅ NET INCOME PER PAIR
     const NET_INCOME_PER_PAIR = 1000 - 
@@ -146,10 +171,19 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
       maxPairsForDailyCap
     );
 
+    console.log("🎯 Pair calculation:", {
+      possiblePairsThisSession,
+      maxPairsForSessionCap,
+      maxPairsForDailyCap,
+      pairsThisSession,
+    });
+
     if (pairsThisSession <= 0) {
-      console.log(`${user.username}: Cannot credit pairs - caps exceeded`);
+      console.log(`❌ ${user.username}: Cannot credit pairs - caps exceeded`);
       return { success: false, message: 'Caps exceeded' };
     }
+    
+    console.log(`✅ Will credit ${pairsThisSession} pairs!`);
 
     // Calculate income
     const grossIncome = pairsThisSession * GROSS_PAIR_INCOME;
@@ -186,14 +220,16 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
     const updatedSessionBasedIncome = [...(user.sessionBasedIncome || []), sessionRecord];
     const updatedBasicIncomeRecords = [...(user.basicIncomeRecords || []), incomeRecord];
 
-    await User.findByIdAndUpdate(placementParentId, {
+    const updateResult = await User.findByIdAndUpdate(placementParentId, {
       basicIncome: updatedBasicIncome,
       sessionBasedIncome: updatedSessionBasedIncome,
       basicIncomeRecords: updatedBasicIncomeRecords,
       updatedAt: new Date(),
-    });
+    }, { new: true });
 
-    console.log(`✅ Auto-calculated basic income for ${user.username}:`, {
+    console.log(`\n🎉 AUTO-CALC SUCCESS for ${user.username}:`, {
+      previousBasicIncome: user.basicIncome || 0,
+      newBasicIncome: updatedBasicIncome,
       pairsThisSession,
       possiblePairsThisSession,
       excessPairs: possiblePairsThisSession - pairsThisSession,

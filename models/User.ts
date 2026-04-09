@@ -222,7 +222,7 @@ const userSchema = new Schema<IUser>(
     placementPosition: { type: String, required: false, enum: ['left', 'right'], trim: true },
     memberType: { type: String, required: false, enum: ['gold', 'active'], default: 'active' },
     role: { type: String, required: false, default: 'user', enum: ['user', 'admin', 'moderator'] },
-    basicRank: { type: String, required: false, default: 'unranked' },
+    basicRank: { type: String, required: false, default: 'basic' },
     boosterStatus: { 
       type: { 
         isBoosterLeft: { type: Boolean, default: false }, 

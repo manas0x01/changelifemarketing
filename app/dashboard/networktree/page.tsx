@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 
@@ -157,14 +157,21 @@ function TreeSVG({ root, onNodeHover, onNodeLeave }: { root: TreeNode | null; on
           >
             {/* Avatar circle */}
             <circle cx={x} cy={y} r={AVATAR_R} fill="#fff" stroke={isGold ? "#ffc107" : "#2196f3"} strokeWidth="2.5"/>
-            <foreignObject x={x - AVATAR_R} y={y - AVATAR_R} width={AVATAR_R * 2} height={AVATAR_R * 2}>
-              <div style={{ width: AVATAR_R * 2, height: AVATAR_R * 2, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {isGold
-                  ? <GoldAvatar   size={AVATAR_R * 2} />
-                  : <ActiveAvatar size={AVATAR_R * 2} />
-                }
-              </div>
-            </foreignObject>
+            
+            {/* Avatar - Responsive Rendering (foreignObject with SVG fallback) */}
+            <g>
+              <foreignObject x={x - AVATAR_R} y={y - AVATAR_R} width={AVATAR_R * 2} height={AVATAR_R * 2}>
+                <div style={{ width: AVATAR_R * 2, height: AVATAR_R * 2, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {isGold
+                    ? <GoldAvatar   size={AVATAR_R * 2} />
+                    : <ActiveAvatar size={AVATAR_R * 2} />
+                  }
+                </div>
+              </foreignObject>
+              
+              {/* 📱 Fallback: Colored circle for mobile/incompatible browsers */}
+              <circle cx={x} cy={y} r={AVATAR_R - 2} fill={isGold ? "#ffc107" : "#2196f3"} opacity="0.3" />
+            </g>
 
             {/* Label box */}
             <rect
@@ -198,105 +205,209 @@ export default function NetworkTreePage() {
   const [hoveredLoading, setHoveredLoading] = useState(false);
   const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  // 🔧 UTILITY: Clamp position within viewport
+  const getClampedPosition = (x: number, y: number, popupWidth: number = 500, popupHeight: number = 400) => {
+    const padding = 10;
+    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
+    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
+
+    let clampedX = x;
+    let clampedY = y;
+
+    // Clamp X: If popup extends right edge, shift left
+    if (x + popupWidth > viewportWidth - padding) {
+      clampedX = viewportWidth - popupWidth - padding;
+    }
+    // Keep minimum left padding
+    if (clampedX < padding) {
+      clampedX = padding;
+    }
+
+    // Clamp Y: If popup extends bottom, shift up
+    if (y + popupHeight > viewportHeight - padding) {
+      clampedY = viewportHeight - popupHeight - padding;
+    }
+    // Keep minimum top padding
+    if (clampedY < padding) {
+      clampedY = padding;
+    }
+
+    console.log('📍 Position clamped:', { original: { x, y }, clamped: { x: clampedX, y: clampedY } });
+    return { x: clampedX, y: clampedY };
+  };
 
   const handleFilter = async () => {
+    console.log('🔍 [NETWORK-TREE] Filter initiated - Searching for username');
+    
     if (!memberId.trim()) {
+      console.log('❌ [NETWORK-TREE] No username entered');
       setError("Please enter a Username");
       return;
     }
-
+    
+    console.log('📝 Username entered:', memberId);
     setLoading(true);
     setError("");
 
     try {
+      console.log('🚀 [NETWORK-TREE] Fetching placement tree for:', memberId);
       const response = await fetch("/api/user/placement-tree", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: memberId })
       });
+      
+      console.log('📊 API Response status:', response.status);
 
       const data = await response.json();
+      console.log('📋 Response data received:', data);
 
       if (!data.success) {
+        console.log('❌ API returned error:', data.error);
         setError(data.error || "Failed to fetch placement tree");
         setTreeRoot(null);
       } else {
+        console.log('✅ Tree data retrieved successfully');
+        console.log('🌳 Tree structure:', data.tree);
         setTreeRoot(data.tree);
         setError("");
       }
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : "Something went wrong";
+      console.error('❌ Error fetching tree:', errorMsg);
       setError(errorMsg);
       setTreeRoot(null);
     } finally {
       setLoading(false);
+      console.log('✅ Filter loading completed');
     }
   };
 
   const handleNodeHover = async (nodeId: string, event: React.MouseEvent) => {
-    setHoveredNodeId(nodeId);
-    setHoveredLoading(true);
+    console.log('👆 [NETWORK-TREE] Node hover triggered for:', nodeId);
     
-    const rect = (event.target as Element).getBoundingClientRect();
-    setHoverPosition({ x: rect.left, y: rect.bottom + 10 });
-
-    try {
-      const response = await fetch("/api/user/placement-tree", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: nodeId })
-      });
-
-      const data = await response.json();
-      if (data.success) {
-        setHoveredTree(data.tree);
-      }
-    } catch (err) {
-      console.error("Error fetching hover tree:", err);
-      setHoveredTree(null);
-    } finally {
-      setHoveredLoading(false);
+    // Clear any pending debounce timers
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
     }
+    
+    // 🎯 Debounce: Wait 300ms before making API call (avoids rapid requests)
+    debounceTimerRef.current = setTimeout(async () => {
+      console.log('🐢 [NETWORK-TREE] Debounce completed, fetching tree for:', nodeId);
+      setHoveredNodeId(nodeId);
+      setHoveredLoading(true);
+      
+      const rect = (event.target as Element).getBoundingClientRect();
+      
+      // 📍 Clamp position within viewport
+      const clampedPos = getClampedPosition(rect.left, rect.bottom + 10);
+      console.log('📍 Position calculated and clamped:', clampedPos);
+      setHoverPosition(clampedPos);
+
+      try {
+        console.log('🚀 [NETWORK-TREE] Fetching hover tree for node:', nodeId);
+        const response = await fetch("/api/user/placement-tree", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: nodeId })
+        });
+        
+        console.log('📊 Hover API response status:', response.status);
+
+        const data = await response.json();
+        if (data.success) {
+          console.log('✅ Hover tree data retrieved for:', nodeId);
+          console.log('🌳 Hover tree structure:', data.tree);
+          setHoveredTree(data.tree);
+        } else {
+          console.log('⚠️ Hover tree fetch returned unsuccessful');
+          setHoveredTree(null);
+        }
+      } catch (err) {
+        console.error("❌ Error fetching hover tree:", err);
+        setHoveredTree(null);
+      } finally {
+        setHoveredLoading(false);
+        console.log('✅ Hover tree loading completed for:', nodeId);
+      }
+    }, 300); // 300ms debounce interval
   };
 
   const handleNodeLeave = () => {
+    console.log('👋 [NETWORK-TREE] Node hover left - Clearing hover data');
+    
+    // Clear debounce timer if hover ends before API call
+    if (debounceTimerRef.current) {
+      console.log('⏹️ Debounce cancelled - hover ended before request');
+      clearTimeout(debounceTimerRef.current);
+      debounceTimerRef.current = null;
+    }
+    
     setHoveredNodeId(null);
     setHoveredTree(null);
   };
 
   useEffect(() => {
+    console.log('🔍 [NETWORK-TREE] Component mounted / Session changed');
     if (session?.user?.username && !autoLoaded) {
+      console.log('📝 Session found - Loading user tree for:', session.user.username);
       setMemberId(session.user.username);
       setAutoLoaded(true);
       const fetchTree = async () => {
         setLoading(true);
+        console.log('🚀 [NETWORK-TREE] Auto-loading placement tree...');
         try {
+          console.log('📤 Sending API request to fetch placement tree');
           const response = await fetch("/api/user/placement-tree", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ userId: session.user.username })
           });
+          
+          console.log('📊 API response status:', response.status);
 
           const data = await response.json();
+          console.log('📋 Tree data received:', data);
 
           if (data.success) {
+            console.log('✅ Auto-load successful - Tree loaded');
+            console.log('🌳 Tree root:', data.tree?.id, 'with', data.tree?.children?.length || 0, 'children');
             setTreeRoot(data.tree);
             setError("");
           } else {
+            console.log('❌ Auto-load failed:', data.error);
             setError(data.error || "Failed to fetch placement tree");
             setTreeRoot(null);
           }
         } catch (err) {
           const errorMsg = err instanceof Error ? err.message : "Something went wrong";
+          console.error('❌ Exception during tree fetch:', errorMsg);
           setError(errorMsg);
           setTreeRoot(null);
         } finally {
           setLoading(false);
+          console.log('✅ Auto-load process completed');
         }
       };
 
       fetchTree();
+    } else {
+      if (autoLoaded) {
+        console.log('⏭️ Already loaded - skipping auto-load');
+      } else {
+        console.log('⏳ Waiting for session...');
+      }
     }
+
+    // 🧹 Cleanup: Clear debounce timer on unmount
+    return () => {
+      if (debounceTimerRef.current) {
+        console.log('🧹 Cleaning up debounce timer on unmount');
+        clearTimeout(debounceTimerRef.current);
+      }
+    };
   }, [session?.user?.username, autoLoaded]);
 
   return (

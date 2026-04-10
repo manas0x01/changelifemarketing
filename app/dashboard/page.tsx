@@ -120,9 +120,12 @@ export default function Dashboard() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState("");
   useEffect(() => {
+    console.log('🔍 [DASHBOARD] Component mounted');
     if (typeof window !== 'undefined') {
       const shouldReload = sessionStorage.getItem('reloadDashboard');
+      console.log('📝 Reload flag:', shouldReload);
       if (shouldReload === 'true') {
+        console.log('🔄 Reloading dashboard due to session flag');
         sessionStorage.removeItem('reloadDashboard');
         window.location.reload();
       }
@@ -132,6 +135,7 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
+        console.log('🚀 [DASHBOARD] Fetching all dashboard data...');
         setLoading(true);
         const [
           teamResponse, directResponse,
@@ -149,35 +153,64 @@ export default function Dashboard() {
         ]);
         if (teamResponse.status === 401 || directResponse.status === 401 || 
             incomeResponse.status === 401 || profileResponse.status === 401) {
+          console.log('❌ Unauthorized - redirecting to login');
           window.location.href = '/auth/login';
           return;
         }
+        
+        console.log('📊 Processing API responses...');
+        
         if (teamResponse.ok) {
           const d = await teamResponse.json();
+          console.log('✅ Total Team:', d.totalTeam);
           setTotalTeam(d.totalTeam || { left: 0, right: 0 });
+        } else {
+          console.log('⚠️ Total Team API failed');
         }
+        
         if (directResponse.ok) {
           const d = await directResponse.json();
+          console.log('✅ Total Direct:', d.totalDirect);
           setTotalDirect(d.totalDirect || { left: 0, right: 0 });
+        } else {
+          console.log('⚠️ Total Direct API failed');
         }
+        
         if (incomeResponse.ok) {
           const d = await incomeResponse.json();
+          console.log('✅ Basic Income:', d.basicIncome);
           setBasicIncome(d.basicIncome || 0);
+        } else {
+          console.log('⚠️ Basic Income API failed');
         }
+        
         if (boosterResponse.ok) {
           const d = await boosterResponse.json();
+          console.log('✅ Booster Income:', d.boosterIncome);
           setBoosterIncome(d.boosterIncome || { LG: 0, RG: 0, totalBoosterMatching: 0 });
+        } else {
+          console.log('⚠️ Booster Income API failed');
         }
+        
         if (boosterAmountResponse.ok) {
           const d = await boosterAmountResponse.json();
+          console.log('✅ Booster Income Amount:', d.boosterIncomeAmount);
           setBoosterIncomeAmount(d.boosterIncomeAmount || 0);
+        } else {
+          console.log('⚠️ Booster Income Amount API failed');
         }
+        
         if (profileResponse.ok) {
           const d = await profileResponse.json();
+          console.log('✅ User Profile:', d.user?.userId);
           if (d.user) setUserProfile({ ...d.user, username: d.user.username || "N/A" });
+        } else {
+          console.log('⚠️ User Profile API failed');
         }
+        
         if (totalIncomeResponse.ok) {
           const d = await totalIncomeResponse.json();
+          console.log('✅ Total Income:', d.totalIncome, '| Bank:', d.bankName);
           setTotalIncome(d.totalIncome || 0);
           setBankDetails({
             accountHolderName: d.fullName || "", 
@@ -185,64 +218,94 @@ export default function Dashboard() {
             ifscCode: d.ifsc || "", 
             bankName: d.bankName || "",
           });
+        } else {
+          console.log('⚠️ Total Income API failed');
         }
+        
         if (totalPinsResponse.ok) {
           const d = await totalPinsResponse.json();
+          console.log('✅ Total Pins - Active:', d.activePins, '| Used:', d.usedPins, '| Total:', d.totalPins);
           setTotalPins({
             active: d.activePins || 0,
             used: d.usedPins || 0,
             total: d.totalPins || 0,
           });
+        } else {
+          console.log('⚠️ Total Pins API failed');
         }
       } catch (error: any) {
-        console.error('Dashboard data fetch error:', error);
+        console.error('❌ Dashboard data fetch error:', error);
       } finally {
+        console.log('✅ Dashboard data fetch completed');
         setLoading(false);
       }
     };
     fetchDashboardData();
   }, []);
   const handleWithdraw = async () => {
+    console.log('💸 [WITHDRAW] Withdraw request initiated');
     setWithdrawError("");
     setWithdrawSuccess("");
+    
+    console.log('📝 Withdraw amount entered:', withdrawAmount);
     const amt = Number(withdrawAmount);
+    
     if (!withdrawAmount || isNaN(amt)) {
+      console.log('❌ Invalid amount entered:', withdrawAmount);
       setWithdrawError("Please enter a valid amount.");
       return;
     }
+    console.log('✅ Amount is valid:', amt);
+    
     if (amt < 800) {
+      console.log('❌ Amount below minimum (800):', amt);
       setWithdrawError("Minimum withdrawal amount is ₹800.");
       return;
     }
+    
     if (amt > totalIncome) {
+      console.log('❌ Amount exceeds balance - Requested:', amt, '| Available:', totalIncome);
       setWithdrawError("Amount exceeds your total income balance.");
       return;
     }
+    
+    console.log('✅ All validations passed. Submitting withdrawal...');
     try {
       setWithdrawLoading(true);
+      console.log('🚀 Sending withdraw API request:', { amount: amt });
+      
       const res = await fetch('/api/user/withdraw', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: amt }),
       });
+      
       if (res.status === 401) {
+        console.log('❌ Unauthorized - redirecting to login');
         window.location.href = '/auth/login';
         return;
       }
+      
       const data = await res.json();
+      console.log('📋 Server response:', data);
+      
       if (!res.ok) {
+        console.log('❌ Withdrawal failed:', data.error || data.message);
         setWithdrawError(data.error || data.message || "Withdrawal failed.");
       } else {
+        console.log('✅ Withdrawal successful!');
+        console.log('📊 New balance:', data.remainingBalance);
         setWithdrawSuccess(data.message || "Withdrawal request submitted!");
         setTotalIncome(data.remainingBalance ?? totalIncome - amt);
         setWithdrawAmount("");
       }
     } catch (error: any) {
-      console.error('Withdraw error:', error);
+      console.error('❌ Withdraw error:', error);
       setWithdrawError("Network error. Please try again.");
     } finally {
       setWithdrawLoading(false);
+      console.log('✅ Withdraw request processing completed');
     }
   };
 
@@ -400,12 +463,31 @@ export default function Dashboard() {
                     className="stat-card"
                     style={{ background: card.gradient }}
                     onClick={() => {
-                      if (card.title === "Total Team") setShowTotalTeamInfo(!showTotalTeamInfo);
-                      else if (card.title === "Basic Income") setShowBasicIncomeInfo(!showBasicIncomeInfo);
-                      else if (card.title === "Booster Income") setShowBoosterIncomeInfo(!showBoosterIncomeInfo);
-                      else if (card.title === "Total Direct") setShowTotalDirectInfo(!showTotalDirectInfo);
-                      else if (card.title === "Total Pins") setShowTotalPinsInfo(!showTotalPinsInfo);
-                      else if (card.title === "Total Income") setShowTotalIncomeInfo(!showTotalIncomeInfo);
+                      console.log('📊 Stat card clicked:', card.title);
+                      if (card.title === "Total Team") {
+                        console.log('👥 Toggling Total Team info');
+                        setShowTotalTeamInfo(!showTotalTeamInfo);
+                      }
+                      else if (card.title === "Basic Income") {
+                        console.log('💰 Toggling Basic Income info');
+                        setShowBasicIncomeInfo(!showBasicIncomeInfo);
+                      }
+                      else if (card.title === "Booster Income") {
+                        console.log('🚀 Toggling Booster Income info');
+                        setShowBoosterIncomeInfo(!showBoosterIncomeInfo);
+                      }
+                      else if (card.title === "Total Direct") {
+                        console.log('👤 Toggling Total Direct info');
+                        setShowTotalDirectInfo(!showTotalDirectInfo);
+                      }
+                      else if (card.title === "Total Pins") {
+                        console.log('📌 Toggling Total Pins info');
+                        setShowTotalPinsInfo(!showTotalPinsInfo);
+                      }
+                      else if (card.title === "Total Income") {
+                        console.log('💳 Toggling Total Income info');
+                        setShowTotalIncomeInfo(!showTotalIncomeInfo);
+                      }
                     }}
                   >
                     <div className="stat-card-icon">{card.icon}</div>
@@ -431,6 +513,7 @@ export default function Dashboard() {
                               className="withdraw-btn"
                               onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                 e.stopPropagation();
+                                console.log('💸 Withdraw button clicked - Opening dialog');
                                 setWithdrawOpen(true);
                                 setWithdrawError("");
                                 setWithdrawSuccess("");

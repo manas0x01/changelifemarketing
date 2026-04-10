@@ -75,18 +75,23 @@ export default function NewRegisterPage() {
 
   useEffect(() => {
     const checkPinAvailability = async () => {
+      console.log('🔍 STEP 1: Checking PIN availability...');
       try {
         const res = await fetch('/api/auth/check-pin-availability');
         const data = await res.json();
+        console.log('✅ PIN Availability Response:', data);
         
         if (!data.hasPins) {
+          console.log('❌ No PINs available');
           setHasPins(false);
           setPinError(data.message || 'First Buy The Pin Then Create A Account');
           toast.error(data.message || 'No pins available');
         } else {
+          console.log('✅ PINs are available');
           setHasPins(true);
         }
       } catch (error) {
+        console.error('❌ Error checking PIN availability:', error);
         setHasPins(false);
         setPinError('Error checking pin availability');
         toast.error('Error checking pin availability');
@@ -101,15 +106,19 @@ export default function NewRegisterPage() {
   };
 
   const handleValidateSponsor = async () => {
+    console.log('🔍 STEP 2: Validating Sponsor...');
     if (!sponsorId.trim()) {
+      console.log('❌ Sponsor ID is empty');
       setSponsorError("Please enter a sponsor ID.");
       return;
     }
 
+    console.log('📝 Sponsor ID entered:', sponsorId);
     setSponsorError("");
     
     try {
       // Check if sponsor has pins
+      console.log('🔍 Checking E-PINs for sponsor...');
       const pinCheckRes = await fetch('/api/user/check-epins', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -118,8 +127,10 @@ export default function NewRegisterPage() {
       });
 
       const pinData = await pinCheckRes.json();
+      console.log('✅ E-PIN Check Response:', pinData);
 
       if (!pinCheckRes.ok || !pinData.availableEPins || pinData.availableEPins.length === 0) {
+        console.log('❌ Sponsor has no available E-PINs');
         setSponsorError("First Buy The Pins And Then Create A Account");
         toast.error("Sponsor has no pins available");
         return;
@@ -127,6 +138,7 @@ export default function NewRegisterPage() {
 
       // Fetch sponsor name
       try {
+        console.log('🔍 Fetching sponsor name...');
         const nameResponse = await fetch('/api/user/get-name', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -134,8 +146,10 @@ export default function NewRegisterPage() {
           credentials: 'include',
         });
         const nameData = await nameResponse.json();
+        console.log('✅ Sponsor Name:', nameData.name);
         setSponsorName(nameData.name || "");
       } catch (err) {
+        console.error('❌ Error fetching sponsor name:', err);
         setSponsorName("");
       }
 
@@ -149,25 +163,32 @@ export default function NewRegisterPage() {
         return ePin;
       }) || [];
 
+      console.log('✅ Available E-PINs:', pinStrings);
       setAvailableEPins(pinStrings);
       setSelectedEPin(pinStrings[0] || "");
       setSponsorValidated(true);
+      console.log('✅ Sponsor Validated Successfully!');
       toast.success("✓ Sponsor validated!");
     } catch (error) {
+      console.error('❌ Error validating sponsor:', error);
       setSponsorError("An error occurred. Please try again.");
       toast.error("Error validating sponsor");
     }
   };
 
   const handleValidateUserId = async () => {
+    console.log('🔍 STEP 3: Validating User ID...');
     if (!userId.trim() || userId === "CLM") {
+      console.log('❌ User ID is empty or invalid:', userId);
       setUserIdError("Please enter a User ID");
       return;
     }
 
+    console.log('📝 User ID entered:', userId);
     setUserIdError("");
     
     try {
+      console.log('🔍 Checking User ID availability...');
       const response = await fetch('/api/auth/check-userid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -176,83 +197,104 @@ export default function NewRegisterPage() {
       });
 
       const data = await response.json();
+      console.log('✅ User ID Check Response:', data);
 
       if (!response.ok) {
+        console.log('❌ User ID already exists');
         setUserIdError(data.error || "This User ID is already taken");
         setUserIdValidated(false);
         toast.error("User ID already exists!");
         return;
       }
 
+      console.log('✅ User ID is available!');
       setUserIdValidated(true);
       setUserIdError("");
       toast.success("✓ User ID is available!");
     } catch (error) {
+      console.error('❌ Error validating User ID:', error);
       setUserIdError("Error checking User ID availability");
       toast.error("Error validating User ID");
     }
   };
 
   const handleSponsorSubmit = () => {
+    console.log('🔍 STEP 4: Validating Sponsor Details Before Proceeding...');
     if (!sponsorValidated) {
+      console.log('❌ Sponsor not validated');
       alert("Please validate sponsor ID first");
       return;
     }
     if (!position || position === "-- Select --") {
+      console.log('❌ Position not selected');
       toast.error("Please select a position");
       return;
     }
     if (!pkg || pkg === "-- Select Package --") {
+      console.log('❌ Package not selected');
       toast.error("Please select a package");
       return;
     }
+    console.log('✅ All sponsor details validated. Moving to registration step...');
+    console.log('📋 Sponsor Details:', { sponsorId, position, pkg, selectedEPin });
     setStep("register");
   };
 
   const handleRegistrationSubmit = async () => {
+    console.log('🔍 STEP 5: Validating Registration Form...');
     // Validate required fields
     if (!userIdValidated) {
+      console.log('❌ User ID not validated');
       toast.error("Please validate User ID first");
       return;
     }
     if (!selectedEPin) {
+      console.log('❌ E-PIN not selected');
       toast.error("Please select an E-Pin to proceed");
       return;
     }
     if (!fullName.trim()) {
+      console.log('❌ Full name is empty');
       toast.error("Full name is required");
       return;
     }
     if (!gender) {
+      console.log('❌ Gender not selected');
       toast.error("Please select gender");
       return;
     }
     if (!mobileNo.trim()) {
+      console.log('❌ Mobile number is empty');
       toast.error("Mobile number is required");
       return;
     }
     if (!email.trim()) {
+      console.log('❌ Email is empty');
       toast.error("Email ID is required");
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
+      console.log('❌ Invalid email format:', email);
       toast.error("Please enter a valid email address");
       return;
     }
     if (!password.trim()) {
+      console.log('❌ Password is empty');
       setPasswordError("Password is required");
       toast.error("Password is required");
       return;
     }
     setPasswordError("");
     if (!confirmPwd.trim()) {
+      console.log('❌ Confirm password is empty');
       setConfirmPwdError("Confirm password is required");
       toast.error("Please confirm password");
       return;
     }
     setConfirmPwdError("");
     if (password !== confirmPwd) {
+      console.log('❌ Passwords do not match');
       setPasswordError("Passwords don't match");
       setConfirmPwdError("Passwords don't match");
       toast.error("Passwords do not match");
@@ -261,6 +303,7 @@ export default function NewRegisterPage() {
     setPasswordError("");
     setConfirmPwdError("");
 
+    console.log('✅ All validations passed. Preparing registration data...');
     setIsSubmitting(true);
 
     try {
@@ -288,13 +331,20 @@ export default function NewRegisterPage() {
         ifsc: ifscCode,
         password,
       };
+
+      // Only add nomineeRelation if it's not the default placeholder
       if (nomineeRel && nomineeRel !== "-- Select --") {
         registrationData.nomineeRelation = nomineeRel;
       }
+
+      // Only add accountType if it's not the default placeholder
       if (accountType && accountType !== "-- Select --") {
         registrationData.accountType = accountType;
       }
 
+      console.log('📋 Registration Data:', registrationData);
+      console.log('🚀 Submitting registration...');
+      
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -303,17 +353,22 @@ export default function NewRegisterPage() {
       });
 
       const data = await response.json();
+      console.log('✅ Server Response:', data);
       
       if (!response.ok) {
+        console.error('❌ Registration failed:', data.error);
         toast.error(data.error || "Registration failed");
         return;
       }
 
+      console.log('✅ Member registered successfully! Redirecting to login...');
       toast.success("✓ Member registered successfully!");
       setTimeout(() => {
+        console.log('🔄 Redirecting to login page...');
         window.location.href = "/auth/login";
       }, 2000);
     } catch (error) {
+      console.error('❌ Error during registration:', error);
       toast.error("An error occurred during registration");
     } finally {
       setIsSubmitting(false);

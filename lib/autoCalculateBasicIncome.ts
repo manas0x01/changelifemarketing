@@ -11,8 +11,7 @@
 import User from '@/models/User';
 
 const GROSS_PAIR_INCOME = 1000;
-const TDS_PERCENTAGE = 5;
-const SERVICE_CHARGE_PERCENTAGE = 15;
+const NET_INCOME_PER_PAIR = 1000;  // No deductions - full payout
 const SESSION_CAP = 1000;
 const DAILY_CAP = 2000;
 
@@ -151,11 +150,8 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
       DAILY_CAP,
     });
 
-    // ✅ NET INCOME PER PAIR
-    const NET_INCOME_PER_PAIR = 1000 - 
-      ((1000 * TDS_PERCENTAGE) / 100) - 
-      ((1000 * SERVICE_CHARGE_PERCENTAGE) / 100);
-
+    // ✅ NET INCOME PER PAIR = ₹1,000 (No deductions)
+    
     // Calculate max pairs that fit in session cap
     const remainingSessionCap = SESSION_CAP - sessionIncomeToday;
     const maxPairsForSessionCap = Math.floor(remainingSessionCap / NET_INCOME_PER_PAIR);
@@ -185,10 +181,8 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
     
     console.log(`✅ Will credit ${pairsThisSession} pairs!`);
 
-    // Calculate income
+    // Calculate income (₹1,000 per pair, no deductions)
     const grossIncome = pairsThisSession * GROSS_PAIR_INCOME;
-    const tdsAmount = (grossIncome * TDS_PERCENTAGE) / 100;
-    const serviceChargeAmount = (grossIncome * SERVICE_CHARGE_PERCENTAGE) / 100;
     const netIncome = pairsThisSession * NET_INCOME_PER_PAIR;
 
     // Create session income record
@@ -200,8 +194,6 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
       pairsInSession: pairsThisSession,
       grossIncome,
       netIncome,
-      tdsDeducted: tdsAmount,
-      serviceChargeDeducted: serviceChargeAmount,
       status: 'Completed' as const,
     };
 

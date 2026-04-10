@@ -28,15 +28,8 @@ export const CAPS = {
   BOOSTER_CARRY_FORWARD_MAX: 10, // Max carry forward pairs
 };
 
-export const DEDUCTIONS = {
-  TDS: 0.05,                     // 5%
-  SERVICE_CHARGE: 0.15,          // 15%
-  TOTAL: 0.20,                   // 20%
-  NET_PERCENTAGE: 0.80,          // 80% (after deductions)
-};
-
 export const BINARY_PAIR_GV = 1000;  // ₹1,000 per pair
-export const BINARY_PAIR_NET = BINARY_PAIR_GV * DEDUCTIONS.NET_PERCENTAGE; // ₹800
+export const BINARY_PAIR_NET = BINARY_PAIR_GV; // ₹1,000 (No deductions)
 
 /**
  * Get current session type based on hour
@@ -76,22 +69,12 @@ export function isSameSession(date1: Date, date2: Date): boolean {
 }
 
 /**
- * Calculate net income after deductions
+ * Calculate net income (no deductions applied)
  */
-export function calculateNetIncome(
-  grossAmount: number,
-  tdsPercentage: number = DEDUCTIONS.TDS,
-  serviceChargePercentage: number = DEDUCTIONS.SERVICE_CHARGE
-) {
-  const tds = grossAmount * tdsPercentage;
-  const serviceCharge = grossAmount * serviceChargePercentage;
-  const netIncome = grossAmount - tds - serviceCharge;
-  
+export function calculateNetIncome(grossAmount: number) {
   return {
     grossIncome: grossAmount,
-    tdsDeducted: tds,
-    serviceChargeDeducted: serviceCharge,
-    netIncome: netIncome,
+    netIncome: grossAmount,
   };
 }
 

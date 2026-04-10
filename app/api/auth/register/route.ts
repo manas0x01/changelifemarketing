@@ -6,7 +6,9 @@ import { autoCalculateBasicIncome } from "@/lib/autoCalculateBasicIncome";
 
 export async function POST(req: Request) {
     try {
+        console.log('\n🚀 [API] REGISTRATION - Starting new member registration...');
         const registrationData = await req.json();
+        console.log('📋 Registration data received');
 
         const {
             userId,
@@ -34,20 +36,33 @@ export async function POST(req: Request) {
             accountType,
             password,
         } = registrationData;
+        
+        console.log('📝 Validating required fields...');
         if (!fullName?.trim()) {
+            console.log('❌ Full name is required');
             return Response.json({ error: "Full name is required" }, { status: 400 });
         }
         if (!mobileNo?.trim()) {
+            console.log('❌ Mobile number is required');
             return Response.json({ error: "Mobile number is required" }, { status: 400 });
         }
         if (!password?.trim()) {
+            console.log('❌ Password is required');
             return Response.json({ error: "Password is required" }, { status: 400 });
         }
+        console.log('✅ All required fields validated');
+        
         await connectDB();
+        console.log('✅ Database connected');
+        console.log('🔍 Checking for existing user with mobile:', mobileNo);
         const existingUser = await User.findOne({ mobileNo });
         if (existingUser) {
+            console.log('❌ Mobile number already registered:', mobileNo);
             return Response.json({ error: "Mobile number already registered" }, { status: 400 });
         }
+        console.log('✅ Mobile number is unique');
+        
+        console.log('🔍 Searching for sponsor:', sponsorId);
         const sponsor = await User.findOne({
             $or: [
                 { username: sponsorId },
@@ -55,14 +70,21 @@ export async function POST(req: Request) {
             ]
         });
         if (!sponsor) {
+            console.log('❌ Sponsor not found:', sponsorId);
             return Response.json({ error: "Sponsor ID not found" }, { status: 404 });
         }
+        console.log('✅ Sponsor found:', sponsor.username || sponsor.userId);
+        
+        console.log('🔍 Checking E-PIN availability:', epin);
         const availableEPin = sponsor.ePins?.find((pin: any) => pin.pin === epin && !pin.usedDate);
         if (!availableEPin) {
+            console.log('❌ E-Pin not available or already used:', epin);
             return Response.json({ error: "E-Pin not available or already used" }, { status: 400 });
         }
+        console.log('✅ E-PIN is available and valid');
 
         // 🔄 GET AUTOMATIC PLACEMENT from sponsor's network
+        console.log('🔍 Determining automatic placement...');
         let placementId: string;
         let finalPosition = position.toLowerCase();
         try {
@@ -76,7 +98,7 @@ export async function POST(req: Request) {
             });
 
             if (!autoPlacementResponse.ok) {
-                console.error("Auto-placement API failed:", autoPlacementResponse.statusText);
+                console.error("❌ Auto-placement API failed:", autoPlacementResponse.statusText);
                 return Response.json(
                     { error: "Could not determine placement position" },
                     { status: 500 }
@@ -94,13 +116,14 @@ export async function POST(req: Request) {
                 finalPosition,
             });
         } catch (error) {
-            console.error("Auto-placement fetch error:", error);
+            console.error("❌ Auto-placement fetch error:", error);
             return Response.json(
                 { error: "Failed to determine placement" },
                 { status: 500 }
             );
         }
 
+        console.log('🔍 Generating User ID...');
         const lastUser = await User.findOne({ userId: /^CLM2026/ }).sort({ userId: -1 });
         let nextSequence = 1;
         
@@ -113,17 +136,45 @@ export async function POST(req: Request) {
         const autoUserId = `CLM2026${nextSequence}`;
         const finalUserId = userId && userId !== "CLM" ? userId : autoUserId;
         const username = finalUserId; // Username is same as userId
+        console.log('📝 Generated User ID:', finalUserId);
+        
+        console.log('🔍 Checking if User ID already exists...');
         const existingUserId = await User.findOne({ userId: finalUserId });
         if (existingUserId) {
+            console.log('❌ User ID already exists:', finalUserId);
             return Response.json({ error: "User ID already exists" }, { status: 400 });
         }
+        console.log('✅ User ID is unique');
 
-        const newUser = new User({
+        console.log('🔍 Creating new user object...');
+        
+        // ✅ DEFENSIVE: Clean up enum fields - remove empty/placeholder values
+        const cleanEnumField = (value: string | undefined) => {
+            if (!value) return undefined;
+            const trimmed = value.trim();
+            // Return undefined for empty or placeholder values
+            if (!trimmed || trimmed === "-- Select --" || trimmed === "-- Select Package --") {
+                return undefined;
+            }
+            return trimmed;
+        };
+
+        const cleanedGender = cleanEnumField(gender);
+        const cleanedNomineeRelation = cleanEnumField(nomineeRelation);
+        const cleanedAccountType = cleanEnumField(accountType);
+
+        console.log('📋 Cleaned enum fields:', {
+            gender: cleanedGender,
+            nomineeRelation: cleanedNomineeRelation,
+            accountType: cleanedAccountType,
+        });
+        
+        // ✅ Build userData object with only valid values
+        const userData: any = {
             username,
             userId: finalUserId,
             password,
             fullName,
-            gender,
             mobileNo,
             email,
             dateOfBirth,
@@ -134,19 +185,24 @@ export async function POST(req: Request) {
             address,
             pincode,
             nomineeName,
-            nomineeRelation,
             bankName,
             branchName,
             accountNo,
             ifsc,
-            accountType,
             sponsorId,
             placementId,
             placementPosition: finalPosition,
             role: "user",
-            basicRank: "basic", // Default rank for new users
+            basicRank: "basic",
             joiningDate: new Date().toISOString().split("T")[0],
-        });
+        };
+
+        // Only add enum fields if they have valid values
+        if (cleanedGender) userData.gender = cleanedGender;
+        if (cleanedNomineeRelation) userData.nomineeRelation = cleanedNomineeRelation;
+        if (cleanedAccountType) userData.accountType = cleanedAccountType;
+
+        const newUser = new User(userData);
 
         console.log("\n🔵 REGISTRATION - USER CREATED:", {
             userId: finalUserId,
@@ -201,14 +257,14 @@ export async function POST(req: Request) {
             if (placementParent) {
                 console.log("\n🟡 ADDING MEMBER TO PARENT:", {
                     parentId: placementId,
-                    newMemberId: newUser.userId,
+                    newMemberId: newUser.username,
                     position: finalPosition,
                 });
 
                 // ── Add to boosterDownlineMembers ──
                 const boosterMemberRecord = {
                     srNo: (placementParent.boosterDownlineMembers?.length || 0) + 1,
-                    memberId: newUser.userId || newUser.username || newUser._id.toString(),
+                    memberId: newUser.username || newUser._id.toString(),
                     name: newUser.fullName || newUser.username || 'N/A',
                     date: newUser.joiningDate || new Date().toISOString().split('T')[0],
                     position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
@@ -223,7 +279,7 @@ export async function POST(req: Request) {
                 // ── Add to directMembers (for basic income validation) ──
                 // ✅ CRITICAL FOR POINTS 3-5 VALIDATION
                 const directMemberRecord = {
-                    memberId: newUser.userId || newUser.username || newUser._id.toString(),
+                    memberId: newUser.username || newUser._id.toString(),
                     name: newUser.fullName || newUser.username || 'N/A',
                     joinDate: new Date(),  // Current timestamp - MUST include hours/minutes for session detection
                     position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
@@ -291,6 +347,15 @@ export async function POST(req: Request) {
             // Don't fail registration if metrics calculation fails
         }
 
+        console.log('🎉 [API] REGISTRATION COMPLETED SUCCESSFULLY!');
+        console.log('📋 New User Summary:', {
+            userId: finalUserId,
+            email,
+            mobileNo,
+            sponsorId,
+            placementId,
+        });
+        
         return Response.json({
             success: true,
             message: "Registration successful",
@@ -303,7 +368,11 @@ export async function POST(req: Request) {
         });
     } catch (error) {
         // Handle specific error cases
+        console.error('❌ [API] REGISTRATION FAILED:');
+        
         if (error instanceof Error) {
+            console.error('Error Message:', error.message);
+            console.error('Error Stack:', error.stack);
             
             if (error.message.includes("password")) {
                 return Response.json({ error: "Password hashing failed" }, { status: 500 });

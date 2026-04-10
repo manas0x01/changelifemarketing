@@ -1,18 +1,9 @@
-/**
- * Advanced Income Calculation Utility
- * Handles:
- * - Booster Qualification (12 pairs with 3,6,9,12 cuts)
- * - Rank Progression (13 levels)
- * - Carry Forward Logic
- * - Flesh Out Tracking
- */
 
 import {
   CAPS,
   SESSION_TYPES,
   RANK_CONFIG,
   BINARY_PAIR_GV,
-  DEDUCTIONS,
 } from '@/lib/sessionBalance';
 
 export interface BoosterQualificationCheck {
@@ -24,17 +15,11 @@ export interface BoosterQualificationCheck {
   estimatedQualificationDate?: Date;
 }
 
-/**
- * Check if user qualifies as Booster
- * Booster requires 12 pairs completed with cuts at 3,6,9,12
- */
 export function checkBoosterQualification(
   totalPairsCompleted: number
 ): BoosterQualificationCheck {
   const cutsApplied: number[] = [];
   let pairsWithCuts = 0;
-
-  // Count pairs excluding cuts at 3,6,9,12
   for (let i = 1; i <= totalPairsCompleted; i++) {
     if (i === 3 || i === 6 || i === 9 || i === 12) {
       cutsApplied.push(i);
@@ -42,8 +27,6 @@ export function checkBoosterQualification(
       pairsWithCuts++;
     }
   }
-
-  // Booster qualification: exactly 12 pairs completed (with 4 cuts)
   const isQualified = totalPairsCompleted >= 12;
 
   return {
@@ -55,9 +38,6 @@ export function checkBoosterQualification(
   };
 }
 
-/**
- * Calculate Booster Income for a session
- */
 export interface BoosterIncomeCalculation {
   sessionType: 'morning' | 'evening';
   pairsMatched: number;
@@ -271,20 +251,17 @@ NEXT RANK: ${rankData.nextRankRequirements.rankName} (Rank ${rankData.nextRankRe
 
 /**
  * Calculate Income Deductions
+ * NOTE: As of current policy, NO deductions are applied
+ * TDS = 0, Service Charge = 0, Net = Gross
  */
 export function calculateDeductions(grossAmount: number) {
-  const tds = grossAmount * DEDUCTIONS.TDS;
-  const serviceCharge = grossAmount * DEDUCTIONS.SERVICE_CHARGE;
-  const totalDeducted = tds + serviceCharge;
-  const netAmount = grossAmount - totalDeducted;
-
   return {
     grossAmount,
-    tds: Math.round(tds * 100) / 100,
-    serviceCharge: Math.round(serviceCharge * 100) / 100,
-    totalDeducted: Math.round(totalDeducted * 100) / 100,
-    netAmount: Math.round(netAmount * 100) / 100,
-    deductionPercentage: Math.round(((totalDeducted / grossAmount) * 100 * 100) / 100),
+    tds: 0,
+    serviceCharge: 0,
+    totalDeducted: 0,
+    netAmount: grossAmount, // No deductions - net equals gross
+    deductionPercentage: 0,
   };
 }
 

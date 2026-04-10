@@ -89,13 +89,21 @@ export async function POST(req: Request) {
             return Response.json({ error: "E-Pin not available or already used" }, { status: 400 });
         }
         console.log('✅ E-PIN is available and valid');
-
-        // ✅ STEP 3: Determine Placement (Automatic)
         console.log('🔍 Determining automatic placement...');
         let placementId: string;
         let finalPosition = position.toLowerCase();
         try {
-            const autoPlacementResponse = await fetch("http://localhost:3000/api/user/auto-placement", {
+            const baseUrl = process.env.NEXTAUTH_URL?.replace(/\/$/, '') || '';
+            
+            const autoPlacementUrl = `${baseUrl}/api/user/auto-placement`;
+            console.log('📡 Auto-placement URL:', autoPlacementUrl);
+            console.log('🔧 Environment:', {
+                NODE_ENV: process.env.NODE_ENV,
+                NEXTAUTH_URL: process.env.NEXTAUTH_URL ? '✓ Set' : '✗ Not set',
+                baseUrl: baseUrl,
+            });
+            
+            const autoPlacementResponse = await fetch(autoPlacementUrl, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

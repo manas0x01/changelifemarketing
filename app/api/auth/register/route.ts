@@ -137,8 +137,6 @@ export async function POST(req: Request) {
                 { status: 500 }
             );
         }
-
-        // ✅ STEP 4: Check User ID Availability and Generate if needed
         console.log('🔍 Validating User ID...');
         const lastUser = await User.findOne({ userId: /^CLM2026/ }).sort({ userId: -1 });
         let nextSequence = 1;

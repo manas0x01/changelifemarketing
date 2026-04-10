@@ -62,6 +62,7 @@ export default function MyEPinsPage() {
           throw new Error("Failed to fetch E-Pins");
         }
         const data = await response.json();
+        console.log("📋 E-Pins Data Received:", data.ePins);
         setAllEPins(data.ePins || []);
         setPackages(getPackages(data.ePins || []));
         setStatuses(getStatuses(data.ePins || []));
@@ -101,6 +102,12 @@ export default function MyEPinsPage() {
     setFiltered(data.slice(0, pageSize));
     setHasFiltered(true);
   };
+  
+  useEffect(() => {
+    if (hasFiltered && filtered.length > 0) {
+      handleFilter();
+    }
+  }, [pageSize]);
 
   const handleExportCSV = () => {
     if (!filtered.length) return;
@@ -394,10 +401,8 @@ export default function MyEPinsPage() {
 
         {/* Main Content */}
         {!loading && !error && (
-
         <div className="page-body">
           <div className="main-card">
-
             {/* HEADER */}
             <div className="section-header">
               <span className="section-header-title">My E-Pins</span>
@@ -416,10 +421,8 @@ export default function MyEPinsPage() {
                 </button>
               </div>
             </div>
-
             {/* NOTE */}
             <p className="note-text">Note : Please Use Filter To View This Report.</p>
-
             {/* FILTER ROW */}
             <div className="filter-row">
               {/* Package */}
@@ -433,7 +436,6 @@ export default function MyEPinsPage() {
                   {packages.map(p => <option key={p}>{p}</option>)}
                 </select>
               </div>
-
               {/* Status */}
               <div className="filter-group">
                 <label className="filter-label">Status :</label>
@@ -445,7 +447,6 @@ export default function MyEPinsPage() {
                   {statuses.map(s => <option key={s}>{s}</option>)}
                 </select>
               </div>
-
               {/* From Date */}
               <div className="filter-group">
                 <label className="filter-label">From Date :</label>
@@ -456,7 +457,6 @@ export default function MyEPinsPage() {
                   onChange={(e) => setFromDate(e.target.value)}
                 />
               </div>
-
               {/* To Date */}
               <div className="filter-group">
                 <label className="filter-label">To Date :</label>
@@ -467,10 +467,8 @@ export default function MyEPinsPage() {
                   onChange={(e) => setToDate(e.target.value)}
                 />
               </div>
-
               {/* Filter Button */}
               <button className="filter-btn" onClick={handleFilter}>Filter</button>
-
               {/* Page Size */}
               <div className="filter-group" style={{ marginLeft: "auto" }}>
                 <label className="filter-label">Page Size</label>
@@ -483,7 +481,6 @@ export default function MyEPinsPage() {
                 </select>
               </div>
             </div>
-
             {/* TABLE */}
             <div className="table-wrap">
               <table className="data-table">
@@ -500,7 +497,15 @@ export default function MyEPinsPage() {
                 </thead>
                 <tbody>
                   {hasFiltered && filtered.length > 0 ? (
-                    filtered.map((row) => (
+                    filtered.map((row) => {
+                      console.log(`📍 Rendering Row ${row.srNo}:`, {
+                        ePin: row.ePin,
+                        status: row.status,
+                        transferredTo: row.transferredTo,
+                        transferredToName: row.transferredToName,
+                        transferredDate: row.transferredDate,
+                      });
+                      return (
                       <tr key={row.srNo}>
                         <td>{row.srNo}</td>
                         <td>{row.ePin}</td>
@@ -517,7 +522,8 @@ export default function MyEPinsPage() {
                         <td>{row.transferredToName}</td>
                         <td>{row.transferredDate}</td>
                       </tr>
-                    ))
+                    );
+                    })
                   ) : (
                     <tr>
                       <td colSpan={7}>
@@ -533,14 +539,12 @@ export default function MyEPinsPage() {
                 </tbody>
               </table>
             </div>
-
             {/* Record count */}
             {hasFiltered && filtered.length > 0 && (
               <div className="record-count">
                 Showing {filtered.length} record{filtered.length !== 1 ? "s" : ""}
               </div>
             )}
-
           </div>
         </div>
         )}

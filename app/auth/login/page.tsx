@@ -16,7 +16,6 @@ interface Star {
   op: number;
 }
 
-// Seeded random function for consistent results across server/client renders
 const seededRandom = (seed: number): number => {
   const x = Math.sin(seed) * 10000;
   return x - Math.floor(x);
@@ -35,7 +34,7 @@ export default function Login() {
 
   const generateStars = () => {
     const newStars: Star[] = Array.from({ length: 60 }, (_, i) => {
-      const baseSeed = i * 73; // Prime number for good distribution
+      const baseSeed = i * 73;
       return {
         id: i,
         width: seededRandom(baseSeed) * 2.5 + 1,
@@ -88,6 +87,7 @@ export default function Login() {
         return;
       }
       setLoading(false);
+      sessionStorage.setItem("reloadDashboard", "true");
       setTimeout(() => {
         router.push("/dashboard");
       }, 100);

@@ -4,30 +4,24 @@ import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
 const GROSS_PAIR_INCOME = 1000; // 1 Pair = 1000 rupees
-const TDS_PERCENTAGE = 5; // 5% TDS
-const SERVICE_CHARGE_PERCENTAGE = 15; // 15% Service Charge
 const DAILY_CAP = 2000; // Max ₹2000 per day
 const SESSION_CAP = 1000; // Max ₹1000 per 12-hour session
 const SESSION_DURATION = 12 * 60 * 60 * 1000; // 12 hours in milliseconds
 
-// Determine which session a timestamp belongs to
 function getSessionType(date: Date): 'morning' | 'evening' {
   const hour = date.getHours();
   return hour >= 0 && hour < 12 ? 'morning' : 'evening';
 }
 
-// Get session start and end times
 function getSessionBoundaries(date: Date): { start: Date; end: Date } {
   const hour = date.getHours();
   const sessionStart = new Date(date);
   const sessionEnd = new Date(date);
 
   if (hour >= 0 && hour < 12) {
-    // Morning session: 12 AM to 12 PM
     sessionStart.setHours(0, 0, 0, 0);
     sessionEnd.setHours(12, 0, 0, 0);
   } else {
-    // Evening session: 12 PM to 12 AM (next day)
     sessionStart.setHours(12, 0, 0, 0);
     sessionEnd.setHours(24, 0, 0, 0);
   }
@@ -35,7 +29,6 @@ function getSessionBoundaries(date: Date): { start: Date; end: Date } {
   return { start: sessionStart, end: sessionEnd };
 }
 
-// Get today's boundaries (00:00 - 23:59)
 function getTodayBoundaries(): { start: Date; end: Date } {
   const start = new Date();
   start.setHours(0, 0, 0, 0);
@@ -59,8 +52,6 @@ export async function POST(req: Request) {
     if (!user) {
       return Response.json({ success: false, message: "User not found" }, { status: 404 });
     }
-
-    // Check rank requirement - allow 'basic' and all other ranks
     if (user.basicRank === 'unranked' || !user.basicRank) {
       return Response.json({
         success: false,
@@ -68,16 +59,10 @@ export async function POST(req: Request) {
         data: { currentRank: user.basicRank || 'unranked' }
       }, { status: 403 });
     }
-
-    // ✅ User has valid rank ('basic' or higher), can earn income
-
-    // Get current session info
     const now = new Date();
     const currentSession = getSessionType(now);
     const { start: sessionStart, end: sessionEnd } = getSessionBoundaries(now);
     const { start: dayStart, end: dayEnd } = getTodayBoundaries();
-
-    // Get direct members added in this session (same timestamp boundaries)
     const directMembers = user.directMembers || [];
     
     const leftMembersThisSession = directMembers.filter(m =>
@@ -113,8 +98,6 @@ export async function POST(req: Request) {
         }
       });
     }
-
-    // Check today's income cap
     const todayIncome = (user.sessionBasedIncome || [])
       .filter(s => s.sessionDate >= dayStart && s.sessionDate <= dayEnd)
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
@@ -126,34 +109,16 @@ export async function POST(req: Request) {
         s.sessionType === currentSession
       )
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
-
-    // ✅ NET INCOME PER PAIR (after deductions)
-    const NET_INCOME_PER_PAIR = GROSS_PAIR_INCOME - 
-      ((GROSS_PAIR_INCOME * TDS_PERCENTAGE) / 100) - 
-      ((GROSS_PAIR_INCOME * SERVICE_CHARGE_PERCENTAGE) / 100);
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // 🎯 APPLY SESSION CAP (Max ₹1000 per 12-hour session)
-    // ═══════════════════════════════════════════════════════════════════════
+    const NET_INCOME_PER_PAIR = GROSS_PAIR_INCOME;
     const remainingSessionCap = SESSION_CAP - sessionIncomeToday;
     const maxPairsForSessionCap = Math.floor(remainingSessionCap / NET_INCOME_PER_PAIR);
-    
-    // ═══════════════════════════════════════════════════════════════════════
-    // 🎯 APPLY DAILY CAP (Max ₹2000 per 24 hours)
-    // ═══════════════════════════════════════════════════════════════════════
     const remainingDailyCap = DAILY_CAP - todayIncome;
     const maxPairsForDailyCap = Math.floor(remainingDailyCap / NET_INCOME_PER_PAIR);
-
-    // ═══════════════════════════════════════════════════════════════════════
-    // 🎯 FINAL PAIRS TO CREDIT = MIN(possible, session_cap, daily_cap)
-    // ═══════════════════════════════════════════════════════════════════════
     const pairsThisSession = Math.min(
       possiblePairsThisSession,
       maxPairsForSessionCap,
       maxPairsForDailyCap
     );
-
-    // If no pairs can be credited even with 1 pair
     if (pairsThisSession <= 0) {
       const sessionLimitReached = maxPairsForSessionCap <= 0;
       const dailyLimitReached = maxPairsForDailyCap <= 0;
@@ -180,14 +145,10 @@ export async function POST(req: Request) {
         }
       }, { status: 400 });
     }
-
-    // Calculate income for credited pairs
     const grossIncome = pairsThisSession * GROSS_PAIR_INCOME;
-    const tdsAmount = (grossIncome * TDS_PERCENTAGE) / 100;
-    const serviceChargeAmount = (grossIncome * SERVICE_CHARGE_PERCENTAGE) / 100;
+    const tdsAmount = 0;
+    const serviceChargeAmount = 0;
     const netIncome = pairsThisSession * NET_INCOME_PER_PAIR;
-
-    // Create session income record
     const sessionRecord = {
       sessionDate: now,
       sessionType: currentSession,
@@ -200,12 +161,8 @@ export async function POST(req: Request) {
       serviceChargeDeducted: serviceChargeAmount,
       status: 'Completed' as const,
     };
-
-    // Update user
     const updatedBasicIncome = (user.basicIncome || 0) + netIncome;
     const updatedSessionBasedIncome = [...(user.sessionBasedIncome || []), sessionRecord];
-
-    // Also create basicIncomeRecord for history
     const incomeRecord = {
       srNo: ((user.basicIncomeRecords || []).length || 0) + 1,
       amount: netIncome,
@@ -230,14 +187,14 @@ export async function POST(req: Request) {
         excessPairs: possiblePairsThisSession - pairsThisSession, // Pairs that didn't fit in cap
         breakdown: {
           grossPerPair: GROSS_PAIR_INCOME,
-          tdsPerPair: (GROSS_PAIR_INCOME * TDS_PERCENTAGE) / 100,
-          serviceChargePerPair: (GROSS_PAIR_INCOME * SERVICE_CHARGE_PERCENTAGE) / 100,
+          tdsPerPair: 0,
+          serviceChargePerPair: 0,
           netPerPair: NET_INCOME_PER_PAIR,
         },
         totalBreakdown: {
           grossIncome,
-          tdsDeducted: tdsAmount,
-          serviceChargeDeducted: serviceChargeAmount,
+          tdsDeducted: 0,
+          serviceChargeDeducted: 0,
           netIncome,
         },
         cappingStatus: {

@@ -11,7 +11,6 @@ export async function POST(req: Request) {
         const {
             userId,
             sponsorId,
-            placementId,
             position,
             package: packageName,
             epin,
@@ -62,6 +61,46 @@ export async function POST(req: Request) {
         if (!availableEPin) {
             return Response.json({ error: "E-Pin not available or already used" }, { status: 400 });
         }
+
+        // 🔄 GET AUTOMATIC PLACEMENT from sponsor's network
+        let placementId: string;
+        let finalPosition = position.toLowerCase();
+        try {
+            const autoPlacementResponse = await fetch("http://localhost:3000/api/user/auto-placement", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    sponsorId: sponsor.userId || sponsor.username,
+                    position: position.toLowerCase(),
+                }),
+            });
+
+            if (!autoPlacementResponse.ok) {
+                console.error("Auto-placement API failed:", autoPlacementResponse.statusText);
+                return Response.json(
+                    { error: "Could not determine placement position" },
+                    { status: 500 }
+                );
+            }
+
+            const autoPlacementData = await autoPlacementResponse.json();
+            placementId = autoPlacementData.placementId;
+            finalPosition = autoPlacementData.placementPosition || finalPosition;
+
+            console.log("✅ AUTO-PLACEMENT DETERMINED:", {
+                sponsorId: sponsor.userId || sponsor.username,
+                requestedPosition: position.toLowerCase(),
+                placementId,
+                finalPosition,
+            });
+        } catch (error) {
+            console.error("Auto-placement fetch error:", error);
+            return Response.json(
+                { error: "Failed to determine placement" },
+                { status: 500 }
+            );
+        }
+
         const lastUser = await User.findOne({ userId: /^CLM2026/ }).sort({ userId: -1 });
         let nextSequence = 1;
         
@@ -103,7 +142,7 @@ export async function POST(req: Request) {
             accountType,
             sponsorId,
             placementId,
-            placementPosition: position.toLowerCase(),
+            placementPosition: finalPosition,
             role: "user",
             basicRank: "basic", // Default rank for new users
             joiningDate: new Date().toISOString().split("T")[0],
@@ -114,7 +153,7 @@ export async function POST(req: Request) {
             username,
             basicRank: "basic",
             placementId,
-            position: position.toLowerCase(),
+            position: finalPosition,
             email,
         });
 
@@ -128,7 +167,26 @@ export async function POST(req: Request) {
             sponsor.ePins![pinIndex].status = 'Used';
             sponsor.ePins![pinIndex].usedByUsername = newUser.username;
             sponsor.ePins![pinIndex].usedByName = fullName;
+            
+            console.log("✅ E-PIN MARKED AS USED:", {
+                ePin: epin,
+                usedDate: sponsor.ePins![pinIndex].usedDate,
+                usedByUsername: sponsor.ePins![pinIndex].usedByUsername,
+                usedByName: sponsor.ePins![pinIndex].usedByName,
+                status: sponsor.ePins![pinIndex].status,
+            });
+            
             await sponsor.save();
+            
+            console.log("✅ Sponsor user saved. Verifying E-Pin data:");
+            const updatedSponsor = await User.findOne({ username: sponsor.username });
+            const verifyPin = updatedSponsor?.ePins?.find((p: any) => p.pin === epin);
+            console.log("✅ Verified E-Pin from DB:", {
+                ePin: verifyPin?.pin,
+                usedDate: verifyPin?.usedDate,
+                usedByUsername: verifyPin?.usedByUsername,
+                usedByName: verifyPin?.usedByName,
+            });
         }
 
         // ✅ ADD NEW MEMBER TO PLACEMENT PARENT'S boosterDownlineMembers & directMembers ARRAYS
@@ -144,7 +202,7 @@ export async function POST(req: Request) {
                 console.log("\n🟡 ADDING MEMBER TO PARENT:", {
                     parentId: placementId,
                     newMemberId: newUser.userId,
-                    position: position.toLowerCase(),
+                    position: finalPosition,
                 });
 
                 // ── Add to boosterDownlineMembers ──
@@ -153,7 +211,7 @@ export async function POST(req: Request) {
                     memberId: newUser.userId || newUser.username || newUser._id.toString(),
                     name: newUser.fullName || newUser.username || 'N/A',
                     date: newUser.joiningDate || new Date().toISOString().split('T')[0],
-                    position: (position.toLowerCase() === 'left' ? 'left' : 'right') as 'left' | 'right'
+                    position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
                 };
 
                 if (!placementParent.boosterDownlineMembers) {
@@ -168,7 +226,7 @@ export async function POST(req: Request) {
                     memberId: newUser.userId || newUser.username || newUser._id.toString(),
                     name: newUser.fullName || newUser.username || 'N/A',
                     joinDate: new Date(),  // Current timestamp - MUST include hours/minutes for session detection
-                    position: (position.toLowerCase() === 'left' ? 'left' : 'right') as 'left' | 'right'
+                    position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
                 };
 
                 if (!placementParent.directMembers) {

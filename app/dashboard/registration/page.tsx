@@ -43,8 +43,6 @@ export default function NewRegisterPage() {
   const [sponsorName,  setSponsorName]  = useState("");
   const [sponsorValidated, setSponsorValidated] = useState(false);
   const [sponsorError, setSponsorError] = useState("");
-  const [placementId,  setPlacementId]  = useState("");
-  const [placementName, setPlacementName] = useState("");
   const [position,     setPosition]     = useState("-- Select --");
   const [pkg,          setPkg]          = useState("-- Select Package --");
   const [availableEPins, setAvailableEPins] = useState<string[]>([]);
@@ -161,32 +159,6 @@ export default function NewRegisterPage() {
     }
   };
 
-  const handlePlacementIdChange = async (value: string) => {
-    setPlacementId(value);
-    
-    // Fetch placement name from database if ID is entered
-    if (value && value.trim()) {
-      try {
-        const response = await fetch('/api/user/get-name', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: value.trim() }),
-          credentials: 'include',
-        });
-        const data = await response.json();
-        if (data.name) {
-          setPlacementName(data.name);
-        } else {
-          setPlacementName("");
-        }
-      } catch (err) {
-        setPlacementName("");
-      }
-    } else {
-      setPlacementName("");
-    }
-  };
-
   const handleValidateUserId = async () => {
     if (!userId.trim() || userId === "CLM") {
       setUserIdError("Please enter a User ID");
@@ -263,7 +235,6 @@ export default function NewRegisterPage() {
       toast.error("Email ID is required");
       return;
     }
-    // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
       toast.error("Please enter a valid email address");
@@ -296,7 +267,6 @@ export default function NewRegisterPage() {
       const registrationData: any = {
         userId,
         sponsorId,
-        placementId,
         position,
         package: pkg,
         epin: selectedEPin,
@@ -647,33 +617,6 @@ export default function NewRegisterPage() {
                           style={{ background: "#f5f5f5", color: "#777" }}
                         />
                       </div>
-                      <div className="form-group">
-                        <label className="form-label"><span className="req">*</span>Placement ID :</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={placementId}
-                          onChange={(e) => handlePlacementIdChange(e.target.value)}
-                          placeholder="Enter Placement ID"
-                          suppressHydrationWarning
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label className="form-label">Placement Name :</label>
-                        <input
-                          className="form-input"
-                          type="text"
-                          value={placementName}
-                          readOnly
-                          style={{ background: "#f5f5f5", color: "#777" }}
-                        />
-                      </div>
-                      <div className="form-group" style={{ visibility: "hidden" }}>
-                        <label className="form-label">Placeholder</label>
-                      </div>
                     </div>
 
                     <div className="form-row">
@@ -726,17 +669,6 @@ export default function NewRegisterPage() {
                   <div className="form-group">
                     <label className="form-label">Sponsor Name :</label>
                     <input className="form-input" type="text" value={sponsorName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Placement ID :</label>
-                    <input className="form-input" type="text" value={placementId} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Placement Name :</label>
-                    <input className="form-input" type="text" value={placementName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
                   </div>
                 </div>
 

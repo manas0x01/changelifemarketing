@@ -33,19 +33,25 @@ export async function GET(req: NextRequest) {
       // Use actual status from database
       const actualStatus = pin.status || "Active";
 
+      console.log(`\n🔍 Processing E-Pin #${index + 1}:`, {
+        pinObject: JSON.stringify(pin, null, 2),
+      });
+
       if (pin.transferDate) {
         // For Transferred E-Pins, show transfer details
         displayTo = pin.transferredTo || "--";
         displayToName = pin.transferredToName || "--";
         displayDate = new Date(pin.transferDate).toLocaleDateString("en-IN");
+        console.log(`✅ Transferred Pin - To: ${displayTo}, Name: ${displayToName}`);
       } else if (pin.usedDate) {
         // For Used E-Pins, show who used it
         displayTo = pin.usedByUsername || "--";
         displayToName = pin.usedByName || "--";
         displayDate = new Date(pin.usedDate).toLocaleDateString("en-IN");
+        console.log(`✅ Used Pin - By: ${displayTo}, Name: ${displayToName}`);
       }
 
-      return {
+      const mappedPin = {
         srNo: index + 1,
         ePin: pin.pin,
         package: pin.packageName,
@@ -57,6 +63,10 @@ export async function GET(req: NextRequest) {
         usedDate: pin.usedDate ? new Date(pin.usedDate).toISOString() : null,
         remark: pin.remark || "",
       };
+
+      console.log(`📌 E-Pin #${index + 1}:`, mappedPin);
+
+      return mappedPin;
     });
 
     return NextResponse.json({ 

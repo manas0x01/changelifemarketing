@@ -29,7 +29,6 @@ interface BankDetails {
   bankName: string;
 }
 
-// ── ICONS ──
 const TeamIcon = () => (
   <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.9">
     <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
@@ -45,10 +44,14 @@ const WalletIcon = () => (
     <path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
   </svg>
 );
+const PinIcon = () => (
+  <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.9">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+  </svg>
+);
 const MoonIcon = () => <span style={{ fontSize: 14 }}>🌙</span>;
 const GearIcon = () => <span style={{ fontSize: 14 }}>⚙️</span>;
 
-// ── STAT CARDS CONFIG ──
 const statCards = [
   {
     title: "Total Team",
@@ -71,6 +74,11 @@ const statCards = [
     icon: <TeamIcon />,
   },
   {
+    title: "Total Pins",
+    gradient: "linear-gradient(135deg, #FF6B6B 0%, #FF4757 100%)",
+    icon: <PinIcon />,
+  },
+  {
     title: "Total Income",
     gradient: "linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)",
     icon: <WalletIcon />,
@@ -87,6 +95,7 @@ export default function Dashboard() {
   const [showTotalDirectInfo, setShowTotalDirectInfo] = useState(false);
   const [showBasicIncomeInfo, setShowBasicIncomeInfo] = useState(false);
   const [showBoosterIncomeInfo, setShowBoosterIncomeInfo] = useState(false);
+  const [showTotalPinsInfo, setShowTotalPinsInfo] = useState(false);
   const [showTotalIncomeInfo, setShowTotalIncomeInfo] = useState(false);
 
   // Data states
@@ -95,6 +104,7 @@ export default function Dashboard() {
   const [basicIncome, setBasicIncome] = useState(0);
   const [boosterIncomeAmount, setBoosterIncomeAmount] = useState(0);
   const [boosterIncome, setBoosterIncome] = useState({ LG: 0, RG: 0, totalBoosterMatching: 0 });
+  const [totalPins, setTotalPins] = useState({ active: 0, used: 0, total: 0 });
   const [totalIncome, setTotalIncome] = useState(0);
   const [userProfile, setUserProfile] = useState({
     fullName: "N/A", userId: "N/A", username: "N/A", mobileNo: "N/A", email: "N/A", joiningDate: "N/A",
@@ -109,6 +119,15 @@ export default function Dashboard() {
   const [withdrawError, setWithdrawError] = useState("");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState("");
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const shouldReload = sessionStorage.getItem('reloadDashboard');
+      if (shouldReload === 'true') {
+        sessionStorage.removeItem('reloadDashboard');
+        window.location.reload();
+      }
+    }
+  }, []);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -117,7 +136,7 @@ export default function Dashboard() {
         const [
           teamResponse, directResponse,
           incomeResponse, boosterResponse, boosterAmountResponse,
-          profileResponse, totalIncomeResponse,
+          profileResponse, totalIncomeResponse, totalPinsResponse,
         ] = await Promise.all([
           fetch('/api/user/total-team', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/total-direct', { method: 'GET', credentials: 'include' }),
@@ -126,15 +145,13 @@ export default function Dashboard() {
           fetch('/api/user/booster-income-amount', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/get-profile', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/total-income', { method: 'GET', credentials: 'include' }),
+          fetch('/api/user/total-pins', { method: 'GET', credentials: 'include' }),
         ]);
-
-        // Check for 401 errors and redirect to login
         if (teamResponse.status === 401 || directResponse.status === 401 || 
             incomeResponse.status === 401 || profileResponse.status === 401) {
           window.location.href = '/auth/login';
           return;
         }
-
         if (teamResponse.ok) {
           const d = await teamResponse.json();
           setTotalTeam(d.totalTeam || { left: 0, right: 0 });
@@ -169,6 +186,14 @@ export default function Dashboard() {
             bankName: d.bankName || "",
           });
         }
+        if (totalPinsResponse.ok) {
+          const d = await totalPinsResponse.json();
+          setTotalPins({
+            active: d.activePins || 0,
+            used: d.usedPins || 0,
+            total: d.totalPins || 0,
+          });
+        }
       } catch (error: any) {
         console.error('Dashboard data fetch error:', error);
       } finally {
@@ -201,13 +226,10 @@ export default function Dashboard() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: amt }),
       });
-
-      // Handle 401 - redirect to login
       if (res.status === 401) {
         window.location.href = '/auth/login';
         return;
       }
-
       const data = await res.json();
       if (!res.ok) {
         setWithdrawError(data.error || data.message || "Withdrawal failed.");
@@ -233,13 +255,14 @@ export default function Dashboard() {
         .green-bar { height: 8px; background: linear-gradient(90deg, #00c853, #1de9b6); }
         .page-content { padding: 20px; max-width: 1400px; margin: 0 auto; }
 
-        /* 5 cards in a row */
+        /* 6 cards in a row */
         .stat-cards {
           display: grid;
-          grid-template-columns: repeat(5, 1fr);
+          grid-template-columns: repeat(6, 1fr);
           gap: 16px;
           margin-bottom: 22px;
         }
+        @media (max-width: 1300px) { .stat-cards { grid-template-columns: repeat(4, 1fr); } }
         @media (max-width: 1100px) { .stat-cards { grid-template-columns: repeat(3, 1fr); } }
         @media (max-width: 700px) { .stat-cards { grid-template-columns: repeat(2, 1fr); } }
         @media (max-width: 400px) { .stat-cards { grid-template-columns: 1fr; } }
@@ -381,6 +404,7 @@ export default function Dashboard() {
                       else if (card.title === "Basic Income") setShowBasicIncomeInfo(!showBasicIncomeInfo);
                       else if (card.title === "Booster Income") setShowBoosterIncomeInfo(!showBoosterIncomeInfo);
                       else if (card.title === "Total Direct") setShowTotalDirectInfo(!showTotalDirectInfo);
+                      else if (card.title === "Total Pins") setShowTotalPinsInfo(!showTotalPinsInfo);
                       else if (card.title === "Total Income") setShowTotalIncomeInfo(!showTotalIncomeInfo);
                     }}
                   >
@@ -396,6 +420,8 @@ export default function Dashboard() {
                         <span className="stat-card-link">₹ {boosterIncomeAmount} | LG : {boosterIncome.LG} | RG : {boosterIncome.RG} | Matching : {boosterIncome.totalBoosterMatching}</span>
                       ) : card.title === "Total Direct" && showTotalDirectInfo ? (
                         <span className="stat-card-link">Left : {totalDirect.left} | Right : {totalDirect.right}</span>
+                      ) : card.title === "Total Pins" && showTotalPinsInfo ? (
+                        <span className="stat-card-link">Active : {totalPins.active} | Used : {totalPins.used} | Total : {totalPins.total}</span>
                       ) : card.title === "Total Income" ? (
                         showTotalIncomeInfo ? (
                           <div>

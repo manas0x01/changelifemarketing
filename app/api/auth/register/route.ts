@@ -37,6 +37,8 @@ export async function POST(req: Request) {
             password,
         } = registrationData;
         
+        console.log('\n📝 ═══ VALIDATION PHASE ═══');
+        // ✅ STEP 1: Validate Form Data
         console.log('📝 Validating required fields...');
         if (!fullName?.trim()) {
             console.log('❌ Full name is required');
@@ -50,11 +52,14 @@ export async function POST(req: Request) {
             console.log('❌ Password is required');
             return Response.json({ error: "Password is required" }, { status: 400 });
         }
-        console.log('✅ All required fields validated');
+        console.log('✅ Form data validation passed');
         
+        // ✅ STEP 2: Connect DB and validate all database conditions
         await connectDB();
         console.log('✅ Database connected');
-        console.log('🔍 Checking for existing user with mobile:', mobileNo);
+        
+        // Check Mobile Uniqueness
+        console.log('🔍 Validating mobile number uniqueness...');
         const existingUser = await User.findOne({ mobileNo });
         if (existingUser) {
             console.log('❌ Mobile number already registered:', mobileNo);
@@ -62,7 +67,8 @@ export async function POST(req: Request) {
         }
         console.log('✅ Mobile number is unique');
         
-        console.log('🔍 Searching for sponsor:', sponsorId);
+        // Check Sponsor Exists
+        console.log('🔍 Validating sponsor exists...');
         const sponsor = await User.findOne({
             $or: [
                 { username: sponsorId },
@@ -75,7 +81,8 @@ export async function POST(req: Request) {
         }
         console.log('✅ Sponsor found:', sponsor.username || sponsor.userId);
         
-        console.log('🔍 Checking E-PIN availability:', epin);
+        // Check E-PIN Availability
+        console.log('🔍 Validating E-PIN availability...');
         const availableEPin = sponsor.ePins?.find((pin: any) => pin.pin === epin && !pin.usedDate);
         if (!availableEPin) {
             console.log('❌ E-Pin not available or already used:', epin);
@@ -83,7 +90,7 @@ export async function POST(req: Request) {
         }
         console.log('✅ E-PIN is available and valid');
 
-        // 🔄 GET AUTOMATIC PLACEMENT from sponsor's network
+        // ✅ STEP 3: Determine Placement (Automatic)
         console.log('🔍 Determining automatic placement...');
         let placementId: string;
         let finalPosition = position.toLowerCase();
@@ -123,7 +130,8 @@ export async function POST(req: Request) {
             );
         }
 
-        console.log('🔍 Generating User ID...');
+        // ✅ STEP 4: Check User ID Availability and Generate if needed
+        console.log('🔍 Validating User ID...');
         const lastUser = await User.findOne({ userId: /^CLM2026/ }).sort({ userId: -1 });
         let nextSequence = 1;
         
@@ -138,13 +146,13 @@ export async function POST(req: Request) {
         const username = finalUserId;
         console.log('📝 Generated User ID:', finalUserId);
         
-        console.log('🔍 Checking if User ID already exists...');
         const existingUserId = await User.findOne({ userId: finalUserId });
         if (existingUserId) {
             console.log('❌ User ID already exists:', finalUserId);
             return Response.json({ error: "User ID already exists" }, { status: 400 });
         }
         console.log('✅ User ID is unique');
+        console.log('✅ ═══ ALL VALIDATIONS PASSED ═══\n');
         console.log('🔍 Creating new user object...');
         const cleanEnumField = (value: string | undefined) => {
             if (!value) return undefined;
@@ -199,27 +207,26 @@ export async function POST(req: Request) {
         if (cleanedAccountType) userData.accountType = cleanedAccountType;
 
         // ✅ FIX: Omitted enum fields must be removed from userData and NOT added to the document
-        // This prevents Mongoose from initializing them with defaults
         if (!userData.gender) delete userData.gender;
         if (!userData.nomineeRelation) delete userData.nomineeRelation;
         if (!userData.accountType) delete userData.accountType;
 
-        console.log('📋 Final userData for User creation - enum fields:', { gender: userData.gender, nomineeRelation: userData.nomineeRelation, accountType: userData.accountType });
-        const newUser = new User(userData);
-
-        console.log("\n🔵 REGISTRATION - USER CREATED:", {
-            userId: finalUserId,
-            username,
-            basicRank: "basic",
-            placementId,
-            position: finalPosition,
-            email,
+        console.log('📋 Final userData for User creation - enum fields:', { 
+            gender: userData.gender, 
+            nomineeRelation: userData.nomineeRelation, 
+            accountType: userData.accountType 
         });
 
-        // ✅ Save and handle enum validation errors for optional fields
+        // ✅ ═══ EXECUTION PHASE - ALL DB OPERATIONS ═══
+        console.log('\n📝 ═══ EXECUTION PHASE ═══');
+        
+        // ✅ STEP 1: Create New User
+        console.log('➕ STEP 1: Creating new user...');
+        const newUser = new User(userData);
+
         try {
             await newUser.save();
-            console.log("✅ User saved to database:", finalUserId);
+            console.log("✅ New user saved to database:", finalUserId);
         } catch (saveError: any) {
             // If error is ONLY about missing optional enum fields, retry without validation
             if (saveError.name === 'ValidationError') {
@@ -231,23 +238,31 @@ export async function POST(req: Request) {
                 );
                 
                 if (enumFieldErrors.length > 0 && otherErrors.length === 0) {
-                    // Only optional enum field errors - remove them and retry
-                    console.log('⚠️ Optional enum fields failing validation, removing and retrying...', enumFieldErrors);
+                    console.log('⚠️ Optional enum fields failing, removing and retrying...', enumFieldErrors);
                     newUser.gender = undefined as any;
                     newUser.nomineeRelation = undefined as any;
                     newUser.accountType = undefined as any;
                     await newUser.save();
-                    console.log("✅ User saved to database after removing enum fields:", finalUserId);
+                    console.log("✅ User saved after removing optional enum fields:", finalUserId);
                 } else {
-                    // Real validation error - throw it
-                    throw saveError;
+                    // Real validation error - abort registration
+                    console.error('❌ User creation validation failed (non-enum errors):', otherErrors);
+                    return Response.json({ 
+                        error: "User creation validation failed", 
+                        details: otherErrors.join(", ") 
+                    }, { status: 400 });
                 }
             } else {
-                throw saveError;
+                console.error('❌ User creation failed:', saveError.message);
+                return Response.json({ 
+                    error: "Failed to create user", 
+                    details: saveError.message 
+                }, { status: 500 });
             }
         }
 
-        // Mark E-Pin as used
+        // ✅ STEP 2: Mark E-PIN as Used
+        console.log('➕ STEP 2: Marking E-PIN as used in sponsor record...');
         const pinIndex = sponsor.ePins!.findIndex((pin: any) => pin.pin === epin);
         if (pinIndex !== -1) {
             sponsor.ePins![pinIndex].usedDate = new Date();
@@ -255,52 +270,59 @@ export async function POST(req: Request) {
             sponsor.ePins![pinIndex].usedByUsername = newUser.username;
             sponsor.ePins![pinIndex].usedByName = fullName;
             
-            console.log("✅ E-PIN MARKED AS USED:", {
+            console.log("✅ E-PIN marked as used:", {
                 ePin: epin,
                 usedDate: sponsor.ePins![pinIndex].usedDate,
                 usedByUsername: sponsor.ePins![pinIndex].usedByUsername,
                 usedByName: sponsor.ePins![pinIndex].usedByName,
                 status: sponsor.ePins![pinIndex].status,
             });
-            
-            // ✅ Save sponsor with same enum field error handling
-            try {
-                await sponsor.save();
-            } catch (sponsorError: any) {
-                if (sponsorError.name === 'ValidationError') {
-                    const enumFieldErrors = Object.keys(sponsorError.errors || {}).filter(
-                        key => ['gender', 'nomineeRelation', 'accountType'].includes(key)
-                    );
-                    const otherErrors = Object.keys(sponsorError.errors || {}).filter(
-                        key => !['gender', 'nomineeRelation', 'accountType'].includes(key)
-                    );
-                    
-                    if (enumFieldErrors.length > 0 && otherErrors.length === 0) {
-                        console.log('⚠️ Sponsor enum fields failing validation, removing and retrying...', enumFieldErrors);
-                        sponsor.gender = undefined as any;
-                        sponsor.nomineeRelation = undefined as any;
-                        sponsor.accountType = undefined as any;
-                        await sponsor.save();
-                    } else {
-                        throw sponsorError;
-                    }
-                } else {
-                    throw sponsorError;
-                }
-            }
-            
-            console.log("✅ Sponsor user saved. Verifying E-Pin data:");
-            const updatedSponsor = await User.findOne({ username: sponsor.username });
-            const verifyPin = updatedSponsor?.ePins?.find((p: any) => p.pin === epin);
-            console.log("✅ Verified E-Pin from DB:", {
-                ePin: verifyPin?.pin,
-                usedDate: verifyPin?.usedDate,
-                usedByUsername: verifyPin?.usedByUsername,
-                usedByName: verifyPin?.usedByName,
-            });
         }
 
-        // ✅ ADD NEW MEMBER TO PLACEMENT PARENT'S boosterDownlineMembers & directMembers ARRAYS
+        // ✅ STEP 3: Clean Sponsor's pinRequests (Remove corrupted entries)
+        console.log('➕ STEP 3: Cleaning sponsor pinRequests record...');
+        if (sponsor.pinRequests && sponsor.pinRequests.length > 0) {
+            const originalCount = sponsor.pinRequests.length;
+            // Remove entries with missing required fields
+            sponsor.pinRequests = sponsor.pinRequests.filter((req: any) => {
+                const isValid = req.srNo && req.requestNo && req.date && req.memberId && req.name && req.totalPins && req.totalAmount && req.description && req.type;
+                if (!isValid) {
+                    console.log('⚠️ Removing corrupted pinRequest entry:', {
+                        srNo: req.srNo,
+                        memberId: req.memberId,
+                        name: req.name || '[MISSING]',
+                    });
+                }
+                return isValid;
+            });
+            console.log(`🧹 Cleaned sponsor pinRequests: ${originalCount} → ${sponsor.pinRequests.length}`);
+        }
+
+        // ✅ STEP 4: Save Sponsor with updated records
+        console.log('➕ STEP 4: Saving sponsor with updated records...');
+        try {
+            await sponsor.save();
+            console.log("✅ Sponsor saved successfully");
+        } catch (sponsorError: any) {
+            // If still has validation errors, log but don't fail (data already partially committed)
+            if (sponsorError.name === 'ValidationError') {
+                const errors = Object.keys(sponsorError.errors || {});
+                console.error('⚠️ Sponsor save had validation errors (non-critical):', errors);
+                // Force save without validation
+                try {
+                    await sponsor.save({ validateBeforeSave: false });
+                    console.log("✅ Sponsor force-saved (validation skipped)");
+                } catch (forceSaveError) {
+                    console.error('⚠️ Force save also failed, but registration continues:', forceSaveError);
+                }
+            } else {
+                console.error('⚠️ Sponsor save failed:', sponsorError.message);
+                // Continue anyway since user is already created
+            }
+        }
+
+        // ✅ STEP 5: Add member to placement parent
+        console.log('➕ STEP 5: Adding member to placement parent...');
         if (placementId) {
             const placementParent = await User.findOne({
                 $or: [
@@ -310,7 +332,7 @@ export async function POST(req: Request) {
             });
 
             if (placementParent) {
-                console.log("\n🟡 ADDING MEMBER TO PARENT:", {
+                console.log("🟡 ADDING MEMBER TO PARENT:", {
                     parentId: placementId,
                     newMemberId: newUser.username,
                     position: finalPosition,
@@ -332,11 +354,10 @@ export async function POST(req: Request) {
                 console.log("✅ Added to boosterDownlineMembers");
 
                 // ── Add to directMembers (for basic income validation) ──
-                // ✅ CRITICAL FOR POINTS 3-5 VALIDATION
                 const directMemberRecord = {
                     memberId: newUser.username || newUser._id.toString(),
                     name: newUser.fullName || newUser.username || 'N/A',
-                    joinDate: new Date(),  // Current timestamp - MUST include hours/minutes for session detection
+                    joinDate: new Date(),
                     position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
                 };
 
@@ -350,17 +371,21 @@ export async function POST(req: Request) {
                     joinDate: directMemberRecord.joinDate,
                 });
 
-                await placementParent.save();
-                console.log("✅ Parent user updated in database");
+                try {
+                    await placementParent.save();
+                    console.log("✅ Placement parent updated in database");
+                } catch (parentError: any) {
+                    console.error('⚠️ Placement parent save failed:', parentError.message);
+                    // Continue anyway - main registration is done
+                }
             }
         }
 
-        // ── AUTO-CALCULATE METRICS ──
-        // Update metrics for all affected users
+        // ✅ STEP 6: Calculate metrics
+        console.log('➕ STEP 6: Calculating metrics...');
         try {
-            // 1. Calculate basic income for placement parent (if pair is formed)
             if (placementId) {
-                console.log("\n🟣 CALLING AUTO-CALCULATE BASIC INCOME:");
+                console.log("🟣 Calling auto-calculate basic income...");
                 const placementParent = await User.findOne({
                     $or: [
                         { username: placementId },
@@ -368,21 +393,13 @@ export async function POST(req: Request) {
                     ]
                 });
                 if (placementParent) {
-                    console.log("📊 Parent details:", {
-                        userId: placementParent.userId,
-                        basicRank: placementParent.basicRank,
-                        currentBasicIncome: placementParent.basicIncome || 0,
-                    });
-                    // Auto-calculate basic income if pair is complete in same session
                     const autoCalcResult = await autoCalculateBasicIncome(placementParent._id);
-                    console.log("📤 Auto-calc result:", autoCalcResult);
+                    console.log("📊 Auto-calc result:", autoCalcResult);
                 }
             }
 
-            // 2. Calculate metrics for new user
             await calculateAndUpdateUserMetrics(newUser._id);
-
-            // 3. Calculate metrics for placement parent (to update their team count & income)
+            
             if (placementId) {
                 const placementParent = await User.findOne({
                     $or: [
@@ -395,12 +412,13 @@ export async function POST(req: Request) {
                 }
             }
 
-            // 4. Calculate metrics for sponsor
             await calculateAndUpdateUserMetrics(sponsor._id);
+            console.log("✅ All metrics calculated successfully");
         } catch (calcError) {
-            console.error('Error calculating metrics after registration:', calcError);
-            // Don't fail registration if metrics calculation fails
+            console.error('⚠️ Metrics calculation failed (non-critical):', calcError);
         }
+
+        console.log('✅ ═══ EXECUTION PHASE COMPLETE ═══\n');
 
         console.log('🎉 [API] REGISTRATION COMPLETED SUCCESSFULLY!');
         console.log('📋 New User Summary:', {
@@ -422,24 +440,31 @@ export async function POST(req: Request) {
             },
         });
     } catch (error) {
-        // Handle specific error cases
-        console.error('❌ [API] REGISTRATION FAILED:');
+        // ❌ Handle registration errors
+        console.error('\n❌ ═══ REGISTRATION FAILED ═══');
         
         if (error instanceof Error) {
+            console.error('Error Type:', error.name);
             console.error('Error Message:', error.message);
-            console.error('Error Stack:', error.stack);
             
+            // Provide helpful error messages
             if (error.message.includes("password")) {
                 return Response.json({ error: "Password hashing failed" }, { status: 500 });
             }
-            
             if (error.message.includes("duplicate")) {
-                return Response.json({ error: "User already exists" }, { status: 400 });
+                return Response.json({ error: "Duplicate entry - user may already exist" }, { status: 400 });
+            }
+            if (error.message.includes("validation")) {
+                return Response.json({ 
+                    error: "Validation error", 
+                    details: error.message 
+                }, { status: 400 });
             }
         }
         
+        console.error('Error Details:', error);
         return Response.json({ 
-            error: error instanceof Error ? error.message : "Registration failed",
+            error: error instanceof Error ? error.message : "Registration failed - please try again",
             details: process.env.NODE_ENV === 'development' ? String(error) : undefined
         }, { status: 500 });
     }

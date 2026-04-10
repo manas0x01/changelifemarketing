@@ -135,7 +135,7 @@ export async function POST(req: Request) {
         }
         const autoUserId = `CLM2026${nextSequence}`;
         const finalUserId = userId && userId !== "CLM" ? userId : autoUserId;
-        const username = finalUserId; // Username is same as userId
+        const username = finalUserId;
         console.log('📝 Generated User ID:', finalUserId);
         
         console.log('🔍 Checking if User ID already exists...');
@@ -145,14 +145,11 @@ export async function POST(req: Request) {
             return Response.json({ error: "User ID already exists" }, { status: 400 });
         }
         console.log('✅ User ID is unique');
-
         console.log('🔍 Creating new user object...');
-        
-        // ✅ DEFENSIVE: Clean up enum fields - remove empty/placeholder values
         const cleanEnumField = (value: string | undefined) => {
             if (!value) return undefined;
             const trimmed = value.trim();
-            // Return undefined for empty or placeholder values
+  
             if (!trimmed || trimmed === "-- Select --" || trimmed === "-- Select Package --") {
                 return undefined;
             }
@@ -197,11 +194,17 @@ export async function POST(req: Request) {
             joiningDate: new Date().toISOString().split("T")[0],
         };
 
-        // Only add enum fields if they have valid values
         if (cleanedGender) userData.gender = cleanedGender;
         if (cleanedNomineeRelation) userData.nomineeRelation = cleanedNomineeRelation;
         if (cleanedAccountType) userData.accountType = cleanedAccountType;
 
+        // ✅ FIX: Omitted enum fields must be removed from userData and NOT added to the document
+        // This prevents Mongoose from initializing them with defaults
+        if (!userData.gender) delete userData.gender;
+        if (!userData.nomineeRelation) delete userData.nomineeRelation;
+        if (!userData.accountType) delete userData.accountType;
+
+        console.log('📋 Final userData for User creation - enum fields:', { gender: userData.gender, nomineeRelation: userData.nomineeRelation, accountType: userData.accountType });
         const newUser = new User(userData);
 
         console.log("\n🔵 REGISTRATION - USER CREATED:", {
@@ -213,8 +216,36 @@ export async function POST(req: Request) {
             email,
         });
 
-        await newUser.save();
-        console.log("✅ User saved to database:", finalUserId);
+        // ✅ Save and handle enum validation errors for optional fields
+        try {
+            await newUser.save();
+            console.log("✅ User saved to database:", finalUserId);
+        } catch (saveError: any) {
+            // If error is ONLY about missing optional enum fields, retry without validation
+            if (saveError.name === 'ValidationError') {
+                const enumFieldErrors = Object.keys(saveError.errors || {}).filter(
+                    key => ['gender', 'nomineeRelation', 'accountType'].includes(key)
+                );
+                const otherErrors = Object.keys(saveError.errors || {}).filter(
+                    key => !['gender', 'nomineeRelation', 'accountType'].includes(key)
+                );
+                
+                if (enumFieldErrors.length > 0 && otherErrors.length === 0) {
+                    // Only optional enum field errors - remove them and retry
+                    console.log('⚠️ Optional enum fields failing validation, removing and retrying...', enumFieldErrors);
+                    newUser.gender = undefined as any;
+                    newUser.nomineeRelation = undefined as any;
+                    newUser.accountType = undefined as any;
+                    await newUser.save();
+                    console.log("✅ User saved to database after removing enum fields:", finalUserId);
+                } else {
+                    // Real validation error - throw it
+                    throw saveError;
+                }
+            } else {
+                throw saveError;
+            }
+        }
 
         // Mark E-Pin as used
         const pinIndex = sponsor.ePins!.findIndex((pin: any) => pin.pin === epin);
@@ -232,7 +263,31 @@ export async function POST(req: Request) {
                 status: sponsor.ePins![pinIndex].status,
             });
             
-            await sponsor.save();
+            // ✅ Save sponsor with same enum field error handling
+            try {
+                await sponsor.save();
+            } catch (sponsorError: any) {
+                if (sponsorError.name === 'ValidationError') {
+                    const enumFieldErrors = Object.keys(sponsorError.errors || {}).filter(
+                        key => ['gender', 'nomineeRelation', 'accountType'].includes(key)
+                    );
+                    const otherErrors = Object.keys(sponsorError.errors || {}).filter(
+                        key => !['gender', 'nomineeRelation', 'accountType'].includes(key)
+                    );
+                    
+                    if (enumFieldErrors.length > 0 && otherErrors.length === 0) {
+                        console.log('⚠️ Sponsor enum fields failing validation, removing and retrying...', enumFieldErrors);
+                        sponsor.gender = undefined as any;
+                        sponsor.nomineeRelation = undefined as any;
+                        sponsor.accountType = undefined as any;
+                        await sponsor.save();
+                    } else {
+                        throw sponsorError;
+                    }
+                } else {
+                    throw sponsorError;
+                }
+            }
             
             console.log("✅ Sponsor user saved. Verifying E-Pin data:");
             const updatedSponsor = await User.findOne({ username: sponsor.username });

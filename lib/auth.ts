@@ -8,6 +8,13 @@ declare module "next-auth" {
     role?: string;
     username?: string;
     fullName?: string;
+    mobileNo?: string;
+    userId?: string;
+    sponsorId?: string;
+    placementId?: string;
+    placementPosition?: 'left' | 'right';
+    memberType?: string;
+    registeredPackage?: string;
   }
   interface Session {
     user: {
@@ -16,6 +23,14 @@ declare module "next-auth" {
       name?: string;
       username?: string;
       role?: string;
+      fullName?: string;
+      mobileNo?: string;
+      userId?: string;
+      sponsorId?: string;
+      placementId?: string;
+      placementPosition?: 'left' | 'right';
+      memberType?: string;
+      registeredPackage?: string;
     }
   }
 }
@@ -27,6 +42,14 @@ declare module "next-auth/jwt" {
     name?: string;
     username?: string;
     role?: string;
+    fullName?: string;
+    mobileNo?: string;
+    userId?: string;
+    sponsorId?: string;
+    placementId?: string;
+    placementPosition?: 'left' | 'right';
+    memberType?: string;
+    registeredPackage?: string;
   }
 }
 
@@ -65,6 +88,14 @@ export const authOptions: NextAuthOptions = {
             name: user.fullName || user.username,
             username: user.username,
             role: user.role,
+            fullName: user.fullName,
+            mobileNo: user.mobileNo,
+            userId: user.userId,
+            sponsorId: user.sponsorId,
+            placementId: user.placementId,
+            placementPosition: user.placementPosition,
+            memberType: user.memberType,
+            registeredPackage: user.registeredPackage,
           };
         } catch (error) {
           throw new Error("Authorization failed");
@@ -90,6 +121,14 @@ export const authOptions: NextAuthOptions = {
         token.name = user.name || undefined;
         token.username = user.username;
         token.role = user.role;
+        token.fullName = user.fullName;
+        token.mobileNo = user.mobileNo;
+        token.userId = user.userId;
+        token.sponsorId = user.sponsorId;
+        token.placementId = user.placementId;
+        token.placementPosition = user.placementPosition;
+        token.memberType = user.memberType;
+        token.registeredPackage = user.registeredPackage;
       }
       return token;
     },
@@ -100,6 +139,14 @@ export const authOptions: NextAuthOptions = {
         session.user.name = token.name as string;
         session.user.username = token.username as string;
         session.user.role = token.role as string;
+        session.user.fullName = token.fullName as string;
+        session.user.mobileNo = token.mobileNo as string;
+        session.user.userId = token.userId as string;
+        session.user.sponsorId = token.sponsorId as string;
+        session.user.placementId = token.placementId as string;
+        session.user.placementPosition = token.placementPosition as 'left' | 'right';
+        session.user.memberType = token.memberType as string;
+        session.user.registeredPackage = token.registeredPackage as string;
       }
       return session;
     },

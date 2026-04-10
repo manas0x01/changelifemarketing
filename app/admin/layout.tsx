@@ -1,7 +1,5 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import User from "@/models/User";
-import { connectDB } from "@/lib/database";
 import { redirect } from "next/navigation";
 
 interface AdminLayoutProps {
@@ -10,32 +8,28 @@ interface AdminLayoutProps {
 
 export default async function AdminLayout({ children }: AdminLayoutProps) {
   const session = await getServerSession(authOptions);
+  
+  console.log('🔍 [ADMIN-LAYOUT] Session check:', { 
+    hasSession: !!session, 
+    username: session?.user?.username,
+    role: session?.user?.role,
+    email: session?.user?.email 
+  });
 
-  if (!session?.user?.email) {
+  // First check: must have a session with username
+  if (!session?.user?.username) {
+    console.log('❌ [ADMIN-LAYOUT] No session or username');
     redirect("/auth/login");
   }
 
-  await connectDB();
-  
-  // Look up user by username (primary identifier) since email might be empty
-  const userIdentifier = session.user?.username || session.user?.email;
-  console.log('🔍 [ADMIN-LAYOUT] Looking up user by identifier:', userIdentifier);
-  
-  const user = await User.findOne({
-    $or: [
-      { username: userIdentifier },
-      { email: userIdentifier }
-    ]
-  });
-
-  console.log('👤 [ADMIN-LAYOUT] Found User:', user?.username, '| Role:', user?.role);
-
-  if (!user || user.role !== "admin") {
-    console.log('❌ [ADMIN-LAYOUT] Access denied - Not admin or user not found');
+  // Second check: check role from session first (fastest)
+  if (session.user?.role !== "admin") {
+    console.log('❌ [ADMIN-LAYOUT] Not admin - Session role:', session.user?.role);
     redirect("/dashboard");
   }
-  
-  console.log('✅ [ADMIN-LAYOUT] Admin access granted for:', user.username);
+
+  // If we get here, role is already verified from session
+  console.log('✅ [ADMIN-LAYOUT] Admin access granted for:', session.user.username, '| Role from session:', session.user.role);
 
   return <>{children}</>;
 }

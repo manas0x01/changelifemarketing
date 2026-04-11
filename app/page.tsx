@@ -155,7 +155,7 @@ export default function HomePage() {
             transition={{ duration: 1, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col sm:flex-row gap-6 justify-center items-center"
           >
-            <Link href="/join-now" className="group relative overflow-hidden rounded-none bg-[#C9A84C] px-10 py-5 transition-all hover:bg-[#FFFFFF]">
+            <Link href="/contact" className="group relative overflow-hidden rounded-none bg-[#C9A84C] px-10 py-5 transition-all hover:bg-[#FFFFFF]">
               <div className="absolute inset-0 w-0 bg-[#FFFFFF] transition-all duration-250 ease-out group-hover:w-full"></div>
               <span className="relative flex items-center gap-3 font-['Roboto'] font-semibold text-[1.125rem] text-[#0A6E5A] group-hover:text-[#0A6E5A]">
                 Get Started
@@ -163,7 +163,7 @@ export default function HomePage() {
               </span>
             </Link>
 
-            <Link href="/business-plan" className="group flex items-center gap-3 px-10 py-5 border border-[#FFFFFF]/30 hover:border-[#FFFFFF] transition-colors rounded-none backdrop-blur-sm">
+            <Link href="https://youtu.be/hhJbAEcvm9k?si=DIbidN-ORtv4zsNt" className="group flex items-center gap-3 px-10 py-5 border border-[#FFFFFF]/30 hover:border-[#FFFFFF] transition-colors rounded-none backdrop-blur-sm">
               <div className="w-10 h-10 rounded-full border border-[#FFFFFF] flex items-center justify-center group-hover:bg-[#FFFFFF] group-hover:text-[#0A6E5A] transition-colors text-[#FFFFFF]">
                 <Play className="w-4 h-4 ml-1" />
               </div>

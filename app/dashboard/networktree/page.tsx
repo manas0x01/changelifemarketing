@@ -5,14 +5,14 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
-const AR   = 26; 
-const NW   = 130;  
-const NH   = 44; 
-const BS   = 44; 
-const SW   = 72; 
+const AR   = 26;
+const NW   = 130;
+const NH   = 44;
+const BS   = 44;
+const SW   = 72;
 const HG   = 120;
-const VS   = 158; 
-const MAXD = 1.5;  
+const VS   = 158;
+const MAXD = 1.5;
 
 type NodeType = "active" | "booster" | "open" | "close";
 
@@ -30,6 +30,7 @@ interface MNode {
   leftCount  ?: number;
   rightCount ?: number;
   totalCount ?: number;
+  totalDirect?: { left: number; right: number };
   children   ?: MNode[];
 }
 
@@ -52,12 +53,10 @@ const isSlot = (n: MNode) => n.type === "open" || n.type === "close";
 
 function treeW(node: MNode | null, depth: number): number {
   if (!node || node.type === "close") return SW;
-
   if (isSlot(node)) {
     return depth < MAXD ? SW + HG + SW : SW;
   }
   if (depth >= MAXD) return NW;
-
   const ch = node.children ?? [];
   const L  = ch.find(c => c.position === "left")  ?? null;
   const R  = ch.find(c => c.position === "right") ?? null;
@@ -67,13 +66,6 @@ function treeW(node: MNode | null, depth: number): number {
   return Math.max(NW, lw + HG + rw);
 }
 
-/* ═══════════════════════════════════════════════════════
-   LAYOUT BUILDER
-   Rule:
-   • Real member  → empty children are "open"
-   • Open slot    → its children are "close"
-   • Close slot   → LEAF, no children rendered
-═══════════════════════════════════════════════════════ */
 function buildLayout(
   node    : MNode,
   cx      : number,
@@ -84,18 +76,15 @@ function buildLayout(
   const ln: LayoutNode = {
     node, x: cx, y: cy, depth, ch: [], slot: virtSlot || isSlot(node),
   };
-
   if (depth > MAXD) return ln;
-
   if (node.type === "close") return ln;
-
   if (isSlot(node) && node.userId) return ln;
 
   const ch = node.children ?? [];
   const L  = ch.find(c => c.position === "left")  ?? null;
   const R  = ch.find(c => c.position === "right") ?? null;
   const cd = depth + 1;
-  const slotT: NodeType = "open"; 
+  const slotT: NodeType = "open";
 
   const lNode: MNode = L ?? {
     id: `vl-${node.id}`, name: slotT, userId: "", type: slotT, position: "left",
@@ -163,15 +152,16 @@ function AvatarBooster({ x, y }: { x: number; y: number }) {
   );
 }
 
-/* ═══════════════════════════════════════════════════════
-   TREE SVG RENDERER
-═══════════════════════════════════════════════════════ */
 function TreeSVG({
   root,
   onNodeClick,
+  onNodeHover,
+  onNodeLeave,
 }: {
   root        : MNode | null;
   onNodeClick : (node: MNode, e: React.MouseEvent) => void;
+  onNodeHover : (node: MNode, e: React.MouseEvent) => void;
+  onNodeLeave : () => void;
 }) {
   if (!root) {
     return (
@@ -191,12 +181,12 @@ function TreeSVG({
 
   return (
     <svg
-      width={svgW}
-      height={svgH}
-      style={{ minWidth: svgW, display: "block" }}
+      viewBox={`0 0 ${svgW} ${svgH}`}
+      width="100%"
+      height="auto"
+      style={{ display: "block" }}
       xmlns="http://www.w3.org/2000/svg"
     >
-      {/* ── Connector lines ── */}
       {edges.map((e, i) => {
         const mid = (e.y1 + e.y2) / 2;
         return (
@@ -210,17 +200,15 @@ function TreeSVG({
         );
       })}
 
-      {/* ── Nodes ── */}
       {nodes.map((ln, i) => {
         const { node: n, x, y, slot, depth } = ln;
 
-        /* ── Open / Close slot ── */
         if (slot) {
-          const isOpen  = n.type === "open";
-          const col     = isOpen ? "#27ae60" : "#e53935";
-          const bg      = isOpen ? "#e8f5e9" : "#ffebee";
-          const half    = BS / 2;
-          const label   = isOpen ? "Open" : "Close";
+          const isOpen = n.type === "open";
+          const col    = isOpen ? "#27ae60" : "#e53935";
+          const bg     = isOpen ? "#e8f5e9" : "#ffebee";
+          const half   = BS / 2;
+          const label  = isOpen ? "Open" : "Close";
 
           return (
             <g
@@ -230,27 +218,15 @@ function TreeSVG({
                 if (isOpen) { e.stopPropagation(); onNodeClick(n, e); }
               }}
             >
-              {/* ── Square box — NO text inside ── */}
               <rect
-                x={x - half}
-                y={y - half}
-                width={BS}
-                height={BS}
-                rx="10"
-                fill={bg}
-                stroke={col}
-                strokeWidth="3.5"
+                x={x - half} y={y - half}
+                width={BS} height={BS} rx="10"
+                fill={bg} stroke={col} strokeWidth="3.5"
               />
-
-              {/* ── Label BELOW the box ── */}
               <text
-                x={x}
-                y={y + half + 16}
-                textAnchor="middle"
-                fontSize="12"
-                fontWeight="700"
-                fill={col}
-                fontFamily="Poppins,sans-serif"
+                x={x} y={y + half + 16}
+                textAnchor="middle" fontSize="12" fontWeight="700"
+                fill={col} fontFamily="Poppins,sans-serif"
               >
                 {label}
               </text>
@@ -258,21 +234,20 @@ function TreeSVG({
           );
         }
 
-        /* ── Member node ── */
-        const booster    = n.type === "booster";
+        const booster = n.type === "booster";
         const cardTop = y + AR + 4;
 
         return (
           <g
             key={`n-${i}`}
-            onClick={e => onNodeClick(n, e)}
+            onClick={e => { e.stopPropagation(); onNodeClick(n, e); }}
+            onMouseEnter={e => { e.stopPropagation(); onNodeHover(n, e); }}
+            onMouseLeave={e => { e.stopPropagation(); onNodeLeave(); }}
             style={{ cursor: "pointer" }}
             role="button"
             aria-label={`View details for ${n.id}`}
           >
             <circle cx={x} cy={y} r={AR + 8} fill="transparent"/>
-
-            {/* Glow ring on root */}
             {depth === 0 && (
               <circle
                 cx={x} cy={y} r={AR + 5}
@@ -282,10 +257,7 @@ function TreeSVG({
                 opacity="0.5"
               />
             )}
-
             {booster ? <AvatarBooster x={x} y={y}/> : <AvatarActive x={x} y={y}/>}
-
-            {/* Name card */}
             <rect
               x={x - NW / 2} y={cardTop}
               width={NW} height={NH} rx="8"
@@ -315,7 +287,6 @@ function TreeSVG({
   );
 }
 
-/* ── Skeleton loaders ── */
 function SkeletonNode() {
   return (
     <g>
@@ -333,7 +304,13 @@ function TreeSkeletonSVG() {
     { x: 280, y: 310 }, { x: 360, y: 310 },
   ];
   return (
-    <svg width="520" height="400" style={{ minWidth: 520, display: "block" }} xmlns="http://www.w3.org/2000/svg">
+    <svg
+      viewBox="0 0 520 400"
+      width="100%"
+      height="auto"
+      style={{ display: "block" }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
       {[
         { x1:200,y1:90,  x2:80,  y2:130 },
         { x1:200,y1:90,  x2:320, y2:130 },
@@ -365,10 +342,17 @@ function FilterSkeleton() {
   );
 }
 
-/* ═══════════════════════════════════════════════════════
-   MEMBER POPUP
-═══════════════════════════════════════════════════════ */
-function MemberPopup({ state, onClose }: { state: PopupState; onClose: () => void }) {
+function MemberPopup({
+  state,
+  onClose,
+  onMouseEnter,
+  onMouseLeave,
+}: {
+  state        : PopupState;
+  onClose      : () => void;
+  onMouseEnter?: () => void;
+  onMouseLeave?: () => void;
+}) {
   const { node: n, left, top } = state;
   const booster = n.type === "booster";
 
@@ -381,13 +365,15 @@ function MemberPopup({ state, onClose }: { state: PopupState; onClose: () => voi
   ];
 
   const countBadges = [
-    { label: "LEFT",  val: n.leftCount  ?? 0, col: "#1565c0" },
-    { label: "RIGHT", val: n.rightCount ?? 0, col: "#2e7d32" },
-    { label: "TOTAL", val: n.totalCount ?? 0, col: "#6a1b9a" },
+    { label: "LEFT",  val: n.totalDirect?.left  ?? 0, col: "#1565c0" },
+    { label: "RIGHT", val: n.totalDirect?.right ?? 0, col: "#2e7d32" },
+    { label: "TOTAL", val: (n.totalDirect?.left ?? 0) + (n.totalDirect?.right ?? 0), col: "#6a1b9a" },
   ];
 
   return (
     <div
+      onMouseEnter={onMouseEnter}
+      onMouseLeave={onMouseLeave}
       style={{
         position:"fixed", left, top,
         zIndex:2200, width:308,
@@ -396,6 +382,7 @@ function MemberPopup({ state, onClose }: { state: PopupState; onClose: () => voi
         border:`2.5px solid ${booster ? "#f9a825" : "#26a69a"}`,
         fontFamily:"Poppins,sans-serif",
         animation:"ntPopIn .2s cubic-bezier(.16,1,.3,1)",
+        maxWidth:"calc(100vw - 20px)",
       }}
       onClick={e => e.stopPropagation()}
     >
@@ -458,9 +445,6 @@ function MemberPopup({ state, onClose }: { state: PopupState; onClose: () => voi
   );
 }
 
-/* ═══════════════════════════════════════════════════════
-   MAIN PAGE
-═══════════════════════════════════════════════════════ */
 export default function NetworkTreePage() {
   const { data: session }           = useSession();
   const router                      = useRouter();
@@ -473,7 +457,6 @@ export default function NetworkTreePage() {
   const [popup,     setPopup]       = useState<PopupState | null>(null);
   const scrollRef                   = useRef<HTMLDivElement>(null);
 
-  /* ── Fetch tree ── */
   const fetchTree = async (uid: string) => {
     const trimmed = uid.trim();
     if (!trimmed) { setError("Please enter a Username"); return; }
@@ -498,6 +481,7 @@ export default function NetworkTreePage() {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (session?.user?.username && !autoLoaded) {
       setAutoLoaded(true);
@@ -506,62 +490,144 @@ export default function NetworkTreePage() {
     }
   }, [session?.user?.username, autoLoaded]);
 
-  const handleNodeClick = (n: MNode, e: React.MouseEvent) => {
+  const handleSlotClick = (n: MNode, e: React.MouseEvent) => {
     e.stopPropagation();
-
-    if (isSlot(n)) {
-      if (n.type === "open") {
-        const parentId = n.id.replace(/^v[lr]-/, "");
-        router.push(`/dashboard/registration?placementId=${parentId}`);
-      }
-      return;
+    if (n.type === "open") {
+      const parentId = n.id.replace(/^v[lr]-/, "");
+      router.push(`/dashboard/registration?placementId=${parentId}`);
     }
+  };
+
+  /* ── Hover refs for stable popup ── */
+  const isHoveringRef      = useRef(false);           // on node
+  const isOnPopupRef       = useRef(false);           // on popup card
+  const popupShowTimeRef   = useRef<number | null>(null);
+  const closeTimeoutRef    = useRef<NodeJS.Timeout | null>(null);
+  const fetchIdRef         = useRef<string | null>(null);  // Track current fetch
+
+  const handleNodeHover = (n: MNode, e: React.MouseEvent) => {
+    if (isSlot(n)) return;
+    e.stopPropagation();
+    
+    // New hover - cancel old pending close and set new fetch ID
+    const currentFetchId = `${n.userId}-${Date.now()}`;
+    fetchIdRef.current = currentFetchId;
+    console.log(`[HOVER] Node hovered: ${n.id} (${n.name}) - fetchId: ${currentFetchId}`);
+    
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+      console.log(`[CANCEL] Cancelled pending close`);
+    }
+
+    isHoveringRef.current = true;
+
     const vw = window.innerWidth, vh = window.innerHeight;
     const pw = 308, ph = 330;
     const box = (e.currentTarget as Element)?.getBoundingClientRect();
-    
-    if (!box) {
-      console.error("Could not get element bounds");
-      return;
-    }
+    if (!box) return;
+
     let lft = box.left + box.width / 2 - pw / 2;
-    let top = box.bottom + 10;
+    let top  = box.bottom + 10;
     if (lft + pw > vw - 10) lft = vw - pw - 10;
     if (lft < 10)           lft = 10;
     if (top + ph > vh - 10) top = box.top - ph - 10;
     if (top < 10)           top = 10;
-    
+
     const fetchMemberCard = async () => {
       try {
-        const res = await fetch("/api/user/member-card", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: n.userId }),
+        const fetchStart = performance.now();
+        const res  = await fetch("/api/user/member-card", {
+          method:"POST",
+          headers:{ "Content-Type":"application/json" },
+          body:JSON.stringify({ userId: n.userId }),
         });
         const data = await res.json();
-        
-        if (data.success && data.card) {
+        const fetchEnd = performance.now();
+        console.log(`[FETCH] Fetch completed in ${(fetchEnd - fetchStart).toFixed(1)}ms for ${n.id} - fetchId: ${currentFetchId}`);
+
+        // Only show if this is still the current fetch AND hovering
+        if (fetchIdRef.current === currentFetchId && isHoveringRef.current && data.success && data.card) {
           const card = data.card;
-          const updatedNode: MNode = {
-            ...n,
-            sponsorId: card.sponsorId,
-            joiningDate: card.joiningDate,
-            package: card.package,
-            leftId: card.leftId,
-            rightId: card.rightId,
-            leftCount: card.leftCount,
-            rightCount: card.rightCount,
-            totalCount: card.totalCount,
-          };
-          
-          setPopup({ node: updatedNode, left: lft, top });
+          popupShowTimeRef.current = Date.now();
+          console.log(`[SHOW] Card showing for ${n.id} at ${new Date().toLocaleTimeString()}`);
+          setPopup({
+            node: {
+              ...n,
+              sponsorId  : card.sponsorId,
+              joiningDate: card.joiningDate,
+              package    : card.package,
+              leftId     : card.leftId,
+              rightId    : card.rightId,
+              leftCount  : card.leftCount,
+              rightCount : card.rightCount,
+              totalCount : card.totalCount,
+              totalDirect: card.totalDirect || { left: 0, right: 0 },
+            },
+            left: lft,
+            top,
+          });
+        } else {
+          if (fetchIdRef.current !== currentFetchId) {
+            console.log(`[SKIP] Card NOT shown - newer fetch already in progress`);
+          } else {
+            console.log(`[SKIP] Card NOT shown - hovering=${isHoveringRef.current}, success=${data.success}`);
+          }
         }
       } catch (err) {
         console.error("Failed to fetch member card:", err);
       }
     };
-    
     fetchMemberCard();
+  };
+
+  const handleNodeLeave = () => {
+    console.log(`[LEAVE] Left node - debouncing close for 300ms`);
+    
+    // Debounce close - wait 300ms to allow slow fetches (some take 200+ms) to complete
+    closeTimeoutRef.current = setTimeout(() => {
+      isHoveringRef.current = false;
+      console.log(`[DEBOUNCE-TIMEOUT] 300ms passed, marking not hovering, closing if on popup: ${!isOnPopupRef.current}`);
+      if (!isOnPopupRef.current) {
+        if (popup && popupShowTimeRef.current) {
+          const duration = Date.now() - popupShowTimeRef.current;
+          console.log(`[CLOSE] Card closed after ${duration}ms`);
+        }
+        setPopup(null);
+      }
+      closeTimeoutRef.current = null;
+    }, 300);
+  };
+
+  const handlePopupEnter = () => {
+    isOnPopupRef.current = true;
+    console.log(`[POPUP-ENTER] Cursor on popup`);
+    // Cancel any pending close
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+  };
+
+  const handlePopupLeave = () => {
+    isOnPopupRef.current = false;
+    console.log(`[POPUP-LEAVE] Left popup`);
+    // Close immediately only if not hovering node
+    if (!isHoveringRef.current) {
+      if (popup && popupShowTimeRef.current) {
+        const duration = Date.now() - popupShowTimeRef.current;
+        console.log(`[CLOSE] Card closed after ${duration}ms`);
+      }
+      setPopup(null);
+    }
+  };
+
+  const handleNodeClick = (n: MNode, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isSlot(n)) { handleSlotClick(n, e); return; }
+    setMemberId(n.userId);
+    fetchTree(n.userId);
+    setPopup(null);
   };
 
   const handleRootClick = () => {
@@ -585,25 +651,31 @@ export default function NetworkTreePage() {
 
         .nt-root { font-family:'Poppins',sans-serif; background:#f0f2f5; min-height:100vh; }
 
+        /* ── Breadcrumb ── */
         .nt-bc { padding:10px 16px; font-size:12px; color:#666; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
         .nt-bc a { color:#666; text-decoration:none; }
         .nt-bc a:hover { text-decoration:underline; }
 
+        /* ── Body ── */
         .nt-body { padding:14px 10px 44px; }
         @media(min-width:600px)  { .nt-body { padding:18px 16px 44px; } }
         @media(min-width:1024px) { .nt-body { padding:20px 20px 44px; } }
 
+        /* ── Card ── */
         .nt-card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,0.08); }
 
+        /* ── Header ── */
         .nt-hdr { background:linear-gradient(90deg,#26a69a,#1de9b6); padding:12px 16px;
                   display:flex; align-items:center; justify-content:space-between; }
         .nt-hdr-title { font-size:13px; font-weight:700; color:#fff; letter-spacing:.8px; text-transform:uppercase; }
 
-        .nt-legend { display:flex; align-items:center; justify-content:center; gap:24px;
-                     padding:14px 16px 10px; flex-wrap:wrap; border-bottom:1px solid #f0f0f0; }
-        .nt-leg-item { display:flex; flex-direction:column; align-items:center; gap:6px; }
+        /* ── Legend ── */
+        .nt-legend { display:flex; align-items:center; justify-content:center; gap:18px;
+                     padding:12px 16px 10px; flex-wrap:wrap; border-bottom:1px solid #f0f0f0; }
+        .nt-leg-item { display:flex; flex-direction:column; align-items:center; gap:5px; }
         .nt-leg-lbl  { font-size:11px; color:#555; font-weight:500; }
 
+        /* ── Filter ── */
         .nt-filter { padding:12px 14px 14px; }
         .nt-f-row  { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; }
         .nt-f-grp  { display:flex; flex-direction:column; gap:4px; flex:1; min-width:190px; }
@@ -623,17 +695,21 @@ export default function NetworkTreePage() {
         .nt-err { color:#c62828; font-size:12px; margin-top:8px; padding:7px 12px;
                   background:#ffebee; border-radius:5px; border-left:3px solid #c62828; }
 
+        /* ── Tree wrapper ── */
         .nt-tree-wrap { display:flex; flex-direction:column; border-top:1px solid #e8e8e8; }
         @media(min-width:768px) { .nt-tree-wrap { flex-direction:row; } }
 
+        /* ── Sidebar ── */
         .nt-sidebar { width:100%; padding:12px 14px; border-bottom:1px solid #e8e8e8;
                       display:flex; align-items:center; gap:12px; }
         @media(min-width:768px) { .nt-sidebar { width:160px; flex-direction:column; align-items:center;
-                                                padding:18px 12px; border-right:1px solid #e8e8e8; border-bottom:none; flex-shrink:0; } }
+                                                padding:18px 12px; border-right:1px solid #e8e8e8;
+                                                border-bottom:none; flex-shrink:0; } }
         @media(min-width:1024px) { .nt-sidebar { width:188px; padding:22px 14px; } }
 
-        .nt-sb-av { width:58px; height:58px; border-radius:50%; background:#e3f2fd; border:2.5px solid #90caf9;
-                    display:flex; align-items:center; justify-content:center; flex-shrink:0; overflow:hidden; }
+        .nt-sb-av { width:58px; height:58px; border-radius:50%; background:#e3f2fd;
+                    border:2.5px solid #90caf9; display:flex; align-items:center;
+                    justify-content:center; flex-shrink:0; overflow:hidden; }
         @media(min-width:768px) { .nt-sb-av { width:68px; height:68px; margin-bottom:10px; } }
 
         .nt-sb-lbl { font-size:11px; font-weight:700; color:#1565c0; line-height:1.5; }
@@ -641,22 +717,34 @@ export default function NetworkTreePage() {
         .nt-sb-dot { width:10px; height:10px; border-radius:50%; background:#ff5722; flex-shrink:0; }
         .nt-sb-id  { font-size:12px; font-weight:600; color:#222; word-break:break-all; }
 
-        .nt-canvas { flex:1; overflow:auto; background:linear-gradient(160deg,#1565c0 0%,#0d47a1 100%);
-                     min-height:380px; position:relative;
-                     scrollbar-width:thin; scrollbar-color:#ffa000 #0d47a1; }
-        @media(min-width:768px)  { .nt-canvas { min-height:440px; } }
-        @media(min-width:1024px) { .nt-canvas { min-height:520px; } }
-        .nt-canvas::-webkit-scrollbar       { width:7px; height:7px; }
-        .nt-canvas::-webkit-scrollbar-track { background:#0d47a1; }
-        .nt-canvas::-webkit-scrollbar-thumb { background:#ffa000; border-radius:4px; }
+        /* ── Canvas — NO overflow scroll; SVG scales via viewBox ── */
+        .nt-canvas {
+          flex:1;
+          overflow:hidden;               /* ← KEY: removed 'auto', no scrollbar */
+          background:linear-gradient(160deg,#1565c0 0%,#0d47a1 100%);
+          min-height:500px;
+          position:relative;
+        }
+        @media(min-width:480px)  { .nt-canvas { min-height:520px; } }
+        @media(min-width:768px)  { .nt-canvas { min-height:520px; } }
+        @media(min-width:1024px) { .nt-canvas { min-height:600px; } }
 
-        .nt-canvas-inner { padding:26px 36px 38px; display:inline-block; min-width:100%; }
-        @media(min-width:1024px) { .nt-canvas-inner { padding:32px 44px 44px; } }
+        /* Padding gives breathing room; width:100% so SVG fills it */
+        .nt-canvas-inner {
+          padding:12px 12px 16px;
+          width:100%;
+        }
+          
+        @media(min-width:480px)  { .nt-canvas-inner { padding:16px 20px 24px; } }
+        @media(min-width:600px)  { .nt-canvas-inner { padding:26px 28px 36px; } }
+        @media(min-width:1024px) { .nt-canvas-inner { padding:32px 36px 44px; } }
 
+        /* ── Spinner ── */
         .nt-spin { display:inline-block; width:34px; height:34px;
                    border:4px solid rgba(255,255,255,.25); border-top-color:#fff;
                    border-radius:50%; animation:ntSpin .85s linear infinite; }
 
+        /* ── Overlay (behind popup) ── */
         .nt-overlay { position:fixed; inset:0; z-index:2100; background:transparent; }
       `}</style>
 
@@ -697,19 +785,16 @@ export default function NetworkTreePage() {
                 </svg>
                 <span className="nt-leg-lbl">Booster Id</span>
               </div>
-              {/* Legend slot boxes — same style as tree (empty box, label below) */}
               <div className="nt-leg-item">
                 <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                  <div style={{ width:36, height:36, borderRadius:8, border:"3px solid #e53935",
-                                background:"#ffebee" }}/>
+                  <div style={{ width:36, height:36, borderRadius:8, border:"3px solid #e53935", background:"#ffebee" }}/>
                   <span style={{ fontSize:10.5, fontWeight:700, color:"#e53935" }}>Close</span>
                 </div>
                 <span className="nt-leg-lbl">Closed</span>
               </div>
               <div className="nt-leg-item">
                 <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                  <div style={{ width:36, height:36, borderRadius:8, border:"3px solid #27ae60",
-                                background:"#e8f5e9" }}/>
+                  <div style={{ width:36, height:36, borderRadius:8, border:"3px solid #27ae60", background:"#e8f5e9" }}/>
                   <span style={{ fontSize:10.5, fontWeight:700, color:"#27ae60" }}>Open</span>
                 </div>
                 <span className="nt-leg-lbl">Open</span>
@@ -763,12 +848,17 @@ export default function NetworkTreePage() {
                 </div>
               </div>
 
-              {/* Canvas */}
+              {/* Canvas — no scrollbar, SVG scales via viewBox */}
               <div className="nt-canvas" ref={scrollRef}>
                 <div className="nt-canvas-inner">
                   {loading
                     ? <TreeSkeletonSVG/>
-                    : <TreeSVG root={treeRoot} onNodeClick={handleNodeClick}/>
+                    : <TreeSVG
+                        root={treeRoot}
+                        onNodeClick={handleNodeClick}
+                        onNodeHover={handleNodeHover}
+                        onNodeLeave={handleNodeLeave}
+                      />
                   }
                 </div>
               </div>
@@ -776,11 +866,19 @@ export default function NetworkTreePage() {
           </div>
         </div>
 
-        {/* Popup */}
+        {/* ── Popup — overlay + card with correct pointer-events ── */}
         {popup && (
           <>
+            {/* Transparent full-screen click-away */}
             <div className="nt-overlay" onClick={() => setPopup(null)}/>
-            <MemberPopup state={popup} onClose={() => setPopup(null)}/>
+            
+            {/* Card with mouse handlers */}
+            <MemberPopup
+              state={popup}
+              onClose={() => setPopup(null)}
+              onMouseEnter={handlePopupEnter}
+              onMouseLeave={handlePopupLeave}
+            />
           </>
         )}
       </div>

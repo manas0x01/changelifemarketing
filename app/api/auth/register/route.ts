@@ -412,6 +412,38 @@ export async function POST(req: Request) {
             }
         }
 
+        // ✅ STEP 2B: Update logged-in user's direct count (Left/Right)
+        console.log('➕ STEP 2B: Updating logged-in user\'s direct count...');
+        const positionField = position.toLowerCase() === 'left' ? 'left' : 'right';
+        
+        // Initialize totalDirect if not exists
+        if (!registrationUser.totalDirect) {
+            registrationUser.totalDirect = { left: 0, right: 0 };
+        }
+        
+        const currentCount = registrationUser.totalDirect[positionField] || 0;
+        registrationUser.totalDirect[positionField] = currentCount + 1;
+        
+        console.log(`✅ Updated logged-in user (${registrationUser.username}):`, {
+            position: position,
+            field: positionField,
+            oldCount: currentCount,
+            newCount: registrationUser.totalDirect[positionField],
+        });
+        
+        console.log(`✅ Total Direct updated:`, {
+            left: registrationUser.totalDirect.left,
+            right: registrationUser.totalDirect.right,
+        });
+        
+        // Save updated counts
+        try {
+            await registrationUser.save();
+            console.log("✅ Logged-in user saved with updated direct counts");
+        } catch (countError) {
+            console.error("⚠️ Failed to save direct counts:", countError);
+        }
+
         // ✅ STEP 3: Mark E-PIN as Used in SPONSOR's record (for reference)
         console.log('➕ STEP 3: Marking E-PIN reference in sponsor record...');
         const sponsorPinIndex = sponsor.ePins!.findIndex((pin: any) => pin.pin === epin);

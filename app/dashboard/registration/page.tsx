@@ -31,21 +31,16 @@ export default function NewRegisterPage() {
   const [pinError,     setPinError]     = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activePage,   setActivePage]   = useState<"dashboard" | "profile">("dashboard");
-  
-  // Transaction Password Validation Step
   const [txnPassword,  setTxnPassword]  = useState("");
   const [txnPasswordError, setTxnPasswordError] = useState("");
   const [txnValidating, setTxnValidating] = useState(false);
   const [txnValidated, setTxnValidated] = useState(false);
-  
   const [gender,       setGender]       = useState<"Male"|"Female">("Male");
   const [dobDay,       setDobDay]       = useState("1");
   const [dobMonth,     setDobMonth]     = useState("01");
   const [dobYear,      setDobYear]      = useState("1995");
   const [state,        setState]        = useState("Bihar");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Step 2: Sponsor & Package
   const [sponsorId,    setSponsorId]    = useState("");
   const [sponsorName,  setSponsorName]  = useState("");
   const [sponsorValidated, setSponsorValidated] = useState(false);
@@ -55,7 +50,6 @@ export default function NewRegisterPage() {
   const [availableEPins, setAvailableEPins] = useState<string[]>([]);
   const [selectedEPin, setSelectedEPin] = useState("");
   const [availablePositions, setAvailablePositions] = useState<string[]>(["-- Select --", "Left", "Right"]);
-  // Step 3: Registration Form Fields
   const [fullName,     setFullName]     = useState("");
   const [userId,       setUserId]       = useState("CLM");
   const [userIdError,  setUserIdError]  = useState("");
@@ -95,11 +89,9 @@ export default function NewRegisterPage() {
           setPinError(data.message || 'First Buy The Pin Then Create A Account');
           toast.error(data.message || 'No pins available');
         } else {
-          console.log('✅ PINs are available');
           setHasPins(true);
         }
       } catch (error) {
-        console.error('❌ Error checking PIN availability:', error);
         setHasPins(false);
         setPinError('Error checking pin availability');
         toast.error('Error checking pin availability');
@@ -119,40 +111,22 @@ export default function NewRegisterPage() {
       toast.error("Transaction password is required");
       return;
     }
-
     setTxnValidating(true);
     setTxnPasswordError("");
-    
-    console.log('🔐 [FRONTEND] Starting transaction password validation...');
-    console.log('🔐 [FRONTEND] Password entered:', txnPassword.length, 'characters');
-
     try {
-      console.log('📤 [FRONTEND] Sending request to /api/auth/validate-transaction-password');
       const response = await fetch('/api/auth/validate-transaction-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transactionPassword: txnPassword.trim() }),
         credentials: 'include',
       });
-
-      console.log('📥 [FRONTEND] Response received');
-      console.log('📥 [FRONTEND] Status:', response.status);
-      console.log('📥 [FRONTEND] Status Text:', response.statusText);
-      console.log('📥 [FRONTEND] Content-Type:', response.headers.get('content-type'));
-
       const data = await response.json();
-      console.log('📥 [FRONTEND] Response data:', data);
-
-      // Handle 404 error specifically
       if (response.status === 404) {
-        console.error('❌ [FRONTEND] API Route not found (404)');
         setTxnPasswordError('API Route not found. Please check if the backend is running correctly.');
         toast.error('❌ API Route not found (404)');
         setTxnValidating(false);
         return;
       }
-
-      // Handle authentication errors (incorrect password or no password set)
       if (!response.ok && response.status === 401) {
         const errorMsg = data.error === 'No transaction password set' 
           ? "No transaction password set. Please set it in your profile first"
@@ -162,16 +136,12 @@ export default function NewRegisterPage() {
         setTxnValidating(false);
         return;
       }
-
-      // Handle other errors
       if (!response.ok) {
         setTxnPasswordError(data.error || "Transaction password validation failed");
         toast.error(data.error || "Transaction password validation failed");
         setTxnValidating(false);
         return;
       }
-
-      // Check if user has pins (even if password validation succeeded)
       if (!data.hasPins) {
         setTxnPasswordError(data.message || "You don't have a pin. First purchase a pin then create a new account");
         toast.error(data.message || "❌ No pins available", {
@@ -180,26 +150,17 @@ export default function NewRegisterPage() {
         setTxnValidating(false);
         return;
       }
-
-      // Transaction password is valid and user has pins ✅
-      console.log('✅ [FRONTEND] Transaction Password Validated!', data);
       setTxnValidated(true);
       setTxnPassword("");
       setPinError("");
       toast.success("✓ Transaction password verified!", {
         description: "You can now proceed with sponsorship details"
       });
-      
-      // Move to next step after success
       setTimeout(() => {
-        console.log('✅ [FRONTEND] Moving to sponsor step');
         setStep("sponsor");
       }, 500);
 
     } catch (error) {
-      console.error('❌ [FRONTEND] Error during fetch:', error);
-      console.error('❌ [FRONTEND] Error type:', (error as any)?.name);
-      console.error('❌ [FRONTEND] Error message:', (error as any)?.message);
       setTxnPasswordError("An error occurred. Please try again.");
       toast.error("❌ Error validating transaction password");
     } finally {
@@ -227,8 +188,6 @@ export default function NewRegisterPage() {
         toast.error("Sponsor ID not found");
         return;
       }
-
-      // Check for leftChild and rightChild status
       const childrenResponse = await fetch('/api/user/get-children-status', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -240,47 +199,30 @@ export default function NewRegisterPage() {
       
       if (childrenResponse.ok) {
         const childrenData = await childrenResponse.json();
-        console.log('📊 Children Status:', childrenData);
-        
         const hasLeftChild = childrenData.leftChild && childrenData.leftChild.trim() !== "";
         const hasRightChild = childrenData.rightChild && childrenData.rightChild.trim() !== "";
-        
-        // Determine which positions are available
         if (hasLeftChild && hasRightChild) {
-          // Both filled - no position available
           setSponsorError("Both Childs Are Already Filled Use The Different Sponsor Id");
           toast.error("Both Childs Are Already Filled Use The Different Sponsor Id");
           return;
         } else if (hasLeftChild && !hasRightChild) {
-          // Left filled - show only Right
           positionsToShow = ["-- Select --", "Right"];
         } else if (!hasLeftChild && hasRightChild) {
-          // Right filled - show only Left
           positionsToShow = ["-- Select --", "Left"];
         }
-        // Both empty - show both options (default)
       }
-
       setAvailablePositions(positionsToShow);
       setPosition(positionsToShow[0]);
-      
-      console.log('✅ Sponsor Name:', nameData.name);
       setSponsorName(nameData.name || "");
       setSponsorValidated(true);
-      
-      // Fetch available pins for the LOGGED-IN USER (not sponsor)
       try {
-        console.log('📌 Fetching session to get logged-in username...');
         const sessionResponse = await fetch('/api/auth/session', {
           credentials: 'include',
         });
         
         if (sessionResponse.ok) {
           const sessionData = await sessionResponse.json();
-          console.log('👤 Logged-in user from session:', sessionData?.user?.email);
         }
-        
-        console.log('📌 Fetching available pins for LOGGED-IN USER...');
         const pinsResponse = await fetch('/api/user/get-epins', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -290,8 +232,6 @@ export default function NewRegisterPage() {
         
         if (pinsResponse.ok) {
           const pinsData = await pinsResponse.json();
-          console.log('📌 Available E-PINs (for logged-in user):', pinsData.availableEPins);
-          
           const pinStrings = pinsData.availableEPins?.map((ePin: any) => {
             if (typeof ePin === 'string') {
               return ePin;
@@ -300,92 +240,65 @@ export default function NewRegisterPage() {
             }
             return ePin;
           }) || [];
-          
           setAvailableEPins(pinStrings);
           setSelectedEPin(pinStrings[0] || "");
-          console.log('✅ PINs loaded successfully for logged-in user');
         } else {
-          console.warn('⚠️ Failed to fetch pins:', pinsResponse.status);
         }
       } catch (pinsError) {
-        console.error('❌ Error fetching pins for logged-in user:', pinsError);
       }
-      
-      console.log('✅ Sponsor Validated Successfully!');
       toast.success("✓ Sponsor validated!");
     } catch (error) {
-      console.error('❌ Error validating sponsor:', error);
       setSponsorError("An error occurred. Please try again.");
       toast.error("Error validating sponsor");
     }
   };
 
   const handleValidateUserId = async () => {
-    console.log('🔍 STEP 3: Validating User ID...');
     if (!userId.trim() || userId === "CLM") {
-      console.log('❌ User ID is empty or invalid:', userId);
       setUserIdError("Please enter a User ID");
       return;
     }
-
-    console.log('📝 User ID entered:', userId);
     setUserIdError("");
-    
     try {
-      console.log('🔍 Checking User ID availability...');
       const response = await fetch('/api/auth/check-userid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: userId.trim() }),
         credentials: 'include',
       });
-
       const data = await response.json();
-      console.log('✅ User ID Check Response:', data);
-
       if (!response.ok) {
-        console.log('❌ User ID already exists');
         setUserIdError(data.error || "This User ID is already taken");
         setUserIdValidated(false);
         toast.error("User ID already exists!");
         return;
       }
-
-      console.log('✅ User ID is available!');
       setUserIdValidated(true);
       setUserIdError("");
       toast.success("✓ User ID is available!");
     } catch (error) {
-      console.error('❌ Error validating User ID:', error);
       setUserIdError("Error checking User ID availability");
       toast.error("Error validating User ID");
     }
   };
 
   const handleSponsorSubmit = () => {
-    console.log('🔍 STEP 4: Validating Sponsor Details Before Proceeding...');
     if (!sponsorValidated) {
-      console.log('❌ Sponsor not validated');
       alert("Please validate sponsor ID first");
       return;
     }
     if (!position || position === "-- Select --") {
-      console.log('❌ Position not selected');
       toast.error("Please select a position");
       return;
     }
     if (!pkg || pkg === "-- Select Package --") {
-      console.log('❌ Package not selected');
       toast.error("Please select a package");
       return;
     }
     if (!selectedEPin || selectedEPin === "-- Select PIN --") {
-      console.log('❌ PIN not selected');
       toast.error("Please select a PIN");
       return;
     }
-    console.log('✅ All sponsor details validated. Moving to registration step...');
-    console.log('📋 Sponsor Details:', { sponsorId, position, pkg, selectedEPin });
     setStep("register");
   };
 
@@ -522,12 +435,9 @@ export default function NewRegisterPage() {
           });
           
           if (updateResponse.ok) {
-            console.log('✅ Sponsor updated with new child');
           } else {
-            console.warn('⚠️ Failed to update sponsor with new child');
           }
         } catch (updateError) {
-          console.error('❌ Error updating sponsor:', updateError);
         }
       }
 

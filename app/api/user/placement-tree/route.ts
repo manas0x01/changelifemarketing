@@ -26,9 +26,9 @@ async function buildPlacementTree(userId: string): Promise<TreeNode | null> {
       return null;
     }
     console.log('✅ [API] Root user found:', rootUser.userId || rootUser.username);
-    // Use memberType field: 'gold' or 'active' (default: 'active')
     const userType = (rootUser.memberType || 'active') as 'gold' | 'active';
     console.log('📝 [API] User type:', userType);
+    
     const treeNode: TreeNode = {
       id: rootUser.userId || rootUser.username,
       name: rootUser.fullName || rootUser.username,
@@ -36,34 +36,54 @@ async function buildPlacementTree(userId: string): Promise<TreeNode | null> {
       type: userType,
       children: []
     };
-    async function fetchChildren(parentUserId: string) {
-      console.log('👶 [API] Fetching children for parent:', parentUserId);
-      const children = await User.find({ placementId: parentUserId }).lean();
-      console.log('📊 [API] Found', children.length, 'children for parent');
-      const result: TreeNode[] = [];
-      for (const child of children) {
-        // Use memberType field instead of boosterIncomeAmount
-        const childType = (child.memberType || 'active') as 'gold' | 'active';
-        const childNode: TreeNode = {
-          id: child.userId || child.username,
-          name: child.fullName || child.username,
-          userId: child.userId || child.username,
-          type: childType,
-          position: child.placementPosition as 'left' | 'right' | undefined,
-          children: []
-        };
-        const grandchildren = await fetchChildren(child.userId || child.username);
-        if (grandchildren.length > 0) {
-          childNode.children = grandchildren;
-          console.log('✅ [API] Child:', childNode.id, 'has', grandchildren.length, 'grandchildren');
-        }
-        result.push(childNode);
+    
+    async function buildChildNode(childUserId: string | null, position: 'left' | 'right'): Promise<TreeNode | null> {
+      if (!childUserId) return null;
+      
+      console.log(`👶 [API] Fetching child (${position}):`, childUserId);
+      let childUser = await User.findOne({ userId: childUserId }).lean();
+      if (!childUser) {
+        childUser = await User.findOne({ username: childUserId }).lean();
       }
-
-      return result;
+      if (!childUser) {
+        console.log(`❌ [API] Child user not found: ${childUserId}`);
+        return null;
+      }
+      
+      const childType = (childUser.memberType || 'active') as 'gold' | 'active';
+      const childNode: TreeNode = {
+        id: childUser.userId || childUser.username,
+        name: childUser.fullName || childUser.username,
+        userId: childUser.userId || childUser.username,
+        type: childType,
+        position,
+        children: []
+      };
+      
+      // Recursively build the tree using leftChild and rightChild
+      const leftChildId = (childUser.leftChild || null) as string | null;
+      const rightChildId = (childUser.rightChild || null) as string | null;
+      
+      const leftChild = await buildChildNode(leftChildId, 'left');
+      const rightChild = await buildChildNode(rightChildId, 'right');
+      
+      if (leftChild) childNode.children!.push(leftChild);
+      if (rightChild) childNode.children!.push(rightChild);
+      
+      console.log(`✅ [API] Child ${childNode.id} processed with ${childNode.children?.length || 0} children`);
+      return childNode;
     }
-
-    treeNode.children = await fetchChildren(rootUser.userId || rootUser.username);
+    
+    // Fetch left and right children using the new fields
+    const leftChildId = (rootUser.leftChild || null) as string | null;
+    const rightChildId = (rootUser.rightChild || null) as string | null;
+    
+    const leftChild = await buildChildNode(leftChildId, 'left');
+    const rightChild = await buildChildNode(rightChildId, 'right');
+    
+    if (leftChild) treeNode.children!.push(leftChild);
+    if (rightChild) treeNode.children!.push(rightChild);
+    
     console.log('🌳 [API] Tree building completed. Root children count:', treeNode.children?.length || 0);
 
     return treeNode;

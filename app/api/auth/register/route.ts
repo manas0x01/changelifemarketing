@@ -4,6 +4,54 @@ import bcrypt from "bcryptjs";
 import { calculateAndUpdateUserMetrics } from "@/lib/calculateMetrics";
 import { autoCalculateBasicIncome } from "@/lib/autoCalculateBasicIncome";
 
+/**
+ * 🌳 CASCADE PLACEMENT FUNCTION
+ * ─────────────────────────────
+ * Finds the next available leaf node in the selected branch to place the new member.
+ * If the current position is already filled, it recursively goes down the tree.
+ * 
+ * Logic:
+ * 1. Check if the selected position (left/right) has a child
+ * 2. If empty → Return this user (place new member here)
+ * 3. If occupied → Recursively search in that child's subtree
+ * 4. Return the actual leaf node where new member should be placed
+ */
+async function findNextAvailableLeafNode(currentUser: any, position: 'left' | 'right'): Promise<any> {
+    const positionField = position === 'left' ? 'leftChild' : 'rightChild';
+    
+    // Check if this position is empty
+    if (!currentUser[positionField]) {
+        console.log(`🍃 Leaf node found at ${position} position for parent:`, {
+            parentId: currentUser.userId || currentUser.username,
+            positionField,
+            isEmpty: true,
+        });
+        return currentUser;
+    }
+
+    // Position is occupied, fetch the child user
+    console.log(`↓ Position ${position} already occupied, cascading down...`, {
+        currentParent: currentUser.userId || currentUser.username,
+        childId: currentUser[positionField],
+    });
+
+    const childUser = await User.findOne({
+        $or: [
+            { username: currentUser[positionField] },
+            { userId: currentUser[positionField] },
+        ]
+    });
+
+    if (!childUser) {
+        console.warn(`⚠️ Child user referenced but not found:`, currentUser[positionField]);
+        // If child doesn't exist in database, place new user here
+        return currentUser;
+    }
+
+    // Recursively search in the child's subtree
+    return await findNextAvailableLeafNode(childUser, position);
+}
+
 export async function POST(req: Request) {
     try {
         console.log('\n🚀 [API] REGISTRATION - Starting new member registration...');
@@ -369,28 +417,42 @@ export async function POST(req: Request) {
         // ✅ STEP 5: Add member to placement parent
         console.log('➕ STEP 5: Adding member to placement parent...');
         if (finalPlacementId && placementUser) {
-            console.log("🟡 ADDING MEMBER TO PARENT:", {
-                parentId: finalPlacementId,
-                newMemberId: newUser.username,
-                position: finalPosition,
+            console.log("🟡 STEP 5.1: Finding actual placement node (cascade)...", {
+                initialPlacementId: finalPlacementId,
+                requestedPosition: finalPosition,
             });
 
-            // ── Add to boosterDownlineMembers ──
+            // ── BINARY TREE CASCADE PLACEMENT ──
+            // Find the actual leaf node where new user should be placed
+            const actualPlacementNode = await findNextAvailableLeafNode(placementUser, finalPosition as 'left' | 'right');
+            const newUserFieldValue = newUser.userId || newUser.username;
+            const positionField = finalPosition === 'left' ? 'leftChild' : 'rightChild';
+            
+            console.log("🌳 CASCADE PLACEMENT RESULT:", {
+                requestedParentId: finalPlacementId,
+                requestedPosition: finalPosition,
+                actualPlacementNodeId: actualPlacementNode.userId || actualPlacementNode.username,
+                actualPosition: positionField,
+                newMemberId: newUserFieldValue,
+            });
+
+            // ── Add to boosterDownlineMembers of ACTUAL node ──
+            console.log("🟡 STEP 5.2: Updating actual placement node's records...");
             const boosterMemberRecord = {
-                srNo: (placementUser.boosterDownlineMembers?.length || 0) + 1,
+                srNo: (actualPlacementNode.boosterDownlineMembers?.length || 0) + 1,
                 memberId: newUser.username || newUser._id.toString(),
                 name: newUser.fullName || newUser.username || 'N/A',
                 date: newUser.joiningDate || new Date().toISOString().split('T')[0],
                 position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
             };
 
-            if (!placementUser.boosterDownlineMembers) {
-                placementUser.boosterDownlineMembers = [];
+            if (!actualPlacementNode.boosterDownlineMembers) {
+                actualPlacementNode.boosterDownlineMembers = [];
             }
-            placementUser.boosterDownlineMembers.push(boosterMemberRecord);
-            console.log("✅ Added to boosterDownlineMembers");
+            actualPlacementNode.boosterDownlineMembers.push(boosterMemberRecord);
+            console.log("✅ Added to actual node's boosterDownlineMembers");
 
-            // ── Add to directMembers (for basic income validation) ──
+            // ── Add to directMembers of ACTUAL node (for basic income validation) ──
             const directMemberRecord = {
                 memberId: newUser.username || newUser._id.toString(),
                 name: newUser.fullName || newUser.username || 'N/A',
@@ -398,37 +460,32 @@ export async function POST(req: Request) {
                 position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
             };
 
-            if (!placementUser.directMembers) {
-                placementUser.directMembers = [];
+            if (!actualPlacementNode.directMembers) {
+                actualPlacementNode.directMembers = [];
             }
-            placementUser.directMembers.push(directMemberRecord);
-            console.log("✅ Added to directMembers:", {
-                totalLeft: placementUser.directMembers.filter(m => m.position === 'left').length,
-                totalRight: placementUser.directMembers.filter(m => m.position === 'right').length,
-                joinDate: directMemberRecord.joinDate,
+            actualPlacementNode.directMembers.push(directMemberRecord);
+            console.log("✅ Added to actual node's directMembers:", {
+                actualNodeId: actualPlacementNode.userId || actualPlacementNode.username,
+                totalLeft: actualPlacementNode.directMembers.filter((m: any) => m.position === 'left').length,
+                totalRight: actualPlacementNode.directMembers.filter((m: any) => m.position === 'right').length,
             });
 
-            // ── Update Binary Tree: Set leftChild or rightChild ──
-            const newUserFieldValue = newUser.userId || newUser.username;
-            if (finalPosition === 'left') {
-                console.log("🌳 Updating LEFT child:", {
-                    parentId: placementUser.userId || placementUser.username,
-                    leftChild: newUserFieldValue,
-                });
-                placementUser.leftChild = newUserFieldValue;
-            } else {
-                console.log("🌳 Updating RIGHT child:", {
-                    parentId: placementUser.userId || placementUser.username,
-                    rightChild: newUserFieldValue,
-                });
-                placementUser.rightChild = newUserFieldValue;
-            }
+            // ── Assign new user to the actual leaf node found by cascade ──
+            console.log("🟡 STEP 5.3: Updating binary tree (leftChild/rightChild)...");
+            actualPlacementNode[positionField] = newUserFieldValue;
+            console.log(`✅ Binary tree update: ${newUserFieldValue} → ${positionField} of ${actualPlacementNode.userId || actualPlacementNode.username}`);
 
             try {
-                await placementUser.save();
-                console.log("✅ Placement parent updated in database");
+                await actualPlacementNode.save();
+                console.log("✅ Actual placement node updated in database");
+                
+                if (actualPlacementNode._id !== placementUser._id) {
+                    console.log("✅ Cascade placement through intermediate nodes completed");
+                } else {
+                    console.log("✅ Direct placement (no cascade needed)");
+                }
             } catch (parentError: any) {
-                console.error('⚠️ Placement parent save failed:', parentError.message);
+                console.error('⚠️ Actual placement node save failed:', parentError.message);
                 // Continue anyway - main registration is done
             }
         }

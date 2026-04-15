@@ -1,189 +1,320 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
 
-interface TreeNode {
-  id: string;
-  name: string;
-  userId: string;
-  type: "gold" | "active";
-  position?: "left" | "right";
-  children?: TreeNode[];
+/* ═══════════════════════════════════════════════════════════════
+   LAYOUT CONSTANTS
+═══════════════════════════════════════════════════════════════ */
+const AR    = 26;   // avatar circle radius (px)
+const NW    = 130;  // member name-card width
+const NH    = 44;   // member name-card height
+const SW    = 72;   // open/close slot box width
+const SH    = 34;   // open/close slot box height
+const HG    = 30;   // horizontal gap between sibling subtrees
+const VS    = 124;  // vertical step: avatar-center to next avatar-center
+const MAXD  = 2;    // 0-indexed max depth shown (3 visible levels: 0,1,2)
+// Member node total height from avatar-center: AR + 4 + NH = 74 px
+// Gap between parent-card-bottom and child-avatar-top = VS - 2·AR - NH - 4 ≈ 18px
+
+/* ═══════════════════════════════════════════════════════════════
+   TYPES
+═══════════════════════════════════════════════════════════════ */
+type NodeType = "active" | "gold" | "open" | "close";
+
+interface MNode {
+  id          : string;           // SM-ID displayed in card
+  name        : string;           // full name
+  userId      : string;           // username for API calls
+  type        : NodeType;
+  position   ?: "left" | "right";
+  // Popup detail fields (populated by API)
+  sponsorId  ?: string;
+  joiningDate?: string;
+  package    ?: string;
+  leftId     ?: string;
+  rightId    ?: string;
+  leftCount  ?: number;
+  rightCount ?: number;
+  totalCount ?: number;
+  children   ?: MNode[];
 }
-
-const ActiveAvatar = ({ size = 56 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="40" cy="40" r="40" fill="#fff"/>
-    {/* Head */}
-    <ellipse cx="40" cy="28" rx="13" ry="14" fill="#f5cba7"/>
-    {/* Hair */}
-    <ellipse cx="40" cy="17" rx="13" ry="7" fill="#3d2b1f"/>
-    <ellipse cx="28" cy="22" rx="5" ry="7" fill="#3d2b1f"/>
-    <ellipse cx="52" cy="22" rx="5" ry="7" fill="#3d2b1f"/>
-    {/* Hat brim */}
-    <rect x="24" y="14" width="32" height="5" rx="2" fill="#222"/>
-    <rect x="28" y="10" width="24" height="8" rx="3" fill="#333"/>
-    {/* Body - blue shirt */}
-    <path d="M20 65 Q22 50 40 48 Q58 50 60 65 Z" fill="#2196f3"/>
-    {/* Laptop */}
-    <rect x="26" y="52" width="28" height="18" rx="3" fill="#cfd8dc"/>
-    <rect x="28" y="54" width="24" height="13" rx="2" fill="#90caf9"/>
-    <rect x="22" y="70" width="36" height="4" rx="2" fill="#b0bec5"/>
-    {/* Arms */}
-    <path d="M20 58 Q14 62 18 70" stroke="#2196f3" strokeWidth="7" strokeLinecap="round" fill="none"/>
-    <path d="M60 58 Q66 62 62 70" stroke="#2196f3" strokeWidth="7" strokeLinecap="round" fill="none"/>
-    {/* Hands */}
-    <ellipse cx="19" cy="71" rx="5" ry="4" fill="#f5cba7"/>
-    <ellipse cx="61" cy="71" rx="5" ry="4" fill="#f5cba7"/>
-  </svg>
-);
-
-const GoldAvatar = ({ size = 56 }: { size?: number }) => (
-  <svg width={size} height={size} viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="40" cy="40" r="40" fill="#fff"/>
-    <ellipse cx="40" cy="28" rx="13" ry="14" fill="#f5cba7"/>
-    <ellipse cx="40" cy="17" rx="13" ry="7" fill="#3d2b1f"/>
-    <ellipse cx="28" cy="22" rx="5" ry="7" fill="#3d2b1f"/>
-    <ellipse cx="52" cy="22" rx="5" ry="7" fill="#3d2b1f"/>
-    <rect x="24" y="14" width="32" height="5" rx="2" fill="#222"/>
-    <rect x="28" y="10" width="24" height="8" rx="3" fill="#333"/>
-    {/* Body - yellow/gold shirt */}
-    <path d="M20 65 Q22 50 40 48 Q58 50 60 65 Z" fill="#ffc107"/>
-    <rect x="26" y="52" width="28" height="18" rx="3" fill="#cfd8dc"/>
-    <rect x="28" y="54" width="24" height="13" rx="2" fill="#90caf9"/>
-    <rect x="22" y="70" width="36" height="4" rx="2" fill="#b0bec5"/>
-    <path d="M20 58 Q14 62 18 70" stroke="#ffc107" strokeWidth="7" strokeLinecap="round" fill="none"/>
-    <path d="M60 58 Q66 62 62 70" stroke="#ffc107" strokeWidth="7" strokeLinecap="round" fill="none"/>
-    <ellipse cx="19" cy="71" rx="5" ry="4" fill="#f5cba7"/>
-    <ellipse cx="61" cy="71" rx="5" ry="4" fill="#f5cba7"/>
-  </svg>
-);
-
-const NODE_W   = 140;
-const NODE_H   = 44;
-const H_GAP    = 40;
-const V_GAP    = 100;
-const AVATAR_R = 34;
 
 interface LayoutNode {
-  node: TreeNode;
-  x: number;
-  y: number;
-  children: LayoutNode[];
+  node  : MNode;
+  x     : number;
+  y     : number;
+  depth : number;
+  ch    : LayoutNode[];
+  slot  : boolean;   // true = virtual open/close placeholder
 }
 
-function measureWidth(node: TreeNode): number {
-  if (!node.children || node.children.length === 0) return NODE_W;
-  const childWidths = node.children.map(measureWidth);
-  const totalChildren = childWidths.reduce((a, b) => a + b, 0) + H_GAP * (node.children.length - 1);
-  return Math.max(NODE_W, totalChildren);
+interface PopupState {
+  node : MNode;
+  left : number;
+  top  : number;
 }
 
-function layoutTree(node: TreeNode, x: number, y: number): LayoutNode {
-  const width = measureWidth(node);
-  const layout: LayoutNode = { node, x, y, children: [] };
-  if (node.children && node.children.length > 0) {
-    const childWidths = node.children.map(measureWidth);
-    const total = childWidths.reduce((a, b) => a + b, 0) + H_GAP * (node.children.length - 1);
-    let cx = x - total / 2;
-    for (let i = 0; i < node.children.length; i++) {
-      const cw = childWidths[i];
-      layout.children.push(layoutTree(node.children[i], cx + cw / 2, y + V_GAP + AVATAR_R * 2 + 20));
-      cx += cw + H_GAP;
-    }
-  }
-  return layout;
+const isSlot = (n: MNode) => n.type === "open" || n.type === "close";
+
+function subtreeW(node: MNode | null, d: number): number {
+  if (!node || isSlot(node)) return SW;
+  const ch = node.children ?? [];
+  const L  = ch.find(c => c.position === "left")  ?? null;
+  const R  = ch.find(c => c.position === "right") ?? null;
+  if (d >= MAXD || (!L && !R)) return NW;
+  const lw = L ? subtreeW(L, d + 1) : SW;
+  const rw = R ? subtreeW(R, d + 1) : SW;
+  return Math.max(NW, lw + HG + rw);
 }
 
-function getMaxDepth(node: TreeNode, depth = 0): number {
-  if (!node.children || node.children.length === 0) return depth;
-  return Math.max(...node.children.map(c => getMaxDepth(c, depth + 1)));
+function buildLayout(
+  node    : MNode,
+  cx      : number,
+  cy      : number,
+  depth   : number,
+  virtSlot: boolean = false,
+): LayoutNode {
+  const ln: LayoutNode = {
+    node, x: cx, y: cy, depth, ch: [], slot: virtSlot || isSlot(node),
+  };
+
+  // Slots and depth-limit nodes are leaves
+  if (ln.slot || depth >= MAXD) return ln;
+
+  const ch = node.children ?? [];
+  const L  = ch.find(c => c.position === "left")  ?? null;
+  const R  = ch.find(c => c.position === "right") ?? null;
+
+  // Create virtual placeholder nodes when a side is empty
+  const lNode: MNode = L ?? {
+    id: `vl-${node.id}`, name: "Open", userId: "", type: "open", position: "left",
+  };
+  const rNode: MNode = R ?? {
+    id: `vr-${node.id}`, name: "Open", userId: "", type: "open", position: "right",
+  };
+
+  const lw   = L ? subtreeW(L, depth + 1) : SW;
+  const rw   = R ? subtreeW(R, depth + 1) : SW;
+  const half = (lw + HG + rw) / 2;
+
+  ln.ch.push(buildLayout(lNode, cx - half + lw / 2, cy + VS, depth + 1, !L));
+  ln.ch.push(buildLayout(rNode, cx + half - rw / 2, cy + VS, depth + 1, !R));
+  return ln;
 }
 
-function collectNodes(layout: LayoutNode, out: LayoutNode[] = []) {
-  out.push(layout);
-  layout.children.forEach(c => collectNodes(c, out));
+function flatNodes(ln: LayoutNode, out: LayoutNode[] = []): LayoutNode[] {
+  out.push(ln);
+  ln.ch.forEach(c => flatNodes(c, out));
   return out;
 }
 
-function collectEdges(layout: LayoutNode, out: { x1: number; y1: number; x2: number; y2: number }[] = []) {
-  layout.children.forEach(c => {
-    out.push({ x1: layout.x, y1: layout.y + AVATAR_R + NODE_H / 2 + 4, x2: c.x, y2: c.y - AVATAR_R });
-    collectEdges(c, out);
+function flatEdges(
+  ln  : LayoutNode,
+  out : { x1: number; y1: number; x2: number; y2: number }[] = [],
+) {
+  // Parent connection point: bottom of card (member) or bottom of slot box
+  const py = ln.slot ? ln.y + SH / 2 : ln.y + AR + NH + 4;
+  ln.ch.forEach(c => {
+    // Child connection point: top of avatar circle or top of slot box
+    const cy = c.slot ? c.y - SH / 2 : c.y - AR;
+    out.push({ x1: ln.x, y1: py, x2: c.x, y2: cy });
+    flatEdges(c, out);
   });
   return out;
 }
 
-function TreeSVG({ root, onNodeHover, onNodeLeave }: { root: TreeNode | null; onNodeHover?: (nodeId: string, event: React.MouseEvent) => void; onNodeLeave?: () => void }) {
+/* ═══════════════════════════════════════════════════════════════
+   SVG AVATAR PRIMITIVES (pure SVG, no foreignObject)
+═══════════════════════════════════════════════════════════════ */
+function AvatarActive({ x, y }: { x: number; y: number }) {
+  const r = AR;
+  const f = (v: number) => r * v;
+  return (
+    <g>
+      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#1565c0" strokeWidth="2.5"/>
+      {/* Face */}
+      <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7"/>
+      {/* Hair */}
+      <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f"/>
+      {/* Hat brim */}
+      <rect x={x - f(0.56)} y={y - f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a"/>
+      {/* Hat top */}
+      <rect x={x - f(0.38)} y={y - f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a"/>
+      {/* Body */}
+      <path
+        d={`M${x - f(0.76)},${y + r} Q${x - f(0.6)},${y + f(0.5)} ${x},${y + f(0.46)} Q${x + f(0.6)},${y + f(0.5)} ${x + f(0.76)},${y + r}`}
+        fill="#1976d2"
+      />
+    </g>
+  );
+}
+
+function AvatarGold({ x, y }: { x: number; y: number }) {
+  const r = AR;
+  const f = (v: number) => r * v;
+  return (
+    <g>
+      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#f57c00" strokeWidth="2.5"/>
+      <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7"/>
+      <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f"/>
+      <rect x={x - f(0.56)} y={y - f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a"/>
+      <rect x={x - f(0.38)} y={y - f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a"/>
+      <path
+        d={`M${x - f(0.76)},${y + r} Q${x - f(0.6)},${y + f(0.5)} ${x},${y + f(0.46)} Q${x + f(0.6)},${y + f(0.5)} ${x + f(0.76)},${y + r}`}
+        fill="#f9a825"
+      />
+    </g>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   TREE SVG RENDERER
+═══════════════════════════════════════════════════════════════ */
+function TreeSVG({
+  root,
+  onNodeClick,
+}: {
+  root        : MNode | null;
+  onNodeClick : (node: MNode, e: React.MouseEvent) => void;
+}) {
   if (!root) {
-    return <div style={{ padding: '40px', textAlign: 'center', color: '#666' }}>No data to display</div>;
+    return (
+      <div style={{ padding: 60, textAlign: "center", color: "#7ec8e3", fontSize: 13 }}>
+        Enter a Username and click Filter to view the tree
+      </div>
+    );
   }
 
-  const treeWidth  = measureWidth(root);
-  const depth      = getMaxDepth(root);
-  const cx         = Math.max(treeWidth / 2 + 60, 500);
-  const svgW       = cx * 2;
-  const svgH       = depth * (V_GAP + AVATAR_R * 2 + 30) + 220;
-  const layout     = layoutTree(root, cx, 80);
-  const allNodes   = collectNodes(layout);
-  const allEdges   = collectEdges(layout);
+  const rootW  = subtreeW(root, 0);
+  const cx     = Math.max(rootW / 2 + 80, 440);
+  const svgW   = cx * 2;
+  const svgH   = (MAXD + 1) * VS + AR + NH + 60;
+  const rootLN = buildLayout(root, cx, AR + 36, 0);
+  const nodes  = flatNodes(rootLN);
+  const edges  = flatEdges(rootLN);
 
   return (
-    <svg width={svgW} height={svgH} xmlns="http://www.w3.org/2000/svg" style={{ minWidth: svgW }}>
-      {/* Edges */}
-      {allEdges.map((e, i) => {
-        const midY = (e.y1 + e.y2) / 2;
+    <svg
+      width={svgW}
+      height={svgH}
+      style={{ minWidth: svgW, display: "block" }}
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* ── Connector lines ── */}
+      {edges.map((e, i) => {
+        const mid = (e.y1 + e.y2) / 2;
         return (
           <path
-            key={i}
-            d={`M ${e.x1} ${e.y1} L ${e.x1} ${midY} L ${e.x2} ${midY} L ${e.x2} ${e.y2}`}
-            stroke="#bbb" strokeWidth="2" fill="none"
+            key={`e-${i}`}
+            d={`M${e.x1},${e.y1} L${e.x1},${mid} L${e.x2},${mid} L${e.x2},${e.y2}`}
+            stroke="#64b5f6"
+            strokeWidth="1.8"
+            fill="none"
+            strokeDasharray="none"
           />
         );
       })}
 
-      {/* Nodes */}
-      {allNodes.map((ln) => {
-        const { node, x, y } = ln;
-        const isGold = node.type === "gold";
-        return (
-          <g 
-            key={node.id}
-            onMouseEnter={(e: any) => onNodeHover?.(node.userId || node.id, e)}
-            onMouseLeave={() => onNodeLeave?.()}
-            style={{ cursor: 'pointer' }}
-          >
-            {/* Avatar circle */}
-            <circle cx={x} cy={y} r={AVATAR_R} fill="#fff" stroke={isGold ? "#ffc107" : "#2196f3"} strokeWidth="2.5"/>
-            
-            {/* Avatar - Responsive Rendering (foreignObject with SVG fallback) */}
-            <g>
-              <foreignObject x={x - AVATAR_R} y={y - AVATAR_R} width={AVATAR_R * 2} height={AVATAR_R * 2}>
-                <div style={{ width: AVATAR_R * 2, height: AVATAR_R * 2, borderRadius: "50%", overflow: "hidden", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  {isGold
-                    ? <GoldAvatar   size={AVATAR_R * 2} />
-                    : <ActiveAvatar size={AVATAR_R * 2} />
-                  }
-                </div>
-              </foreignObject>
-              
-              {/* 📱 Fallback: Colored circle for mobile/incompatible browsers */}
-              <circle cx={x} cy={y} r={AVATAR_R - 2} fill={isGold ? "#ffc107" : "#2196f3"} opacity="0.3" />
-            </g>
+      {/* ── Nodes ── */}
+      {nodes.map((ln, i) => {
+        const { node: n, x, y, slot } = ln;
 
-            {/* Label box */}
+        /* ── Open / Close slot ── */
+        if (slot) {
+          const isOpen = n.type !== "close";
+          const col    = isOpen ? "#27ae60" : "#e53935";
+          const bg     = isOpen ? "#e8f5e9" : "#ffebee";
+          return (
+            <g key={`n-${i}`}>
+              <rect
+                x={x - SW / 2}
+                y={y - SH / 2}
+                width={SW}
+                height={SH}
+                rx="9"
+                fill={bg}
+                stroke={col}
+                strokeWidth="2.5"
+              />
+              <text
+                x={x}
+                y={y + 4.5}
+                textAnchor="middle"
+                fontSize="11.5"
+                fontWeight="700"
+                fill={col}
+                fontFamily="Poppins,sans-serif"
+              >
+                {isOpen ? "Open" : "Close"}
+              </text>
+            </g>
+          );
+        }
+
+        /* ── Member node ── */
+        const gold    = n.type === "gold";
+        const cardTop = y + AR + 4;
+
+        return (
+          <g
+            key={`n-${i}`}
+            onClick={e => onNodeClick(n, e)}
+            style={{ cursor: "pointer" }}
+            role="button"
+            aria-label={`View details for ${n.id}`}
+          >
+            {/* Invisible larger hit zone */}
+            <circle cx={x} cy={y} r={AR + 8} fill="transparent"/>
+
+            {/* Glow ring on root node */}
+            {ln.depth === 0 && (
+              <circle
+                cx={x}
+                cy={y}
+                r={AR + 5}
+                fill="none"
+                stroke={gold ? "#f9a825" : "#26a69a"}
+                strokeWidth="2"
+                opacity="0.5"
+              />
+            )}
+
+            {/* Avatar */}
+            {gold ? <AvatarGold x={x} y={y}/> : <AvatarActive x={x} y={y}/>}
+
+            {/* Name card */}
             <rect
-              x={x - NODE_W / 2} y={y + AVATAR_R + 4}
-              width={NODE_W} height={NODE_H}
-              rx="6" fill="#fff" stroke="#d0d0d0" strokeWidth="1.2"
+              x={x - NW / 2}
+              y={cardTop}
+              width={NW}
+              height={NH}
+              rx="8"
+              fill={gold ? "#fff8e1" : "#ffffff"}
+              stroke={gold ? "#f9a825" : "#90caf9"}
+              strokeWidth="1.5"
             />
-            <text x={x} y={y + AVATAR_R + 20} textAnchor="middle" fontSize="11.5" fontWeight="600" fill="#1976d2" fontFamily="Poppins,sans-serif">
-              {node.id}
+            <text
+              x={x}
+              y={cardTop + 16}
+              textAnchor="middle"
+              fontSize="10.5"
+              fontWeight="700"
+              fill={gold ? "#e65100" : "#1565c0"}
+              fontFamily="Poppins,sans-serif"
+            >
+              {n.id}
             </text>
-            <text x={x} y={y + AVATAR_R + 36} textAnchor="middle" fontSize="10.5" fill="#333" fontFamily="Poppins,sans-serif">
-              {node.name.length > 18 ? node.name.substring(0, 18) + "…" : node.name}
+            <text
+              x={x}
+              y={cardTop + 31}
+              textAnchor="middle"
+              fontSize="9.5"
+              fill="#555"
+              fontFamily="Poppins,sans-serif"
+            >
+              {n.name.length > 17 ? n.name.slice(0, 17) + "…" : n.name}
             </text>
           </g>
         );
@@ -192,816 +323,631 @@ function TreeSVG({ root, onNodeHover, onNodeLeave }: { root: TreeNode | null; on
   );
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   MEMBER DETAIL POPUP
+═══════════════════════════════════════════════════════════════ */
+function MemberPopup({
+  state,
+  onClose,
+}: {
+  state  : PopupState;
+  onClose: () => void;
+}) {
+  const { node: n, left, top } = state;
+  const gold = n.type === "gold";
+
+  const infoRows = [
+    { label: "Sponsor ID",   val: n.sponsorId   || "—" },
+    { label: "Joining Date", val: n.joiningDate  || "—" },
+    { label: "Package",      val: n.package      || "—" },
+    { label: "Left ID",      val: n.leftId       || "—" },
+    { label: "Right ID",     val: n.rightId      || "—" },
+  ];
+
+  const countBadges = [
+    { label: "LEFT",  val: n.leftCount  ?? 0, col: "#1565c0" },
+    { label: "RIGHT", val: n.rightCount ?? 0, col: "#2e7d32" },
+    { label: "TOTAL", val: n.totalCount ?? 0, col: "#6a1b9a" },
+  ];
+
+  return (
+    <div
+      style={{
+        position    : "fixed",
+        left        : left,
+        top         : top,
+        zIndex      : 2200,
+        width       : 308,
+        borderRadius: 14,
+        overflow    : "hidden",
+        boxShadow   : "0 16px 48px rgba(0,0,0,0.28), 0 4px 12px rgba(0,0,0,0.12)",
+        border      : `2.5px solid ${gold ? "#f9a825" : "#26a69a"}`,
+        fontFamily  : "Poppins,sans-serif",
+        animation   : "ntPopIn .2s cubic-bezier(.16,1,.3,1)",
+      }}
+      onClick={e => e.stopPropagation()}
+    >
+      {/* Header */}
+      <div
+        style={{
+          background    : gold
+            ? "linear-gradient(135deg,#e65100,#f9a825)"
+            : "linear-gradient(135deg,#26a69a,#1de9b6)",
+          padding       : "11px 14px",
+          display       : "flex",
+          alignItems    : "center",
+          justifyContent: "space-between",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div
+            style={{
+              width      : 36,
+              height     : 36,
+              borderRadius: "50%",
+              background : "rgba(255,255,255,0.22)",
+              display    : "flex",
+              alignItems : "center",
+              justifyContent: "center",
+              fontSize   : 18,
+            }}
+          >
+            {gold ? "👑" : "👤"}
+          </div>
+          <div>
+            <p style={{ color: "#fff", fontWeight: 700, fontSize: 13, margin: 0 }}>{n.id}</p>
+            <p style={{ color: "rgba(255,255,255,0.82)", fontSize: 10.5, margin: 0 }}>{n.name}</p>
+          </div>
+        </div>
+        <button
+          onClick={onClose}
+          style={{
+            background  : "rgba(255,255,255,0.18)",
+            border      : "none",
+            borderRadius: 7,
+            color       : "#fff",
+            cursor      : "pointer",
+            padding     : "4px 9px",
+            fontSize    : 13,
+            lineHeight  : 1,
+            fontWeight  : 700,
+          }}
+        >
+          ✕
+        </button>
+      </div>
+
+      {/* Body */}
+      <div style={{ background: "#fff", padding: "12px 14px 14px" }}>
+        {/* Info rows */}
+        {infoRows.map(row => (
+          <div
+            key={row.label}
+            style={{
+              display       : "flex",
+              justifyContent: "space-between",
+              alignItems    : "center",
+              padding       : "5.5px 0",
+              borderBottom  : "1px solid #f2f2f2",
+            }}
+          >
+            <span style={{ fontSize: 11, color: "#888", fontWeight: 500 }}>{row.label}</span>
+            <span style={{ fontSize: 11.5, color: "#222", fontWeight: 600 }}>{row.val}</span>
+          </div>
+        ))}
+
+        {/* Network count badges */}
+        <div style={{ display: "flex", gap: 8, marginTop: 13 }}>
+          {countBadges.map(b => (
+            <div
+              key={b.label}
+              style={{
+                flex          : 1,
+                textAlign     : "center",
+                padding       : "8px 4px",
+                borderRadius  : 9,
+                background    : `${b.col}11`,
+                border        : `1.5px solid ${b.col}30`,
+              }}
+            >
+              <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: b.col, lineHeight: 1 }}>{b.val}</p>
+              <p style={{ margin: "3px 0 0", fontSize: 9, fontWeight: 700, color: b.col, letterSpacing: 0.6 }}>
+                {b.label}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {/* Type badge */}
+        <div style={{ marginTop: 10, textAlign: "center" }}>
+          <span
+            style={{
+              display    : "inline-block",
+              padding    : "3px 12px",
+              borderRadius: 20,
+              fontSize   : 10,
+              fontWeight : 700,
+              background : gold ? "#fff8e1" : "#e3f2fd",
+              color      : gold ? "#f57c00" : "#1565c0",
+              border     : `1px solid ${gold ? "#f9a825" : "#90caf9"}`,
+              letterSpacing: 0.5,
+            }}
+          >
+            {gold ? "⭐ GOLD MEMBER" : "✅ ACTIVE MEMBER"}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN PAGE
+═══════════════════════════════════════════════════════════════ */
 export default function NetworkTreePage() {
-  const { data: session } = useSession();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [memberId,     setMemberId]     = useState("");
-  const [treeRoot,     setTreeRoot]     = useState<TreeNode | null>(null);
-  const [loading,      setLoading]      = useState(false);
-  const [error,        setError]        = useState("");
-  const [autoLoaded,   setAutoLoaded]   = useState(false);
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const [hoveredTree, setHoveredTree] = useState<TreeNode | null>(null);
-  const [hoveredLoading, setHoveredLoading] = useState(false);
-  const [hoverPosition, setHoverPosition] = useState({ x: 0, y: 0 });
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const { data: session }             = useSession();
+  const [ddOpen,   setDdOpen]         = useState(false);
+  const [memberId, setMemberId]       = useState("");
+  const [treeRoot, setTreeRoot]       = useState<MNode | null>(null);
+  const [loading,  setLoading]        = useState(false);
+  const [error,    setError]          = useState("");
+  const [autoLoaded, setAutoLoaded]   = useState(false);
+  const [popup,    setPopup]          = useState<PopupState | null>(null);
+  const scrollRef                     = useRef<HTMLDivElement>(null);
 
-  // 🔧 UTILITY: Clamp position within viewport
-  const getClampedPosition = (x: number, y: number, popupWidth: number = 500, popupHeight: number = 400) => {
-    const padding = 10;
-    const viewportWidth = typeof window !== 'undefined' ? window.innerWidth : 1024;
-    const viewportHeight = typeof window !== 'undefined' ? window.innerHeight : 768;
-
-    let clampedX = x;
-    let clampedY = y;
-
-    // Clamp X: If popup extends right edge, shift left
-    if (x + popupWidth > viewportWidth - padding) {
-      clampedX = viewportWidth - popupWidth - padding;
-    }
-    // Keep minimum left padding
-    if (clampedX < padding) {
-      clampedX = padding;
-    }
-
-    // Clamp Y: If popup extends bottom, shift up
-    if (y + popupHeight > viewportHeight - padding) {
-      clampedY = viewportHeight - popupHeight - padding;
-    }
-    // Keep minimum top padding
-    if (clampedY < padding) {
-      clampedY = padding;
-    }
-
-    console.log('📍 Position clamped:', { original: { x, y }, clamped: { x: clampedX, y: clampedY } });
-    return { x: clampedX, y: clampedY };
-  };
-
-  const handleFilter = async () => {
-    console.log('🔍 [NETWORK-TREE] Filter initiated - Searching for username');
-    
-    if (!memberId.trim()) {
-      console.log('❌ [NETWORK-TREE] No username entered');
-      setError("Please enter a Username");
-      return;
-    }
-    
-    console.log('📝 Username entered:', memberId);
-    setLoading(true);
-    setError("");
-
+  /* ── Fetch tree data ── */
+  const fetchTree = async (uid: string) => {
+    const trimmed = uid.trim();
+    if (!trimmed) { setError("Please enter a Username"); return; }
+    setLoading(true); setError(""); setPopup(null);
     try {
-      console.log('🚀 [NETWORK-TREE] Fetching placement tree for:', memberId);
-      const response = await fetch("/api/user/placement-tree", {
-        method: "POST",
+      const res  = await fetch("/api/user/placement-tree", {
+        method : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: memberId })
+        body   : JSON.stringify({ userId: trimmed }),
       });
-      
-      console.log('📊 API Response status:', response.status);
-
-      const data = await response.json();
-      console.log('📋 Response data received:', data);
-
-      if (!data.success) {
-        console.log('❌ API returned error:', data.error);
-        setError(data.error || "Failed to fetch placement tree");
-        setTreeRoot(null);
-      } else {
-        console.log('✅ Tree data retrieved successfully');
-        console.log('🌳 Tree structure:', data.tree);
+      const data = await res.json();
+      if (data.success) {
         setTreeRoot(data.tree);
-        setError("");
+      } else {
+        setError(data.error || "Failed to load placement tree");
+        setTreeRoot(null);
       }
-    } catch (err) {
-      const errorMsg = err instanceof Error ? err.message : "Something went wrong";
-      console.error('❌ Error fetching tree:', errorMsg);
-      setError(errorMsg);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Something went wrong");
       setTreeRoot(null);
     } finally {
       setLoading(false);
-      console.log('✅ Filter loading completed');
     }
   };
 
-  const handleNodeHover = async (nodeId: string, event: React.MouseEvent) => {
-    console.log('👆 [NETWORK-TREE] Node hover triggered for:', nodeId);
-    
-    // Clear any pending debounce timers
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-    
-    // 🎯 Debounce: Wait 300ms before making API call (avoids rapid requests)
-    debounceTimerRef.current = setTimeout(async () => {
-      console.log('🐢 [NETWORK-TREE] Debounce completed, fetching tree for:', nodeId);
-      setHoveredNodeId(nodeId);
-      setHoveredLoading(true);
-      
-      const rect = (event.target as Element).getBoundingClientRect();
-      
-      // 📍 Clamp position within viewport
-      const clampedPos = getClampedPosition(rect.left, rect.bottom + 10);
-      console.log('📍 Position calculated and clamped:', clampedPos);
-      setHoverPosition(clampedPos);
-
-      try {
-        console.log('🚀 [NETWORK-TREE] Fetching hover tree for node:', nodeId);
-        const response = await fetch("/api/user/placement-tree", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ userId: nodeId })
-        });
-        
-        console.log('📊 Hover API response status:', response.status);
-
-        const data = await response.json();
-        if (data.success) {
-          console.log('✅ Hover tree data retrieved for:', nodeId);
-          console.log('🌳 Hover tree structure:', data.tree);
-          setHoveredTree(data.tree);
-        } else {
-          console.log('⚠️ Hover tree fetch returned unsuccessful');
-          setHoveredTree(null);
-        }
-      } catch (err) {
-        console.error("❌ Error fetching hover tree:", err);
-        setHoveredTree(null);
-      } finally {
-        setHoveredLoading(false);
-        console.log('✅ Hover tree loading completed for:', nodeId);
-      }
-    }, 300); // 300ms debounce interval
-  };
-
-  const handleNodeLeave = () => {
-    console.log('👋 [NETWORK-TREE] Node hover left - Clearing hover data');
-    
-    // Clear debounce timer if hover ends before API call
-    if (debounceTimerRef.current) {
-      console.log('⏹️ Debounce cancelled - hover ended before request');
-      clearTimeout(debounceTimerRef.current);
-      debounceTimerRef.current = null;
-    }
-    
-    setHoveredNodeId(null);
-    setHoveredTree(null);
-  };
-
+  /* ── Auto-load on session ── */
   useEffect(() => {
-    console.log('🔍 [NETWORK-TREE] Component mounted / Session changed');
     if (session?.user?.username && !autoLoaded) {
-      console.log('📝 Session found - Loading user tree for:', session.user.username);
-      setMemberId(session.user.username);
       setAutoLoaded(true);
-      const fetchTree = async () => {
-        setLoading(true);
-        console.log('🚀 [NETWORK-TREE] Auto-loading placement tree...');
-        try {
-          console.log('📤 Sending API request to fetch placement tree');
-          const response = await fetch("/api/user/placement-tree", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ userId: session.user.username })
-          });
-          
-          console.log('📊 API response status:', response.status);
-
-          const data = await response.json();
-          console.log('📋 Tree data received:', data);
-
-          if (data.success) {
-            console.log('✅ Auto-load successful - Tree loaded');
-            console.log('🌳 Tree root:', data.tree?.id, 'with', data.tree?.children?.length || 0, 'children');
-            setTreeRoot(data.tree);
-            setError("");
-          } else {
-            console.log('❌ Auto-load failed:', data.error);
-            setError(data.error || "Failed to fetch placement tree");
-            setTreeRoot(null);
-          }
-        } catch (err) {
-          const errorMsg = err instanceof Error ? err.message : "Something went wrong";
-          console.error('❌ Exception during tree fetch:', errorMsg);
-          setError(errorMsg);
-          setTreeRoot(null);
-        } finally {
-          setLoading(false);
-          console.log('✅ Auto-load process completed');
-        }
-      };
-
-      fetchTree();
-    } else {
-      if (autoLoaded) {
-        console.log('⏭️ Already loaded - skipping auto-load');
-      } else {
-        console.log('⏳ Waiting for session...');
-      }
+      setMemberId(session.user.username);
+      fetchTree(session.user.username);
     }
-
-    // 🧹 Cleanup: Clear debounce timer on unmount
-    return () => {
-      if (debounceTimerRef.current) {
-        console.log('🧹 Cleaning up debounce timer on unmount');
-        clearTimeout(debounceTimerRef.current);
-      }
-    };
   }, [session?.user?.username, autoLoaded]);
+
+  /* ── Node click → show popup ── */
+  const handleNodeClick = (n: MNode, e: React.MouseEvent) => {
+    if (isSlot(n)) return;
+    e.stopPropagation();
+    const vw  = window.innerWidth;
+    const vh  = window.innerHeight;
+    const pw  = 308;
+    const ph  = 330;
+    const box = (e.currentTarget as Element).getBoundingClientRect();
+    // Position popup below the clicked node; clamp to viewport
+    let lft = box.left + box.width / 2 - pw / 2;
+    let top = box.bottom + 10;
+    if (lft + pw > vw - 10) lft = vw - pw - 10;
+    if (lft < 10)           lft = 10;
+    if (top + ph > vh - 10) top = box.top - ph - 10;
+    if (top < 10)           top = 10;
+    setPopup({ node: n, left: lft, top });
+  };
+
+  /* ── Dismiss popup & dropdown on root click ── */
+  const handleRootClick = () => {
+    if (ddOpen)  setDdOpen(false);
+    if (popup)   setPopup(null);
+  };
 
   return (
     <>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-        * { margin:0; padding:0; box-sizing:border-box; }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
 
-        .mt-root { font-family:'Poppins',sans-serif; background:#f0f2f5; min-height:100vh; }
-
-        /* BREADCRUMB */
-        .breadcrumb { 
-          padding:12px 16px; 
-          font-size:13px; 
-          color:#555; 
-          display:flex; 
-          align-items:center; 
-          gap:6px;
-          overflow-x:auto;
-          white-space:nowrap;
+        @keyframes ntPopIn {
+          from { opacity:0; transform:scale(.88) translateY(-8px); }
+          to   { opacity:1; transform:scale(1) translateY(0); }
         }
-        .breadcrumb a { color:#555; text-decoration:none; }
-        .breadcrumb a:hover { text-decoration:underline; }
-        .breadcrumb .sep { color:#999; }
-
-        /* PAGE BODY */
-        .page-body { 
-          padding:16px 12px 40px;
-        }
-        @media (min-width: 640px) {
-          .page-body { padding:20px 16px 40px; }
-        }
-        @media (min-width: 1024px) {
-          .page-body { padding:20px 20px 40px; }
+        @keyframes ntSpin {
+          to { transform:rotate(360deg); }
         }
 
-        /* MAIN CARD */
-        .main-card { 
-          background:#fff; 
-          border-radius:8px; 
-          overflow:hidden; 
-          box-shadow:0 2px 10px rgba(0,0,0,0.07); 
-        }
-        @media (min-width: 640px) {
-          .main-card { border-radius:10px; }
+        .nt-root {
+          font-family: 'Poppins', sans-serif;
+          background: #f0f2f5;
+          min-height: 100vh;
         }
 
-        /* HEADER */
-        .section-header {
-          background:linear-gradient(90deg,#26a69a,#1de9b6);
-          padding:12px 14px;
-          display:flex; 
-          align-items:center; 
-          justify-content:space-between;
+        /* ── Breadcrumb ── */
+        .nt-bc {
+          padding: 10px 16px;
+          font-size: 12px;
+          color: #666;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          flex-wrap: wrap;
         }
-        @media (min-width: 640px) {
-          .section-header { padding:12px 16px; }
-        }
+        .nt-bc a { color:#666; text-decoration:none; }
+        .nt-bc a:hover { text-decoration:underline; }
 
-        .section-title { 
-          font-size:12px; 
-          font-weight:700; 
-          color:#fff; 
-          letter-spacing:0.8px; 
-          text-transform:uppercase; 
-        }
-        @media (min-width: 640px) {
-          .section-title { font-size:13px; }
-        }
+        /* ── Page body ── */
+        .nt-body { padding: 14px 10px 44px; }
+        @media(min-width:600px)  { .nt-body { padding: 18px 16px 44px; } }
+        @media(min-width:1024px) { .nt-body { padding: 20px 20px 44px; } }
 
-        /* LEGEND */
-        .legend-row {
-          display:grid;
-          grid-template-columns: repeat(2, 1fr);
-          gap:12px;
-          padding:14px 12px;
-          justify-items:center;
-        }
-        @media (min-width: 640px) {
-          .legend-row {
-            display:flex;
-            grid-template-columns: unset;
-            align-items:flex-end;
-            justify-content:center;
-            gap:30px;
-            padding:18px 20px 10px;
-            flex-wrap:wrap;
-          }
-        }
-
-        .legend-item { 
-          display:flex; 
-          flex-direction:column; 
-          align-items:center; 
-          gap:4px; 
-        }
-        .legend-label { 
-          font-size:11px; 
-          color:#333; 
-          font-weight:500;
-          text-align:center;
-        }
-        @media (min-width: 640px) {
-          .legend-label { font-size:12.5px; }
-        }
-
-        /* FILTER AREA */
-        .filter-area { 
-          padding:12px 12px 14px;
-        }
-        @media (min-width: 640px) {
-          .filter-area { padding:10px 20px 18px; }
-        }
-
-        .filter-inner { 
-          display:flex; 
-          align-items:flex-end; 
-          gap:8px; 
-          flex-wrap:wrap; 
-        }
-        @media (min-width: 640px) {
-          .filter-inner { gap:12px; }
-        }
-
-        .filter-group { 
-          display:flex; 
-          flex-direction:column; 
-          gap:4px;
-          flex:1;
-          min-width:200px;
-        }
-        @media (min-width: 640px) {
-          .filter-group { 
-            gap:5px;
-            flex:0 1 auto;
-            min-width:220px;
-          }
-        }
-
-        .filter-label { 
-          font-size:11px; 
-          font-weight:600; 
-          color:#444;
-        }
-        @media (min-width: 640px) {
-          .filter-label { font-size:12.5px; font-weight:500; }
-        }
-
-        .filter-input {
-          border:1px solid #d0d0d0; 
-          border-radius:4px;
-          padding:8px 10px; 
-          font-size:12px;
-          font-family:'Poppins',sans-serif; 
-          color:#333;
-          background:#fff; 
-          outline:none; 
-          height:36px;
-          width:100%;
-          transition:border-color .18s;
-        }
-        @media (min-width: 640px) {
-          .filter-input {
-            border-radius:5px;
-            padding:9px 13px;
-            font-size:13px;
-            height:40px;
-            width:auto;
-          }
-        }
-
-        .filter-input::placeholder { color:#aaa; }
-        .filter-input:focus { 
-          border-color:#26a69a; 
-          box-shadow:0 0 0 2px rgba(38,166,154,0.1); 
-        }
-
-        .filter-btn {
-          background:#1976d2; 
-          color:#fff; 
-          border:none; 
-          border-radius:4px;
-          padding:0 16px; 
-          height:36px; 
-          font-size:12px; 
-          font-weight:600;
-          font-family:'Poppins',sans-serif; 
-          cursor:pointer;
-          white-space:nowrap;
-          transition:background .18s, transform .15s;
-        }
-        @media (min-width: 640px) {
-          .filter-btn {
-            border-radius:6px;
-            padding:0 28px;
-            height:40px;
-            font-size:14px;
-          }
-        }
-
-        .filter-btn:hover { 
-          background:#1565c0; 
-          transform:translateY(-1px); 
-        }
-
-        .filter-btn:disabled {
-          background:#ccc;
-          cursor:not-allowed;
-          transform:none;
-        }
-
-        .error-message {
-          color:#d32f2f;
-          font-size:12px;
-          margin-top:8px;
-          padding:8px 12px;
-          background:#ffebee;
-          border-radius:4px;
-          border-left:3px solid #d32f2f;
-        }
-
-        /* LEFT PANEL + TREE PANEL */
-        .tree-layout {
-          display:flex; 
-          flex-direction:column;
-          gap:0;
-          border-top:1px solid #e0e0e0;
-        }
-        @media (min-width: 768px) {
-          .tree-layout {
-            flex-direction:row;
-          }
-        }
-
-        /* Left sidebar */
-        .tree-sidebar {
-          width:100%;
-          padding:14px 12px;
-          border-right:none;
-          border-bottom:1px solid #e0e0e0;
-          display:flex;
-          align-items:center;
-          gap:12px;
-        }
-        @media (min-width: 768px) {
-          .tree-sidebar {
-            width:160px;
-            flex-direction:column;
-            padding:16px 14px;
-            border-right:1px solid #e0e0e0;
-            border-bottom:none;
-            flex-shrink:0;
-          }
-        }
-        @media (min-width: 1024px) {
-          .tree-sidebar {
-            width:200px;
-            padding:20px 16px;
-          }
-        }
-
-        .sidebar-avatar-wrap {
-          width:56px; 
-          height:56px; 
-          border-radius:50%;
-          background:#e0e0e0; 
-          overflow:hidden;
-          display:flex; 
-          align-items:center; 
-          justify-content:center;
-          flex-shrink:0;
-        }
-        @media (min-width: 768px) {
-          .sidebar-avatar-wrap {
-            width:60px;
-            height:60px;
-            margin-bottom:10px;
-          }
-        }
-        @media (min-width: 1024px) {
-          .sidebar-avatar-wrap {
-            width:70px;
-            height:70px;
-            margin-bottom:14px;
-          }
-        }
-
-        .searched-label { 
-          font-size:11px; 
-          font-weight:700; 
-          color:#1976d2;
-          margin-bottom:0;
-        }
-        @media (min-width: 768px) {
-          .searched-label { 
-            font-size:12px;
-            margin-bottom:4px;
-          }
-        }
-
-        .team-row { 
-          display:flex; 
-          align-items:center; 
-          gap:6px; 
-        }
-        @media (min-width: 768px) {
-          .team-row { margin-top:6px; }
-        }
-        @media (min-width: 1024px) {
-          .team-row { margin-top:8px; }
-        }
-
-        .team-dot { 
-          width:10px; 
-          height:10px; 
-          border-radius:50%; 
-          background:#ff5722; 
-          flex-shrink:0; 
-        }
-        @media (min-width: 768px) {
-          .team-dot { width:12px; height:12px; }
-        }
-
-        .team-id  { 
-          font-size:12px; 
-          color:#333; 
-          font-weight:500; 
-        }
-        @media (min-width: 768px) {
-          .team-id { font-size:13px; }
-        }
-
-        /* Tree canvas */
-        .tree-canvas-wrap {
-          flex:1; 
-          overflow:auto; 
-          position:relative;
-          background:#1a6bb5;
-          min-height:320px;
-          scrollbar-width:thin;
-          scrollbar-color:#e6a817 #1565c0;
-        }
-        @media (min-width: 768px) {
-          .tree-canvas-wrap {
-            min-height:420px;
-          }
-        }
-        @media (min-width: 1024px) {
-          .tree-canvas-wrap {
-            min-height:520px;
-          }
-        }
-
-        .tree-canvas-wrap::-webkit-scrollbar { 
-          width:8px; 
-          height:8px; 
-        }
-        @media (min-width: 768px) {
-          .tree-canvas-wrap::-webkit-scrollbar {
-            width:10px;
-            height:10px;
-          }
-        }
-
-        .tree-canvas-wrap::-webkit-scrollbar-track { background:#1565c0; }
-        .tree-canvas-wrap::-webkit-scrollbar-thumb { 
-          background:#e6a817; 
-          border-radius:4px; 
-        }
-
-        .tree-canvas-inner {
-          padding:20px 24px 30px;
-          display:inline-block;
-          min-width:100%;
-        }
-        @media (min-width: 640px) {
-          .tree-canvas-inner {
-            padding:25px 30px 35px;
-          }
-        }
-        @media (min-width: 1024px) {
-          .tree-canvas-inner {
-            padding:30px 40px 40px;
-          }
-        }
-
-        .loading-spinner {
-          display:inline-block;
-          width:20px;
-          height:20px;
-          border:3px solid #f3f3f3;
-          border-top:3px solid #1976d2;
-          border-radius:50%;
-          animation:spin 1s linear infinite;
-        }
-
-        @keyframes spin {
-          0% { transform:rotate(0deg); }
-          100% { transform:rotate(360deg); }
-        }
-
-        /* HOVER TREE POPUP */
-        .hover-tree-popup {
-          animation: popupSlideIn 0.2s ease-out;
-        }
-
-        @keyframes popupSlideIn {
-          from {
-            opacity: 0;
-            transform: translateY(-10px) scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-          }
-        }
-
-        .hover-tree-card {
+        /* ── Main card ── */
+        .nt-card {
           background: #fff;
-          border-radius: 8px;
-          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+          border-radius: 12px;
           overflow: hidden;
-          max-width: 500px;
-          max-height: 400px;
-          border: 2px solid #26a69a;
+          box-shadow: 0 2px 16px rgba(0,0,0,0.08);
         }
 
-        .hover-tree-header {
+        /* ── Section header ── */
+        .nt-hdr {
           background: linear-gradient(90deg, #26a69a, #1de9b6);
-          padding: 10px 14px;
+          padding: 12px 16px;
           display: flex;
           align-items: center;
           justify-content: space-between;
         }
-
-        .hover-tree-title {
-          font-size: 12px;
+        .nt-hdr-title {
+          font-size: 13px;
           font-weight: 700;
           color: #fff;
-          letter-spacing: 0.5px;
+          letter-spacing: .8px;
           text-transform: uppercase;
-          margin: 0;
         }
 
-        .hover-loading-spinner {
-          display: inline-block;
-          width: 14px;
-          height: 14px;
-          border: 2px solid rgba(255, 255, 255, 0.3);
-          border-top: 2px solid #fff;
+        /* ── Legend ── */
+        .nt-legend {
+          display: flex;
+          align-items: flex-end;
+          justify-content: center;
+          gap: 22px;
+          padding: 14px 16px 10px;
+          flex-wrap: wrap;
+          border-bottom: 1px solid #f0f0f0;
+        }
+        .nt-leg-item {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 5px;
+        }
+        .nt-leg-lbl {
+          font-size: 11px;
+          color: #555;
+          font-weight: 500;
+        }
+
+        /* ── Filter ── */
+        .nt-filter { padding: 12px 14px 14px; }
+        .nt-f-row {
+          display: flex;
+          align-items: flex-end;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .nt-f-grp {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          flex: 1;
+          min-width: 190px;
+        }
+        .nt-f-lbl { font-size: 12px; font-weight: 600; color: #333; }
+        .nt-f-in {
+          border: 1.5px solid #d4d4d4;
+          border-radius: 6px;
+          padding: 8px 12px;
+          font-size: 13px;
+          font-family: 'Poppins', sans-serif;
+          color: #333;
+          background: #fff;
+          outline: none;
+          height: 38px;
+          width: 100%;
+          transition: border-color .18s, box-shadow .18s;
+        }
+        .nt-f-in::placeholder { color: #bbb; }
+        .nt-f-in:focus {
+          border-color: #26a69a;
+          box-shadow: 0 0 0 3px rgba(38,166,154,.12);
+        }
+        .nt-f-btn {
+          background: #1976d2;
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          padding: 0 26px;
+          height: 38px;
+          font-size: 13px;
+          font-weight: 600;
+          font-family: 'Poppins', sans-serif;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: background .18s, box-shadow .18s, transform .12s;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        .nt-f-btn:hover:not(:disabled) {
+          background: #1565c0;
+          box-shadow: 0 4px 14px rgba(25,118,210,.28);
+          transform: translateY(-1px);
+        }
+        .nt-f-btn:disabled { background: #b0bec5; cursor: not-allowed; transform: none; }
+        .nt-err {
+          color: #c62828;
+          font-size: 12px;
+          margin-top: 8px;
+          padding: 7px 12px;
+          background: #ffebee;
+          border-radius: 5px;
+          border-left: 3px solid #c62828;
+        }
+
+        /* ── Tree layout wrapper ── */
+        .nt-tree-wrap {
+          display: flex;
+          flex-direction: column;
+          border-top: 1px solid #e8e8e8;
+        }
+        @media(min-width:768px) { .nt-tree-wrap { flex-direction: row; } }
+
+        /* ── Sidebar ── */
+        .nt-sidebar {
+          width: 100%;
+          padding: 12px 14px;
+          border-bottom: 1px solid #e8e8e8;
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        @media(min-width:768px) {
+          .nt-sidebar {
+            width: 160px;
+            flex-direction: column;
+            align-items: center;
+            padding: 18px 12px;
+            border-right: 1px solid #e8e8e8;
+            border-bottom: none;
+            flex-shrink: 0;
+          }
+        }
+        @media(min-width:1024px) { .nt-sidebar { width: 188px; padding: 22px 14px; } }
+
+        .nt-sb-av {
+          width: 58px; height: 58px;
           border-radius: 50%;
-          animation: spin 0.8s linear infinite;
+          background: #e3f2fd;
+          border: 2.5px solid #90caf9;
+          display: flex; align-items: center; justify-content: center;
+          flex-shrink: 0;
+          overflow: hidden;
         }
+        @media(min-width:768px) { .nt-sb-av { width: 68px; height: 68px; margin-bottom: 10px; } }
 
-        .hover-tree-content {
-          padding: 10px;
-          background: #f9f9f9;
+        .nt-sb-lbl { font-size: 11px; font-weight: 700; color: #1565c0; line-height: 1.5; }
+        .nt-sb-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+        .nt-sb-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff5722; flex-shrink: 0; }
+        .nt-sb-id  { font-size: 12px; font-weight: 600; color: #222; word-break: break-all; }
+
+        /* ── Canvas ── */
+        .nt-canvas {
+          flex: 1;
           overflow: auto;
-          max-height: 340px;
+          background: linear-gradient(160deg, #1565c0 0%, #0d47a1 100%);
+          min-height: 380px;
+          position: relative;
+          scrollbar-width: thin;
+          scrollbar-color: #ffa000 #0d47a1;
+        }
+        @media(min-width:768px)  { .nt-canvas { min-height: 440px; } }
+        @media(min-width:1024px) { .nt-canvas { min-height: 520px; } }
+
+        .nt-canvas::-webkit-scrollbar { width: 7px; height: 7px; }
+        .nt-canvas::-webkit-scrollbar-track { background: #0d47a1; }
+        .nt-canvas::-webkit-scrollbar-thumb { background: #ffa000; border-radius: 4px; }
+
+        .nt-canvas-inner {
+          padding: 26px 36px 38px;
+          display: inline-block;
+          min-width: 100%;
+        }
+        @media(min-width:1024px) { .nt-canvas-inner { padding: 32px 44px 44px; } }
+
+        /* ── Loading spinner ── */
+        .nt-spin {
+          display: inline-block;
+          width: 34px; height: 34px;
+          border: 4px solid rgba(255,255,255,.25);
+          border-top-color: #fff;
+          border-radius: 50%;
+          animation: ntSpin .85s linear infinite;
         }
 
-        .hover-tree-content svg {
-          max-width: 100%;
-          height: auto;
+        /* ── Popup overlay (transparent dismiss layer) ── */
+        .nt-overlay {
+          position: fixed;
+          inset: 0;
+          z-index: 2100;
+          background: transparent;
         }
       `}</style>
 
-      <div className="mt-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
+      <div className="nt-root" onClick={handleRootClick}>
+        {/* Top nav */}
+        <Navbar dropdownOpen={ddOpen} setDropdownOpen={setDdOpen} setActivePage={() => {}} />
 
-        {/* TOP NAV */}
-        <Navbar dropdownOpen={dropdownOpen} setDropdownOpen={setDropdownOpen} setActivePage={() => {}} />
-
-        {/* BREADCRUMB */}
-        <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+        {/* Breadcrumb */}
+        <div className="nt-bc">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="#777">
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+          </svg>
           <a href="/dashboard">Home</a>
-          <span className="sep">/</span>
-          <span className="current">My Network</span>
-          <span className="sep">/</span>
-          <span>Network Tree</span>
+          <span style={{ color: "#ccc" }}>/</span>
+          <span>My Network</span>
+          <span style={{ color: "#ccc" }}>/</span>
+          <span style={{ color: "#26a69a", fontWeight: 600 }}>Network Tree</span>
         </div>
 
-        <div className="page-body">
-          <div className="main-card">
+        <div className="nt-body">
+          <div className="nt-card">
 
-            {/* HEADER */}
-            <div className="section-header">
-              <span className="section-title">Network Tree (Placement Tree)</span>
+            {/* ── Header ── */}
+            <div className="nt-hdr">
+              <span className="nt-hdr-title">Network Tree (Placement Tree)</span>
             </div>
 
-            {/* LEGEND ROW */}
-            <div className="legend-row">
-              <div className="legend-item">
-                <ActiveAvatar size={40} />
-                <span className="legend-label">Active ID</span>
+            {/* ── Legend ── */}
+            <div className="nt-legend">
+              {/* Active ID */}
+              <div className="nt-leg-item">
+                <svg width="42" height="42" viewBox="-4 -4 60 60" xmlns="http://www.w3.org/2000/svg">
+                  <AvatarActive x={26} y={26}/>
+                </svg>
+                <span className="nt-leg-lbl">Active ID</span>
               </div>
-              <div className="legend-item">
-                <GoldAvatar size={40} />
-                <span className="legend-label">Booster ID</span>
+
+              {/* Gold ID */}
+              <div className="nt-leg-item">
+                <svg width="42" height="42" viewBox="-4 -4 60 60" xmlns="http://www.w3.org/2000/svg">
+                  <AvatarGold x={26} y={26}/>
+                </svg>
+                <span className="nt-leg-lbl">Gold ID</span>
               </div>
-              <div className="legend-item">
-                <div style={{ width: 40, height: 40, borderRadius: 8, background: '#ffcdd2' }} />
-                <span className="legend-label">Left Leg</span>
+
+              {/* Close for joining */}
+              <div className="nt-leg-item">
+                <div style={{
+                  width: 50, height: 28, borderRadius: 8,
+                  border: "2.5px solid #e53935",
+                  background: "#ffebee",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <span style={{ fontSize: 10.5, fontWeight: 700, color: "#e53935" }}>Close</span>
+                </div>
+                <span className="nt-leg-lbl">Closed</span>
               </div>
-              <div className="legend-item">
-                <div style={{ width: 40, height: 40, borderRadius: 8, background: '#c8e6c9' }} />
-                <span className="legend-label">Right Leg</span>
+
+              {/* Open for joining */}
+              <div className="nt-leg-item">
+                <div style={{
+                  width: 50, height: 28, borderRadius: 8,
+                  border: "2.5px solid #27ae60",
+                  background: "#e8f5e9",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  <span style={{ fontSize: 10.5, fontWeight: 700, color: "#27ae60" }}>Open</span>
+                </div>
+                <span className="nt-leg-lbl">Open</span>
               </div>
             </div>
 
-            {/* FILTER AREA */}
-            <div className="filter-area">
-              <div className="filter-inner">
-                <div className="filter-group">
-                  <label className="filter-label">Username :</label>
+            {/* ── Filter ── */}
+            <div className="nt-filter">
+              <div className="nt-f-row">
+                <div className="nt-f-grp">
+                  <label className="nt-f-lbl">Username :</label>
                   <input
-                    className="filter-input"
+                    className="nt-f-in"
                     type="text"
-                    placeholder="Enter Username (e.g., john_doe)"
+                    placeholder="Enter Username (e.g., SM674643)"
                     value={memberId}
-                    onChange={(e) => setMemberId(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleFilter()}
-                    suppressHydrationWarning
+                    onChange={e => setMemberId(e.target.value)}
+                    onKeyDown={e => e.key === "Enter" && fetchTree(memberId)}
                   />
                 </div>
-                <button 
-                  className="filter-btn" 
-                  onClick={handleFilter}
+                <button
+                  className="nt-f-btn"
+                  onClick={() => fetchTree(memberId)}
                   disabled={loading}
                 >
-                  {loading ? <span className="loading-spinner"></span> : "Filter"}
+                  {loading
+                    ? <span className="nt-spin" style={{ width: 16, height: 16, borderWidth: 3 }}/>
+                    : null
+                  }
+                  {loading ? "Loading…" : "Filter"}
                 </button>
               </div>
-              {error && <div className="error-message">{error}</div>}
+              {error && <div className="nt-err">{error}</div>}
             </div>
 
-            {/* TREE LAYOUT: sidebar + canvas */}
-            <div className="tree-layout">
+            {/* ── Tree layout ── */}
+            <div className="nt-tree-wrap">
 
-              {/* LEFT SIDEBAR */}
-              <div className="tree-sidebar">
-                <div className="sidebar-avatar-wrap">
-                  {/* Business person avatar */}
-                  <svg width="56" height="56" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="40" cy="40" r="40" fill="#e0e0e0"/>
-                    <ellipse cx="40" cy="28" rx="13" ry="14" fill="#f5cba7"/>
-                    <ellipse cx="40" cy="17" rx="14" ry="8" fill="#555"/>
-                    <path d="M20 65 Q22 50 40 48 Q58 50 60 65 Z" fill="#c62828"/>
-                    <rect x="37" y="48" width="6" height="20" fill="#fff"/>
-                    <ellipse cx="40" cy="72" rx="18" ry="8" fill="#c62828"/>
+              {/* Sidebar */}
+              <div className="nt-sidebar">
+                <div className="nt-sb-av">
+                  <svg width="54" height="54" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="40" cy="40" r="40" fill="#e3f2fd"/>
+                    <ellipse cx="40" cy="28" rx="12" ry="13" fill="#f5cba7"/>
+                    <ellipse cx="40" cy="17" rx="14" ry="8" fill="#3d2b1f"/>
+                    <path d="M18 70 Q20 52 40 50 Q60 52 62 70 Z" fill="#c62828"/>
+                    <rect x="37" y="50" width="6" height="22" fill="#fff"/>
+                    <ellipse cx="40" cy="72" rx="22" ry="8" fill="#c62828"/>
                   </svg>
                 </div>
                 <div>
-                  <p className="searched-label">Searched<br/>Username</p>
-                  <div className="team-row" style={{ marginTop: 4 }}>
-                    <div className="team-dot" />
-                    <span className="team-id">{memberId || "---"}</span>
+                  <p className="nt-sb-lbl">Searched<br/>Username</p>
+                  <div className="nt-sb-row">
+                    <div className="nt-sb-dot"/>
+                    <span className="nt-sb-id">{memberId || "—"}</span>
                   </div>
                 </div>
               </div>
 
-              {/* TREE CANVAS */}
-              <div className="tree-canvas-wrap" ref={scrollRef}>
-                <div className="tree-canvas-inner">
-                  <TreeSVG root={treeRoot} onNodeHover={handleNodeHover} onNodeLeave={handleNodeLeave} />
+              {/* Canvas */}
+              <div className="nt-canvas" ref={scrollRef}>
+                <div className="nt-canvas-inner">
+                  {loading ? (
+                    <div style={{
+                      display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center",
+                      gap: 14, padding: 70,
+                    }}>
+                      <div className="nt-spin"/>
+                      <p style={{ color: "#90caf9", fontSize: 12, margin: 0 }}>
+                        Loading placement tree…
+                      </p>
+                    </div>
+                  ) : (
+                    <TreeSVG root={treeRoot} onNodeClick={handleNodeClick}/>
+                  )}
                 </div>
               </div>
-
             </div>
+
           </div>
         </div>
 
-        {/* HOVER TREE POPUP */}
-        {hoveredTree && (
-          <div 
-            className="hover-tree-popup"
-            style={{
-              position: 'fixed',
-              left: `${hoverPosition.x}px`,
-              top: `${hoverPosition.y}px`,
-              zIndex: 1000
-            }}
-            onMouseLeave={handleNodeLeave}
-          >
-            <div className="hover-tree-card">
-              <div className="hover-tree-header">
-                <p className="hover-tree-title">{hoveredNodeId}'s Network</p>
-                {hoveredLoading && <span className="hover-loading-spinner"></span>}
-              </div>
-              <div className="hover-tree-content">
-                <TreeSVG root={hoveredTree} onNodeHover={() => {}} onNodeLeave={() => {}} />
-              </div>
-            </div>
-          </div>
+        {/* ── Popup ── */}
+        {popup && (
+          <>
+            {/* Transparent overlay to dismiss */}
+            <div className="nt-overlay" onClick={() => setPopup(null)}/>
+            <MemberPopup state={popup} onClose={() => setPopup(null)}/>
+          </>
         )}
       </div>
     </>

@@ -242,7 +242,6 @@ export async function POST(req: Request) {
   }
 }
 
-// GET endpoint to view status
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);

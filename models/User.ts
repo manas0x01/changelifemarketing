@@ -32,6 +32,8 @@ export interface IUser extends Document {
   placementId?: string;
   placementName?: string;
   placementPosition?: 'left' | 'right';
+  leftChild?: string;
+  rightChild?: string;
   memberType?: 'gold' | 'active';
   role?: string;
   basicRank?: string; // User rank for basic income eligibility
@@ -220,6 +222,8 @@ const userSchema = new Schema<IUser>(
     placementId: { type: String, required: false, trim: true },
     placementName: { type: String, required: false, trim: true },
     placementPosition: { type: String, required: false, enum: ['left', 'right'], trim: true },
+    leftChild: { type: String, required: false, trim: true },
+    rightChild: { type: String, required: false, trim: true },
     memberType: { type: String, required: false, enum: ['gold', 'active'], default: 'active' },
     role: { type: String, required: false, default: 'user', enum: ['user', 'admin', 'moderator'] },
     basicRank: { type: String, required: false, default: 'basic' },

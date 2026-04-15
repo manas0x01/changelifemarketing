@@ -13,6 +13,7 @@ export async function POST(req: Request) {
         const {
             userId,
             sponsorId,
+            placementId,
             position,
             package: packageName,
             epin,
@@ -89,49 +90,87 @@ export async function POST(req: Request) {
             return Response.json({ error: "E-Pin not available or already used" }, { status: 400 });
         }
         console.log('✅ E-PIN is available and valid');
-        console.log('🔍 Determining automatic placement...');
-        let placementId: string;
+        
+        // Check Placement User Exists (if provided)
+        let placementUser = null;
+        let finalPlacementId = placementId;
+        
+        if (placementId && placementId.trim()) {
+            console.log('🔍 Validating placement user exists...');
+            placementUser = await User.findOne({
+                $or: [
+                    { username: placementId },
+                    { userId: placementId },
+                ]
+            });
+            if (!placementUser) {
+                console.log('❌ Placement user not found:', placementId);
+                return Response.json({ error: "Placement ID not found" }, { status: 404 });
+            }
+            console.log('✅ Placement user found:', placementUser.username || placementUser.userId);
+            finalPlacementId = placementUser.userId || placementUser.username;
+        } else {
+            console.log('⚠️ No placement ID provided, using auto-placement...');
+        }
+        
+        console.log('🔍 Determining placement...');
         let finalPosition = position.toLowerCase();
         try {
-            const baseUrl = process.env.NEXTAUTH_URL?.replace(/\/$/, '') || '';
-            
-            const autoPlacementUrl = `${baseUrl}/api/user/auto-placement`;
-            console.log('📡 Auto-placement URL:', autoPlacementUrl);
-            console.log('🔧 Environment:', {
-                NODE_ENV: process.env.NODE_ENV,
-                NEXTAUTH_URL: process.env.NEXTAUTH_URL ? '✓ Set' : '✗ Not set',
-                baseUrl: baseUrl,
-            });
-            
-            const autoPlacementResponse = await fetch(autoPlacementUrl, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
+            if (!finalPlacementId) {
+                // Use auto-placement if no placement ID provided
+                const baseUrl = process.env.NEXTAUTH_URL?.replace(/\/$/, '') || '';
+                
+                const autoPlacementUrl = `${baseUrl}/api/user/auto-placement`;
+                console.log('📡 Auto-placement URL:', autoPlacementUrl);
+                console.log('🔧 Environment:', {
+                    NODE_ENV: process.env.NODE_ENV,
+                    NEXTAUTH_URL: process.env.NEXTAUTH_URL ? '✓ Set' : '✗ Not set',
+                    baseUrl: baseUrl,
+                });
+                
+                const autoPlacementResponse = await fetch(autoPlacementUrl, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        sponsorId: sponsor.userId || sponsor.username,
+                        position: position.toLowerCase(),
+                    }),
+                });
+
+                if (!autoPlacementResponse.ok) {
+                    console.error("❌ Auto-placement API failed:", autoPlacementResponse.statusText);
+                    return Response.json(
+                        { error: "Could not determine placement position" },
+                        { status: 500 }
+                    );
+                }
+
+                const autoPlacementData = await autoPlacementResponse.json();
+                finalPlacementId = autoPlacementData.placementId;
+                finalPosition = autoPlacementData.placementPosition || finalPosition;
+                
+                // Fetch the placement user for later operations
+                placementUser = await User.findOne({
+                    $or: [
+                        { username: finalPlacementId },
+                        { userId: finalPlacementId },
+                    ]
+                });
+
+                console.log("✅ AUTO-PLACEMENT DETERMINED:", {
                     sponsorId: sponsor.userId || sponsor.username,
-                    position: position.toLowerCase(),
-                }),
-            });
-
-            if (!autoPlacementResponse.ok) {
-                console.error("❌ Auto-placement API failed:", autoPlacementResponse.statusText);
-                return Response.json(
-                    { error: "Could not determine placement position" },
-                    { status: 500 }
-                );
+                    requestedPosition: position.toLowerCase(),
+                    placementId: finalPlacementId,
+                    finalPosition,
+                });
+            } else {
+                console.log("✅ MANUAL PLACEMENT SELECTED:", {
+                    placementId: finalPlacementId,
+                    position: finalPosition,
+                });
             }
-
-            const autoPlacementData = await autoPlacementResponse.json();
-            placementId = autoPlacementData.placementId;
-            finalPosition = autoPlacementData.placementPosition || finalPosition;
-
-            console.log("✅ AUTO-PLACEMENT DETERMINED:", {
-                sponsorId: sponsor.userId || sponsor.username,
-                requestedPosition: position.toLowerCase(),
-                placementId,
-                finalPosition,
-            });
         } catch (error) {
-            console.error("❌ Auto-placement fetch error:", error);
+            console.error("❌ Placement determination failed:", error);
             return Response.json(
                 { error: "Failed to determine placement" },
                 { status: 500 }
@@ -201,7 +240,7 @@ export async function POST(req: Request) {
             accountNo,
             ifsc,
             sponsorId,
-            placementId,
+            placementId: finalPlacementId,
             placementPosition: finalPosition,
             role: "user",
             basicRank: "basic",
@@ -329,93 +368,84 @@ export async function POST(req: Request) {
 
         // ✅ STEP 5: Add member to placement parent
         console.log('➕ STEP 5: Adding member to placement parent...');
-        if (placementId) {
-            const placementParent = await User.findOne({
-                $or: [
-                    { username: placementId },
-                    { userId: placementId }
-                ]
+        if (finalPlacementId && placementUser) {
+            console.log("🟡 ADDING MEMBER TO PARENT:", {
+                parentId: finalPlacementId,
+                newMemberId: newUser.username,
+                position: finalPosition,
             });
 
-            if (placementParent) {
-                console.log("🟡 ADDING MEMBER TO PARENT:", {
-                    parentId: placementId,
-                    newMemberId: newUser.username,
-                    position: finalPosition,
+            // ── Add to boosterDownlineMembers ──
+            const boosterMemberRecord = {
+                srNo: (placementUser.boosterDownlineMembers?.length || 0) + 1,
+                memberId: newUser.username || newUser._id.toString(),
+                name: newUser.fullName || newUser.username || 'N/A',
+                date: newUser.joiningDate || new Date().toISOString().split('T')[0],
+                position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
+            };
+
+            if (!placementUser.boosterDownlineMembers) {
+                placementUser.boosterDownlineMembers = [];
+            }
+            placementUser.boosterDownlineMembers.push(boosterMemberRecord);
+            console.log("✅ Added to boosterDownlineMembers");
+
+            // ── Add to directMembers (for basic income validation) ──
+            const directMemberRecord = {
+                memberId: newUser.username || newUser._id.toString(),
+                name: newUser.fullName || newUser.username || 'N/A',
+                joinDate: new Date(),
+                position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
+            };
+
+            if (!placementUser.directMembers) {
+                placementUser.directMembers = [];
+            }
+            placementUser.directMembers.push(directMemberRecord);
+            console.log("✅ Added to directMembers:", {
+                totalLeft: placementUser.directMembers.filter(m => m.position === 'left').length,
+                totalRight: placementUser.directMembers.filter(m => m.position === 'right').length,
+                joinDate: directMemberRecord.joinDate,
+            });
+
+            // ── Update Binary Tree: Set leftChild or rightChild ──
+            const newUserFieldValue = newUser.userId || newUser.username;
+            if (finalPosition === 'left') {
+                console.log("🌳 Updating LEFT child:", {
+                    parentId: placementUser.userId || placementUser.username,
+                    leftChild: newUserFieldValue,
                 });
-
-                // ── Add to boosterDownlineMembers ──
-                const boosterMemberRecord = {
-                    srNo: (placementParent.boosterDownlineMembers?.length || 0) + 1,
-                    memberId: newUser.username || newUser._id.toString(),
-                    name: newUser.fullName || newUser.username || 'N/A',
-                    date: newUser.joiningDate || new Date().toISOString().split('T')[0],
-                    position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
-                };
-
-                if (!placementParent.boosterDownlineMembers) {
-                    placementParent.boosterDownlineMembers = [];
-                }
-                placementParent.boosterDownlineMembers.push(boosterMemberRecord);
-                console.log("✅ Added to boosterDownlineMembers");
-
-                // ── Add to directMembers (for basic income validation) ──
-                const directMemberRecord = {
-                    memberId: newUser.username || newUser._id.toString(),
-                    name: newUser.fullName || newUser.username || 'N/A',
-                    joinDate: new Date(),
-                    position: (finalPosition === 'left' ? 'left' : 'right') as 'left' | 'right'
-                };
-
-                if (!placementParent.directMembers) {
-                    placementParent.directMembers = [];
-                }
-                placementParent.directMembers.push(directMemberRecord);
-                console.log("✅ Added to directMembers:", {
-                    totalLeft: placementParent.directMembers.filter(m => m.position === 'left').length,
-                    totalRight: placementParent.directMembers.filter(m => m.position === 'right').length,
-                    joinDate: directMemberRecord.joinDate,
+                placementUser.leftChild = newUserFieldValue;
+            } else {
+                console.log("🌳 Updating RIGHT child:", {
+                    parentId: placementUser.userId || placementUser.username,
+                    rightChild: newUserFieldValue,
                 });
+                placementUser.rightChild = newUserFieldValue;
+            }
 
-                try {
-                    await placementParent.save();
-                    console.log("✅ Placement parent updated in database");
-                } catch (parentError: any) {
-                    console.error('⚠️ Placement parent save failed:', parentError.message);
-                    // Continue anyway - main registration is done
-                }
+            try {
+                await placementUser.save();
+                console.log("✅ Placement parent updated in database");
+            } catch (parentError: any) {
+                console.error('⚠️ Placement parent save failed:', parentError.message);
+                // Continue anyway - main registration is done
             }
         }
 
         // ✅ STEP 6: Calculate metrics
         console.log('➕ STEP 6: Calculating metrics...');
         try {
-            if (placementId) {
+            if (finalPlacementId && placementUser) {
                 console.log("🟣 Calling auto-calculate basic income...");
-                const placementParent = await User.findOne({
-                    $or: [
-                        { username: placementId },
-                        { userId: placementId }
-                    ]
-                });
-                if (placementParent) {
-                    const autoCalcResult = await autoCalculateBasicIncome(placementParent._id);
-                    console.log("📊 Auto-calc result:", autoCalcResult);
-                }
+                const autoCalcResult = await autoCalculateBasicIncome(placementUser._id);
+                console.log("📊 Auto-calc result:", autoCalcResult);
             }
 
             await calculateAndUpdateUserMetrics(newUser._id);
             
-            if (placementId) {
-                const placementParent = await User.findOne({
-                    $or: [
-                        { username: placementId },
-                        { userId: placementId }
-                    ]
-                });
-                if (placementParent) {
-                    await calculateAndUpdateUserMetrics(placementParent._id);
-                }
+            if (finalPlacementId && placementUser) {
+                await calculateAndUpdateUserMetrics(placementUser._id);
             }
 
             await calculateAndUpdateUserMetrics(sponsor._id);
@@ -432,7 +462,7 @@ export async function POST(req: Request) {
             email,
             mobileNo,
             sponsorId,
-            placementId,
+            placementId: finalPlacementId,
         });
         
         return Response.json({

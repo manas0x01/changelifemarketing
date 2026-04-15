@@ -43,6 +43,10 @@ export default function NewRegisterPage() {
   const [sponsorName,  setSponsorName]  = useState("");
   const [sponsorValidated, setSponsorValidated] = useState(false);
   const [sponsorError, setSponsorError] = useState("");
+  const [placementId,    setPlacementId]    = useState("");
+  const [placementName,  setPlacementName]  = useState("");
+  const [placementValidated, setPlacementValidated] = useState(false);
+  const [placementError, setPlacementError] = useState("");
   const [position,     setPosition]     = useState("-- Select --");
   const [pkg,          setPkg]          = useState("-- Select Package --");
   const [availableEPins, setAvailableEPins] = useState<string[]>([]);
@@ -149,11 +153,10 @@ export default function NewRegisterPage() {
         console.log('✅ Sponsor Name:', nameData.name);
         setSponsorName(nameData.name || "");
       } catch (err) {
-        console.error('❌ Error fetching sponsor name:', err);
+        console.error('❌ Error fetching sponsor n ame:', err);
         setSponsorName("");
       }
 
-      // Extract pin strings and set the first one as selected
       const pinStrings = pinData.availableEPins?.map((ePin: any) => {
         if (typeof ePin === 'string') {
           return ePin;
@@ -218,11 +221,56 @@ export default function NewRegisterPage() {
     }
   };
 
+  const handleValidatePlacement = async () => {
+    console.log('🔍 STEP 2B: Validating Placement ID...');
+    if (!placementId.trim()) {
+      console.log('❌ Placement ID is empty');
+      setPlacementError("Please enter a placement ID.");
+      return;
+    }
+
+    console.log('📝 Placement ID entered:', placementId);
+    setPlacementError("");
+    
+    try {
+      console.log('🔍 Fetching placement user name...');
+      const nameResponse = await fetch('/api/user/get-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: placementId.trim() }),
+        credentials: 'include',
+      });
+      
+      if (!nameResponse.ok) {
+        console.log('❌ Placement ID not found');
+        setPlacementError("Placement ID not found");
+        toast.error("Placement ID not found");
+        return;
+      }
+
+      const nameData = await nameResponse.json();
+      console.log('✅ Placement User Name:', nameData.name);
+      setPlacementName(nameData.name || "");
+      setPlacementValidated(true);
+      console.log('✅ Placement ID Validated Successfully!');
+      toast.success("✓ Placement ID validated!");
+    } catch (error) {
+      console.error('❌ Error validating placement ID:', error);
+      setPlacementError("An error occurred. Please try again.");
+      toast.error("Error validating placement ID");
+    }
+  };
+
   const handleSponsorSubmit = () => {
     console.log('🔍 STEP 4: Validating Sponsor Details Before Proceeding...');
     if (!sponsorValidated) {
       console.log('❌ Sponsor not validated');
       alert("Please validate sponsor ID first");
+      return;
+    }
+    if (!placementValidated) {
+      console.log('❌ Placement not validated');
+      alert("Please validate placement ID first");
       return;
     }
     if (!position || position === "-- Select --") {
@@ -236,7 +284,7 @@ export default function NewRegisterPage() {
       return;
     }
     console.log('✅ All sponsor details validated. Moving to registration step...');
-    console.log('📋 Sponsor Details:', { sponsorId, position, pkg, selectedEPin });
+    console.log('📋 Sponsor Details:', { sponsorId, placementId, position, pkg, selectedEPin });
     setStep("register");
   };
 
@@ -310,6 +358,7 @@ export default function NewRegisterPage() {
       const registrationData: any = {
         userId,
         sponsorId,
+        placementId,
         position,
         package: pkg,
         epin: selectedEPin,
@@ -674,34 +723,88 @@ export default function NewRegisterPage() {
                       </div>
                     </div>
 
+                    {/* Placement ID Validation Section */}
                     <div className="form-row">
                       <div className="form-group">
-                        <label className="form-label"><span className="req">*</span>Position :</label>
-                        <select
-                          className="form-select"
-                          value={position}
-                          onChange={(e) => setPosition(e.target.value)}
-                        >
-                          {positions.map(p => <option key={p}>{p}</option>)}
-                        </select>
-                      </div>
-                      <div className="form-group">
-                        <label className="form-label"><span className="req">*</span>Package :</label>
-                        <select
-                          className="form-select"
-                          value={pkg}
-                          onChange={(e) => setPkg(e.target.value)}
-                        >
-                          {packages.map(p => <option key={p}>{p}</option>)}
-                        </select>
+                        <label className="form-label"><span className="req">*</span>Placement ID :</label>
+                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                          <div style={{ flex: 1 }}>
+                            <input
+                              className="form-input"
+                              type="text"
+                              placeholder="ENTER PLACEMENT ID"
+                              value={placementId}
+                              onChange={(e) => setPlacementId(e.target.value)}
+                              onKeyDown={(e) => e.key === "Enter" && handleValidatePlacement()}
+                              disabled={placementValidated}
+                              suppressHydrationWarning
+                            />
+                            {placementError && <div className="txn-error">{placementError}</div>}
+                          </div>
+                          {!placementValidated ? (
+                            <button 
+                              className="proceed-btn" 
+                              onClick={handleValidatePlacement}
+                              style={{ marginTop: 0 }}
+                              suppressHydrationWarning
+                            >
+                              VALIDATE
+                            </button>
+                          ) : (
+                            <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
+                              <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                              Verified
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="submit-wrap" style={{ paddingTop: "20px" }}>
-                      <button className="proceed-btn" onClick={handleSponsorSubmit}>
-                        NEXT
-                      </button>
-                    </div>
+                    {placementValidated && (
+                      <>
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label className="form-label">Placement Name :</label>
+                            <input
+                              className="form-input"
+                              type="text"
+                              value={placementName}
+                              readOnly
+                              style={{ background: "#f5f5f5", color: "#777" }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label className="form-label"><span className="req">*</span>Position :</label>
+                            <select
+                              className="form-select"
+                              value={position}
+                              onChange={(e) => setPosition(e.target.value)}
+                            >
+                              {positions.map(p => <option key={p}>{p}</option>)}
+                            </select>
+                          </div>
+                          <div className="form-group">
+                            <label className="form-label"><span className="req">*</span>Package :</label>
+                            <select
+                              className="form-select"
+                              value={pkg}
+                              onChange={(e) => setPkg(e.target.value)}
+                            >
+                              {packages.map(p => <option key={p}>{p}</option>)}
+                            </select>
+                          </div>
+                        </div>
+
+                        <div className="submit-wrap" style={{ paddingTop: "20px" }}>
+                          <button className="proceed-btn" onClick={handleSponsorSubmit}>
+                            NEXT
+                          </button>
+                        </div>
+                      </>
+                    )}
                   </>
                 )}
 
@@ -724,6 +827,17 @@ export default function NewRegisterPage() {
                   <div className="form-group">
                     <label className="form-label">Sponsor Name :</label>
                     <input className="form-input" type="text" value={sponsorName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label"><span className="req">*</span>Placement ID :</label>
+                    <input className="form-input" type="text" value={placementId} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Placement Name :</label>
+                    <input className="form-input" type="text" value={placementName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
                   </div>
                 </div>
 

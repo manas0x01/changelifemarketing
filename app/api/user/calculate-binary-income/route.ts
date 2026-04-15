@@ -13,25 +13,15 @@ export async function POST(req: Request) {
         if (!session?.user?.username) {
             return Response.json({ success: false, message: "Unauthorized" }, { status: 401 });
         }
-
         await connectDB();
         const user = await User.findOne({ username: session.user.username });
-
         if (!user) {
             return Response.json({ success: false, message: "User not found" }, { status: 404 });
         }
-
-        // Get left and right side member counts
         const leftCount = user.totalDirect?.left || 0;
         const rightCount = user.totalDirect?.right || 0;
-
-        // Calculate completed pairs (minimum of both sides)
         const completedPairs = Math.min(leftCount, rightCount);
-
-        // Get already processed pairs (from basicIncomeRecords)
         const processedPairs = (user.basicIncomeRecords || []).length || 0;
-
-        // Calculate new pairs to be processed
         const newPairs = completedPairs - processedPairs;
 
         if (newPairs <= 0) {
@@ -48,7 +38,6 @@ export async function POST(req: Request) {
             });
         }
 
-        // Calculate income for new pairs
         const grossIncome = newPairs * GROSS_PAIR_INCOME;
         const tdsAmount = (grossIncome * TDS_PERCENTAGE) / 100;
         const serviceChargeAmount = (grossIncome * SERVICE_CHARGE_PERCENTAGE) / 100;

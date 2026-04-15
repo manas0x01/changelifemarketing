@@ -25,6 +25,14 @@ const positions      = ["-- Select --","Left","Right"];
 const nomineeRels    = ["-- Select --","Son","Daughter","Wife","Husband","Father","Mother","Brother","Sister","Other"];
 const accountTypes   = ["-- Select --","Saving","Current","Salary","NRI","Joint"];
 
+interface NewUserData {
+  userId: string;
+  fullName: string;
+  mobileNo: string;
+  password: string;
+  transactionPassword: string;
+}
+
 export default function NewRegisterPage() {
   const [step,         setStep]         = useState<Step>("validateTxn");
   const [hasPins,      setHasPins]      = useState<boolean | null>(null);
@@ -35,6 +43,8 @@ export default function NewRegisterPage() {
   const [txnPasswordError, setTxnPasswordError] = useState("");
   const [txnValidating, setTxnValidating] = useState(false);
   const [txnValidated, setTxnValidated] = useState(false);
+  const [showCongratulations, setShowCongratulations] = useState(false);
+  const [newUserData, setNewUserData] = useState<NewUserData | null>(null);
   const [gender,       setGender]       = useState<"Male"|"Female">("Male");
   const [dobDay,       setDobDay]       = useState("1");
   const [dobMonth,     setDobMonth]     = useState("01");
@@ -441,10 +451,16 @@ export default function NewRegisterPage() {
         }
       }
 
+      // Show congratulations card with new user data
+      setNewUserData({
+        userId: userId,
+        fullName: fullName,
+        mobileNo: mobileNo,
+        password: password,
+        transactionPassword: transactionPassword,
+      });
+      setShowCongratulations(true);
       toast.success("✓ Member registered successfully!");
-      setTimeout(() => {
-        window.location.href = "/auth/login";
-      }, 2000);
     } catch (error) {
       toast.error("An error occurred during registration");
     } finally {
@@ -652,6 +668,150 @@ export default function NewRegisterPage() {
 
         /* submit wrap */
         .submit-wrap { display: flex; justify-content: center; padding-top: 10px; }
+
+        /* ── CONGRATULATIONS MODAL ── */
+        .congratulations-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          padding: 20px;
+        }
+
+        .congratulations-card {
+          background: #fff;
+          border-radius: 12px;
+          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+          max-width: 500px;
+          width: 100%;
+          overflow: hidden;
+          animation: slideUp 0.35s ease-out;
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .congratulations-header {
+          background: linear-gradient(135deg, #00c853 0%, #1de9b6 100%);
+          padding: 40px 20px;
+          text-align: center;
+          color: #fff;
+        }
+
+        .congratulations-header h2 {
+          font-size: 28px;
+          font-weight: 700;
+          margin: 0 0 8px;
+          letter-spacing: -0.5px;
+        }
+
+        .congratulations-header p {
+          font-size: 14px;
+          margin: 0;
+          opacity: 0.95;
+          font-weight: 500;
+        }
+
+        .congratulations-icon {
+          font-size: 42px;
+          margin-bottom: 12px;
+          display: block;
+        }
+
+        .congratulations-body {
+          padding: 32px 24px;
+        }
+
+        .details-section {
+          display: flex;
+          flex-direction: column;
+          gap: 16px;
+          margin-bottom: 24px;
+        }
+
+        .detail-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 12px;
+          background: #f8f9fa;
+          border-radius: 6px;
+          border-left: 3px solid #26a69a;
+        }
+
+        .detail-label {
+          font-size: 13px;
+          font-weight: 600;
+          color: #666;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+        }
+
+        .detail-value {
+          font-size: 14px;
+          font-weight: 600;
+          color: #1976d2;
+          word-break: break-all;
+          text-align: right;
+          max-width: 60%;
+        }
+
+        .detail-value.password {
+          font-family: 'Courier New', monospace;
+          letter-spacing: 1px;
+        }
+
+        .congratulations-footer {
+          padding: 20px 24px;
+          text-align: center;
+          border-top: 1px solid #e0e0e0;
+        }
+
+        .congratulations-footer p {
+          font-size: 12px;
+          color: #999;
+          margin: 0 0 16px;
+          line-height: 1.5;
+        }
+
+        .done-btn {
+          background: linear-gradient(90deg, #26a69a, #1de9b6);
+          color: #fff;
+          border: none;
+          border-radius: 6px;
+          padding: 12px 40px;
+          font-size: 14px;
+          font-weight: 700;
+          font-family: 'Poppins', sans-serif;
+          cursor: pointer;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          transition: all 0.25s;
+          box-shadow: 0 4px 12px rgba(38, 166, 154, 0.3);
+        }
+
+        .done-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 16px rgba(38, 166, 154, 0.4);
+        }
+
+        .done-btn:active {
+          transform: scale(0.98);
+        }
       `}</style>
 
       <div className="nr-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -1162,6 +1322,65 @@ export default function NewRegisterPage() {
         </div>
 
       </div>
+
+      {/* ── CONGRATULATIONS MODAL ── */}
+      {showCongratulations && newUserData && (
+        <div className="congratulations-overlay">
+          <div className="congratulations-card">
+            <div className="congratulations-header">
+              <span className="congratulations-icon">🎉</span>
+              <h2>Congratulations!</h2>
+              <p>Your account has been created successfully</p>
+            </div>
+
+            <div className="congratulations-body">
+              <div className="details-section">
+                <div className="detail-row">
+                  <span className="detail-label">User ID</span>
+                  <span className="detail-value">{newUserData.userId}</span>
+                </div>
+
+                <div className="detail-row">
+                  <span className="detail-label">Full Name</span>
+                  <span className="detail-value">{newUserData.fullName}</span>
+                </div>
+
+                <div className="detail-row">
+                  <span className="detail-label">Mobile Number</span>
+                  <span className="detail-value">+91 {newUserData.mobileNo}</span>
+                </div>
+
+                <div className="detail-row">
+                  <span className="detail-label">Sponsor ID</span>
+                  <span className="detail-value">{sponsorId}</span>
+                </div>
+
+                <div className="detail-row">
+                  <span className="detail-label">Password</span>
+                  <span className="detail-value password">••••••••</span>
+                </div>
+
+                <div className="detail-row">
+                  <span className="detail-label">Transaction Password</span>
+                  <span className="detail-value password">••••</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="congratulations-footer">
+              <p>Please save these credentials securely. You can now log in to your account.</p>
+              <button
+                className="done-btn"
+                onClick={() => {
+                  window.location.href = "/dashboard";
+                }}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Toaster position="top-right" />
     </>

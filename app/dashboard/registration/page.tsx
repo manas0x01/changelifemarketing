@@ -97,14 +97,12 @@ export default function NewRegisterPage() {
         if (!data.hasPins) {
           setHasPins(false);
           setPinError(data.message || 'First Buy The Pin Then Create A Account');
-          toast.error(data.message || 'No pins available');
         } else {
           setHasPins(true);
         }
       } catch (error) {
         setHasPins(false);
         setPinError('Error checking pin availability');
-        toast.error('Error checking pin availability');
       }
     };
 
@@ -118,7 +116,6 @@ export default function NewRegisterPage() {
   const handleValidateTransactionPassword = async () => {
     if (!txnPassword.trim()) {
       setTxnPasswordError("Please enter your transaction password");
-      toast.error("Transaction password is required");
       return;
     }
     setTxnValidating(true);
@@ -133,7 +130,6 @@ export default function NewRegisterPage() {
       const data = await response.json();
       if (response.status === 404) {
         setTxnPasswordError('API Route not found. Please check if the backend is running correctly.');
-        toast.error('❌ API Route not found (404)');
         setTxnValidating(false);
         return;
       }
@@ -142,37 +138,28 @@ export default function NewRegisterPage() {
           ? "No transaction password set. Please set it in your profile first"
           : "Transaction password is incorrect";
         setTxnPasswordError(errorMsg);
-        toast.error("❌ " + errorMsg);
         setTxnValidating(false);
         return;
       }
       if (!response.ok) {
         setTxnPasswordError(data.error || "Transaction password validation failed");
-        toast.error(data.error || "Transaction password validation failed");
         setTxnValidating(false);
         return;
       }
       if (!data.hasPins) {
         setTxnPasswordError(data.message || "You don't have a pin. First purchase a pin then create a new account");
-        toast.error(data.message || "❌ No pins available", {
-          description: "Please buy pins first to complete registration"
-        });
         setTxnValidating(false);
         return;
       }
       setTxnValidated(true);
       setTxnPassword("");
       setPinError("");
-      toast.success("✓ Transaction password verified!", {
-        description: "You can now proceed with sponsorship details"
-      });
       setTimeout(() => {
         setStep("sponsor");
       }, 500);
 
     } catch (error) {
       setTxnPasswordError("An error occurred. Please try again.");
-      toast.error("❌ Error validating transaction password");
     } finally {
       setTxnValidating(false);
     }
@@ -195,7 +182,6 @@ export default function NewRegisterPage() {
       
       if (!nameResponse.ok) {
         setSponsorError("Sponsor ID not found");
-        toast.error("Sponsor ID not found");
         return;
       }
       const childrenResponse = await fetch('/api/user/get-children-status', {
@@ -213,7 +199,6 @@ export default function NewRegisterPage() {
         const hasRightChild = childrenData.rightChild && childrenData.rightChild.trim() !== "";
         if (hasLeftChild && hasRightChild) {
           setSponsorError("Both Childs Are Already Filled Use The Different Sponsor Id");
-          toast.error("Both Childs Are Already Filled Use The Different Sponsor Id");
           return;
         } else if (hasLeftChild && !hasRightChild) {
           positionsToShow = ["-- Select --", "Right"];
@@ -371,14 +356,12 @@ export default function NewRegisterPage() {
     setTransactionPasswordError("");
     if (!confirmTxnPwd.trim()) {
       setConfirmTxnPwdError("Confirm Transaction Password is required");
-      toast.error("Please confirm Transaction Password");
       return;
     }
     setConfirmTxnPwdError("");
     if (transactionPassword !== confirmTxnPwd) {
       setTransactionPasswordError("Transaction Passwords don't match");
       setConfirmTxnPwdError("Transaction Passwords don't match");
-      toast.error("Transaction Passwords do not match");
       return;
     }
     setTransactionPasswordError("");
@@ -426,11 +409,8 @@ export default function NewRegisterPage() {
       });
       const data = await response.json();
       if (!response.ok) {
-        toast.error(data.error || "Registration failed");
         return;
       }
-
-      // After successful registration, update sponsor's team metrics (totalTeam count)
       if (position === "Left" || position === "Right") {
         try {
           const metricsResponse = await fetch('/api/user/update-sponsor-team-metrics', {
@@ -463,9 +443,7 @@ export default function NewRegisterPage() {
         transactionPassword: transactionPassword,
       });
       setShowCongratulations(true);
-      toast.success("✓ Member registered successfully!");
     } catch (error) {
-      toast.error("An error occurred during registration");
     } finally {
       setIsSubmitting(false);
     }
@@ -530,7 +508,7 @@ export default function NewRegisterPage() {
         .validate-body {
           padding: 28px 20px;
           display: flex;
-          align-items: center;
+          align-items: flex-start;
           gap: 16px;
           flex-wrap: wrap;
         }
@@ -540,13 +518,21 @@ export default function NewRegisterPage() {
           color: #333;
           white-space: nowrap;
           flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          height: 42px;
         }
         .txn-label .req { color: #e53935; margin-right: 1px; }
 
-        .txn-input-wrap { display: flex; align-items: center; gap: 12px; flex: 1; flex-wrap: wrap; }
-        .txn-input {
+        .txn-input-group {
           flex: 1;
           min-width: 220px;
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+
+        .txn-input {
           border: 1px solid #d0d0d0;
           border-radius: 5px;
           padding: 10px 14px;
@@ -560,7 +546,7 @@ export default function NewRegisterPage() {
         .txn-input::placeholder { color: #aaa; text-transform: uppercase; font-size: 12.5px; }
         .txn-input:focus { border-color: #26a69a; }
 
-        .txn-error { color: #e53935; font-size: 12px; margin-top: 6px; padding-left: 20px; }
+        .txn-error { color: #e53935; font-size: 12px; margin-top: 2px; padding-left: 0; }
 
         /* ── PROCEED / SUBMIT BUTTONS ── */
         .proceed-btn {
@@ -684,7 +670,8 @@ export default function NewRegisterPage() {
           align-items: center;
           justify-content: center;
           z-index: 9999;
-          padding: 20px;
+          padding: 16px;
+          overflow-y: auto;
         }
 
         .congratulations-card {
@@ -693,8 +680,16 @@ export default function NewRegisterPage() {
           box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
           max-width: 500px;
           width: 100%;
-          overflow: hidden;
+          max-height: 90vh;
+          overflow-y: auto;
           animation: slideUp 0.35s ease-out;
+        }
+
+        @media (max-width: 600px) {
+          .congratulations-card {
+            border-radius: 8px;
+            max-height: 95vh;
+          }
         }
 
         @keyframes slideUp {
@@ -710,58 +705,80 @@ export default function NewRegisterPage() {
 
         .congratulations-header {
           background: linear-gradient(135deg, #00c853 0%, #1de9b6 100%);
-          padding: 40px 20px;
+          padding: 32px 20px;
           text-align: center;
           color: #fff;
         }
 
         .congratulations-header h2 {
-          font-size: 28px;
+          font-size: 24px;
           font-weight: 700;
           margin: 0 0 8px;
           letter-spacing: -0.5px;
         }
 
         .congratulations-header p {
-          font-size: 14px;
+          font-size: 13px;
           margin: 0;
           opacity: 0.95;
           font-weight: 500;
+          padding: 0 10px;
+        }
+
+        @media (max-width: 480px) {
+          .congratulations-header {
+            padding: 24px 16px;
+          }
+          .congratulations-header h2 {
+            font-size: 20px;
+          }
+          .congratulations-header p {
+            font-size: 12px;
+          }
         }
 
         .congratulations-icon {
-          font-size: 42px;
+          font-size: 40px;
           margin-bottom: 12px;
           display: block;
         }
 
         .congratulations-body {
-          padding: 32px 24px;
+          padding: 28px 20px;
+        }
+
+        @media (max-width: 480px) {
+          .congratulations-body {
+            padding: 20px 16px;
+          }
         }
 
         .details-section {
           display: flex;
           flex-direction: column;
-          gap: 16px;
-          margin-bottom: 24px;
+          gap: 12px;
+          margin-bottom: 20px;
         }
 
         .detail-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 12px;
+          padding: 11px 12px;
           background: #f8f9fa;
           border-radius: 6px;
           border-left: 3px solid #26a69a;
+          gap: 12px;
         }
 
         .detail-label {
-          font-size: 13px;
+          font-size: 12px;
           font-weight: 600;
           color: #666;
           text-transform: uppercase;
           letter-spacing: 0.5px;
+          flex-shrink: 0;
+          min-width: fit-content;
         }
 
         .detail-value {
@@ -770,16 +787,40 @@ export default function NewRegisterPage() {
           color: #1976d2;
           word-break: break-all;
           text-align: right;
-          max-width: 60%;
+          flex-grow: 1;
         }
 
         .detail-value.password {
           font-family: 'Courier New', monospace;
-          letter-spacing: 1px;
+          letter-spacing: 0.8px;
+          font-size: 13px;
+          text-align: center;
+        }
+
+        @media (max-width: 480px) {
+          .details-section {
+            gap: 10px;
+            margin-bottom: 16px;
+          }
+          .detail-row {
+            padding: 10px;
+            gap: 10px;
+            flex-wrap: wrap;
+          }
+          .detail-label {
+            font-size: 11px;
+          }
+          .detail-value {
+            font-size: 13px;
+          }
+          .detail-value.password {
+            font-size: 12px;
+            letter-spacing: 0.6px;
+          }
         }
 
         .congratulations-footer {
-          padding: 20px 24px;
+          padding: 16px 20px;
           text-align: center;
           border-top: 1px solid #e0e0e0;
         }
@@ -787,8 +828,19 @@ export default function NewRegisterPage() {
         .congratulations-footer p {
           font-size: 12px;
           color: #999;
-          margin: 0 0 16px;
-          line-height: 1.5;
+          margin: 0 0 14px;
+          line-height: 1.4;
+          padding: 0 8px;
+        }
+
+        @media (max-width: 480px) {
+          .congratulations-footer {
+            padding: 14px 16px;
+          }
+          .congratulations-footer p {
+            font-size: 11px;
+            margin: 0 0 12px;
+          }
         }
 
         .done-btn {
@@ -796,8 +848,23 @@ export default function NewRegisterPage() {
           color: #fff;
           border: none;
           border-radius: 6px;
-          padding: 12px 40px;
-          font-size: 14px;
+          padding: 11px 36px;
+          font-size: 13px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: opacity 0.3s ease;
+        }
+
+        .done-btn:hover {
+          opacity: 0.9;
+        }
+
+        @media (max-width: 480px) {
+          .done-btn {
+            padding: 10px 32px;
+            font-size: 12px;
+          }
+        }
           font-weight: 700;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
@@ -846,7 +913,7 @@ export default function NewRegisterPage() {
                 <label className="txn-label">
                   <span className="req">*</span>Transaction Password :
                 </label>
-                <div className="txn-input-wrap">
+                <div className="txn-input-group">
                   <input
                     className="txn-input"
                     type="password"
@@ -859,16 +926,16 @@ export default function NewRegisterPage() {
                     onKeyDown={(e) => e.key === "Enter" && handleValidateTransactionPassword()}
                     suppressHydrationWarning
                   />
-                  <button
-                    className="proceed-btn"
-                    onClick={handleValidateTransactionPassword}
-                    disabled={txnValidating}
-                    suppressHydrationWarning
-                  >
-                    {txnValidating ? "VALIDATING..." : "PROCESS"}
-                  </button>
+                  {txnPasswordError && <div className="txn-error">{txnPasswordError}</div>}
                 </div>
-                {txnPasswordError && <div className="txn-error">{txnPasswordError}</div>}
+                <button
+                  className="proceed-btn"
+                  onClick={handleValidateTransactionPassword}
+                  disabled={txnValidating}
+                  suppressHydrationWarning
+                >
+                  PROCEED
+                </button>
               </div>
             </div>
           )}
@@ -882,7 +949,7 @@ export default function NewRegisterPage() {
                 <div style={{ fontSize: '16px', fontWeight: 600, color: '#d32f2f', marginBottom: '12px' }}>❌ No Available Pins</div>
                 <div style={{ fontSize: '14px', color: '#333', marginBottom: '20px' }}>{pinError}</div>
                 <a href="/dashboard/buypins" style={{ textDecoration: 'none' }}>
-                  <button className="proceed-btn" style={{ background: '#ff9800' }}>
+                  <button className="proceed-btn" style={{ background: '#ff9800' }} suppressHydrationWarning={true}>
                     BUY PIN NOW
                   </button>
                 </a>
@@ -919,7 +986,7 @@ export default function NewRegisterPage() {
                           className="proceed-btn" 
                           onClick={handleValidateSponsor}
                           style={{ marginTop: 0 }}
-                          suppressHydrationWarning
+                          suppressHydrationWarning={true}
                         >
                           VALIDATE
                         </button>
@@ -992,7 +1059,7 @@ export default function NewRegisterPage() {
                         </div>
 
                         <div className="submit-wrap" style={{ paddingTop: "20px" }}>
-                          <button className="proceed-btn" onClick={handleSponsorSubmit}>
+                          <button className="proceed-btn" onClick={handleSponsorSubmit} suppressHydrationWarning={true}>
                             NEXT
                           </button>
                         </div>
@@ -1079,7 +1146,7 @@ export default function NewRegisterPage() {
                           className="proceed-btn" 
                           onClick={handleValidateUserId}
                           style={{ marginTop: 0 }}
-                          suppressHydrationWarning
+                          suppressHydrationWarning={true}
                         >
                           VALIDATE
                         </button>
@@ -1314,8 +1381,8 @@ export default function NewRegisterPage() {
 
                 {/* Submit */}
                 <div className="submit-wrap">
-                  <button className="proceed-btn" onClick={handleRegistrationSubmit} disabled={isSubmitting}>
-                    {isSubmitting ? "REGISTERING..." : "REGISTER MEMBER"}
+                  <button className="proceed-btn" onClick={handleRegistrationSubmit} disabled={isSubmitting} suppressHydrationWarning={true}>
+                    REGISTER MEMBER
                   </button>
                 </div>
 
@@ -1377,6 +1444,7 @@ export default function NewRegisterPage() {
                 onClick={() => {
                   window.location.href = "/dashboard";
                 }}
+                suppressHydrationWarning={true}
               >
                 Done
               </button>
@@ -1384,8 +1452,6 @@ export default function NewRegisterPage() {
           </div>
         </div>
       )}
-
-      <Toaster position="top-right" />
     </>
   );
 }

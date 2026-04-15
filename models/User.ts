@@ -336,12 +336,38 @@ const userSchema = new Schema<IUser>(
 );
 
 userSchema.pre('save', async function () {
+  console.log('💾 [PRE-SAVE] Starting save hook for user:', this.username || this.userId);
+  console.log('💾 [PRE-SAVE] Is new document:', this.isNew);
+  console.log('💾 [PRE-SAVE] Modified fields:', this.modifiedPaths());
+  
   const salt = await bcrypt.genSalt(12);
+  
   if (this.isModified('password')) {
+    console.log('🔒 [PRE-SAVE] Password is modified, hashing...');
     this.password = await bcrypt.hash(this.password, salt);
   }
-  if (this.isModified('transactionPassword') && this.transactionPassword) {
-    this.transactionPassword = await bcrypt.hash(this.transactionPassword, salt);
+  
+  // Check transaction password - includes both modified existing and new documents
+  console.log('🔐 [PRE-SAVE] Checking transactionPassword...');
+  console.log('🔐 [PRE-SAVE] isModified("transactionPassword"):', this.isModified('transactionPassword'));
+  console.log('🔐 [PRE-SAVE] transactionPassword value:', this.transactionPassword ? `[PRESENT - ${this.transactionPassword.length} chars]` : '');
+  console.log('🔐 [PRE-SAVE] transactionPassword type:', typeof this.transactionPassword);
+  
+  if (this.transactionPassword) {
+    console.log('🔐 [PRE-SAVE] Transaction password found, processing...');
+    const trimmedTxnPassword = this.transactionPassword.toString().trim();
+    console.log('🔐 [PRE-SAVE] Trimmed length:', trimmedTxnPassword.length);
+    
+    if (trimmedTxnPassword.length > 0) {
+      console.log('🔐 [PRE-SAVE] Hashing transaction password with salt ', salt);
+      this.transactionPassword = await bcrypt.hash(trimmedTxnPassword, salt);
+      console.log('✅ [PRE-SAVE] Transaction password hashed successfully');
+    } else {
+      console.log('⚠️ [PRE-SAVE] After trim, transaction password is empty');
+      this.transactionPassword = undefined;
+    }
+  } else {
+    console.log('⚠️ [PRE-SAVE] No transaction password provided, skipping hashing');
   }
 });
 
@@ -351,8 +377,26 @@ userSchema.methods.comparePassword = async function (password: string): Promise<
 };
 
 userSchema.methods.compareTransactionPassword = async function (password: string): Promise<boolean> {
-  if (!this.transactionPassword) return false;
-  return bcrypt.compare(password, this.transactionPassword);
+  if (!this.transactionPassword) {
+    console.log('🔐 [DEBUG] No transaction password stored');
+    return false;
+  }
+  
+  // Trim the input password before comparison
+  const trimmedInput = password.toString().trim();
+  if (trimmedInput.length === 0) {
+    console.log('🔐 [DEBUG] Empty password provided for comparison');
+    return false;
+  }
+  
+  try {
+    const result = await bcrypt.compare(trimmedInput, this.transactionPassword);
+    console.log('🔐 [DEBUG] Transaction password comparison result:', result);
+    return result;
+  } catch (error) {
+    console.error('🔐 [ERROR] bcrypt comparison failed:', error);
+    return false;
+  }
 };
 
 if (mongoose.models.User) delete mongoose.models.User;

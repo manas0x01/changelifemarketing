@@ -115,41 +115,64 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      console.log('🔐 [JWT] JWT callback - user:', user?.username);
+      console.log('🔐 [JWT] JWT callback - user:', user?.username || user?.email || 'undefined');
+      
       if (user) {
+        // ⭐ Set username from user object (during login)
         token.id = user.id;
         token.email = user.email;
         token.name = user.name;
-        token.username = user.username;
+        token.username = user.username;  // ⭐ CRITICAL: Username MUST come from user
+        token.userId = user.userId;      // ⭐ CRITICAL: UserId MUST come from user
         token.role = user.role;
         token.fullName = user.fullName;
         token.mobileNo = user.mobileNo;
-        token.userId = user.userId;
         token.sponsorId = user.sponsorId;
         token.placementId = user.placementId;
         token.placementPosition = user.placementPosition;
         token.memberType = user.memberType;
         token.registeredPackage = user.registeredPackage;
-        console.log('🔐 [JWT] Token updated:', token.username);
+        console.log('🔐 [JWT] 🆕 Token created with username:', token.username, 'userId:', token.userId);
+      } else {
+        // Token refresh - keep existing values
+        console.log('🔐 [JWT] 🔄 Token refresh - keeping username:', token.username, 'userId:', token.userId);
       }
+      
       return token;
     },
     async session({ session, token }) {
-      if (session?.user) {
-        session.user.id = token.id as string;
-        session.user.email = token.email as string;
-        session.user.name = token.name as string;
-        session.user.username = token.username as string;
-        session.user.role = token.role as string;
-        session.user.fullName = token.fullName as string;
-        session.user.mobileNo = token.mobileNo as string;
-        session.user.userId = token.userId as string;
-        session.user.sponsorId = token.sponsorId as string;
-        session.user.placementId = token.placementId as string;
-        session.user.placementPosition = token.placementPosition as 'left' | 'right';
-        session.user.memberType = token.memberType as string;
-        session.user.registeredPackage = token.registeredPackage as string;
+      console.log('🔐 [SESSION] Session callback - token:', { username: token?.username, userId: token?.userId, email: token?.email });
+      
+      if (session && session.user) {
+        // Ensure all properties are set directly on user object
+        (session.user as any).id = token.id || null;
+        (session.user as any).email = token.email || null;
+        (session.user as any).name = token.name || null;
+        (session.user as any).username = token.username || null;  // ⭐ CRITICAL: Username must be set
+        (session.user as any).userId = token.userId || null;      // ⭐ CRITICAL: UserId must be set
+        (session.user as any).role = token.role || null;
+        (session.user as any).fullName = token.fullName || null;
+        (session.user as any).mobileNo = token.mobileNo || null;
+        (session.user as any).sponsorId = token.sponsorId || null;
+        (session.user as any).placementId = token.placementId || null;
+        (session.user as any).placementPosition = token.placementPosition || null;
+        (session.user as any).memberType = token.memberType || null;
+        (session.user as any).registeredPackage = token.registeredPackage || null;
+        
+        console.log('🔐 [SESSION] ✅ Session user properties set:', {
+          username: (session.user as any).username,
+          userId: (session.user as any).userId,
+          email: (session.user as any).email,
+          name: (session.user as any).name,
+        });
       }
+      
+      console.log('🔐 [SESSION] Returning session with user:', {
+        username: (session?.user as any)?.username,
+        userId: (session?.user as any)?.userId,
+        email: session?.user?.email,
+      });
+      
       return session;
     },
   },

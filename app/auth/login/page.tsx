@@ -494,7 +494,7 @@ export default function Login() {
           <Link href="/auth/forgotpassword" className="forgot">Forgot password?</Link>
 
           {/* Login */}
-          <button className="login-btn" onClick={handleLogin} disabled={loading}>
+          <button className="login-btn" onClick={handleLogin} disabled={loading} suppressHydrationWarning>
             {loading ? "Logging in..." : "Login"}
           </button>
 

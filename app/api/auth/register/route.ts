@@ -296,8 +296,8 @@ export async function POST(req: Request) {
         const userData: any = {
             username,
             userId: finalUserId,
-            password,
-            transactionPassword,
+            password: password.trim(),
+            transactionPassword: transactionPassword.trim(),
             fullName,
             mobileNo,
             email,
@@ -335,6 +335,7 @@ export async function POST(req: Request) {
             nomineeRelation: userData.nomineeRelation, 
             accountType: userData.accountType 
         });
+        console.log('🔐 [REGISTER] userData transactionPassword:', userData.transactionPassword ? `[PRESENT - ${userData.transactionPassword.length} chars]` : 'MISSING');
 
         // ✅ ═══ EXECUTION PHASE - ALL DB OPERATIONS ═══
         console.log('\n📝 ═══ EXECUTION PHASE ═══');
@@ -342,10 +343,17 @@ export async function POST(req: Request) {
         // ✅ STEP 1: Create New User
         console.log('➕ STEP 1: Creating new user...');
         const newUser = new User(userData);
+        
+        console.log('🔐 [REGISTER] After User constructor, newUser.transactionPassword:', newUser.transactionPassword ? `[PRESENT - ${newUser.transactionPassword.length} chars]` : 'MISSING');
+        console.log('🔐 [REGISTER] New user is new document:', newUser.isNew);
 
         try {
             await newUser.save();
             console.log("✅ New user saved to database:", finalUserId);
+            
+            // Verify it was saved by fetching with select
+            const savedUser = await User.findOne({ userId: finalUserId }).select('+transactionPassword');
+            console.log('🔐 [VERIFY] After save - transactionPassword in DB:', savedUser?.transactionPassword ? `[PRESENT - HASHED]` : 'MISSING/EMPTY');
         } catch (saveError: any) {
             // If error is ONLY about missing optional enum fields, retry without validation
             if (saveError.name === 'ValidationError') {

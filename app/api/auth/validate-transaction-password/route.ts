@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { connectDB } from '@/lib/database';
 import User from '@/models/User';
 
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
   try {
     // Get the session to identify the logged-in user
     console.log('🔑 [AUTH] Getting session...');
-    const session = await getServerSession();
+    const session = await getServerSession(authOptions);
     console.log('🔑 [AUTH] Session:', session ? 'Found' : 'Not found');
 
     if (!session || !session.user) {
@@ -24,10 +25,12 @@ export async function POST(request: NextRequest) {
 
     // Get username from session
     console.log('👤 [USER] Full session.user:', session.user);
-    const username = session.user.username || session.user.name || session.user.email;
+    const username = session.user.username || session.user.email;
     const userEmail = session.user.email;
+    const userId = (session.user as any)?.userId;
     console.log('👤 [USER] Username from session:', username);
     console.log('👤 [USER] Email from session:', userEmail);
+    console.log('👤 [USER] UserId from session:', userId);
     console.log('👤 [USER] Session user.username:', session.user.username);
     console.log('👤 [USER] Session user.name:', session.user.name);
     console.log('👤 [USER] Session user.email:', session.user.email);
@@ -58,44 +61,66 @@ export async function POST(request: NextRequest) {
     await connectDB();
     console.log('🔌 [DB] Connected');
 
-    // Build search query - prioritize by email if username is not available
+    // Build search query - PRIORITY: username > userId > email
     const searchQuery: any = {};
+    let searchMethod = '';
+    
+    // Method 1: Search by username (highest priority)
     if (session.user.username) {
       searchQuery.username = session.user.username;
-      console.log('🔍 [DB] Primary search: by username');
-    } else if (userEmail) {
+      searchMethod = 'username (from session)';
+    } 
+    // Method 2: Search by userId (second priority)
+    else if (userId) {
+      searchQuery.userId = userId;
+      searchMethod = 'userId (from session)';
+    }
+    // Method 3: Search by email (last resort)
+    else if (userEmail) {
       searchQuery.email = userEmail;
-      console.log('🔍 [DB] Primary search: by email (username not in session)');
-    } else {
-      searchQuery.$or = [
-        { userId: username },
-        { email: userEmail },
-        { mobileNo: username }
-      ];
-      console.log('🔍 [DB] Primary search: by multiple fields');
+      searchMethod = 'email (fallback)';
     }
 
-    // Find user with transaction password selected
+    console.log(`🔍 [DB] Primary search method: ${searchMethod}`);
     console.log('🔍 [DB] Finding user with query:', searchQuery);
     let user = await User.findOne(searchQuery).select('+transactionPassword');
     
-    // If not found, try alternate searches
-    if (!user && (username || userEmail)) {
-      console.log('🔍 [DB] User not found by primary method, trying alternate fields...');
-      user = await User.findOne({
-        $or: [
-          { username: username },
-          { email: userEmail },
-          { userId: username },
-          { mobileNo: username }
-        ]
-      }).select('+transactionPassword');
+    // If not found by primary method, try alternate searches in priority order
+    if (!user) {
+      console.log('🔍 [DB] User not found by primary method, trying alternate searches...');
+      
+      // Try username first
+      if (!user && session.user.username) {
+        user = await User.findOne({ username: session.user.username }).select('+transactionPassword');
+        if (user) console.log('🔍 [DB] Found by username (retry)');
+      }
+      
+      // Try userId
+      if (!user && userId) {
+        user = await User.findOne({ userId: userId }).select('+transactionPassword');
+        if (user) console.log('🔍 [DB] Found by userId (retry)');
+      }
+      
+      // Try email
+      if (!user && userEmail) {
+        user = await User.findOne({ email: userEmail }).select('+transactionPassword');
+        if (user) console.log('🔍 [DB] Found by email (retry)');
+      }
+      
+      // Try mobile
+      if (!user && username) {
+        user = await User.findOne({ mobileNo: username }).select('+transactionPassword');
+        if (user) console.log('🔍 [DB] Found by mobileNo (retry)');
+      }
+      
       console.log('🔍 [DB] Alternate search result:', user ? 'Found' : 'Not found');
     }
     
     console.log('🔍 [DB] User found:', user ? 'Yes' : 'No');
     if (user) {
       console.log('🔍 [DB] User details - username:', user.username, 'email:', user.email, 'fullName:', user.fullName);
+      console.log('🔐 [DEBUG] Transaction password field present:', user.transactionPassword ? 'Yes (hashed)' : 'No/Empty');
+      console.log('🔐 [DEBUG] Transaction password length:', user.transactionPassword?.length || 0);
     }
 
     if (!user) {
@@ -108,8 +133,9 @@ export async function POST(request: NextRequest) {
 
     // Check if user has set a transaction password
     console.log('🔐 [PASS] Checking transaction password...');
-    if (!user.transactionPassword) {
+    if (!user.transactionPassword || user.transactionPassword.trim() === '') {
       console.log('❌ [ERROR] User has no transaction password set');
+      console.log('🔐 [DEBUG] transactionPassword value:', user.transactionPassword);
       return NextResponse.json(
         { 
           error: 'No transaction password set',

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { toast, Toaster } from "sonner";
 import Navbar from "@/components/Navbar";
 
-type Step = "sponsor" | "register";
+type Step = "validateTxn" | "sponsor" | "register";
 
 const indianStates = [
   "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
@@ -20,17 +20,24 @@ const monthNames = ["January","February","March","April","May","June",
                  "July","August","September","October","November","December"];
 const years  = Array.from({ length: 60 }, (_, i) => String(2005 - i));
 
-const packages       = ["-- Select Package --","Agriculture Package","Healthcare Package","Sanitary Napkine"];
+const packages       = ["-- Select Package --","Basic Package","Healthcare Package","Sanitary Napkine"];
 const positions      = ["-- Select --","Left","Right"];
 const nomineeRels    = ["-- Select --","Son","Daughter","Wife","Husband","Father","Mother","Brother","Sister","Other"];
 const accountTypes   = ["-- Select --","Saving","Current","Salary","NRI","Joint"];
 
 export default function NewRegisterPage() {
-  const [step,         setStep]         = useState<Step>("sponsor");
+  const [step,         setStep]         = useState<Step>("validateTxn");
   const [hasPins,      setHasPins]      = useState<boolean | null>(null);
   const [pinError,     setPinError]     = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activePage,   setActivePage]   = useState<"dashboard" | "profile">("dashboard");
+  
+  // Transaction Password Validation Step
+  const [txnPassword,  setTxnPassword]  = useState("");
+  const [txnPasswordError, setTxnPasswordError] = useState("");
+  const [txnValidating, setTxnValidating] = useState(false);
+  const [txnValidated, setTxnValidated] = useState(false);
+  
   const [gender,       setGender]       = useState<"Male"|"Female">("Male");
   const [dobDay,       setDobDay]       = useState("1");
   const [dobMonth,     setDobMonth]     = useState("01");
@@ -43,14 +50,11 @@ export default function NewRegisterPage() {
   const [sponsorName,  setSponsorName]  = useState("");
   const [sponsorValidated, setSponsorValidated] = useState(false);
   const [sponsorError, setSponsorError] = useState("");
-  const [placementId,    setPlacementId]    = useState("");
-  const [placementName,  setPlacementName]  = useState("");
-  const [placementValidated, setPlacementValidated] = useState(false);
-  const [placementError, setPlacementError] = useState("");
   const [position,     setPosition]     = useState("-- Select --");
   const [pkg,          setPkg]          = useState("-- Select Package --");
   const [availableEPins, setAvailableEPins] = useState<string[]>([]);
   const [selectedEPin, setSelectedEPin] = useState("");
+  const [availablePositions, setAvailablePositions] = useState<string[]>(["-- Select --", "Left", "Right"]);
   // Step 3: Registration Form Fields
   const [fullName,     setFullName]     = useState("");
   const [userId,       setUserId]       = useState("CLM");
@@ -72,21 +76,21 @@ export default function NewRegisterPage() {
   const [accountType,  setAccountType]  = useState("-- Select --");
   const [password,     setPassword]     = useState("");
   const [confirmPwd,   setConfirmPwd]   = useState("");
+  const [transactionPassword, setTransactionPassword] = useState("");
+  const [confirmTxnPwd, setConfirmTxnPwd] = useState("");
   const [passwordError,    setPasswordError]    = useState("");
   const [confirmPwdError,  setConfirmPwdError]  = useState("");
+  const [transactionPasswordError, setTransactionPasswordError] = useState("");
+  const [confirmTxnPwdError, setConfirmTxnPwdError] = useState("");
   const [nomineeRelError,  setNomineeRelError]  = useState("");
   const [accountTypeError, setAccountTypeError] = useState("");
 
   useEffect(() => {
     const checkPinAvailability = async () => {
-      console.log('🔍 STEP 1: Checking PIN availability...');
       try {
         const res = await fetch('/api/auth/check-pin-availability');
         const data = await res.json();
-        console.log('✅ PIN Availability Response:', data);
-        
         if (!data.hasPins) {
-          console.log('❌ No PINs available');
           setHasPins(false);
           setPinError(data.message || 'First Buy The Pin Then Create A Account');
           toast.error(data.message || 'No pins available');
@@ -109,67 +113,204 @@ export default function NewRegisterPage() {
     setStep("sponsor");
   };
 
-  const handleValidateSponsor = async () => {
-    console.log('🔍 STEP 2: Validating Sponsor...');
-    if (!sponsorId.trim()) {
-      console.log('❌ Sponsor ID is empty');
-      setSponsorError("Please enter a sponsor ID.");
+  const handleValidateTransactionPassword = async () => {
+    if (!txnPassword.trim()) {
+      setTxnPasswordError("Please enter your transaction password");
+      toast.error("Transaction password is required");
       return;
     }
 
-    console.log('📝 Sponsor ID entered:', sponsorId);
-    setSponsorError("");
+    setTxnValidating(true);
+    setTxnPasswordError("");
     
+    console.log('🔐 [FRONTEND] Starting transaction password validation...');
+    console.log('🔐 [FRONTEND] Password entered:', txnPassword.length, 'characters');
+
     try {
-      // Check if sponsor has pins
-      console.log('🔍 Checking E-PINs for sponsor...');
-      const pinCheckRes = await fetch('/api/user/check-epins', {
+      console.log('📤 [FRONTEND] Sending request to /api/auth/validate-transaction-password');
+      const response = await fetch('/api/auth/validate-transaction-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sponsorId: sponsorId.trim() }),
+        body: JSON.stringify({ transactionPassword: txnPassword.trim() }),
         credentials: 'include',
       });
 
-      const pinData = await pinCheckRes.json();
-      console.log('✅ E-PIN Check Response:', pinData);
+      console.log('📥 [FRONTEND] Response received');
+      console.log('📥 [FRONTEND] Status:', response.status);
+      console.log('📥 [FRONTEND] Status Text:', response.statusText);
+      console.log('📥 [FRONTEND] Content-Type:', response.headers.get('content-type'));
 
-      if (!pinCheckRes.ok || !pinData.availableEPins || pinData.availableEPins.length === 0) {
-        console.log('❌ Sponsor has no available E-PINs');
-        setSponsorError("First Buy The Pins And Then Create A Account");
-        toast.error("Sponsor has no pins available");
+      const data = await response.json();
+      console.log('📥 [FRONTEND] Response data:', data);
+
+      // Handle 404 error specifically
+      if (response.status === 404) {
+        console.error('❌ [FRONTEND] API Route not found (404)');
+        setTxnPasswordError('API Route not found. Please check if the backend is running correctly.');
+        toast.error('❌ API Route not found (404)');
+        setTxnValidating(false);
         return;
       }
 
-      // Fetch sponsor name
-      try {
-        console.log('🔍 Fetching sponsor name...');
-        const nameResponse = await fetch('/api/user/get-name', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: sponsorId.trim() }),
-          credentials: 'include',
-        });
-        const nameData = await nameResponse.json();
-        console.log('✅ Sponsor Name:', nameData.name);
-        setSponsorName(nameData.name || "");
-      } catch (err) {
-        console.error('❌ Error fetching sponsor n ame:', err);
-        setSponsorName("");
+      // Handle authentication errors (incorrect password or no password set)
+      if (!response.ok && response.status === 401) {
+        const errorMsg = data.error === 'No transaction password set' 
+          ? "No transaction password set. Please set it in your profile first"
+          : "Transaction password is incorrect";
+        setTxnPasswordError(errorMsg);
+        toast.error("❌ " + errorMsg);
+        setTxnValidating(false);
+        return;
       }
 
-      const pinStrings = pinData.availableEPins?.map((ePin: any) => {
-        if (typeof ePin === 'string') {
-          return ePin;
-        } else if (typeof ePin === 'object' && ePin.pin) {
-          return ePin.pin;
-        }
-        return ePin;
-      }) || [];
+      // Handle other errors
+      if (!response.ok) {
+        setTxnPasswordError(data.error || "Transaction password validation failed");
+        toast.error(data.error || "Transaction password validation failed");
+        setTxnValidating(false);
+        return;
+      }
 
-      console.log('✅ Available E-PINs:', pinStrings);
-      setAvailableEPins(pinStrings);
-      setSelectedEPin(pinStrings[0] || "");
+      // Check if user has pins (even if password validation succeeded)
+      if (!data.hasPins) {
+        setTxnPasswordError(data.message || "You don't have a pin. First purchase a pin then create a new account");
+        toast.error(data.message || "❌ No pins available", {
+          description: "Please buy pins first to complete registration"
+        });
+        setTxnValidating(false);
+        return;
+      }
+
+      // Transaction password is valid and user has pins ✅
+      console.log('✅ [FRONTEND] Transaction Password Validated!', data);
+      setTxnValidated(true);
+      setTxnPassword("");
+      setPinError("");
+      toast.success("✓ Transaction password verified!", {
+        description: "You can now proceed with sponsorship details"
+      });
+      
+      // Move to next step after success
+      setTimeout(() => {
+        console.log('✅ [FRONTEND] Moving to sponsor step');
+        setStep("sponsor");
+      }, 500);
+
+    } catch (error) {
+      console.error('❌ [FRONTEND] Error during fetch:', error);
+      console.error('❌ [FRONTEND] Error type:', (error as any)?.name);
+      console.error('❌ [FRONTEND] Error message:', (error as any)?.message);
+      setTxnPasswordError("An error occurred. Please try again.");
+      toast.error("❌ Error validating transaction password");
+    } finally {
+      setTxnValidating(false);
+    }
+  };
+
+  const handleValidateSponsor = async () => {
+    if (!sponsorId.trim()) {
+      setSponsorError("Please enter a sponsor ID.");
+      return;
+    }
+    setSponsorError("");
+    try {
+      const nameResponse = await fetch('/api/user/get-name', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: sponsorId.trim() }),
+        credentials: 'include',
+      });
+      const nameData = await nameResponse.json();
+      
+      if (!nameResponse.ok) {
+        setSponsorError("Sponsor ID not found");
+        toast.error("Sponsor ID not found");
+        return;
+      }
+
+      // Check for leftChild and rightChild status
+      const childrenResponse = await fetch('/api/user/get-children-status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: sponsorId.trim() }),
+        credentials: 'include',
+      });
+
+      let positionsToShow = ["-- Select --", "Left", "Right"];
+      
+      if (childrenResponse.ok) {
+        const childrenData = await childrenResponse.json();
+        console.log('📊 Children Status:', childrenData);
+        
+        const hasLeftChild = childrenData.leftChild && childrenData.leftChild.trim() !== "";
+        const hasRightChild = childrenData.rightChild && childrenData.rightChild.trim() !== "";
+        
+        // Determine which positions are available
+        if (hasLeftChild && hasRightChild) {
+          // Both filled - no position available
+          setSponsorError("Both Childs Are Already Filled Use The Different Sponsor Id");
+          toast.error("Both Childs Are Already Filled Use The Different Sponsor Id");
+          return;
+        } else if (hasLeftChild && !hasRightChild) {
+          // Left filled - show only Right
+          positionsToShow = ["-- Select --", "Right"];
+        } else if (!hasLeftChild && hasRightChild) {
+          // Right filled - show only Left
+          positionsToShow = ["-- Select --", "Left"];
+        }
+        // Both empty - show both options (default)
+      }
+
+      setAvailablePositions(positionsToShow);
+      setPosition(positionsToShow[0]);
+      
+      console.log('✅ Sponsor Name:', nameData.name);
+      setSponsorName(nameData.name || "");
       setSponsorValidated(true);
+      
+      // Fetch available pins for the LOGGED-IN USER (not sponsor)
+      try {
+        console.log('📌 Fetching session to get logged-in username...');
+        const sessionResponse = await fetch('/api/auth/session', {
+          credentials: 'include',
+        });
+        
+        if (sessionResponse.ok) {
+          const sessionData = await sessionResponse.json();
+          console.log('👤 Logged-in user from session:', sessionData?.user?.email);
+        }
+        
+        console.log('📌 Fetching available pins for LOGGED-IN USER...');
+        const pinsResponse = await fetch('/api/user/get-epins', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+          credentials: 'include',
+        });
+        
+        if (pinsResponse.ok) {
+          const pinsData = await pinsResponse.json();
+          console.log('📌 Available E-PINs (for logged-in user):', pinsData.availableEPins);
+          
+          const pinStrings = pinsData.availableEPins?.map((ePin: any) => {
+            if (typeof ePin === 'string') {
+              return ePin;
+            } else if (typeof ePin === 'object' && ePin.pin) {
+              return ePin.pin;
+            }
+            return ePin;
+          }) || [];
+          
+          setAvailableEPins(pinStrings);
+          setSelectedEPin(pinStrings[0] || "");
+          console.log('✅ PINs loaded successfully for logged-in user');
+        } else {
+          console.warn('⚠️ Failed to fetch pins:', pinsResponse.status);
+        }
+      } catch (pinsError) {
+        console.error('❌ Error fetching pins for logged-in user:', pinsError);
+      }
+      
       console.log('✅ Sponsor Validated Successfully!');
       toast.success("✓ Sponsor validated!");
     } catch (error) {
@@ -221,56 +362,11 @@ export default function NewRegisterPage() {
     }
   };
 
-  const handleValidatePlacement = async () => {
-    console.log('🔍 STEP 2B: Validating Placement ID...');
-    if (!placementId.trim()) {
-      console.log('❌ Placement ID is empty');
-      setPlacementError("Please enter a placement ID.");
-      return;
-    }
-
-    console.log('📝 Placement ID entered:', placementId);
-    setPlacementError("");
-    
-    try {
-      console.log('🔍 Fetching placement user name...');
-      const nameResponse = await fetch('/api/user/get-name', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: placementId.trim() }),
-        credentials: 'include',
-      });
-      
-      if (!nameResponse.ok) {
-        console.log('❌ Placement ID not found');
-        setPlacementError("Placement ID not found");
-        toast.error("Placement ID not found");
-        return;
-      }
-
-      const nameData = await nameResponse.json();
-      console.log('✅ Placement User Name:', nameData.name);
-      setPlacementName(nameData.name || "");
-      setPlacementValidated(true);
-      console.log('✅ Placement ID Validated Successfully!');
-      toast.success("✓ Placement ID validated!");
-    } catch (error) {
-      console.error('❌ Error validating placement ID:', error);
-      setPlacementError("An error occurred. Please try again.");
-      toast.error("Error validating placement ID");
-    }
-  };
-
   const handleSponsorSubmit = () => {
     console.log('🔍 STEP 4: Validating Sponsor Details Before Proceeding...');
     if (!sponsorValidated) {
       console.log('❌ Sponsor not validated');
       alert("Please validate sponsor ID first");
-      return;
-    }
-    if (!placementValidated) {
-      console.log('❌ Placement not validated');
-      alert("Please validate placement ID first");
       return;
     }
     if (!position || position === "-- Select --") {
@@ -283,66 +379,59 @@ export default function NewRegisterPage() {
       toast.error("Please select a package");
       return;
     }
+    if (!selectedEPin || selectedEPin === "-- Select PIN --") {
+      console.log('❌ PIN not selected');
+      toast.error("Please select a PIN");
+      return;
+    }
     console.log('✅ All sponsor details validated. Moving to registration step...');
-    console.log('📋 Sponsor Details:', { sponsorId, placementId, position, pkg, selectedEPin });
+    console.log('📋 Sponsor Details:', { sponsorId, position, pkg, selectedEPin });
     setStep("register");
   };
 
   const handleRegistrationSubmit = async () => {
-    console.log('🔍 STEP 5: Validating Registration Form...');
-    // Validate required fields
     if (!userIdValidated) {
-      console.log('❌ User ID not validated');
       toast.error("Please validate User ID first");
       return;
     }
     if (!selectedEPin) {
-      console.log('❌ E-PIN not selected');
       toast.error("Please select an E-Pin to proceed");
       return;
     }
     if (!fullName.trim()) {
-      console.log('❌ Full name is empty');
       toast.error("Full name is required");
       return;
     }
     if (!gender) {
-      console.log('❌ Gender not selected');
       toast.error("Please select gender");
       return;
     }
     if (!mobileNo.trim()) {
-      console.log('❌ Mobile number is empty');
       toast.error("Mobile number is required");
       return;
     }
     if (!email.trim()) {
-      console.log('❌ Email is empty');
       toast.error("Email ID is required");
       return;
     }
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
-      console.log('❌ Invalid email format:', email);
       toast.error("Please enter a valid email address");
       return;
     }
     if (!password.trim()) {
-      console.log('❌ Password is empty');
       setPasswordError("Password is required");
       toast.error("Password is required");
       return;
     }
     setPasswordError("");
     if (!confirmPwd.trim()) {
-      console.log('❌ Confirm password is empty');
       setConfirmPwdError("Confirm password is required");
       toast.error("Please confirm password");
       return;
     }
     setConfirmPwdError("");
     if (password !== confirmPwd) {
-      console.log('❌ Passwords do not match');
       setPasswordError("Passwords don't match");
       setConfirmPwdError("Passwords don't match");
       toast.error("Passwords do not match");
@@ -351,14 +440,33 @@ export default function NewRegisterPage() {
     setPasswordError("");
     setConfirmPwdError("");
 
-    console.log('✅ All validations passed. Preparing registration data...');
+    if (!transactionPassword.trim()) {
+      setTransactionPasswordError("Transaction Password is required");
+      toast.error("Transaction Password is required");
+      return;
+    }
+    setTransactionPasswordError("");
+    if (!confirmTxnPwd.trim()) {
+      setConfirmTxnPwdError("Confirm Transaction Password is required");
+      toast.error("Please confirm Transaction Password");
+      return;
+    }
+    setConfirmTxnPwdError("");
+    if (transactionPassword !== confirmTxnPwd) {
+      setTransactionPasswordError("Transaction Passwords don't match");
+      setConfirmTxnPwdError("Transaction Passwords don't match");
+      toast.error("Transaction Passwords do not match");
+      return;
+    }
+    setTransactionPasswordError("");
+    setConfirmTxnPwdError("");
+
     setIsSubmitting(true);
 
     try {
       const registrationData: any = {
         userId,
         sponsorId,
-        placementId,
         position,
         package: pkg,
         epin: selectedEPin,
@@ -379,45 +487,55 @@ export default function NewRegisterPage() {
         accountNo,
         ifsc: ifscCode,
         password,
+        transactionPassword,
       };
-
-      // Only add nomineeRelation if it's not the default placeholder
       if (nomineeRel && nomineeRel !== "-- Select --") {
         registrationData.nomineeRelation = nomineeRel;
       }
-
-      // Only add accountType if it's not the default placeholder
       if (accountType && accountType !== "-- Select --") {
         registrationData.accountType = accountType;
       }
-
-      console.log('📋 Registration Data:', registrationData);
-      console.log('🚀 Submitting registration...');
-      
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(registrationData),
         credentials: 'include',
       });
-
       const data = await response.json();
-      console.log('✅ Server Response:', data);
-      
       if (!response.ok) {
-        console.error('❌ Registration failed:', data.error);
         toast.error(data.error || "Registration failed");
         return;
       }
 
-      console.log('✅ Member registered successfully! Redirecting to login...');
+      // After successful registration, update sponsor's leftChild/rightChild
+      if (position === "Left" || position === "Right") {
+        try {
+          const updateResponse = await fetch('/api/user/update-child', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              sponsorId: sponsorId.trim(),
+              position: position,
+              childUserId: userId,
+            }),
+            credentials: 'include',
+          });
+          
+          if (updateResponse.ok) {
+            console.log('✅ Sponsor updated with new child');
+          } else {
+            console.warn('⚠️ Failed to update sponsor with new child');
+          }
+        } catch (updateError) {
+          console.error('❌ Error updating sponsor:', updateError);
+        }
+      }
+
       toast.success("✓ Member registered successfully!");
       setTimeout(() => {
-        console.log('🔄 Redirecting to login page...');
         window.location.href = "/auth/login";
       }, 2000);
     } catch (error) {
-      console.error('❌ Error during registration:', error);
       toast.error("An error occurred during registration");
     } finally {
       setIsSubmitting(false);
@@ -647,8 +765,43 @@ export default function NewRegisterPage() {
 
         <div className="page-body">
 
+          {/* ══ TRANSACTION PASSWORD VALIDATION ══ */}
+          {step === "validateTxn" && (
+            <div className="section-card">
+              <div className="section-header">Validate Transaction Password</div>
+              <div className="validate-body">
+                <label className="txn-label">
+                  <span className="req">*</span>Transaction Password :
+                </label>
+                <div className="txn-input-wrap">
+                  <input
+                    className="txn-input"
+                    type="password"
+                    placeholder="ENTER YOUR TRANSACTION PASSWORD"
+                    value={txnPassword}
+                    onChange={(e) => {
+                      setTxnPassword(e.target.value);
+                      setTxnPasswordError("");
+                    }}
+                    onKeyDown={(e) => e.key === "Enter" && handleValidateTransactionPassword()}
+                    suppressHydrationWarning
+                  />
+                  <button
+                    className="proceed-btn"
+                    onClick={handleValidateTransactionPassword}
+                    disabled={txnValidating}
+                    suppressHydrationWarning
+                  >
+                    {txnValidating ? "VALIDATING..." : "PROCESS"}
+                  </button>
+                </div>
+                {txnPasswordError && <div className="txn-error">{txnPasswordError}</div>}
+              </div>
+            </div>
+          )}
+
           {/* ══ PIN AVAILABILITY CHECK ══ */}
-          {hasPins === false && (
+          {hasPins === false && txnValidated && (
           <div className="section-card" style={{ background: '#fff3cd', borderLeft: '4px solid #ff9800' }}>
             <div className="section-header" style={{ background: '#ff9800' }}>Pin Availability Required</div>
             <div className="validate-body" style={{ padding: '28px 20px' }}>
@@ -666,7 +819,7 @@ export default function NewRegisterPage() {
           )}
 
           {/* STEP 2: SPONSOR & PACKAGE */}
-          {hasPins && step === "sponsor" && (
+          {txnValidated && hasPins && step === "sponsor" && (
             <div className="section-card">
               <div className="section-header">Fill The Sponsor Details</div>
               <div className="form-body">
@@ -723,58 +876,8 @@ export default function NewRegisterPage() {
                       </div>
                     </div>
 
-                    {/* Placement ID Validation Section */}
-                    <div className="form-row">
-                      <div className="form-group">
-                        <label className="form-label"><span className="req">*</span>Placement ID :</label>
-                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                          <div style={{ flex: 1 }}>
-                            <input
-                              className="form-input"
-                              type="text"
-                              placeholder="ENTER PLACEMENT ID"
-                              value={placementId}
-                              onChange={(e) => setPlacementId(e.target.value)}
-                              onKeyDown={(e) => e.key === "Enter" && handleValidatePlacement()}
-                              disabled={placementValidated}
-                              suppressHydrationWarning
-                            />
-                            {placementError && <div className="txn-error">{placementError}</div>}
-                          </div>
-                          {!placementValidated ? (
-                            <button 
-                              className="proceed-btn" 
-                              onClick={handleValidatePlacement}
-                              style={{ marginTop: 0 }}
-                              suppressHydrationWarning
-                            >
-                              VALIDATE
-                            </button>
-                          ) : (
-                            <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
-                              <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                              Verified
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-
-                    {placementValidated && (
+                    {sponsorValidated && (
                       <>
-                        <div className="form-row">
-                          <div className="form-group">
-                            <label className="form-label">Placement Name :</label>
-                            <input
-                              className="form-input"
-                              type="text"
-                              value={placementName}
-                              readOnly
-                              style={{ background: "#f5f5f5", color: "#777" }}
-                            />
-                          </div>
-                        </div>
-
                         <div className="form-row">
                           <div className="form-group">
                             <label className="form-label"><span className="req">*</span>Position :</label>
@@ -783,7 +886,7 @@ export default function NewRegisterPage() {
                               value={position}
                               onChange={(e) => setPosition(e.target.value)}
                             >
-                              {positions.map(p => <option key={p}>{p}</option>)}
+                              {availablePositions.map(p => <option key={p}>{p}</option>)}
                             </select>
                           </div>
                           <div className="form-group">
@@ -795,6 +898,23 @@ export default function NewRegisterPage() {
                             >
                               {packages.map(p => <option key={p}>{p}</option>)}
                             </select>
+                          </div>
+                        </div>
+
+                        <div className="form-row">
+                          <div className="form-group">
+                            <label className="form-label"><span className="req">*</span>Select PIN :</label>
+                            <select
+                              className="form-select"
+                              value={selectedEPin}
+                              onChange={(e) => setSelectedEPin(e.target.value)}
+                            >
+                              <option key="default">-- Select PIN --</option>
+                              {availableEPins.map(pin => <option key={pin}>{pin}</option>)}
+                            </select>
+                          </div>
+                          <div className="form-group" style={{ visibility: "hidden" }}>
+                            <label className="form-label">Placeholder</label>
                           </div>
                         </div>
 
@@ -813,12 +933,12 @@ export default function NewRegisterPage() {
           )}
 
           {/* ══ STEP 3: REGISTRATION FORM ══ */}
-          {hasPins && step === "register" && (
+          {txnValidated && hasPins && step === "register" && (
             <div className="section-card">
               <div className="section-header">New Member Registration</div>
               <div className="form-body">
 
-                {/* ── Sponsor / Placement ── */}
+                {/* ── Sponsor Details ── */}
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Sponsor ID :</label>
@@ -827,17 +947,6 @@ export default function NewRegisterPage() {
                   <div className="form-group">
                     <label className="form-label">Sponsor Name :</label>
                     <input className="form-input" type="text" value={sponsorName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Placement ID :</label>
-                    <input className="form-input" type="text" value={placementId} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label">Placement Name :</label>
-                    <input className="form-input" type="text" value={placementName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
                   </div>
                 </div>
 
@@ -1090,6 +1199,41 @@ export default function NewRegisterPage() {
                       suppressHydrationWarning 
                     />
                     {confirmPwdError && <div className="txn-error">{confirmPwdError}</div>}
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label"><span className="req">*</span>Transaction Password :</label>
+                    <input 
+                      className="form-input" 
+                      type="password" 
+                      placeholder="Create Transaction Password (e.g., 1020)" 
+                      value={transactionPassword} 
+                      onChange={(e) => {
+                        setTransactionPassword(e.target.value);
+                        setTransactionPasswordError("");
+                      }}
+                      style={{ borderColor: transactionPasswordError ? "#e53935" : "" }}
+                      suppressHydrationWarning 
+                    />
+                    {transactionPasswordError && <div className="txn-error">{transactionPasswordError}</div>}
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label"><span className="req">*</span>Confirm Transaction Password :</label>
+                    <input 
+                      className="form-input" 
+                      type="password" 
+                      placeholder="Confirm Transaction Password" 
+                      value={confirmTxnPwd} 
+                      onChange={(e) => {
+                        setConfirmTxnPwd(e.target.value);
+                        setConfirmTxnPwdError("");
+                      }}
+                      style={{ borderColor: confirmTxnPwdError ? "#e53935" : "" }}
+                      suppressHydrationWarning 
+                    />
+                    {confirmTxnPwdError && <div className="txn-error">{confirmTxnPwdError}</div>}
                   </div>
                 </div>
 

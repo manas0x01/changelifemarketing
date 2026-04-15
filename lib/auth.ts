@@ -18,38 +18,38 @@ declare module "next-auth" {
   }
   interface Session {
     user: {
-      id?: string;
-      email?: string;
-      name?: string;
-      username?: string;
-      role?: string;
-      fullName?: string;
-      mobileNo?: string;
-      userId?: string;
-      sponsorId?: string;
-      placementId?: string;
-      placementPosition?: 'left' | 'right';
-      memberType?: string;
-      registeredPackage?: string;
+      id?: string | null;
+      email?: string | null;
+      name?: string | null;
+      username?: string | null;
+      role?: string | null;
+      fullName?: string | null;
+      mobileNo?: string | null;
+      userId?: string | null;
+      sponsorId?: string | null;
+      placementId?: string | null;
+      placementPosition?: 'left' | 'right' | null;
+      memberType?: string | null;
+      registeredPackage?: string | null;
     }
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    id?: string;
-    email?: string;
-    name?: string;
-    username?: string;
-    role?: string;
-    fullName?: string;
-    mobileNo?: string;
-    userId?: string;
-    sponsorId?: string;
-    placementId?: string;
-    placementPosition?: 'left' | 'right';
-    memberType?: string;
-    registeredPackage?: string;
+    id?: string | null;
+    email?: string | null;
+    name?: string | null;
+    username?: string | null;
+    role?: string | null;
+    fullName?: string | null;
+    mobileNo?: string | null;
+    userId?: string | null;
+    sponsorId?: string | null;
+    placementId?: string | null;
+    placementPosition?: 'left' | 'right' | null;
+    memberType?: string | null;
+    registeredPackage?: string | null;
   }
 }
 
@@ -115,10 +115,11 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
+      console.log('🔐 [JWT] JWT callback - user:', user?.username);
       if (user) {
         token.id = user.id;
-        token.email = user.email || undefined;
-        token.name = user.name || undefined;
+        token.email = user.email;
+        token.name = user.name;
         token.username = user.username;
         token.role = user.role;
         token.fullName = user.fullName;
@@ -129,11 +130,13 @@ export const authOptions: NextAuthOptions = {
         token.placementPosition = user.placementPosition;
         token.memberType = user.memberType;
         token.registeredPackage = user.registeredPackage;
+        console.log('🔐 [JWT] Token updated:', token.username);
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user) {
+      console.log('🔐 [SESSION] Session callback - token.username:', token.username);
+      if (session?.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
         session.user.name = token.name as string;
@@ -147,6 +150,7 @@ export const authOptions: NextAuthOptions = {
         session.user.placementPosition = token.placementPosition as 'left' | 'right';
         session.user.memberType = token.memberType as string;
         session.user.registeredPackage = token.registeredPackage as string;
+        console.log('🔐 [SESSION] Session user updated:', session.user.username);
       }
       return session;
     },

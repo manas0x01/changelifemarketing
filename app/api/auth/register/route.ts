@@ -3,6 +3,8 @@ import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { calculateAndUpdateUserMetrics } from "@/lib/calculateMetrics";
 import { autoCalculateBasicIncome } from "@/lib/autoCalculateBasicIncome";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
 
 /**
  * 🌳 CASCADE PLACEMENT FUNCTION
@@ -130,14 +132,43 @@ export async function POST(req: Request) {
         }
         console.log('✅ Sponsor found:', sponsor.username || sponsor.userId);
         
-        // Check E-PIN Availability
-        console.log('🔍 Validating E-PIN availability...');
-        const availableEPin = sponsor.ePins?.find((pin: any) => pin.pin === epin && !pin.usedDate);
+        // ✅ STEP 2A: Get logged-in user from session
+        console.log('🔍 Getting logged-in user from session...');
+        const session = await getServerSession(authOptions);
+        if (!session?.user?.email) {
+            console.log('❌ No active session found');
+            return Response.json({ error: "Session expired. Please login again" }, { status: 401 });
+        }
+        
+        const registrationUser = await User.findOne({ email: session.user.email });
+        if (!registrationUser) {
+            console.log('❌ Logged-in user not found in database');
+            return Response.json({ error: "User not found in database" }, { status: 404 });
+        }
+        console.log('✅ Logged-in user found:', registrationUser.username);
+        
+        // Check E-PIN Availability in LOGGED-IN USER's pins (not sponsor)
+        console.log('🔍 Validating E-PIN availability in logged-in user\'s pins...');
+        console.log('📌 Logged-in user:', registrationUser.username);
+        console.log('📌 Total pins available:', registrationUser.ePins?.length || 0);
+        
+        const availableEPin = registrationUser.ePins?.find((pin: any) => {
+          const pinMatch = pin.pin === epin;
+          const isActive = pin.status === "Active" || !pin.status;
+          const notUsed = !pin.usedDate;
+          const notTransferred = !pin.transferDate;
+          
+          console.log(`📊 PIN Check - ${epin}: match=${pinMatch}, active=${isActive}, notUsed=${notUsed}, notTransferred=${notTransferred}`);
+          
+          return pinMatch && isActive && notUsed && notTransferred;
+        });
+        
         if (!availableEPin) {
             console.log('❌ E-Pin not available or already used:', epin);
+            console.log('❌ Available pins for user:', registrationUser.ePins?.map((p: any) => ({ pin: p.pin, status: p.status, usedDate: p.usedDate, transferDate: p.transferDate })));
             return Response.json({ error: "E-Pin not available or already used" }, { status: 400 });
         }
-        console.log('✅ E-PIN is available and valid');
+        console.log('✅ E-PIN is available and valid in logged-in user\'s account');
         
         // Check Placement User Exists (if provided)
         let placementUser = null;
@@ -354,25 +385,40 @@ export async function POST(req: Request) {
             }
         }
 
-        // ✅ STEP 2: Mark E-PIN as Used
-        console.log('➕ STEP 2: Marking E-PIN as used in sponsor record...');
-        const pinIndex = sponsor.ePins!.findIndex((pin: any) => pin.pin === epin);
-        if (pinIndex !== -1) {
-            sponsor.ePins![pinIndex].usedDate = new Date();
-            sponsor.ePins![pinIndex].status = 'Used';
-            sponsor.ePins![pinIndex].usedByUsername = newUser.username;
-            sponsor.ePins![pinIndex].usedByName = fullName;
+        // ✅ STEP 2: Mark E-PIN as Used in LOGGED-IN USER's record
+        console.log('➕ STEP 2: Marking E-PIN as used in logged-in user record...');
+        const userPinIndex = registrationUser.ePins!.findIndex((pin: any) => pin.pin === epin);
+        if (userPinIndex !== -1) {
+            registrationUser.ePins![userPinIndex].usedDate = new Date();
+            registrationUser.ePins![userPinIndex].status = 'Used';
+            registrationUser.ePins![userPinIndex].usedByUsername = newUser.username;
+            registrationUser.ePins![userPinIndex].usedByName = fullName;
+            registrationUser.ePins![userPinIndex].remark = `Used for registering ${fullName} (${newUser.userId})`;
             
-            console.log("✅ E-PIN marked as used:", {
+            console.log("✅ E-PIN marked as used in logged-in user's account:", {
                 ePin: epin,
-                usedDate: sponsor.ePins![pinIndex].usedDate,
-                usedByUsername: sponsor.ePins![pinIndex].usedByUsername,
-                usedByName: sponsor.ePins![pinIndex].usedByName,
-                status: sponsor.ePins![pinIndex].status,
+                usedDate: registrationUser.ePins![userPinIndex].usedDate,
+                usedByUsername: registrationUser.ePins![userPinIndex].usedByUsername,
+                usedByName: registrationUser.ePins![userPinIndex].usedByName,
+                status: registrationUser.ePins![userPinIndex].status,
             });
+            
+            // Save the logged-in user with updated PIN status
+            try {
+                await registrationUser.save();
+                console.log("✅ Logged-in user saved with updated PIN status");
+            } catch (userPinError) {
+                console.error("⚠️ Failed to save logged-in user PIN status:", userPinError);
+            }
         }
 
-        // ✅ STEP 3: Clean Sponsor's pinRequests (Remove corrupted entries)
+        // ✅ STEP 3: Mark E-PIN as Used in SPONSOR's record (for reference)
+        console.log('➕ STEP 3: Marking E-PIN reference in sponsor record...');
+        const sponsorPinIndex = sponsor.ePins!.findIndex((pin: any) => pin.pin === epin);
+        if (sponsorPinIndex !== -1) {
+            console.log("ℹ️ PIN exists in sponsor's record, updating reference...");
+            sponsor.ePins![sponsorPinIndex].remark = `PIN from ${registrationUser.username} used for registering ${fullName}`;
+        }
         console.log('➕ STEP 3: Cleaning sponsor pinRequests record...');
         if (sponsor.pinRequests && sponsor.pinRequests.length > 0) {
             const originalCount = sponsor.pinRequests.length;

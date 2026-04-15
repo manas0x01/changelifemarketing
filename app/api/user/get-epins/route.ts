@@ -83,4 +83,54 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+export async function POST(req: NextRequest) {
+  try {
+    console.log('📌 [GET-EPINS] POST request received');
+    
+    const session = await getServerSession(authOptions);
 
+    if (!session?.user?.username) {
+      console.log('❌ [GET-EPINS] Unauthorized - no session username');
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    console.log('👤 [GET-EPINS] User from session:', session.user.username);
+
+    await connectDB();
+    console.log('✅ [DB] Database connected');
+
+    const user = await User.findOne({ username: session.user.username });
+
+    if (!user) {
+      console.log('❌ [GET-EPINS] User not found:', session.user.username);
+      return NextResponse.json(
+        { error: "User not found" },
+        { status: 404 }
+      );
+    }
+
+    // Filter only available (unused and not transferred) PINs
+    const availableEPins = (user.ePins || [])
+      .filter((pin: any) => pin.status === "Active" && !pin.usedDate && !pin.transferDate)
+      .map((pin: any) => pin.pin);
+
+    console.log('📌 [GET-EPINS] All PINs count:', user.ePins?.length || 0);
+    console.log('📌 [GET-EPINS] Available E-PINs:', availableEPins);
+
+    return NextResponse.json({
+      success: true,
+      availableEPins,
+      totalAvailable: availableEPins.length,
+      message: "Available E-PINs fetched successfully"
+    });
+  } catch (error) {
+    console.error("❌ [GET-EPINS] Error fetching E-PINs:", error);
+    return NextResponse.json(
+      { success: false, error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

@@ -5,17 +5,14 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
-/* ═══════════════════════════════════════════════════════
-   CONSTANTS
-═══════════════════════════════════════════════════════ */
-const AR   = 26;   // avatar circle radius (px)
-const NW   = 130;  // member name-card width
+const AR   = 26; 
+const NW   = 130;  
 const NH   = 44; 
 const BS   = 44; 
 const SW   = 72; 
 const HG   = 120;
 const VS   = 158; 
-const MAXD = 2;  // Depth limit: 0=root, 1-2=members/open, 3=close  
+const MAXD = 1.5;  
 
 type NodeType = "active" | "booster" | "open" | "close";
 
@@ -98,8 +95,7 @@ function buildLayout(
   const L  = ch.find(c => c.position === "left")  ?? null;
   const R  = ch.find(c => c.position === "right") ?? null;
   const cd = depth + 1;
-  const parentIsSlot = isSlot(node) || virtSlot;
-  const slotT: NodeType = (parentIsSlot || cd > MAXD) ? "close" : "open";
+  const slotT: NodeType = "open"; 
 
   const lNode: MNode = L ?? {
     id: `vl-${node.id}`, name: slotT, userId: "", type: slotT, position: "left",

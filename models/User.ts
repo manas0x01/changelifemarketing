@@ -185,9 +185,11 @@ export interface IUser extends Document {
     utrNumber?: string;
     paymentMode?: string;
   }[];
+  transactionPassword?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
+  compareTransactionPassword(password: string): Promise<boolean>;
 }
 
 const userSchema = new Schema<IUser>(
@@ -315,7 +317,6 @@ const userSchema = new Schema<IUser>(
       },
       default: { accountHolderName: '', accountNumber: '', ifscCode: '', bankName: '' },
     },
-    // ── NEW: Withdraw Requests Array ──
     withdrawRequests: {
       type: [
         {
@@ -331,6 +332,7 @@ const userSchema = new Schema<IUser>(
       ],
       default: [],
     },
+    transactionPassword: { type: String, required: false, select: false },
   },
   { timestamps: true }
 );
@@ -340,11 +342,19 @@ userSchema.pre('save', async function () {
   if (this.isModified('password')) {
     this.password = await bcrypt.hash(this.password, salt);
   }
+  if (this.isModified('transactionPassword') && this.transactionPassword) {
+    this.transactionPassword = await bcrypt.hash(this.transactionPassword, salt);
+  }
 });
 
 userSchema.methods.comparePassword = async function (password: string): Promise<boolean> {
   if (!this.password) return false;
   return bcrypt.compare(password, this.password);
+};
+
+userSchema.methods.compareTransactionPassword = async function (password: string): Promise<boolean> {
+  if (!this.transactionPassword) return false;
+  return bcrypt.compare(password, this.transactionPassword);
 };
 
 if (mongoose.models.User) delete mongoose.models.User;

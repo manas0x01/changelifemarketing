@@ -135,7 +135,6 @@ export const authOptions: NextAuthOptions = {
       return token;
     },
     async session({ session, token }) {
-      console.log('🔐 [SESSION] Session callback - token.username:', token.username);
       if (session?.user) {
         session.user.id = token.id as string;
         session.user.email = token.email as string;
@@ -150,7 +149,6 @@ export const authOptions: NextAuthOptions = {
         session.user.placementPosition = token.placementPosition as 'left' | 'right';
         session.user.memberType = token.memberType as string;
         session.user.registeredPackage = token.registeredPackage as string;
-        console.log('🔐 [SESSION] Session user updated:', session.user.username);
       }
       return session;
     },

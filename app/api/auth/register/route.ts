@@ -86,6 +86,7 @@ export async function POST(req: Request) {
             ifsc,
             accountType,
             password,
+            transactionPassword,
         } = registrationData;
         
         console.log('\n📝 ═══ VALIDATION PHASE ═══');
@@ -103,20 +104,15 @@ export async function POST(req: Request) {
             console.log('❌ Password is required');
             return Response.json({ error: "Password is required" }, { status: 400 });
         }
+        if (!transactionPassword?.trim()) {
+            console.log('❌ Transaction Password is required');
+            return Response.json({ error: "Transaction Password is required" }, { status: 400 });
+        }
         console.log('✅ Form data validation passed');
         
         // ✅ STEP 2: Connect DB and validate all database conditions
         await connectDB();
         console.log('✅ Database connected');
-        
-        // Check Mobile Uniqueness
-        console.log('🔍 Validating mobile number uniqueness...');
-        const existingUser = await User.findOne({ mobileNo });
-        if (existingUser) {
-            console.log('❌ Mobile number already registered:', mobileNo);
-            return Response.json({ error: "Mobile number already registered" }, { status: 400 });
-        }
-        console.log('✅ Mobile number is unique');
         
         // Check Sponsor Exists
         console.log('🔍 Validating sponsor exists...');
@@ -155,12 +151,10 @@ export async function POST(req: Request) {
         const availableEPin = registrationUser.ePins?.find((pin: any) => {
           const pinMatch = pin.pin === epin;
           const isActive = pin.status === "Active" || !pin.status;
-          const notUsed = !pin.usedDate;
-          const notTransferred = !pin.transferDate;
           
-          console.log(`📊 PIN Check - ${epin}: match=${pinMatch}, active=${isActive}, notUsed=${notUsed}, notTransferred=${notTransferred}`);
+          console.log(`📊 PIN Check - ${epin}: match=${pinMatch}, active=${isActive}`);
           
-          return pinMatch && isActive && notUsed && notTransferred;
+          return pinMatch && isActive;
         });
         
         if (!availableEPin) {
@@ -303,6 +297,7 @@ export async function POST(req: Request) {
             username,
             userId: finalUserId,
             password,
+            transactionPassword,
             fullName,
             mobileNo,
             email,
@@ -385,55 +380,50 @@ export async function POST(req: Request) {
             }
         }
 
-        // ✅ STEP 2: Mark E-PIN as Used in LOGGED-IN USER's record
-        console.log('➕ STEP 2: Marking E-PIN as used in logged-in user record...');
+        // ✅ STEP 2: Pop E-PIN from LOGGED-IN USER's ePins array
+        console.log('➕ STEP 2: Popping E-PIN from logged-in user ePins array...');
         const userPinIndex = registrationUser.ePins!.findIndex((pin: any) => pin.pin === epin);
         if (userPinIndex !== -1) {
-            registrationUser.ePins![userPinIndex].usedDate = new Date();
-            registrationUser.ePins![userPinIndex].status = 'Used';
-            registrationUser.ePins![userPinIndex].usedByUsername = newUser.username;
-            registrationUser.ePins![userPinIndex].usedByName = fullName;
-            registrationUser.ePins![userPinIndex].remark = `Used for registering ${fullName} (${newUser.userId})`;
+            const poppedPin = registrationUser.ePins![userPinIndex];
+            registrationUser.ePins!.splice(userPinIndex, 1);
             
-            console.log("✅ E-PIN marked as used in logged-in user's account:", {
+            console.log("✅ E-PIN popped from logged-in user's ePins array:", {
                 ePin: epin,
-                usedDate: registrationUser.ePins![userPinIndex].usedDate,
-                usedByUsername: registrationUser.ePins![userPinIndex].usedByUsername,
-                usedByName: registrationUser.ePins![userPinIndex].usedByName,
-                status: registrationUser.ePins![userPinIndex].status,
+                remainingPins: registrationUser.ePins!.length,
+                poppedPin: poppedPin,
             });
             
-            // Save the logged-in user with updated PIN status
+            // Save the logged-in user with updated ePins
             try {
                 await registrationUser.save();
-                console.log("✅ Logged-in user saved with updated PIN status");
+                console.log("✅ Logged-in user saved with popped PIN");
             } catch (userPinError) {
-                console.error("⚠️ Failed to save logged-in user PIN status:", userPinError);
+                console.error("⚠️ Failed to save logged-in user with popped PIN:", userPinError);
             }
         }
 
-        // ✅ STEP 2B: Update logged-in user's direct count (Left/Right)
-        console.log('➕ STEP 2B: Updating logged-in user\'s direct count...');
+        // ✅ STEP 2B: Update logged-in user's TOTAL TEAM count (Left/Right)
+        console.log('➕ STEP 2B: Updating logged-in user\'s TOTAL TEAM count...');
         const positionField = position.toLowerCase() === 'left' ? 'left' : 'right';
         
-        // Initialize totalDirect if not exists
-        if (!registrationUser.totalDirect) {
-            registrationUser.totalDirect = { left: 0, right: 0 };
+        // Initialize totalTeam if not exists
+        if (!registrationUser.totalTeam) {
+            registrationUser.totalTeam = { left: 0, right: 0 };
         }
         
-        const currentCount = registrationUser.totalDirect[positionField] || 0;
-        registrationUser.totalDirect[positionField] = currentCount + 1;
+        const currentTeamCount = registrationUser.totalTeam[positionField] || 0;
+        registrationUser.totalTeam[positionField] = currentTeamCount + 1;
         
-        console.log(`✅ Updated logged-in user (${registrationUser.username}):`, {
+        console.log(`✅ Updated logged-in user's TOTAL TEAM (${registrationUser.username}):`, {
             position: position,
             field: positionField,
-            oldCount: currentCount,
-            newCount: registrationUser.totalDirect[positionField],
+            oldCount: currentTeamCount,
+            newCount: registrationUser.totalTeam[positionField],
         });
         
-        console.log(`✅ Total Direct updated:`, {
-            left: registrationUser.totalDirect.left,
-            right: registrationUser.totalDirect.right,
+        console.log(`✅ Total Team updated:`, {
+            left: registrationUser.totalTeam.left,
+            right: registrationUser.totalTeam.right,
         });
         
         // Save updated counts
@@ -443,6 +433,30 @@ export async function POST(req: Request) {
         } catch (countError) {
             console.error("⚠️ Failed to save direct counts:", countError);
         }
+
+        // ✅ STEP 2.5: Update SPONSOR's TOTAL TEAM count
+        console.log('➕ STEP 2.5: Updating sponsor\'s TOTAL TEAM count...');
+        const sponsorPositionField = position.toLowerCase() === 'left' ? 'left' : 'right';
+        
+        // Initialize totalTeam if not exists
+        if (!sponsor.totalTeam) {
+            sponsor.totalTeam = { left: 0, right: 0 };
+        }
+        
+        const sponsorCurrentCount = sponsor.totalTeam[sponsorPositionField] || 0;
+        sponsor.totalTeam[sponsorPositionField] = sponsorCurrentCount + 1;
+        
+        console.log(`✅ Updated SPONSOR's TOTAL TEAM (${sponsor.username}):`, {
+            position: position,
+            field: sponsorPositionField,
+            oldCount: sponsorCurrentCount,
+            newCount: sponsor.totalTeam[sponsorPositionField],
+        });
+        
+        console.log(`✅ Sponsor Total Team updated:`, {
+            left: sponsor.totalTeam.left,
+            right: sponsor.totalTeam.right,
+        });
 
         // ✅ STEP 3: Mark E-PIN as Used in SPONSOR's record (for reference)
         console.log('➕ STEP 3: Marking E-PIN reference in sponsor record...');

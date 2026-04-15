@@ -68,12 +68,6 @@ export interface IUser extends Document {
     pairsCarried: number;
     reason: string;
   }[];
-  directMembers?: {
-    memberId: string;
-    name: string;
-    joinDate: Date;
-    position: 'left' | 'right';
-  }[];
   sessionBasedIncome?: {
     sessionDate: Date;
     sessionType: 'morning' | 'evening';
@@ -87,10 +81,15 @@ export interface IUser extends Document {
     status: 'Completed' | 'Pending';
   }[];
   totalTeam?: { left: number; right: number };
-  totalDirect?: { left: number; right: number };
   basicIncome?: number;
   boosterIncomeAmount?: number;
   boosterIncome?: { LG: number; RG: number; totalBoosterMatching: number };
+  directMembers?: {
+    memberId: string;
+    name: string;
+    joinDate: Date;
+    position: string;
+  }[];
   basicIncomeRecords?: {
     srNo: number; amount: number; pairCount: number;
     date: Date; description: string; status: string;
@@ -246,7 +245,6 @@ const userSchema = new Schema<IUser>(
     directMembers: { type: [{ memberId: String, name: String, joinDate: Date, position: String }], default: [] },
     sessionBasedIncome: { type: [{ sessionDate: Date, sessionType: String, leftMembersInSession: Number, rightMembersInSession: Number, pairsInSession: Number, grossIncome: Number, netIncome: Number, tdsDeducted: Number, serviceChargeDeducted: Number, status: String }], default: [] },
     totalTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
-    totalDirect: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     basicIncome: { type: Number, default: 0 },
     boosterIncomeAmount: { type: Number, default: 0 },
     boosterIncome: { type: { LG: { type: Number, default: 0 }, RG: { type: Number, default: 0 }, totalBoosterMatching: { type: Number, default: 0 } }, default: { LG: 0, RG: 0, totalBoosterMatching: 0 } },

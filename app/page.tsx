@@ -199,9 +199,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* TEAM PROMOTERS */}
-      
-
       {/* ABOUT US / COMPANY OVERVIEW */}
       <section className="py-32 bg-[#FFFFFF] relative">
         <div className="max-w-480 mx-auto px-6 md:px-12">
@@ -258,13 +255,12 @@ export default function HomePage() {
             {/* Right: Content */}
             <div className="lg:col-span-7 pt-12 lg:pt-0">
               <SectionHeading title="A Legacy of Trust & Growth" align="left" />
-
               <div className="space-y-12">
                 {/* Company Details Grid */}
                 <div className="grid sm:grid-cols-2 gap-8">
                   <div className="space-y-2">
                     <p className="text-[0.875rem] font-['Roboto'] text-[#C9A84C] uppercase tracking-wider font-semibold">Established</p>
-                    <p className="font-['Fraunces'] text-[1.5rem] text-[#0A6E5A]">26 Jan 2026</p>
+                    <p className="font-['Fraunces'] text-[1.5rem] text-[#0A6E5A]">22 Jan 2026</p>
                   </div>
                   <div className="space-y-2">
                     <p className="text-[0.875rem] font-['Roboto'] text-[#C9A84C] uppercase tracking-wider font-semibold">Headquarters</p>

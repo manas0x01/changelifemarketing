@@ -21,20 +21,14 @@ export async function calculateAndUpdateUserMetrics(userId: string | mongoose.Ty
         { sponsorId: user.userId }
       ]
     }).lean();
-
-    let totalDirectAmount = 0;
-    let leftDirectCount = 0;
-    let rightDirectCount = 0;
+    let leftTeamCount = 0;
+    let rightTeamCount = 0;
 
     for (const member of directMembers) {
-      // Assuming each direct member contributes some amount (e.g., registration bonus)
-      // You can adjust this based on your business logic
-      totalDirectAmount += 1000; // 1000 per direct member (example)
-      
       if (member.placementPosition === 'left') {
-        leftDirectCount++;
+        leftTeamCount++;
       } else if (member.placementPosition === 'right') {
-        rightDirectCount++;
+        rightTeamCount++;
       }
     }
 
@@ -62,11 +56,6 @@ export async function calculateAndUpdateUserMetrics(userId: string | mongoose.Ty
           left: leftDownline,
           right: rightDownline
         },
-        totalDirect: {
-          left: leftDirectCount,
-          right: rightDirectCount
-        },
-        totalDirectAmount: totalDirectAmount,
         basicIncome: basicIncome,
         boosterIncomeAmount: boosterIncomeAmount,
         boosterIncome: {

@@ -44,15 +44,20 @@ export async function GET(request: NextRequest) {
                 { username: { $in: memberIds } },
                 { userId: { $in: memberIds } }
             ]
-        }).select('username userId fullName mobileNo totalDirect');
+        }).select('username userId fullName mobileNo leftChild rightChild');
 
         // Create a map for quick lookup
         const memberMap = new Map();
         membersDetails.forEach(m => {
+            // Count direct children: 1 if leftChild exists, 1 if rightChild exists
+            const leftCount = m.leftChild ? 1 : 0;
+            const rightCount = m.rightChild ? 1 : 0;
+            const direcCount = leftCount + rightCount;
+            
             memberMap.set(m.userId || m.username, {
                 name: m.fullName || m.username,
                 mobileNo: m.mobileNo || 'N/A',
-                directs: (m.totalDirect?.left || 0) + (m.totalDirect?.right || 0)
+                directs: direcCount
             });
         });
 

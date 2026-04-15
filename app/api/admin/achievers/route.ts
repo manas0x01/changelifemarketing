@@ -62,7 +62,6 @@ export async function GET(req: NextRequest) {
         hasNextPage: page < Math.ceil(total / limit), hasPrevPage: page > 1 },
     });
   } catch (err: any) {
-    console.error('[GET /api/admin/achievers]', err);
     return NextResponse.json({ success: false, message: 'Internal server error.' }, { status: 500 });
   }
 }
@@ -106,12 +105,9 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (err: any) {
-    console.error('[POST /api/admin/achievers]', err);
     return NextResponse.json({ success: false, message: err.message ?? 'Internal server error.' }, { status: 500 });
   }
 }
-
-// ─── PUT ──────────────────────────────────────────────────────────────────────
 
 export async function PUT(req: NextRequest) {
   try {
@@ -156,75 +152,55 @@ export async function PUT(req: NextRequest) {
       }},
       { new: true, runValidators: true }
     );
-
     if (!updated) return NextResponse.json({ success: false, message: 'Achiever not found.' }, { status: 404 });
-
     return NextResponse.json({ success: true, message: 'Achiever updated successfully.', data: updated });
   } catch (err: any) {
-    console.error('[PUT /api/admin/achievers]', err);
     return NextResponse.json({ success: false, message: err.message ?? 'Internal server error.' }, { status: 500 });
   }
 }
-
-// ─── PATCH (toggle visibility / isFirstBooster / displayOrder) ───────────────
 
 export async function PATCH(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const guard   = adminGuard(session);
     if (guard) return guard;
-
     await connectDB();
-
     const id = new URL(req.url).searchParams.get('id');
     if (!id || !isValidId(id)) {
       return NextResponse.json({ success: false, message: 'Invalid or missing ID.' }, { status: 400 });
     }
-
     const body    = await req.json();
     const allowed = ['isVisible', 'isFirstBooster', 'displayOrder', 'memberType'];
     const update: Record<string, any> = {};
     for (const key of allowed) if (key in body) update[key] = body[key];
-
     if (!Object.keys(update).length) {
       return NextResponse.json({ success: false, message: 'No valid fields.' }, { status: 400 });
     }
-
     if (update.isFirstBooster === true) {
       await Achiever.updateMany({ isFirstBooster: true, _id: { $ne: id } }, { $set: { isFirstBooster: false } });
     }
-
     const updated = await Achiever.findByIdAndUpdate(id, { $set: update }, { new: true }).lean();
     if (!updated) return NextResponse.json({ success: false, message: 'Achiever not found.' }, { status: 404 });
-
     return NextResponse.json({ success: true, message: 'Updated.', data: updated });
   } catch (err: any) {
-    console.error('[PATCH /api/admin/achievers]', err);
     return NextResponse.json({ success: false, message: 'Internal server error.' }, { status: 500 });
   }
 }
-
-// ─── DELETE ───────────────────────────────────────────────────────────────────
 
 export async function DELETE(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     const guard   = adminGuard(session);
     if (guard) return guard;
-
     await connectDB();
-
     const id = new URL(req.url).searchParams.get('id');
     if (!id || !isValidId(id)) {
       return NextResponse.json({ success: false, message: 'Invalid or missing ID.' }, { status: 400 });
     }
-
     const deleted = await Achiever.findByIdAndDelete(id);
     if (!deleted) return NextResponse.json({ success: false, message: 'Achiever not found.' }, { status: 404 });
-
     return NextResponse.json({ success: true, message: 'Achiever deleted successfully.' });
   } catch (err: any) {
-    console.error('[DELETE /api/admin/achievers]', err);
     return NextResponse.json({ success: false, message: 'Internal server error.' }, { status: 500 });
   }
 }

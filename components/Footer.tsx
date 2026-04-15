@@ -95,7 +95,7 @@ export default function Footer() {
                 <Instagram className="w-5 h-5 text-[#FFFFFF]" />
               </a>
               <a
-                href="https://wa.me/916204720770"
+                href="https://wa.me/918544167221"
                 className="w-10 h-10 bg-[#C9A84C] rounded-full flex items-center justify-center hover:bg-[#F5A623] transition-colors"
                 aria-label="WhatsApp"
                 target="_blank"

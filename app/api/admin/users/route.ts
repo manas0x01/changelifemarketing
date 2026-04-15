@@ -101,8 +101,8 @@ export async function GET(req: NextRequest) {
           'username userId fullName email phone mobileNo role memberType ' +
           'joiningDate sponsorId sponsorName placementId placementName ' +
           'placementPosition registeredPackage state district city ' +
-          'basicIncome boosterIncomeAmount totalTeam totalDirect ' +
-          'totalDirectAmount createdAt updatedAt'
+          'basicIncome boosterIncomeAmount totalTeam ' +
+          'createdAt updatedAt'
         )
         .sort({ [safeSort]: sortOrder })
         .skip(skip)

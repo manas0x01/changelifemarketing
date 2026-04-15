@@ -46,9 +46,9 @@ export async function POST(req: Request) {
                 leftCount: Math.max(leftCount, leftDownline),
                 rightCount: Math.max(rightCount, rightDownline),
                 totalCount: totalCount || (leftDownline + rightDownline),
-                totalDirect: {
-                    left: Math.max(leftCount, leftDownline),
-                    right: Math.max(rightCount, rightDownline),
+                totalTeam: {
+                    left: user.totalTeam?.left || 0,
+                    right: user.totalTeam?.right || 0,
                 }
             }
         });

@@ -51,9 +51,6 @@ export async function GET(request: NextRequest) {
 
         const finalIncome = calculatedBasicIncome || storedBasicIncome;
         console.log('✅ [API] BASIC-INCOME - Final income:', finalIncome);
-        
-        // Return the calculated value (which respects session caps)
-        // If both are 0, that's fine - user hasn't completed any pairs yet
         return NextResponse.json({
             success: true,
             basicIncome: finalIncome,

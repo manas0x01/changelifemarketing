@@ -43,7 +43,6 @@ export async function POST(req: NextRequest) {
       );
     }
   } catch (error: any) {
-    console.error('Error in calculate-metrics:', error);
     return NextResponse.json(
       { error: error.message ?? 'Failed to calculate metrics' },
       { status: 500 }

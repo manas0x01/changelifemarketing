@@ -66,10 +66,6 @@ export async function calculateAndUpdateUserMetrics(userId: any) {
       awardIncome,
       repurchaseIncome,
       totalIncome,
-      totalDirect: {
-        left: leftCount,
-        right: rightCount,
-      },
       updatedAt: new Date(),
     }, { new: true });
 

@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         });
       }
       const availablePins = user.ePins.filter((pin: any) => 
-        !pin.usedDate && (pin.status === 'Active' || pin.status === 'Transferred')
+        pin.status === 'Active' || !pin.status
       );
       if (availablePins.length === 0) {
         return NextResponse.json({
@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
           pinStats.totalPinsInSystem += user.ePins.length;
           
           const available = user.ePins.filter((pin: any) => 
-            !pin.usedDate && (pin.status === 'Active' || pin.status === 'Transferred')
+            pin.status === 'Active' || !pin.status
           );
           const used = user.ePins.filter((p: any) => p.usedDate);
           pinStats.totalUsedPins += used.length;

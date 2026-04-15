@@ -132,14 +132,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check if user has available EPINs (status should be 'Active' and not used)
+    // Check if user has available EPINs (status should be 'Active' only)
     console.log('📌 [PIN] Checking available pins...');
     const userEPins = user.ePins || [];
     console.log('📌 [PIN] Total pins:', userEPins.length);
     
     const availableEPins = userEPins.filter((pin: any) => {
-      // Consider a pin as available if it's Active and not yet used
-      return pin.status === 'Active' && !pin.usedDate;
+      // Consider a pin as available if it's Active
+      return pin.status === 'Active' || !pin.status;
     });
     
     console.log('📌 [PIN] Available pins:', availableEPins.length);

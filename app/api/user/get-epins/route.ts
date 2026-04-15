@@ -112,9 +112,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Filter only available (unused and not transferred) PINs
+    // Filter only available (Active) PINs
     const availableEPins = (user.ePins || [])
-      .filter((pin: any) => pin.status === "Active" && !pin.usedDate && !pin.transferDate)
+      .filter((pin: any) => pin.status === "Active" || !pin.status)
       .map((pin: any) => pin.pin);
 
     console.log('📌 [GET-EPINS] All PINs count:', user.ePins?.length || 0);

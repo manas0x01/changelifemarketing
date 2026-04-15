@@ -25,7 +25,6 @@ export default function DirectMembersPage() {
   const [loading,      setLoading]      = useState(true);
   const [error,        setError]        = useState<string | null>(null);
 
-  // Fetch direct members from database on component mount
   useEffect(() => {
     const fetchDirectMembers = async () => {
       try {

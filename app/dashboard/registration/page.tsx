@@ -430,24 +430,27 @@ export default function NewRegisterPage() {
         return;
       }
 
-      // After successful registration, update sponsor's leftChild/rightChild
+      // After successful registration, update sponsor's team metrics (totalTeam count)
       if (position === "Left" || position === "Right") {
         try {
-          const updateResponse = await fetch('/api/user/update-child', {
+          const metricsResponse = await fetch('/api/user/update-sponsor-team-metrics', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               sponsorId: sponsorId.trim(),
-              position: position,
-              childUserId: userId,
+              position: position.toLowerCase(),
             }),
             credentials: 'include',
           });
           
-          if (updateResponse.ok) {
+          if (metricsResponse.ok) {
+            const metricsData = await metricsResponse.json();
+            console.log('✅ [METRICS] Sponsor team metrics updated:', metricsData.updated);
           } else {
+            console.warn('⚠️ [METRICS] Failed to update sponsor team metrics');
           }
-        } catch (updateError) {
+        } catch (metricsError) {
+          console.error('❌ [METRICS] Error updating team metrics:', metricsError);
         }
       }
 

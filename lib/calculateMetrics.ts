@@ -1,16 +1,3 @@
-/**
- * Auto-calculate and update user metrics
- * Called when:
- * - User registers (new member added)
- * - Member is added to direct/sponsor team
- * - Income is credited
- * 
- * Calculates:
- * - basicIncome (from sessionBasedIncome records)
- * - boosterIncomeAmount (from boosterMatchingRecords)
- * - awardIncome (from award records)
- * - totalIncome (sum of all 4 income types)
- */
 
 import User from '@/models/User';
 

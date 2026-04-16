@@ -5,18 +5,6 @@ import User from '@/models/User';
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAwardQualification, AWARD_RANKS } from '@/lib/incomeCalculations';
 
-/**
- * ✅ POINT 10: Award Reward System (13 Ranks)
- * 
- * Rank Progression:
- * 1. Bronze - 5 Left + 5 Right Booster Pairs
- * 2. Silver - 10 Left + 10 Right (new)
- * 3. Gold - 15 each
- * ... continues to
- * 13. Legend - 200 pairs
- * 
- * Each rank requires NEW booster pairs (previous don't recount)
- */
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -32,16 +20,9 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-
-    // Count total booster pairs formed
-    // (Each booster pair = 1 left booster + 1 right booster match = 1 qualifying pair)
     const totalBoosterPairs = (user.boosterIncomeRecords || [])
       .reduce((sum: number, record: any) => sum + (record.pairsMatched || 0), 0);
-
-    // Check current and next rank qualification
     const qualification = checkAwardQualification(totalBoosterPairs);
-
-    // Build response with rank progression
     const rankProgressData = {
       currentRank: qualification.currentRank
         ? {
@@ -97,7 +78,6 @@ export async function POST(req: NextRequest) {
       hint: 'Increase booster pairs by building your left and right downline'
     });
   } catch (error) {
-    console.error('Award qualification error:', error);
     return NextResponse.json(
       { error: 'Failed to check award qualification' },
       { status: 500 }
@@ -120,7 +100,6 @@ export async function GET(req: NextRequest) {
       }))
     });
   } catch (error) {
-    console.error('Get ranks error:', error);
     return NextResponse.json(
       { error: 'Failed to retrieve rank information' },
       { status: 500 }

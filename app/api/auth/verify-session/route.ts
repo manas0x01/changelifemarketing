@@ -17,8 +17,6 @@ export async function GET(request: NextRequest) {
         }
       }, { status: 401 });
     }
-
-    console.log('✅ SESSION VERIFIED - User is authenticated');
     return NextResponse.json({
       authenticated: true,
       message: 'Session verified successfully',

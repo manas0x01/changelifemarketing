@@ -5,14 +5,6 @@ import User from '@/models/User';
 import { NextRequest, NextResponse } from 'next/server';
 import { checkBoosterQualification, BOOSTER_CONFIG } from '@/lib/incomeCalculations';
 
-/**
- * ✅ POINT 7: Auto-Qualify for Booster Status
- * Rules:
- * - After 12 pairs complete → User becomes Booster
- * - 4 pairs are cut at positions 3, 6, 9, 12
- * - 8 effective pairs after cuts
- * - Creates separate left & right booster status
- */
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -28,17 +20,10 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
-
-    // Count total pairs completed (from basicIncomeRecords)
     const totalRecords = (user.basicIncomeRecords || []);
     const totalPairsCompleted = totalRecords.length;
-
-    // Check qualification status
     const qualificationStatus = checkBoosterQualification(totalPairsCompleted);
-
-    // If newly qualified, auto-promote to booster
     if (qualificationStatus.isQualified && (!user.boosterStatus?.isBoosterLeft || !user.boosterStatus?.isBoosterRight)) {
-      // Update booster status
       user.boosterStatus = {
         isBoosterLeft: true,
         isBoosterRight: true,
@@ -65,8 +50,6 @@ export async function POST(req: NextRequest) {
         }
       });
     }
-
-    // Already qualified
     if (qualificationStatus.isQualified) {
       return NextResponse.json({
         success: true,
@@ -81,8 +64,6 @@ export async function POST(req: NextRequest) {
         }
       });
     }
-
-    // Not yet qualified
     return NextResponse.json({
       success: true,
       status: 'NOT_QUALIFIED',
@@ -97,7 +78,6 @@ export async function POST(req: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Booster qualification error:', error);
     return NextResponse.json(
       { error: 'Failed to check booster qualification' },
       { status: 500 }
@@ -105,9 +85,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/**
- * GET - Check current booster status without auto-promoting
- */
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -140,7 +117,6 @@ export async function GET(req: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Get booster status error:', error);
     return NextResponse.json(
       { error: 'Failed to get booster status' },
       { status: 500 }

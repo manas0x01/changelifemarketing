@@ -78,20 +78,24 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
     const { start: sessionStart, end: sessionEnd } = getSessionBoundaries(now);
     const { start: dayStart, end: dayEnd } = getTodayBoundaries();
 
-    // Get direct members added in current session
+    // TESTING: Count ALL members (not just current session)
     const directMembers = user.directMembers || [];
     
-    const leftMembersThisSession = directMembers.filter(m =>
-      m.position === 'left' &&
-      m.joinDate >= sessionStart &&
-      m.joinDate < sessionEnd
-    );
+    // const leftMembersThisSession = directMembers.filter(m =>
+    //   m.position === 'left' &&
+    //   m.joinDate >= sessionStart &&
+    //   m.joinDate < sessionEnd
+    // );
 
-    const rightMembersThisSession = directMembers.filter(m =>
-      m.position === 'right' &&
-      m.joinDate >= sessionStart &&
-      m.joinDate < sessionEnd
-    );
+    // const rightMembersThisSession = directMembers.filter(m =>
+    //   m.position === 'right' &&
+    //   m.joinDate >= sessionStart &&
+    //   m.joinDate < sessionEnd
+    // );
+
+    // Count ALL left/right members regardless of session
+    const leftMembersThisSession = directMembers.filter(m => m.position === 'left');
+    const rightMembersThisSession = directMembers.filter(m => m.position === 'right');
 
     console.log("📈 Session analysis:", {
       currentSession,
@@ -102,33 +106,31 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
       totalDirectMembers: directMembers.length,
     });
 
-    // Calculate pairs from this session
+    // Calculate pairs from ALL members
     const possiblePairsThisSession = Math.min(
       leftMembersThisSession.length,
       rightMembersThisSession.length
     );
 
     if (possiblePairsThisSession <= 0) {
-      console.log(`❌ ${user.username}: No complete pairs in current session`);
-      return { success: false, message: 'No pairs in session' };
+      console.log(`❌ ${user.username}: No complete pairs (total members)`);
+      return { success: false, message: 'No pairs available' };
     }
 
     console.log(`✅ Found ${possiblePairsThisSession} possible pairs!`);
 
-    // Check if we've already calculated basic income for this session
-    const existingSessionIncome = (user.sessionBasedIncome || [])
-      .filter(s =>
-        s.sessionDate >= sessionStart &&
-        s.sessionDate < sessionEnd &&
-        s.sessionType === currentSession
-      );
+    // TESTING: Skip session duplicate check - allow multiple calculations
+    // const existingSessionIncome = (user.sessionBasedIncome || [])
+    //   .filter(s =>
+    //     s.sessionDate >= sessionStart &&
+    //     s.sessionDate < sessionEnd &&
+    //     s.sessionType === currentSession
+    //   );
 
-    if (existingSessionIncome.length > 0) {
-      console.log(`⚠️ ${user.username}: Basic income already calculated for this session`);
-      return { success: false, message: 'Already calculated for this session' };
-    }
-    console.log(`✅ No previous income in this session`);
-
+    // if (existingSessionIncome.length > 0) {
+    //   console.log(`⚠️ ${user.username}: Basic income already calculated for this session`);
+    //   return { success: false, message: 'Already calculated for this session' };
+    // }
     // Check session cap
     const sessionIncomeToday = (user.sessionBasedIncome || [])
       .filter(s =>
@@ -137,8 +139,6 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
         s.sessionType === currentSession
       )
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
-
-    // Check daily cap
     const todayIncome = (user.sessionBasedIncome || [])
       .filter(s => s.sessionDate >= dayStart && s.sessionDate <= dayEnd)
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
@@ -152,32 +152,28 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
 
     // ✅ NET INCOME PER PAIR = ₹1,000 (No deductions)
     
-    // Calculate max pairs that fit in session cap
-    const remainingSessionCap = SESSION_CAP - sessionIncomeToday;
-    const maxPairsForSessionCap = Math.floor(remainingSessionCap / NET_INCOME_PER_PAIR);
+    // CAPPING LOGIC COMMENTED OUT FOR TESTING - Multiple IDs & Income Generation
+    // const remainingSessionCap = SESSION_CAP - sessionIncomeToday;
+    // const maxPairsForSessionCap = Math.floor(remainingSessionCap / NET_INCOME_PER_PAIR);
     
     // Calculate max pairs that fit in daily cap
-    const remainingDailyCap = DAILY_CAP - todayIncome;
-    const maxPairsForDailyCap = Math.floor(remainingDailyCap / NET_INCOME_PER_PAIR);
+    // const remainingDailyCap = DAILY_CAP - todayIncome;
+    // const maxPairsForDailyCap = Math.floor(remainingDailyCap / NET_INCOME_PER_PAIR);
 
-    // Final pairs to credit
-    const pairsThisSession = Math.min(
-      possiblePairsThisSession,
-      maxPairsForSessionCap,
-      maxPairsForDailyCap
-    );
+    // Using all possible pairs for testing (ignoring cap limits)
+    const pairsThisSession = possiblePairsThisSession;
 
     console.log("🎯 Pair calculation:", {
       possiblePairsThisSession,
-      maxPairsForSessionCap,
-      maxPairsForDailyCap,
+      // maxPairsForSessionCap,
+      // maxPairsForDailyCap,
       pairsThisSession,
     });
 
-    if (pairsThisSession <= 0) {
-      console.log(`❌ ${user.username}: Cannot credit pairs - caps exceeded`);
-      return { success: false, message: 'Caps exceeded' };
-    }
+    // if (pairsThisSession <= 0) {
+    //   console.log(`❌ ${user.username}: Cannot credit pairs - caps exceeded`);
+    //   return { success: false, message: 'Caps exceeded' };
+    // }
     
     console.log(`✅ Will credit ${pairsThisSession} pairs!`);
 
@@ -240,10 +236,11 @@ export async function autoCalculateBasicIncome(placementParentId: any) {
         netIncome,
         totalBasicIncome: updatedBasicIncome,
         cappingInfo: {
-          sessionRemaining: remainingSessionCap,
-          dailyRemaining: remainingDailyCap,
-          sessionCapped: maxPairsForSessionCap <= 0,
-          dailyCapped: maxPairsForDailyCap <= 0,
+          // sessionRemaining: remainingSessionCap,
+          // dailyRemaining: remainingDailyCap,
+          // sessionCapped: maxPairsForSessionCap <= 0,
+          // dailyCapped: maxPairsForDailyCap <= 0,
+          note: 'Capping disabled for testing'
         }
       }
     };

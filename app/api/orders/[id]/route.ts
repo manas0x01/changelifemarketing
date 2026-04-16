@@ -37,7 +37,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     return NextResponse.json({ success: true, order }, { status: 200 });
   } catch (error) {
-    console.error('[GET /api/orders/[id]]', error);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }
@@ -86,7 +85,6 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       { status: 200 }
     );
   } catch (error) {
-    console.error('[PATCH /api/orders/[id]]', error);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }

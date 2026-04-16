@@ -68,7 +68,6 @@ export async function GET(req: Request) {
       message: boosterCountingRecords.length === 0 ? "No booster counting records found" : "Records fetched successfully"
     });
   } catch (error) {
-    console.error('Error in booster-counting-records:', error);
     return Response.json(
       { 
         success: false, 

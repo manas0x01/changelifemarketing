@@ -96,8 +96,6 @@ export async function POST(req: NextRequest) {
       { status: 201 }
     );
   } catch (error: unknown) {
-    console.error('[POST /api/orders/create]', error);
-
     if (error instanceof Error && error.name === 'ValidationError') {
       return NextResponse.json({ error: 'Validation failed. Please check your input.' }, { status: 400 });
     }

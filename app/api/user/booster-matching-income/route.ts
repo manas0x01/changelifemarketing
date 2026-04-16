@@ -5,16 +5,7 @@ import User from '@/models/User';
 import { NextRequest, NextResponse } from 'next/server';
 import { calculateBoosterMatchingIncome, BOOSTER_MATCHING_CONFIG } from '@/lib/incomeCalculations';
 
-/**
- * ✅ POINT 8-9: Booster Matching Income with Carry-Forward & Fleshout
- * Rules:
- * - Daily cap: ₹20,000 (split into 2 sessions of ₹10,000 each)
- * - Session cap: ₹10,000 per 12-hour session
- * - Max pairs per session: 10 pairs (₹10,000 net)
- * - Beyond 10 pairs in session: Fleshout happens
- * - Up to 10 pairs carry forward to next session
- * - Beyond 10 carry-forward: Wasted (fleshout)
- */
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -25,7 +16,7 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     const body = await req.json();
-    const { sessionType = 'morning' } = body; // 'morning' or 'evening'
+    const { sessionType = 'morning' } = body; 
 
     const user = await User.findOne({ username: session.user.username })
       .select('boosterIncomeRecords boosterCarryForward boosterStatus directMembers');
@@ -122,7 +113,6 @@ export async function POST(req: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Booster matching income error:', error);
     return NextResponse.json(
       { error: 'Failed to calculate booster matching income' },
       { status: 500 }
@@ -130,9 +120,6 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/**
- * GET - Retrieve carry-forward status and remaining capacity
- */
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -185,7 +172,6 @@ export async function GET(req: NextRequest) {
       }
     });
   } catch (error) {
-    console.error('Get carry-forward status error:', error);
     return NextResponse.json(
       { error: 'Failed to get carry-forward status' },
       { status: 500 }

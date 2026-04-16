@@ -131,12 +131,17 @@ export async function POST(req: Request) {
         // ✅ STEP 2A: Get logged-in user from session
         console.log('🔍 Getting logged-in user from session...');
         const session = await getServerSession(authOptions);
-        if (!session?.user?.email) {
+        if (!session?.user?.userId) {
             console.log('❌ No active session found');
             return Response.json({ error: "Session expired. Please login again" }, { status: 401 });
         }
         
-        const registrationUser = await User.findOne({ email: session.user.email });
+        const registrationUser = await User.findOne({
+            $or: [
+                { userId: session.user.userId },
+                { username: session.user.userId },
+            ]
+        });
         if (!registrationUser) {
             console.log('❌ Logged-in user not found in database');
             return Response.json({ error: "User not found in database" }, { status: 404 });

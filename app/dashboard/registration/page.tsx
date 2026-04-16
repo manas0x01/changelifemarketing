@@ -1000,7 +1000,7 @@ export default function NewRegisterPage() {
                   </div>
                 </div>
 
-                {/* Show rest of fields only after sponsor validation */}
+                {/* Show Rest Of Fields Only After Sponsor Validation */}
                 {sponsorValidated && (
                   <>
                     <div className="form-row">
@@ -1050,7 +1050,7 @@ export default function NewRegisterPage() {
                               onChange={(e) => setSelectedEPin(e.target.value)}
                             >
                               <option key="default">-- Select PIN --</option>
-                              {availableEPins.map(pin => <option key={pin}>{pin}</option>)}
+                              {availableEPins.map((pin, i) => <option key={`pin-${i}`}>{pin}</option>)}
                             </select>
                           </div>
                           <div className="form-group" style={{ visibility: "hidden" }}>
@@ -1427,12 +1427,12 @@ export default function NewRegisterPage() {
 
                 <div className="detail-row">
                   <span className="detail-label">Password</span>
-                  <span className="detail-value password">••••••••</span>
+                  <span className="detail-value">{newUserData.password}</span>
                 </div>
 
                 <div className="detail-row">
                   <span className="detail-label">Transaction Password</span>
-                  <span className="detail-value password">••••</span>
+                  <span className="detail-value">{newUserData.transactionPassword}</span>
                 </div>
               </div>
             </div>

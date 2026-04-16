@@ -5,14 +5,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Key, Search, User, Package, Hash, Plus, Trash2,
   CheckCircle, AlertCircle, Loader2, Copy, Check,
-  Crown, UserCheck, ChevronDown, X, Sparkles,
-  ClipboardList, RefreshCw, Info, Shield, ArrowRight,
+  Crown, UserCheck, ChevronDown, X,
+  ClipboardList, RefreshCw, Shield, ArrowRight,
   Download,
 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface UserSuggestion {
   userId?: string;
@@ -33,11 +31,8 @@ interface CreatedPin {
 
 interface FormState {
   userId: string;
-  packageName: string;
   quantity: number;
   remark: string;
-  mode: 'auto' | 'custom';
-  customPins: string[];
 }
 
 const PACKAGES = [
@@ -82,16 +77,11 @@ const PinChip = ({ pin, onCopy }: { pin: string; onCopy: (p: string) => void }) 
   );
 };
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
-
 export default function AdminCreateEPinPage() {
   const [form, setForm] = useState<FormState>({
     userId:     '',
-    packageName: '',
     quantity:   1,
     remark:     '',
-    mode:       'auto',
-    customPins: [''],
   });
 
   const [suggestions,   setSuggestions]   = useState<UserSuggestion[]>([]);
@@ -103,15 +93,10 @@ export default function AdminCreateEPinPage() {
   const [error,         setError]         = useState('');
   const [toast,         setToast]         = useState<{ msg: string; type: 'success' | 'error' } | null>(null);
   const [allCopied,     setAllCopied]     = useState(false);
-
   const searchRef  = useRef<NodeJS.Timeout | undefined>(undefined);
   const inputRef   = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
-
-  // Step detection
-  const step = !selectedUser ? 1 : !form.packageName ? 2 : 3;
-
-  // ── Click outside close dropdown
+  const step = !selectedUser ? 1 : 2;
   useEffect(() => {
     const handler = (e: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -121,9 +106,6 @@ export default function AdminCreateEPinPage() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, []);
-
-  // ── User Search ───────────────────────────────────────────────────────────
-
   const searchUsers = useCallback(async (q: string) => {
     if (q.length < 2) { setSuggestions([]); setShowDropdown(false); return; }
     setSearchLoading(true);
@@ -152,71 +134,32 @@ export default function AdminCreateEPinPage() {
 
   const clearUser = () => {
     setSelectedUser(null);
-    setForm(f => ({ ...f, userId: '', packageName: '', quantity: 1, remark: '', mode: 'auto', customPins: [''] }));
+    setForm(f => ({ ...f, userId: '', quantity: 1, remark: '' }));
     setResult(null);
     setError('');
     setTimeout(() => inputRef.current?.focus(), 50);
   };
-
-  // ── Custom Pins ───────────────────────────────────────────────────────────
-
-  const updateCustomPin = (idx: number, val: string) => {
-    setForm(f => {
-      const cp = [...f.customPins];
-      cp[idx] = val.toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 16);
-      return { ...f, customPins: cp };
-    });
-  };
-
-  const syncCustomPins = (qty: number) => {
-    setForm(f => {
-      const cp = [...f.customPins];
-      while (cp.length < qty) cp.push('');
-      return { ...f, quantity: qty, customPins: cp.slice(0, qty) };
-    });
-  };
-
   const handleQuantityChange = (qty: number) => {
-    if (form.mode === 'custom') { syncCustomPins(qty); }
-    else { setForm(f => ({ ...f, quantity: qty })); }
+    setForm(f => ({ ...f, quantity: qty }));
   };
-
-  const handleModeChange = (mode: 'auto' | 'custom') => {
-    setForm(f => ({
-      ...f,
-      mode,
-      customPins: mode === 'custom'
-        ? Array(f.quantity).fill('')
-        : f.customPins,
-    }));
-  };
-
-  // ── Submit ────────────────────────────────────────────────────────────────
-
   const handleSubmit = async () => {
     setError('');
     setResult(null);
 
     if (!selectedUser) { setError('Please select a user.'); return; }
-    if (!form.packageName) { setError('Please select a package.'); return; }
     if (form.quantity < 1 || form.quantity > 100) { setError('Quantity must be 1–100.'); return; }
-
-    if (form.mode === 'custom') {
-      const empty = form.customPins.slice(0, form.quantity).filter(p => p.length < 6);
-      if (empty.length > 0) { setError('Each custom pin must be at least 6 characters.'); return; }
-    }
 
     setSubmitting(true);
     try {
+      // Generate pins: ["EPIN", "EPIN", ...] based on quantity
+      const pins = Array(form.quantity).fill('EPIN');
+
       const body: Record<string, any> = {
-        userId:      selectedUser.userId ?? selectedUser.username,
-        packageName: form.packageName,
-        quantity:    form.quantity,
-        remark:      form.remark,
+        userId:   selectedUser.userId ?? selectedUser.username,
+        quantity: form.quantity,
+        pins:     pins,
+        remark:   form.remark,
       };
-      if (form.mode === 'custom') {
-        body.customPins = form.customPins.slice(0, form.quantity);
-      }
 
       const res  = await fetch('/api/admin/createepin', {
         method:  'POST',
@@ -273,10 +216,6 @@ export default function AdminCreateEPinPage() {
     clearUser();
   };
 
-  const pkg = PACKAGES.find(p => p.name === form.packageName);
-
-  // ─── Render ───────────────────────────────────────────────────────────────
-
   return (
     <div className="min-h-screen bg-[#F8FAF9] selection:bg-[#C9A84C]/30 selection:text-[#0A6E5A]">
       <Header />
@@ -298,7 +237,6 @@ export default function AdminCreateEPinPage() {
               Generate new EPins and credit them directly to any member's account. Supports bulk creation up to 100 pins.
             </p>
           </motion.div>
-
           {/* Step Tracker */}
           <motion.div
             initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
@@ -306,17 +244,13 @@ export default function AdminCreateEPinPage() {
           >
             <StepBadge n={1} label="Select User"    active={step === 1} done={step > 1} />
             <div className="flex-1 h-px bg-[#FFFFFF]/15 max-w-12" />
-            <StepBadge n={2} label="Choose Package" active={step === 2} done={step > 2} />
-            <div className="flex-1 h-px bg-[#FFFFFF]/15 max-w-12" />
-            <StepBadge n={3} label="Configure"      active={step === 3} done={!!result} />
+            <StepBadge n={2} label="Configure"      active={step === 2} done={!!result} />
           </motion.div>
         </div>
       </section>
-
       <main className="max-w-5xl mx-auto px-4 sm:px-6 md:px-12 py-10">
         <div className="grid lg:grid-cols-5 gap-8 items-start">
-
-          {/* ══ LEFT FORM COLUMN ══════════════════════════════════════════════ */}
+          {/* LEFT FORM COLUMN */}
           <div className="lg:col-span-3 space-y-6">
 
             {/* ── STEP 1: User Search ── */}
@@ -431,7 +365,7 @@ export default function AdminCreateEPinPage() {
               </div>
             </motion.div>
 
-            {/* ── STEP 2: Package Selection ── */}
+            {/* ── STEP 2: Configuration ── */}
             <AnimatePresence>
               {selectedUser && (
                 <motion.div
@@ -439,53 +373,10 @@ export default function AdminCreateEPinPage() {
                   className="bg-[#FFFFFF] border border-[#0A6E5A]/10"
                 >
                   <div className="px-5 py-4 border-b border-[#0A6E5A]/8 flex items-center gap-3">
-                    <div className="w-7 h-7 rounded-full bg-[#C9A84C] flex items-center justify-center">
-                      <span className="font-['Roboto'] text-[0.7rem] font-bold text-[#FFFFFF]">2</span>
-                    </div>
-                    <h2 className="font-['Fraunces'] text-[1.1rem] text-[#0A6E5A]">Select Package</h2>
-                  </div>
-
-                  <div className="p-5 grid grid-cols-2 gap-3">
-                    {PACKAGES.map((p) => (
-                      <button
-                        key={p.name}
-                        onClick={() => setForm(f => ({ ...f, packageName: p.name }))}
-                        className={`relative p-4 text-left border-2 transition-all duration-200 ${
-                          form.packageName === p.name
-                            ? `${p.border} ${p.bg} shadow-sm`
-                            : 'border-[#0A6E5A]/10 hover:border-[#0A6E5A]/25 hover:bg-[#0A6E5A]/2'
-                        }`}
-                      >
-                        {form.packageName === p.name && (
-                          <motion.div
-                            layoutId="pkg-check"
-                            className="absolute top-2.5 right-2.5 w-5 h-5 rounded-full bg-[#0A6E5A] flex items-center justify-center"
-                          >
-                            <Check className="w-3 h-3 text-[#FFFFFF]" />
-                          </motion.div>
-                        )}
-                        <Package className={`w-5 h-5 mb-2 ${p.color}`} />
-                        <p className={`font-['Fraunces'] text-[1rem] ${p.color}`}>{p.name}</p>
-                        <p className="font-['Roboto'] text-[0.7rem] text-[#333333]/40 mt-0.5">{p.amount}</p>
-                      </button>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ── STEP 3: Configuration ── */}
-            <AnimatePresence>
-              {selectedUser && form.packageName && (
-                <motion.div
-                  initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                  className="bg-[#FFFFFF] border border-[#0A6E5A]/10"
-                >
-                  <div className="px-5 py-4 border-b border-[#0A6E5A]/8 flex items-center gap-3">
                     <div className="w-7 h-7 rounded-full bg-[#0A6E5A]/15 flex items-center justify-center">
-                      <span className="font-['Roboto'] text-[0.7rem] font-bold text-[#0A6E5A]">3</span>
+                      <span className="font-['Roboto'] text-[0.7rem] font-bold text-[#0A6E5A]">2</span>
                     </div>
-                    <h2 className="font-['Fraunces'] text-[1.1rem] text-[#0A6E5A]">Configure EPins</h2>
+                    <h2 className="font-['Fraunces'] text-[1.1rem] text-[#0A6E5A]">Create EPins</h2>
                   </div>
 
                   <div className="p-5 space-y-6">
@@ -527,58 +418,6 @@ export default function AdminCreateEPinPage() {
                       </div>
                     </div>
 
-                    {/* Pin Mode Toggle */}
-                    <div>
-                      <label className="block font-['Roboto'] text-[0.7rem] uppercase tracking-widest text-[#333333]/50 mb-2">Pin Generation</label>
-                      <div className="flex">
-                        <button
-                          onClick={() => handleModeChange('auto')}
-                          className={`flex-1 py-2.5 flex items-center justify-center gap-2 font-['Roboto'] text-[0.8rem] font-medium transition-all border ${form.mode === 'auto' ? 'bg-[#0A6E5A] text-[#FFFFFF] border-[#0A6E5A]' : 'border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}
-                        >
-                          <Sparkles className="w-3.5 h-3.5" />Auto Generate
-                        </button>
-                        <button
-                          onClick={() => handleModeChange('custom')}
-                          className={`flex-1 py-2.5 flex items-center justify-center gap-2 font-['Roboto'] text-[0.8rem] font-medium transition-all border-y border-r ${form.mode === 'custom' ? 'bg-[#C9A84C] text-[#FFFFFF] border-[#C9A84C]' : 'border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}
-                        >
-                          <Key className="w-3.5 h-3.5" />Custom Pins
-                        </button>
-                      </div>
-                      {form.mode === 'auto' && (
-                        <p className="font-['Roboto'] text-[0.7rem] text-[#333333]/40 mt-1.5 flex items-center gap-1">
-                          <Info className="w-3 h-3" /> Cryptographically unique 12-char alphanumeric pins will be generated.
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Custom Pins Input */}
-                    <AnimatePresence>
-                      {form.mode === 'custom' && (
-                        <motion.div
-                          initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
-                          className="overflow-hidden"
-                        >
-                          <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
-                            {Array(form.quantity).fill(null).map((_, i) => (
-                              <div key={i} className="flex items-center gap-2">
-                                <span className="font-['Roboto'] text-[0.65rem] text-[#333333]/30 w-6 text-right shrink-0">{i + 1}.</span>
-                                <input
-                                  value={form.customPins[i] ?? ''}
-                                  onChange={(e) => updateCustomPin(i, e.target.value)}
-                                  placeholder={`PIN-${String(i + 1).padStart(3, '0')}`}
-                                  maxLength={16}
-                                  className="flex-1 px-3 py-2 border border-[#0A6E5A]/15 focus:border-[#C9A84C] focus:outline-none font-['Roboto'] text-[0.8rem] text-[#333333] placeholder:text-[#333333]/20 bg-[#F8FAF9] tracking-widest transition-colors"
-                                />
-                                <span className="font-['Roboto'] text-[0.6rem] text-[#333333]/30 w-8 shrink-0">
-                                  {(form.customPins[i] ?? '').length}/16
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
                     {/* Remark */}
                     <div>
                       <label className="block font-['Roboto'] text-[0.7rem] uppercase tracking-widest text-[#333333]/50 mb-2">
@@ -615,7 +454,7 @@ export default function AdminCreateEPinPage() {
                       {submitting ? (
                         <><Loader2 className="w-5 h-5 animate-spin" />Creating EPins…</>
                       ) : (
-                        <><Key className="w-5 h-5" />Create {form.quantity} EPin{form.quantity > 1 ? 's' : ''} — {form.packageName}<ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
+                        <><Key className="w-5 h-5" />Create EPIN<ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" /></>
                       )}
                     </button>
                   </div>
@@ -642,9 +481,7 @@ export default function AdminCreateEPinPage() {
                 {[
                   { label: 'Member',  value: selectedUser ? (selectedUser.fullName ?? selectedUser.username) : '—', gold: false },
                   { label: 'User ID', value: selectedUser?.userId ?? selectedUser?.username ?? '—', gold: true },
-                  { label: 'Package', value: form.packageName || '—', gold: false },
                   { label: 'Qty',     value: form.quantity, gold: false },
-                  { label: 'Mode',    value: form.mode === 'auto' ? 'Auto Generate' : 'Custom Pins', gold: false },
                 ].map(({ label, value, gold }) => (
                   <div key={label} className="flex justify-between items-center py-2 border-b border-[#FFFFFF]/8 last:border-0">
                     <span className="font-['Roboto'] text-[0.72rem] text-[#FFFFFF]/50 uppercase tracking-wider">{label}</span>
@@ -653,7 +490,7 @@ export default function AdminCreateEPinPage() {
                 ))}
               </div>
 
-              {selectedUser && form.packageName && (
+              {selectedUser && (
                 <div className="mt-5 pt-5 border-t border-[#FFFFFF]/10">
                   <div className="flex justify-between items-center">
                     <span className="font-['Roboto'] text-[0.7rem] text-[#FFFFFF]/40 uppercase tracking-wider">Current Active Pins</span>
@@ -734,7 +571,7 @@ export default function AdminCreateEPinPage() {
               <div className="bg-[#FFFFFF] border border-[#0A6E5A]/10 border-t-0 p-5">
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2">
                   {result.pins.map((p, i) => (
-                    <PinChip key={i} pin={p.pin} onCopy={(pin) => navigator.clipboard.writeText(pin)} />
+                    <PinChip key={`${result.user.userId}-pin-${i}`} pin={p.pin} onCopy={(pin) => navigator.clipboard.writeText(pin)} />
                   ))}
                 </div>
               </div>

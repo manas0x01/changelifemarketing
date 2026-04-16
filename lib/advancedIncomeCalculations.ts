@@ -18,24 +18,31 @@ export interface BoosterQualificationCheck {
 export function checkBoosterQualification(
   totalPairsCompleted: number
 ): BoosterQualificationCheck {
+  console.log('🔍 [checkBoosterQualification] Starting - Total Pairs:', totalPairsCompleted);
   const cutsApplied: number[] = [];
   let pairsWithCuts = 0;
   for (let i = 1; i <= totalPairsCompleted; i++) {
+    console.log(`  ➜ Processing pair ${i}`);
     if (i === 3 || i === 6 || i === 9 || i === 12) {
+      console.log(`    ✂️  Pair ${i} - CUT APPLIED`);
       cutsApplied.push(i);
     } else {
+      console.log(`    ✓ Pair ${i} - COUNTED`);
       pairsWithCuts++;
     }
   }
   const isQualified = totalPairsCompleted >= 12;
+  console.log('📊 [checkBoosterQualification] Pairs with cuts:', pairsWithCuts, '| Cuts applied on:', cutsApplied, '| Qualified:', isQualified);
 
-  return {
+  const result = {
     totalPairsCompleted,
     pairsWithCuts,
     isQualified,
     cutsApplied,
     remainingPairsNeeded: Math.max(0, 12 - totalPairsCompleted),
   };
+  console.log('✅ [checkBoosterQualification] Result:', result);
+  return result;
 }
 
 export interface BoosterIncomeCalculation {
@@ -53,33 +60,46 @@ export function calculateBoosterIncomeForSession(
   previousCarryForward: number = 0,
   sessionType: 'morning' | 'evening' = 'morning'
 ): BoosterIncomeCalculation {
+  console.log('💰 [calculateBoosterIncomeForSession] Starting - Session:', sessionType, '| Pairs:', pairsCompleted, '| Carry Forward:', previousCarryForward);
   // Total available pairs = current session + carry forward
   const availablePairs = pairsCompleted + previousCarryForward;
+  console.log('  📈 Total Available Pairs:', availablePairs);
 
   // Cap at 10 pairs per session
   const pairsMatchedThisSession = Math.min(
     availablePairs,
     CAPS.BOOSTER_PAIRS_SESSION
   );
+  console.log('  🎯 Pairs Matched This Session:', pairsMatchedThisSession, '(Cap: ' + CAPS.BOOSTER_PAIRS_SESSION + ')');
 
   // Income calculation
   const grossIncome = pairsMatchedThisSession * BINARY_PAIR_GV;
+  console.log('  💵 Gross Income Calculation:', pairsMatchedThisSession, '×', BINARY_PAIR_GV, '=', grossIncome);
+  
   const cappedGrossIncome = Math.min(
     grossIncome,
     CAPS.BOOSTER_SESSION
   );
+  console.log('  🔒 Capping Applied (if needed) - Cap Limit:', CAPS.BOOSTER_SESSION, '| Final Income:', cappedGrossIncome);
+  
   const netIncome = cappedGrossIncome; // Already deducted in matching
+  console.log('  ✓ Net Income (after deductions):', netIncome);
 
   // Calculate carry forward and flesh out
   const totalFleshOut =
     availablePairs - pairsMatchedThisSession;
+  console.log('  📤 Total Flesh Out:', availablePairs, '-', pairsMatchedThisSession, '=', totalFleshOut);
+  
   const carryForwardPairs = Math.min(
     totalFleshOut,
     CAPS.BOOSTER_CARRY_FORWARD_MAX
   );
+  console.log('  🔄 Carry Forward Pairs:', carryForwardPairs, '(Max allowed:', CAPS.BOOSTER_CARRY_FORWARD_MAX + ')');
+  
   const fleshedOutPairs = totalFleshOut - carryForwardPairs;
+  console.log('  ❌ Fleshed Out (Lost) Pairs:', fleshedOutPairs);
 
-  return {
+  const result = {
     sessionType,
     pairsMatched: pairsMatchedThisSession,
     grossIncome: cappedGrossIncome,
@@ -88,6 +108,8 @@ export function calculateBoosterIncomeForSession(
     fleshedOutPairs,
     cappingApplied: grossIncome > CAPS.BOOSTER_SESSION,
   };
+  console.log('✅ [calculateBoosterIncomeForSession] Result:', result);
+  return result;
 }
 
 /**
@@ -120,23 +142,30 @@ export function calculateRankProgression(
   rightBoostersCount: number,
   currentRankLevel: number = 1
 ): RankProgressionData {
+  console.log('🏆 [calculateRankProgression] Starting - Rank Level:', currentRankLevel, '| Left:', leftBoostersCount, '| Right:', rightBoostersCount);
+  
   const rankConfig = RANK_CONFIG[Math.min(currentRankLevel - 1, 12)];
   const nextRankConfig = RANK_CONFIG[Math.min(currentRankLevel, 12)];
+  console.log('  📋 Current Rank Config:', rankConfig.name, '- Left Required:', rankConfig.leftBooters, '| Right Required:', rankConfig.rightBoosters);
 
   const isQualified =
     leftBoostersCount >= rankConfig.leftBooters &&
     rightBoostersCount >= rankConfig.rightBoosters;
+  console.log('  ✓ Qualified for Current Rank:', isQualified);
 
   const progressPercentageLeft = Math.min(
     100,
     (leftBoostersCount / rankConfig.leftBooters) * 100
   );
+  console.log('  📊 Left Progress:', progressPercentageLeft + '%');
+  
   const progressPercentageRight = Math.min(
     100,
     (rightBoostersCount / rankConfig.rightBoosters) * 100
   );
+  console.log('  📊 Right Progress:', progressPercentageRight + '%');
 
-  return {
+  const result = {
     currentRank: currentRankLevel,
     rankName: rankConfig.name,
     leftBoostersUsed: Math.min(leftBoostersCount, rankConfig.leftBooters),
@@ -159,6 +188,8 @@ export function calculateRankProgression(
         : undefined,
     award: rankConfig.award,
   };
+  console.log('✅ [calculateRankProgression] Result:', result);
+  return result;
 }
 
 /**
@@ -255,7 +286,8 @@ NEXT RANK: ${rankData.nextRankRequirements.rankName} (Rank ${rankData.nextRankRe
  * TDS = 0, Service Charge = 0, Net = Gross
  */
 export function calculateDeductions(grossAmount: number) {
-  return {
+  console.log('💳 [calculateDeductions] Starting - Gross Amount:', grossAmount);
+  const result = {
     grossAmount,
     tds: 0,
     serviceCharge: 0,
@@ -263,6 +295,8 @@ export function calculateDeductions(grossAmount: number) {
     netAmount: grossAmount, // No deductions - net equals gross
     deductionPercentage: 0,
   };
+  console.log('✅ [calculateDeductions] Result:', result);
+  return result;
 }
 
 /**
@@ -283,24 +317,31 @@ export function validateIncomeTransaction(
   pairsInSession: number,
   maxPairsPerSession: number
 ): IncomeValidationResult {
+  console.log('🔐 [validateIncomeTransaction] Starting - Type:', incomeType, '| Amount:', amount);
+  console.log('  📊 Daily Used:', dailyUsed, '| Daily Cap:', dailyCap, '| Total if added:', dailyUsed + amount);
+  console.log('  🎯 Pairs in Session:', pairsInSession, '| Max allowed:', maxPairsPerSession);
+  
   const warnings: string[] = [];
   const errors: string[] = [];
 
   // Check caps
   if (dailyUsed + amount > dailyCap) {
+    console.log('  ❌ ERROR: Daily cap exceeded!');
     errors.push(`Daily cap of ₹${dailyCap} exceeded`);
   }
 
   if (pairsInSession > maxPairsPerSession) {
+    console.log('  ❌ ERROR: Session pair limit exceeded!');
     errors.push(`Session pair limit of ${maxPairsPerSession} exceeded`);
   }
 
   // Warnings
   if (dailyUsed + amount > dailyCap * 0.8) {
+    console.log('  ⚠️ WARNING: Approaching daily limit!');
     warnings.push('Approaching daily limit');
   }
 
-  return {
+  const result = {
     isValid: errors.length === 0,
     warnings,
     errors,
@@ -309,4 +350,6 @@ export function validateIncomeTransaction(
         ? 'Transaction valid - proceed'
         : `Transaction invalid: ${errors.join(', ')}`,
   };
+  console.log('✅ [validateIncomeTransaction] Result - Valid:', result.isValid, '| Errors:', errors.length, '| Warnings:', warnings.length);
+  return result;
 }

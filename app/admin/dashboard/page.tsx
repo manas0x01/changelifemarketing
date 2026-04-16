@@ -21,11 +21,7 @@ import {
   IndianRupee,
   ChevronUp,
 } from "lucide-react";
-import AdminSidebar from "@/components/AdminSidebar";
 
-/* ─────────────────────────────────────────────
-   MOCK DATA
-───────────────────────────────────────────── */
 const kpiCards = [
   {
     label: "Total Users",

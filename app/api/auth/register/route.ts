@@ -273,45 +273,23 @@ export async function POST(req: Request) {
         // ✅ STEP 2: Pop E-PIN from LOGGED-IN USER's ePins array
         const userPinIndex = registrationUser.ePins!.findIndex((pin: any) => pin.pin === epin);
         if (userPinIndex !== -1) {
-            const poppedPin = registrationUser.ePins![userPinIndex];
             registrationUser.ePins!.splice(userPinIndex, 1);
-            
-            // Save the logged-in user with updated ePins
-            try {
-                await registrationUser.save();
-            } catch (userPinError) {
-            }
         }
-
-        // ✅ STEP 2B: Update logged-in user's TOTAL TEAM count (Left/Right)
-        const positionField = position.toLowerCase() === 'left' ? 'left' : 'right';
         
-        // Initialize totalTeam if not exists
+        const positionField = position.toLowerCase() === 'left' ? 'left' : 'right';
+
         if (!registrationUser.totalTeam) {
             registrationUser.totalTeam = { left: 0, right: 0 };
         }
         
         const currentTeamCount = registrationUser.totalTeam[positionField] || 0;
         registrationUser.totalTeam[positionField] = currentTeamCount + 1;
-        
-        // Save updated counts
+
         try {
             await registrationUser.save();
         } catch (countError) {
         }
 
-        // ✅ STEP 2.5: Update SPONSOR's TOTAL TEAM count
-        const sponsorPositionField = position.toLowerCase() === 'left' ? 'left' : 'right';
-        
-        // Initialize totalTeam if not exists
-        if (!sponsor.totalTeam) {
-            sponsor.totalTeam = { left: 0, right: 0 };
-        }
-        
-        const sponsorCurrentCount = sponsor.totalTeam[sponsorPositionField] || 0;
-        sponsor.totalTeam[sponsorPositionField] = sponsorCurrentCount + 1;
-
-        // ✅ STEP 3: Mark E-PIN as Used in SPONSOR's record (for reference)
         const sponsorPinIndex = sponsor.ePins!.findIndex((pin: any) => pin.pin === epin);
         if (sponsorPinIndex !== -1) {
             sponsor.ePins![sponsorPinIndex].remark = `PIN from ${registrationUser.username} used for registering ${fullName}`;
@@ -325,11 +303,8 @@ export async function POST(req: Request) {
             });
         }
         try {
-            await sponsor.save();
         } catch (sponsorError: any) {
-            // If still has validation errors, log but don't fail (data already partially committed)
             if (sponsorError.name === 'ValidationError') {
-                // Force save without validation
                 try {
                     await sponsor.save({ validateBeforeSave: false });
                 } catch (forceSaveError) {
@@ -373,18 +348,8 @@ export async function POST(req: Request) {
             }
         }
         try {
-            if (finalPlacementId && placementUser) {
-                const autoCalcResult = await autoCalculateBasicIncome(placementUser._id);
-            }
-            // ✅ Calculate income for LOGGED-IN USER (not new user)
             await autoCalculateBasicIncome(registrationUser._id);
-
-            await calculateAndUpdateUserMetrics(newUser._id);
-            if (finalPlacementId && placementUser) {
-                await calculateAndUpdateUserMetrics(placementUser._id);
-            }
             await calculateAndUpdateUserMetrics(registrationUser._id);
-            await calculateAndUpdateUserMetrics(sponsor._id);
         } catch (calcError) {
         }
         return Response.json({

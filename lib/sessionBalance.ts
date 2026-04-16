@@ -1,10 +1,3 @@
-/**
- * Session Balance Management Utility
- * Tracks income across 2 daily sessions (Morning & Evening)
- * Session 1: 12:00 AM - 11:59 AM (morning)
- * Session 2: 12:00 PM - 11:59 PM (evening)
- */
-
 export type SessionType = 'morning' | 'evening';
 
 export const SESSION_TYPES = {
@@ -31,50 +24,42 @@ export const CAPS = {
 export const BINARY_PAIR_GV = 1000;  // ₹1,000 per pair
 export const BINARY_PAIR_NET = BINARY_PAIR_GV; // ₹1,000 (No deductions)
 
-/**
- * Get current session type based on hour
- * @param date - Date to check (uses hours)
- * @returns 'morning' (0-11 hours) or 'evening' (12-23 hours)
- */
 export function getSessionType(date: Date = new Date()): SessionType {
   const hours = date.getHours();
-  return hours < 12 ? SESSION_TYPES.MORNING : SESSION_TYPES.EVENING;
+  const session = hours < 12 ? SESSION_TYPES.MORNING : SESSION_TYPES.EVENING;
+  return session;
 }
 
-/**
- * Get session start and end times for a given date
- */
+
 export function getSessionTimeRange(session: SessionType, date: Date = new Date()) {
   const dateStr = date.toISOString().split('T')[0];
-  
   if (session === SESSION_TYPES.MORNING) {
-    return {
-      start: new Date(`${dateStr}T00:00:00Z`),
-      end: new Date(`${dateStr}T11:59:59Z`),
-    };
+    const start = new Date(`${dateStr}T00:00:00Z`);
+    const end = new Date(`${dateStr}T11:59:59Z`);
+    return { start, end };
   } else {
-    return {
-      start: new Date(`${dateStr}T12:00:00Z`),
-      end: new Date(`${dateStr}T23:59:59Z`),
-    };
+    const start = new Date(`${dateStr}T12:00:00Z`);
+    const end = new Date(`${dateStr}T23:59:59Z`);
+    return { start, end };
   }
 }
 
-/**
- * Check if two dates are in the same session
- * @returns true if both dates are in same 12-hour session
- */
+
 export function isSameSession(date1: Date, date2: Date): boolean {
-  return getSessionType(date1) === getSessionType(date2);
+  const session1 = getSessionType(date1);
+  const session2 = getSessionType(date2);
+  const isSame = session1 === session2;
+  return isSame;
 }
 
 /**
  * Calculate net income (no deductions applied)
  */
 export function calculateNetIncome(grossAmount: number) {
+  const netIncome = grossAmount;
   return {
     grossIncome: grossAmount,
-    netIncome: grossAmount,
+    netIncome: netIncome,
   };
 }
 
@@ -115,7 +100,6 @@ export function validateTimeMatching(
 ): { isValid: boolean; reason: string } {
   const leftSession = getSessionType(leftMemberJoinDate);
   const rightSession = getSessionType(rightMemberJoinDate);
-  
   if (leftSession !== rightSession) {
     return {
       isValid: false,
@@ -123,6 +107,7 @@ export function validateTimeMatching(
     };
   }
   
+  console.log(`  ✅ PASSED - Both members joined in same 12-hour session`);
   return {
     isValid: true,
     reason: 'Both members in same session',
@@ -149,9 +134,6 @@ export const RANK_CONFIG = [
   { rank: 13, name: 'Crown Diamond', leftBooters: 32000, rightBoosters: 32000, award: '₹10 Lakh' },
 ];
 
-/**
- * Check if user qualifies for rank
- */
 export function checkRankQualification(
   leftBoosters: number,
   rightBoosters: number,
@@ -162,7 +144,7 @@ export function checkRankQualification(
   if (!rankConfig) {
     return { qualified: false, nextRank: null, message: 'Invalid rank' };
   }
-  
+
   if (leftBoosters >= rankConfig.leftBooters && rightBoosters >= rankConfig.rightBoosters) {
     const nextRank = targetRank < 13 ? targetRank + 1 : null;
     return {
@@ -174,7 +156,7 @@ export function checkRankQualification(
   
   const leftNeeded = Math.max(0, rankConfig.leftBooters - leftBoosters);
   const rightNeeded = Math.max(0, rankConfig.rightBoosters - rightBoosters);
-  
+
   return {
     qualified: false,
     nextRank: null,

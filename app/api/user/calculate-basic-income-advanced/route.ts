@@ -41,18 +41,25 @@ function getTodayBoundaries(): { start: Date; end: Date } {
 
 export async function POST(req: Request) {
   try {
+    console.log('🟢 [POST] /api/user/calculate-basic-income-advanced - Entry');
     const session = await getServerSession(authOptions);
+    console.log('👤 Session:', session);
     if (!session?.user?.username) {
+      console.log('🔴 Unauthorized access attempt');
       return Response.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
+    console.log('✅ Database connected');
     const user = await User.findOne({ username: session.user.username });
+    console.log('👤 User fetched:', user ? user.username : null);
 
     if (!user) {
+      console.log('🔴 User not found');
       return Response.json({ success: false, message: "User not found" }, { status: 404 });
     }
     if (user.basicRank === 'unranked' || !user.basicRank) {
+      console.log('⚠️ User has no rank:', user.basicRank);
       return Response.json({
         success: false,
         message: "User must have a rank to earn basic income (Default: 'basic')",
@@ -61,9 +68,11 @@ export async function POST(req: Request) {
     }
     const now = new Date();
     const currentSession = getSessionType(now);
+    console.log('🕒 Current session type:', currentSession);
     const { start: sessionStart, end: sessionEnd } = getSessionBoundaries(now);
     const { start: dayStart, end: dayEnd } = getTodayBoundaries();
     const directMembers = user.directMembers || [];
+    console.log('👥 Direct members count:', directMembers.length);
     
     const leftMembersThisSession = directMembers.filter(m =>
       m.position === 'left' &&
@@ -76,14 +85,16 @@ export async function POST(req: Request) {
       m.joinDate >= sessionStart &&
       m.joinDate < sessionEnd
     );
+    console.log('⬅️ Left in session:', leftMembersThisSession.length, '➡️ Right in session:', rightMembersThisSession.length);
 
     const possiblePairsThisSession = Math.min(
       leftMembersThisSession.length,
       rightMembersThisSession.length
     );
+    console.log('🔗 Possible pairs this session:', possiblePairsThisSession);
 
     if (possiblePairsThisSession <= 0) {
-      return Response.json({
+      const payload = {
         success: true,
         message: "No new pairs in this session",
         data: {
@@ -96,11 +107,14 @@ export async function POST(req: Request) {
           incomeGenerated: 0,
           canRetryIn: "Check back after adding members in same session"
         }
-      });
+      };
+      console.log('📤 Response payload:', payload);
+      return Response.json(payload);
     }
     const todayIncome = (user.sessionBasedIncome || [])
       .filter(s => s.sessionDate >= dayStart && s.sessionDate <= dayEnd)
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
+    console.log('📅 Today income:', todayIncome);
 
     const sessionIncomeToday = (user.sessionBasedIncome || [])
       .filter(s => 
@@ -109,40 +123,17 @@ export async function POST(req: Request) {
         s.sessionType === currentSession
       )
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
+    console.log('🔁 Session income today:', sessionIncomeToday);
     const NET_INCOME_PER_PAIR = GROSS_PAIR_INCOME;
     // CAPPING LOGIC COMMENTED OUT FOR TESTING - Multiple IDs & Income Generation
     const remainingSessionCap = SESSION_CAP - sessionIncomeToday;
     const maxPairsForSessionCap = Math.floor(remainingSessionCap / NET_INCOME_PER_PAIR);
     const remainingDailyCap = DAILY_CAP - todayIncome;
     const maxPairsForDailyCap = Math.floor(remainingDailyCap / NET_INCOME_PER_PAIR);
+    console.log('⚖️ Caps - remainingSessionCap:', remainingSessionCap, 'remainingDailyCap:', remainingDailyCap);
     // Using all possible pairs for testing (ignoring cap limits)
     const pairsThisSession = possiblePairsThisSession;
-    // if (pairsThisSession <= 0) {
-    //   const sessionLimitReached = maxPairsForSessionCap <= 0;
-    //   const dailyLimitReached = maxPairsForDailyCap <= 0;
-
-    //   return Response.json({
-    //     success: false,
-    //     message: sessionLimitReached 
-    //       ? `Session cap reached. Maximum ₹${SESSION_CAP} per session`
-    //       : `Daily cap reached. Maximum ₹${DAILY_CAP} per day`,
-    //     data: {
-    //       possiblePairs: possiblePairsThisSession,
-    //       sessionStatus: {
-    //         currentIncome: sessionIncomeToday,
-    //         remainingCapacity: remainingSessionCap,
-    //         maxPairsFit: maxPairsForSessionCap,
-    //       },
-    //       dailyStatus: {
-    //         currentIncome: todayIncome,
-    //         remainingCapacity: remainingDailyCap,
-    //         maxPairsFit: maxPairsForDailyCap,
-    //       },
-    //       creditablePairs: 0,
-    //       reason: sessionLimitReached ? 'session_cap_exceeded' : 'daily_cap_exceeded'
-    //     }
-    //   }, { status: 400 });
-    // }
+    console.log('✅ Pairs to process this session:', pairsThisSession);
     const grossIncome = pairsThisSession * GROSS_PAIR_INCOME;
     const tdsAmount = 0;
     const serviceChargeAmount = 0;
@@ -159,6 +150,7 @@ export async function POST(req: Request) {
       serviceChargeDeducted: serviceChargeAmount,
       status: 'Completed' as const,
     };
+    console.log('📝 Session record prepared:', sessionRecord);
     const updatedBasicIncome = (user.basicIncome || 0) + netIncome;
     const updatedSessionBasedIncome = [...(user.sessionBasedIncome || []), sessionRecord];
     const incomeRecord = {
@@ -169,13 +161,15 @@ export async function POST(req: Request) {
       description: `Basic Income from ${pairsThisSession} pair(s) - ${currentSession} session (${leftMembersThisSession.length}L + ${rightMembersThisSession.length}R)`,
       status: 'Paid',
     };
+    console.log('🧾 Income record:', incomeRecord);
 
     user.basicIncome = updatedBasicIncome;
     user.sessionBasedIncome = updatedSessionBasedIncome;
     user.basicIncomeRecords = [...(user.basicIncomeRecords || []), incomeRecord];
     await user.save();
+    console.log('💾 User saved with updated incomes');
 
-    return Response.json({
+    const payload = {
       success: true,
       message: `${pairsThisSession} pair(s) processed successfully in ${currentSession} session`,
       data: {
@@ -229,9 +223,12 @@ export async function POST(req: Request) {
           ? `⚠️ Only ${pairsThisSession} pair(s) credited due to session/daily caps. ${possiblePairsThisSession - pairsThisSession} pair(s) cannot earn in this session.`
           : '✅ All available pairs credited'
       }
-    }, { status: 200 });
+    };
+    console.log('📤 Response payload:', payload);
+    return Response.json(payload, { status: 200 });
 
   } catch (error) {
+    console.log('❌ Error in [POST] /api/user/calculate-basic-income-advanced:', error);
     return Response.json(
       { success: false, message: "Internal server error", error: String(error) },
       { status: 500 }
@@ -241,20 +238,27 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
+    console.log('🟢 [GET] /api/user/calculate-basic-income-advanced - Entry');
     const session = await getServerSession(authOptions);
+    console.log('👤 Session:', session);
     if (!session?.user?.username) {
+      console.log('🔴 Unauthorized access attempt');
       return Response.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
+    console.log('✅ Database connected');
     const user = await User.findOne({ username: session.user.username });
+    console.log('👤 User fetched:', user ? user.username : null);
 
     if (!user) {
+      console.log('🔴 User not found');
       return Response.json({ success: false, message: "User not found" }, { status: 404 });
     }
 
     const now = new Date();
     const currentSession = getSessionType(now);
+    console.log('🕒 Current session type:', currentSession);
     const { start: sessionStart, end: sessionEnd } = getSessionBoundaries(now);
     const { start: dayStart, end: dayEnd } = getTodayBoundaries();
 
@@ -269,10 +273,12 @@ export async function GET(req: Request) {
       m.joinDate >= sessionStart &&
       m.joinDate < sessionEnd
     );
+    console.log('⬅️ Left in session:', leftMembersThisSession.length, '➡️ Right in session:', rightMembersThisSession.length);
 
     const todayIncome = (user.sessionBasedIncome || [])
       .filter(s => s.sessionDate >= dayStart && s.sessionDate <= dayEnd)
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
+    console.log('📅 Today income:', todayIncome);
 
     const sessionIncomeToday = (user.sessionBasedIncome || [])
       .filter(s =>
@@ -281,8 +287,9 @@ export async function GET(req: Request) {
         s.sessionType === currentSession
       )
       .reduce((sum, s) => sum + (s.netIncome || 0), 0);
+    console.log('🔁 Session income today:', sessionIncomeToday);
 
-    return Response.json({
+    const payload = {
       success: true,
       data: {
         userInfo: {
@@ -310,9 +317,12 @@ export async function GET(req: Request) {
         recordCount: (user.basicIncomeRecords || []).length,
         recentRecords: (user.basicIncomeRecords || []).slice(-5).reverse(),
       }
-    });
+    };
+    console.log('📤 Response payload:', payload);
+    return Response.json(payload);
 
   } catch (error) {
+    console.log('❌ Error in [GET] /api/user/calculate-basic-income-advanced:', error);
     return Response.json(
       { success: false, message: "Internal server error" },
       { status: 500 }

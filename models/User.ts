@@ -81,6 +81,7 @@ export interface IUser extends Document {
     status: 'Completed' | 'Pending';
   }[];
   totalTeam?: { left: number; right: number };
+  matchedPairs?: number;
   basicIncome?: number;
   boosterIncomeAmount?: number;
   boosterIncome?: { LG: number; RG: number; totalBoosterMatching: number };
@@ -245,6 +246,7 @@ const userSchema = new Schema<IUser>(
     directMembers: { type: [{ memberId: String, name: String, joinDate: Date, position: String }], default: [] },
     sessionBasedIncome: { type: [{ sessionDate: Date, sessionType: String, leftMembersInSession: Number, rightMembersInSession: Number, pairsInSession: Number, grossIncome: Number, netIncome: Number, tdsDeducted: Number, serviceChargeDeducted: Number, status: String }], default: [] },
     totalTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
+    matchedPairs: { type: Number, default: 0 },
     basicIncome: { type: Number, default: 0 },
     boosterIncomeAmount: { type: Number, default: 0 },
     boosterIncome: { type: { LG: { type: Number, default: 0 }, RG: { type: Number, default: 0 }, totalBoosterMatching: { type: Number, default: 0 } }, default: { LG: 0, RG: 0, totalBoosterMatching: 0 } },
@@ -335,7 +337,7 @@ const userSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
-userSchema.pre('save', async function () {
+userSchema.pre('save', async function (this: IUser) {
   console.log('💾 [PRE-SAVE] Starting save hook for user:', this.username || this.userId);
   console.log('💾 [PRE-SAVE] Is new document:', this.isNew);
   console.log('💾 [PRE-SAVE] Modified fields:', this.modifiedPaths());

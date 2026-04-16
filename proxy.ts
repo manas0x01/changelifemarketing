@@ -33,28 +33,40 @@ export async function proxy(request: NextRequest) {
       loginUrl.pathname = '/auth/login';
       return NextResponse.redirect(loginUrl);
     }
-
-    // Verify JWT and check admin role
+    
     const payload = await verifyAuth(token);
     if (!payload) {
       const loginUrl = request.nextUrl.clone();
       loginUrl.pathname = '/auth/login';
       return NextResponse.redirect(loginUrl);
     }
+    // Try to read role from the token payload first.
+    let userRole = payload.role || payload.user?.role;
+    if (!userRole) {
+      try {
+        const sessionRes = await fetch(`${request.nextUrl.origin}/api/auth/session`, {
+          method: 'GET',
+          headers: { cookie: request.headers.get('cookie') || '' },
+          // ensure we don't follow redirects accidentally
+          redirect: 'manual',
+        });
 
-    // Check if user has admin role
-    const userRole = payload.role || payload.user?.role;
+        if (sessionRes.ok) {
+          const sessionJson = await sessionRes.json();
+          userRole = sessionJson?.user?.role || sessionJson?.role || userRole;
+        }
+      } catch (err) {
+        // ignore - we'll treat missing role as unauthorized below
+      }
+    }
     if (userRole !== 'admin') {
       const homeUrl = request.nextUrl.clone();
       homeUrl.pathname = '/';
       return NextResponse.redirect(homeUrl);
     }
-
-    // Admin verified, allow access to /admin/dashboard
     return NextResponse.next();
   }
 
-  // ── User Dashboard Protection ──
   if (pathname.startsWith('/dashboard')) {
     if (!hasSessionCookie) {
       const loginUrl = request.nextUrl.clone();
@@ -63,7 +75,6 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // ── Auth Pages Redirect ──
   if (pathname.startsWith('/auth/login') || pathname.startsWith('/auth/forgotpassword')) {
     if (hasSessionCookie) {
       const dashboardUrl = request.nextUrl.clone();

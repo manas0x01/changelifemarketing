@@ -11,13 +11,18 @@ export const SESSION_TYPES = {
 
 export function getSessionFromTime(date: Date): 'morning' | 'evening' {
   const hours = date.getHours();
-  return hours < 12 ? SESSION_TYPES.MORNING : SESSION_TYPES.EVENING;
+  const session = hours < 12 ? SESSION_TYPES.MORNING : SESSION_TYPES.EVENING;
+  console.log(`🕐 [getSessionFromTime] Hour: ${hours} → Session: ${session}`);
+  return session;
 }
 
 export function getSessionDate(date: Date): { date: string; session: 'morning' | 'evening' } {
+  const dateStr = date.toISOString().split('T')[0];
+  const session = getSessionFromTime(date);
+  console.log(`📅 [getSessionDate] Date: ${dateStr}, Session: ${session}`);
   return {
-    date: date.toISOString().split('T')[0],
-    session: getSessionFromTime(date)
+    date: dateStr,
+    session: session
   };
 }
 
@@ -33,10 +38,19 @@ export function calculateBinaryPairIncome(pairCount: number = 1): {
   serviceCharge: number;
   netIncome: number;
 } {
+  console.log(`💰 [calculateBinaryPairIncome] Starting - Pair Count: ${pairCount}`);
+  
   const grossIncome = BINARY_PAIR_CONFIG.GROSS_INCOME * pairCount;
+  console.log(`  💹 Gross Income: ${pairCount} × ₹${BINARY_PAIR_CONFIG.GROSS_INCOME} = ₹${grossIncome}`);
+  
   const tds = Math.ceil((grossIncome * BINARY_PAIR_CONFIG.TDS_PERCENTAGE) / 100);
+  console.log(`  📊 TDS: ₹${grossIncome} × ${BINARY_PAIR_CONFIG.TDS_PERCENTAGE}% = ₹${tds}`);
+  
   const serviceCharge = Math.ceil((grossIncome * BINARY_PAIR_CONFIG.SERVICE_CHARGE_PERCENTAGE) / 100);
+  console.log(`  📊 Service Charge: ₹${grossIncome} × ${BINARY_PAIR_CONFIG.SERVICE_CHARGE_PERCENTAGE}% = ₹${serviceCharge}`);
+  
   const netIncome = grossIncome - tds - serviceCharge;
+  console.log(`  ✅ Net Income: ₹${grossIncome} - ₹${tds} - ₹${serviceCharge} = ₹${netIncome}`);
 
   return { grossIncome, tds, serviceCharge, netIncome };
 }
@@ -61,11 +75,20 @@ export function validateBasicIncomePairMatching(
   leftSession?: string;
   rightSession?: string;
 } {
+  console.log(`✅ [validateBasicIncomePairMatching] Validating pair matching...`);
+  
   const leftSession = getSessionDate(leftMemberDate);
+  console.log(`  👈 Left member: ${leftSession.date} (${leftSession.session})`);
+  
   const rightSession = getSessionDate(rightMemberDate);
+  console.log(`  👉 Right member: ${rightSession.date} (${rightSession.session})`);
 
   // Check if same date AND same session
-  if (leftSession.date !== rightSession.date || leftSession.session !== rightSession.session) {
+  const sameDateAndSession = leftSession.date === rightSession.date && leftSession.session === rightSession.session;
+  console.log(`  🔍 Same date & session: ${sameDateAndSession}`);
+  
+  if (!sameDateAndSession) {
+    console.log(`  ❌ Validation FAILED - Members must be in same 12-hour session`);
     return {
       isValid: false,
       reason: 'Members must be added in same 12-hour session (12 AM-PM or 12 PM-AM)',
@@ -74,6 +97,7 @@ export function validateBasicIncomePairMatching(
     };
   }
 
+  console.log(`  ✅ Validation PASSED - Pair matching valid`);
   return {
     isValid: true,
     leftSession: `${leftSession.date} ${leftSession.session}`,
@@ -89,10 +113,20 @@ export function calculateBasicIncome(
   pairsInSession: number,
   sessionType: 'morning' | 'evening'
 ): number {
+  console.log(`💵 [calculateBasicIncome] Starting - Pairs: ${pairsInSession}, Session: ${sessionType}`);
+  
   // Only 1 pair counts per session, cap at ₹1,000
   const countablePairs = Math.min(pairsInSession, BASIC_INCOME_CONFIG.MAX_PAIRS_PER_SESSION);
+  console.log(`  🔢 Countable pairs: MIN(${pairsInSession}, ${BASIC_INCOME_CONFIG.MAX_PAIRS_PER_SESSION}) = ${countablePairs}`);
+  
   const { netIncome } = calculateBinaryPairIncome(countablePairs);
-  return Math.min(netIncome, BASIC_INCOME_CONFIG.SESSION_CAP);
+  console.log(`  💰 Net income from pairs: ₹${netIncome}`);
+  
+  const finalIncome = Math.min(netIncome, BASIC_INCOME_CONFIG.SESSION_CAP);
+  console.log(`  📊 After session cap (₹${BASIC_INCOME_CONFIG.SESSION_CAP}): ₹${finalIncome}`);
+  console.log(`  ✅ Final Basic Income: ₹${finalIncome}`);
+  
+  return finalIncome;
 }
 
 // ✅ POINT 7: Booster Qualification (12 pairs complete → Booster status)
@@ -113,10 +147,20 @@ export function checkBoosterQualification(totalPairsCompleted: number): {
   pairsCut: number;
   effectivePairs: number;
 } {
+  console.log(`🚀 [checkBoosterQualification] Checking qualification - Total pairs: ${totalPairsCompleted}`);
+  console.log(`  🎯 Threshold needed: ${BOOSTER_CONFIG.QUALIFICATION_THRESHOLD}`);
+  
   const isQualified = totalPairsCompleted >= BOOSTER_CONFIG.QUALIFICATION_THRESHOLD;
+  console.log(`  ${isQualified ? '✅' : '❌'} Qualified: ${isQualified}`);
+  
   const pairsNeeded = Math.max(0, BOOSTER_CONFIG.QUALIFICATION_THRESHOLD - totalPairsCompleted);
+  console.log(`  📊 Pairs still needed: ${pairsNeeded}`);
+  
   const pairsCut = isQualified ? BOOSTER_CONFIG.CUTS_TOTAL : 0;
+  console.log(`  ✂️ Pairs cut: ${pairsCut} (at positions: ${BOOSTER_CONFIG.CUTTING_POSITIONS.join(', ')})`);
+  
   const effectivePairs = isQualified ? BOOSTER_CONFIG.EFFECTIVE_PAIRS : 0;
+  console.log(`  💪 Effective pairs: ${effectivePairs} (${totalPairsCompleted} - ${pairsCut})`);
 
   return { isQualified, pairsNeeded, pairsCut, effectivePairs };
 }
@@ -145,26 +189,42 @@ export function calculateBoosterMatchingIncome(
   pairsFleshout: number;
   sessionCapped: boolean;
 } {
+  console.log(`📈 [calculateBoosterMatchingIncome] Starting - Total pairs: ${totalPairs}, Carry forward: ${previousCarryForward}`);
+  
   // Start with carry-forward + new pairs
   const totalAvailable = previousCarryForward + totalPairs;
+  console.log(`  🔢 Total available: ${previousCarryForward} + ${totalPairs} = ${totalAvailable}`);
 
   // Session cap: max 10 pairs per session
   const pairsUsed = Math.min(totalAvailable, BOOSTER_MATCHING_CONFIG.MAX_PAIRS_PER_SESSION);
+  console.log(`  💪 Pairs used this session: MIN(${totalAvailable}, ${BOOSTER_MATCHING_CONFIG.MAX_PAIRS_PER_SESSION}) = ${pairsUsed}`);
+  
   const { netIncome, grossIncome } = calculateBinaryPairIncome(pairsUsed);
+  console.log(`  💰 Income from ${pairsUsed} pairs: Gross ₹${grossIncome}, Net ₹${netIncome}`);
 
   // Remaining pairs for carry-forward or fleshout
   const remainingPairs = totalAvailable - pairsUsed;
+  console.log(`  📦 Remaining pairs: ${totalAvailable} - ${pairsUsed} = ${remainingPairs}`);
+  
   const pairsCarried = Math.min(remainingPairs, BOOSTER_MATCHING_CONFIG.CARRY_FORWARD_MAX);
+  console.log(`  ➡️ Pairs carried forward: MIN(${remainingPairs}, ${BOOSTER_MATCHING_CONFIG.CARRY_FORWARD_MAX}) = ${pairsCarried}`);
+  
   const pairsFleshout = Math.max(0, remainingPairs - BOOSTER_MATCHING_CONFIG.CARRY_FORWARD_MAX);
+  console.log(`  ❌ Pairs fleshed out (lost): MAX(0, ${remainingPairs} - ${BOOSTER_MATCHING_CONFIG.CARRY_FORWARD_MAX}) = ${pairsFleshout}`);
+
+  const finalNetIncome = Math.min(netIncome, BOOSTER_MATCHING_CONFIG.SESSION_CAP);
+  const sessionCapped = pairsUsed >= BOOSTER_MATCHING_CONFIG.MAX_PAIRS_PER_SESSION;
+  console.log(`  📊 After session cap (₹${BOOSTER_MATCHING_CONFIG.SESSION_CAP}): ₹${finalNetIncome}`);
+  console.log(`  ${sessionCapped ? '⚠️' : '✅'} Session capped: ${sessionCapped}`);
 
   return {
     availablePairs: totalAvailable,
     pairsUsed,
     grossIncome,
-    netIncome: Math.min(netIncome, BOOSTER_MATCHING_CONFIG.SESSION_CAP),
+    netIncome: finalNetIncome,
     pairsCarried,
     pairsFleshout,
-    sessionCapped: pairsUsed >= BOOSTER_MATCHING_CONFIG.MAX_PAIRS_PER_SESSION
+    sessionCapped
   };
 }
 
@@ -181,14 +241,21 @@ export function validateBoosterMatching(
   canMatch: boolean;
   reason?: string;
 } {
+  console.log(`🔐 [validateBoosterMatching] Validating booster matching...`);
+  console.log(`  👈 Left booster: ${isBoosterLeft}`);
+  console.log(`  👉 Right booster: ${isBoosterRight}`);
+
   if (!isBoosterLeft && !isBoosterRight) {
+    console.log(`  ❌ FAILED - User not booster on either side`);
     return { canMatch: false, reason: 'User not booster on either side' };
   }
 
   if (!isBoosterLeft || !isBoosterRight) {
+    console.log(`  ❌ FAILED - Active booster required on both sides`);
     return { canMatch: false, reason: 'Active booster required on both sides for matching' };
   }
 
+  console.log(`  ✅ PASSED - Booster matching valid`);
   return { canMatch: true };
 }
 
@@ -214,9 +281,25 @@ export function checkAwardQualification(totalBoosterPairs: number): {
   nextRank?: typeof AWARD_RANKS[number];
   pairsNeededForNext: number;
 } {
+  console.log(`🏆 [checkAwardQualification] Checking rank qualification - Total booster pairs: ${totalBoosterPairs}`);
+  console.log(`  📋 Available ranks: ${AWARD_RANKS.length}`);
+
   const currentRank = [...AWARD_RANKS].reverse().find(r => totalBoosterPairs >= r.requiredBoosterPairs);
+  console.log(`  ✅ Current rank: ${currentRank?.name || 'None'} (Rank ${currentRank?.rank || 0})`);
+  if (currentRank) {
+    console.log(`    🎁 Award: ${currentRank.award}`);
+    console.log(`    ✓ Pairs required: ${currentRank.requiredBoosterPairs}`);
+  }
+
   const nextRank = AWARD_RANKS.find(r => totalBoosterPairs < r.requiredBoosterPairs);
+  console.log(`  ⏭️ Next rank: ${nextRank?.name || 'Legend (Max)'}${nextRank ? ` (Rank ${nextRank.rank})` : ''}`);
+  if (nextRank) {
+    console.log(`    🎁 Award: ${nextRank.award}`);
+    console.log(`    ⏳ Pairs required: ${nextRank.requiredBoosterPairs}`);
+  }
+
   const pairsNeededForNext = nextRank ? nextRank.requiredBoosterPairs - totalBoosterPairs : 0;
+  console.log(`  🔢 Pairs needed for next rank: ${pairsNeededForNext}`);
 
   return { currentRank, nextRank, pairsNeededForNext };
 }

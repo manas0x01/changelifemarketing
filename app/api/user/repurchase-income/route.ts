@@ -1,14 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-/**
- * ✅ POINT 1 (Part 4): Repurchase Income
- * Status: COMING SOON
- * 
- * Future implementation will handle:
- * - Repurchase bonus on product purchases
- * - Commission structure
- * - Calculation and distribution
- */
 
 export async function POST(req: NextRequest) {
   return NextResponse.json({

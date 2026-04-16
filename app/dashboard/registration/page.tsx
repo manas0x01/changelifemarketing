@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
 type Step = "validateTxn" | "sponsor" | "register";
@@ -16,8 +16,6 @@ const indianStates = [
 
 const days   = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const months = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-const monthNames = ["January","February","March","April","May","June",
-                 "July","August","September","October","November","December"];
 const years  = Array.from({ length: 60 }, (_, i) => String(2005 - i));
 
 const packages       = ["-- Select Package --","Basic Package","Healthcare Package","Sanitary Napkine"];
@@ -108,10 +106,6 @@ export default function NewRegisterPage() {
 
     checkPinAvailability();
   }, []);
-
-  const handleProceed = async () => {
-    setStep("sponsor");
-  };
 
   const handleValidateTransactionPassword = async () => {
     if (!txnPassword.trim()) {
@@ -411,30 +405,7 @@ export default function NewRegisterPage() {
       if (!response.ok) {
         return;
       }
-      if (position === "Left" || position === "Right") {
-        try {
-          const metricsResponse = await fetch('/api/user/update-sponsor-team-metrics', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              sponsorId: sponsorId.trim(),
-              position: position.toLowerCase(),
-            }),
-            credentials: 'include',
-          });
-          
-          if (metricsResponse.ok) {
-            const metricsData = await metricsResponse.json();
-            console.log('✅ [METRICS] Sponsor team metrics updated:', metricsData.updated);
-          } else {
-            console.warn('⚠️ [METRICS] Failed to update sponsor team metrics');
-          }
-        } catch (metricsError) {
-          console.error('❌ [METRICS] Error updating team metrics:', metricsError);
-        }
-      }
-
-      // Show congratulations card with new user data
+      
       setNewUserData({
         userId: userId,
         fullName: fullName,

@@ -1,9 +1,3 @@
-/**
- * Session Balance Display Component
- * Shows 4 income types: Basic, Booster, Award, Repurchase
- * With session-wise breakdown and capping status
- */
-
 'use client';
 
 import { useState, useEffect } from 'react';

@@ -39,33 +39,65 @@ export default function BasicIncomePage() {
   useEffect(() => {
     const fetchIncomeData = async () => {
       try {
+        console.log('📥 [BasicIncomePage] useEffect: Fetching income data...');
         setLoading(true);
+        console.log('  ⏳ Loading state set to true');
+        
+        console.log('  🌐 Making API call to /api/user/get-basic-income');
         const response = await fetch("/api/user/get-basic-income");
+        console.log(`  ✅ API response received - Status: ${response.status} ${response.statusText}`);
+        
         const result = await response.json();
+        console.log(`  📦 Response parsed - Data length: ${result.data?.length || 0} records`);
+        
         if (result.data) {
+          console.log(`  ✅ Income records found: ${result.data.length} records`);
+          console.log(`    📊 Sample record:`, result.data[0]);
           setAllIncomeRecords(result.data);
+          console.log('  💾 State updated with income data');
         } else {
-          setError(result.error || "Failed to fetch income data");
+          const errorMsg = result.error || "Failed to fetch income data";
+          console.error(`  ❌ No data in response - Error: ${errorMsg}`);
+          setError(errorMsg);
         }
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Error fetching data");
+        const errorMsg = err instanceof Error ? err.message : "Error fetching data";
+        console.error(`  💥 Exception caught - Error: ${errorMsg}`);
+        setError(errorMsg);
       } finally {
         setLoading(false);
+        console.log('  ✅ Loading state set to false');
       }
     };
+    console.log('📥 [BasicIncomePage] useEffect mounted - Component initialization');
     fetchIncomeData();
   }, []);
 
   const handleFilter = () => {
+    console.log('🔍 [handleFilter] Starting filter operation');
+    console.log(`  📊 Total records available: ${allIncomeRecords.length}`);
+    console.log(`  🎯 Filter criteria: Status="${status}", FromDate="${fromDate}", ToDate="${toDate}", PageSize=${pageSize}`);
+    
     let data = [...allIncomeRecords];
+    console.log(`  📋 Working copy created: ${data.length} records`);
     
     // ✅ Filter by status
     if (status !== "--All--") {
+      console.log(`  🔘 Applying status filter: "${status}"`);
+      const beforeCount = data.length;
       data = data.filter(d => d.status === status);
+      const afterCount = data.length;
+      console.log(`    ✅ Status filter applied: ${beforeCount} → ${afterCount} records (removed ${beforeCount - afterCount})`);
+    } else {
+      console.log(`  🔘 Status filter: --All-- (no filtering)`);
     }
     
     // ✅ Apply date range filtering if dates are provided
     if (fromDate || toDate) {
+      console.log(`  📅 Applying date range filter:`);
+      console.log(`    🔖 From date: ${fromDate || 'Not set'}`);
+      console.log(`    🔖 To date: ${toDate || 'Not set'}`);
+      const beforeCount = data.length;
       data = data.filter((record) => {
         // Parse DD/MM/YYYY format from API response
         const [day, month, year] = record.date.split('/');
@@ -74,36 +106,89 @@ export default function BasicIncomePage() {
         const from = fromDate ? new Date(fromDate) : null;
         const to = toDate ? new Date(toDate) : null;
         
-        if (from && recordDate < from) return false;
+        if (from && recordDate < from) {
+          console.log(`      ❌ Record ${record.srNo} (${record.date}) before from-date - excluded`);
+          return false;
+        }
         if (to) {
           // Include entire last day (set to end of day)
           to.setHours(23, 59, 59, 999);
-          if (recordDate > to) return false;
+          if (recordDate > to) {
+            console.log(`      ❌ Record ${record.srNo} (${record.date}) after to-date - excluded`);
+            return false;
+          }
         }
+        console.log(`      ✅ Record ${record.srNo} (${record.date}) within date range - included`);
         return true;
       });
+      const afterCount = data.length;
+      console.log(`    ✅ Date filter applied: ${beforeCount} → ${afterCount} records (removed ${beforeCount - afterCount})`);
+    } else {
+      console.log(`  📅 Date range filter: Not applied (no dates selected)`);
     }
     
     // ✅ Apply page size limit
+    console.log(`  📄 Applying page size limit: ${pageSize}`);
+    const beforeSlice = data.length;
     const sliced = data.slice(0, pageSize);
+    console.log(`    ✅ Page size limit applied: ${beforeSlice} → ${sliced.length} records (truncated to ${pageSize})`);
+    
     setFiltered(sliced);
     setHasFiltered(true);
+    console.log(`  💾 Filtered data state updated: ${sliced.length} records`);
     
     // ✅ Calculate total using rawAmount field
     const total = sliced.reduce((sum, r) => sum + (r.rawAmount || 0), 0);
+    console.log(`  💰 Total amount calculated from ${sliced.length} records: ₹${total}`);
+    console.log(`    📊 Sample calculations:`);
+    sliced.slice(0, 3).forEach((r, idx) => {
+      console.log(`      Record ${idx + 1}: Amount=₹${r.amount}, RawAmount=${r.rawAmount}, Description="${r.description}"`);
+    });
+    
     setTotalAmount(total);
+    console.log(`  ✅ Filter operation completed - Final results:`);
+    console.log(`    📋 Records shown: ${sliced.length}`);
+    console.log(`    💰 Total income: ₹${total}`);
   };
 
   const handleExportCSV = () => {
-    if (!filtered.length) return;
+    console.log('📤 [handleExportCSV] Starting CSV export...');
+    console.log(`  📋 Records to export: ${filtered.length}`);
+    
+    if (!filtered.length) {
+      console.log(`  ⚠️ No records available for export - Aborting`);
+      return;
+    }
+    
+    console.log(`  📝 CSV Header: "Sr.No.,Amount,Pair Count,Date,Description,Status"`);
+    
     const header = "Sr.No.,Amount,Pair Count,Date,Description,Status";
-    const rows   = filtered.map(r =>
-      `${r.srNo},${r.amount},${r.pairCount},${r.date},${r.description},${r.status}`
-    ).join("\n");
-    const blob = new Blob([header + "\n" + rows], { type: "text/csv" });
-    const url  = URL.createObjectURL(blob);
-    const a    = document.createElement("a"); a.href = url; a.download = "basic-income.csv"; a.click();
+    const rows = filtered.map(r => {
+      const rowStr = `${r.srNo},${r.amount},${r.pairCount},${r.date},${r.description},${r.status}`;
+      console.log(`    ✅ Row ${r.srNo}: ${rowStr}`);
+      return rowStr;
+    }).join("\n");
+    
+    const csvContent = header + "\n" + rows;
+    console.log(`  📊 CSV content generated: ${csvContent.split('\n').length} lines total`);
+    
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    console.log(`  📦 Blob created: Size=${blob.size} bytes, Type=${blob.type}`);
+    
+    const url = URL.createObjectURL(blob);
+    console.log(`  🔗 Object URL created: ${url}`);
+    
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "basic-income.csv";
+    console.log(`  📥 Download link created: ${a.download}`);
+    
+    a.click();
+    console.log(`  ✅ Download triggered`);
+    
     URL.revokeObjectURL(url);
+    console.log(`  🗑️ Object URL revoked - Memory cleaned up`);
+    console.log(`  ✅ CSV export completed successfully`);
   };
 
   return (

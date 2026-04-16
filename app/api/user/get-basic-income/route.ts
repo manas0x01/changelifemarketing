@@ -5,8 +5,11 @@ import User from "@/models/User";
 
 export async function GET(req: Request) {
     try {
+        console.log('🟢 [GET] /api/user/get-basic-income - Entry');
         const session = await getServerSession(authOptions);
+        console.log('👤 Session:', session);
         if (!session?.user?.username) {
+            console.log('🔴 Unauthorized access attempt');
             return Response.json({ 
                 success: false, 
                 message: "Unauthorized",
@@ -15,9 +18,12 @@ export async function GET(req: Request) {
         }
         
         await connectDB();
+        console.log('✅ Database connected');
         const user = await User.findOne({ username: session.user.username });
+        console.log('👤 User fetched:', user ? user.username : null);
 
         if (!user) {
+            console.log('🔴 User not found');
             return Response.json({ 
                 success: false, 
                 message: "User not found",
@@ -39,17 +45,20 @@ export async function GET(req: Request) {
             description: record.description || '--',
             status: record.status || 'Pending',
         }));
+        console.log('📦 Formatted records count:', data.length);
         
-        return Response.json({
+        const response = {
             success: true,
             data,
             basicIncome: user.basicIncome || 0,
             basicIncomeRecords: user.basicIncomeRecords || [],
             totalRecords: data.length,
             message: data.length === 0 ? "No basic income records found" : "Records fetched successfully"
-        });
+        };
+        console.log('📤 Response payload:', response);
+        return Response.json(response);
     } catch (error) {
-        console.error('Error in get-basic-income:', error);
+        console.log('❌ Error in [GET] /api/user/get-basic-income:', error);
         return Response.json(
             { 
                 success: false, 

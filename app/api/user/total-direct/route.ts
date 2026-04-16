@@ -24,8 +24,6 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
-
-    // Calculate Total Direct from leftChild and rightChild
     const leftCount = user.leftChild && user.leftChild.trim() !== '' ? 1 : 0;
     const rightCount = user.rightChild && user.rightChild.trim() !== '' ? 1 : 0;
 

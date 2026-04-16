@@ -3,66 +3,43 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import Navbar from "@/components/Navbar";
+import { Upload, Check, AlertCircle, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
-const PIN_COST   = 1299;  
-const RAZORPAY_KEY = "rzp_test_YourKeyHere";
+const PIN_COST = 1299;
 
 const packages = [
-  { id: "basic",    name: "Basic Package",  icon: "📦" },
+  { id: "basic", name: "Basic Package", icon: "📦" },
 ];
-
-declare global {
-  interface Window {
-    Razorpay: new (options: Record<string, unknown>) => { open: () => void };
-  }
-}
-
-async function sendConfirmationEmail(params: {
-  userName: string;
-  email: string;
-  memberId: string;
-  packageName: string;
-  pins: number;
-  amount: number;
-  paymentId: string;
-}) {
-  return new Promise<void>((resolve) => setTimeout(resolve, 600));
-}
-
-function loadRazorpay(): Promise<boolean> {
-  return new Promise((resolve) => {
-    if (window.Razorpay) { resolve(true); return; }
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.onload  = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
 
 export default function BuyEPinPage() {
   const { data: session } = useSession();
-  const [selectedPkg,   setSelectedPkg]   = useState(packages[0].id);
-  const [numPins,       setNumPins]       = useState(1);
-  const [step,          setStep]          = useState<"form" | "paying" | "success" | "error">("form");
-  const [paymentId,     setPaymentId]     = useState("");
-  const [errorMsg,      setErrorMsg]      = useState("");
-  const [formError,     setFormError]     = useState("");
-  const [dropdownOpen,  setDropdownOpen]  = useState(false);
-  const [activePage,    setActivePage]    = useState<"dashboard" | "profile">("dashboard");
-  const [userData,      setUserData]      = useState({ userName: "", memberId: "", email: "" });
+  const [numPins, setNumPins] = useState(1);
+  const [step, setStep] = useState<"form" | "success" | "error">("form");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [activePage, setActivePage] = useState<"dashboard" | "profile">("dashboard");
+  const [userData, setUserData] = useState({ userName: "", memberId: "", email: "", phone: "" });
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [selectedPkg, setSelectedPkg] = useState(packages[0].id);
+  const [transactionId, setTransactionId] = useState("");
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [filePreview, setFilePreview] = useState("");
+  const [cloudinaryUrl, setCloudinaryUrl] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [successData, setSuccessData] = useState<any>(null);
 
   useEffect(() => {
     if (!session) {
-      window.location.href = '/auth/login';
+      window.location.href = "/auth/login";
       return;
     }
     const fetchUserData = async () => {
       try {
-        const res = await fetch('/api/user/get-profile', {
-          method: 'GET',
-          credentials: 'include',
+        const res = await fetch("/api/user/get-profile", {
+          method: "GET",
+          credentials: "include",
         });
         if (res.ok) {
           const data = await res.json();
@@ -71,11 +48,12 @@ export default function BuyEPinPage() {
               userName: data.user.fullName || session.user?.name || "User",
               memberId: data.user.userId || "N/A",
               email: data.user.email || session.user?.email || "",
+              phone: data.user.mobileNo || data.user.phone || "",
             });
           }
         }
       } catch (error: any) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user data:", error);
       } finally {
         setLoading(false);
       }
@@ -84,8 +62,7 @@ export default function BuyEPinPage() {
   }, [session]);
 
   const totalAmount = numPins * PIN_COST;
-  const pkg         = packages.find(p => p.id === selectedPkg)!;
-  const user        = userData;
+  const pkg = packages.find((p) => p.id === selectedPkg)!;
 
   const handlePinChange = (val: number) => {
     if (val < 1) val = 1;
@@ -93,92 +70,131 @@ export default function BuyEPinPage() {
     setNumPins(val);
   };
 
-  const handleBuy = async () => {
-    setFormError("");
-    setStep("paying");
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        setErrorMsg("File size must be less than 5MB");
+        toast.error("File size must be less than 5MB");
+        return;
+      }
+      
+      setUploadedFile(file);
+      
+      // Show preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setFilePreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+      
+      // Upload to Cloudinary
+      setUploading(true);
+      uploadToCloudinary(file);
+    }
+  };
 
+  const uploadToCloudinary = async (file: File) => {
     try {
-      const loaded = await loadRazorpay();
-      if (!loaded) {
-        setErrorMsg("Razorpay failed to load. Please check your internet connection.");
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "changelife");
+      formData.append("cloud_name", process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "changelife");
+
+      const response = await fetch(
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Upload failed");
+      }
+
+      const data = await response.json();
+      setCloudinaryUrl(data.secure_url);
+      toast.success("Screenshot uploaded successfully!");
+      setUploading(false);
+    } catch (error: any) {
+      console.error("Cloudinary upload error:", error);
+      setErrorMsg("Failed to upload screenshot to cloud. Please try again.");
+      toast.error("Failed to upload screenshot");
+      setUploading(false);
+    }
+  };
+
+  const handleSubmit = async () => {
+    setErrorMsg("");
+
+    if (!transactionId.trim()) {
+      setErrorMsg("Please enter Transaction ID");
+      toast.error("Please enter Transaction ID");
+      return;
+    }
+
+    if (!uploadedFile) {
+      setErrorMsg("Please upload payment screenshot");
+      toast.error("Please upload payment screenshot");
+      return;
+    }
+
+    if (!cloudinaryUrl) {
+      setErrorMsg("Screenshot is still uploading. Please wait...");
+      toast.error("Screenshot is still uploading. Please wait...");
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append("userId", userData.memberId);
+      formData.append("username", userData.userName);
+      formData.append("name", userData.userName);
+      formData.append("email", userData.email);
+      formData.append("mobileNumber", userData.phone);
+      formData.append("transactionId", transactionId);
+      formData.append("quantity", String(numPins));
+      formData.append("packageName", pkg.name);
+      formData.append("amount", String(totalAmount));
+      formData.append("screenshotUrl", cloudinaryUrl);
+      formData.append("orderType", "pack");
+      formData.append("packName", pkg.name);
+      formData.append("packPrice", String(totalAmount));
+
+      const res = await fetch("/api/orders/create", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setErrorMsg(data.message || "Failed to submit order");
         setStep("error");
+        toast.error(data.message || "Failed to submit order");
         return;
       }
 
-      const options = {
-        key:          RAZORPAY_KEY,
-        amount:       totalAmount * 100, 
-        currency:     "INR",
-        name:         "Swamini Life",
-        description:  `Buy ${numPins} E-Pin(s) — ${pkg.name}`,
-        image:        "",
-        handler: async (response: { razorpay_payment_id: string }) => {
-          const pid = response.razorpay_payment_id;
-          setPaymentId(pid);
-
-          try {
-            const orderResponse = await fetch('/api/orders/create', {
-              method: 'POST',
-              credentials: 'include',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                name: user.userName,
-                mobileNumber: "",
-                transactionDetails: `Razorpay Payment ID: ${pid} - ${numPins} E-Pin(s) of ${pkg.name}`,
-                orderType: 'pack',
-                packId: pkg.id,
-                packName: pkg.name,
-                packPrice: totalAmount,
-                quantity: numPins,
-              }),
-            });
-
-            if (orderResponse.ok) {
-              const orderData = await orderResponse.json();
-              console.log('Order created:', orderData.orderId);
-            } else if (orderResponse.status === 401) {
-              window.location.href = '/auth/login';
-              return;
-            }
-            await sendConfirmationEmail({
-              userName:    user.userName,
-              email:       user.email,
-              memberId:    user.memberId,
-              packageName: pkg.name,
-              pins:        numPins,
-              amount:      totalAmount,
-              paymentId:   pid,
-            });
-
-            setStep("success");
-          } catch (err: any) {
-            console.error('Error processing payment:', err);
-            setErrorMsg('Payment recorded but order processing failed. Please contact support.');
-            setStep("error");
-          }
-        },
-        prefill: {
-          name:  user.userName,
-          email: user.email,
-        },
-        notes: {
-          memberId:    user.memberId,
-          package:     pkg.name,
-          pins:        String(numPins),
-        },
-        theme: { color: "#26a69a" },
-        modal: {
-          ondismiss: () => {
-            setStep("form");
-          },
-        },
-      };
-
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-    } catch (e) {
-      setErrorMsg("Payment could not be initiated. Please try again.");
+      setSuccessData({
+        orderId: data.orderId,
+        userName: userData.userName,
+        memberId: userData.memberId,
+        email: userData.email,
+        pins: numPins,
+        amount: totalAmount,
+        transactionId: transactionId,
+      });
+      setStep("success");
+      toast.success("Payment details submitted successfully! Admin will verify within 24 hours.");
+    } catch (err: any) {
+      setErrorMsg(err.message || "Something went wrong");
       setStep("error");
+      toast.error(err.message || "Something went wrong");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -191,18 +207,14 @@ export default function BuyEPinPage() {
         .bp-root { font-family:'Poppins',sans-serif; background:#f0f2f5; min-height:100vh; }
 
         .green-bar { height:8px; background:linear-gradient(90deg,#00c853,#1de9b6); }
-        
-        /* Navbar styling removed - using Navbar component */
 
         .breadcrumb { padding:12px 20px; font-size:13px; color:#555; display:flex; align-items:center; gap:6px; }
         .breadcrumb a { color:#555; text-decoration:none; }
         .breadcrumb a:hover { text-decoration:underline; }
         .breadcrumb .sep { color:#999; }
 
-        /* PAGE BODY */
         .page-body { padding:20px; display:flex; justify-content:center; }
 
-        /* CARD */
         .buy-card {
           width:100%; max-width:620px;
           background:#fff; border-radius:14px;
@@ -210,7 +222,6 @@ export default function BuyEPinPage() {
           overflow:hidden;
         }
 
-        /* HEADER */
         .card-header {
           background:linear-gradient(90deg,#26a69a,#1de9b6);
           padding:18px 24px;
@@ -225,7 +236,6 @@ export default function BuyEPinPage() {
         .card-header-text h2 { font-size:16px; font-weight:700; color:#fff; }
         .card-header-text p  { font-size:12.5px; color:rgba(255,255,255,0.85); }
 
-        /* PRICE BANNER */
         .price-banner {
           background:linear-gradient(135deg,#1b5e20 0%,#2e7d32 100%);
           margin:0; padding:14px 24px;
@@ -245,62 +255,48 @@ export default function BuyEPinPage() {
         .total-val   { font-size:26px; font-weight:800; color:#fff; line-height:1; }
         .total-pins  { font-size:11.5px; color:rgba(255,255,255,0.6); }
 
-        /* FORM */
         .form-body { padding:24px; }
 
         .form-group { margin-bottom:20px; }
         .form-label { font-size:13px; font-weight:600; color:#333; display:block; margin-bottom:7px; }
         .form-label .req { color:#e53935; margin-right:2px; }
 
-        /* Package selector */
-        .pkg-grid {
-          display:grid; grid-template-columns:repeat(3,1fr);
-          gap:10px;
+        .form-input {
+          width:100%; border:1.5px solid #d0d0d0; border-radius:8px;
+          padding:11px 14px; font-size:13.5px;
+          font-family:'Poppins',sans-serif; color:#333;
+          outline:none; transition:border-color .18s, box-shadow .18s;
         }
-        @media(max-width:500px){ .pkg-grid { grid-template-columns:1fr; } }
+        .form-input:focus { border-color:#26a69a; box-shadow:0 0 0 3px rgba(38,166,154,0.12); }
+        .form-input::placeholder { color:#bbb; }
 
-        .pkg-card {
-          border:2px solid #e0e0e0; border-radius:10px;
-          padding:12px 10px; text-align:center;
-          cursor:pointer; transition:all .18s;
+        .form-error {
+          background:#fdecea; border-left:4px solid #e53935; border-radius:4px;
+          padding:9px 13px; font-size:13px; color:#c62828;
+          margin-bottom:16px; display:flex; align-items:center; gap:6px;
         }
-        .pkg-card:hover { border-color:#26a69a; background:#f0fdf9; }
-        .pkg-card.selected {
-          border-color:#26a69a; background:#e0f7f4;
-          box-shadow:0 0 0 3px rgba(38,166,154,0.15);
-        }
-        .pkg-icon  { font-size:24px; margin-bottom:5px; }
-        .pkg-name  { font-size:11.5px; font-weight:600; color:#333; }
 
-        /* Pin counter */
-        .pin-counter {
-          display:flex; align-items:center; gap:0;
-          border:1.5px solid #d0d0d0; border-radius:8px;
-          overflow:hidden; width:fit-content;
+        .file-upload-box {
+          border:2px dashed #26a69a; border-radius:10px; padding:20px;
+          text-align:center; cursor:pointer; transition:all .18s;
+          background:#f0fdf9;
         }
-        .counter-btn {
-          width:44px; height:44px; border:none; background:#f5f5f5;
-          font-size:20px; font-weight:700; color:#333; cursor:pointer;
-          transition:background .15s; display:flex; align-items:center; justify-content:center;
-          flex-shrink:0;
-        }
-        .counter-btn:hover { background:#e0f7f4; color:#26a69a; }
-        .counter-btn:active { background:#b2dfdb; }
-        .counter-input {
-          width:70px; height:44px; text-align:center;
-          border:none; border-left:1.5px solid #e0e0e0; border-right:1.5px solid #e0e0e0;
-          font-size:18px; font-weight:700; color:#1a1a2e;
-          font-family:'Poppins',sans-serif; outline:none;
-          background:#fff;
-        }
-        /* Remove spinners */
-        .counter-input::-webkit-outer-spin-button,
-        .counter-input::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
-        .counter-input[type=number] { -moz-appearance:textfield; }
+        .file-upload-box:hover { background:#e0f7f4; border-color:#1de9b6; }
+        .file-upload-input { display:none; }
+        .upload-icon { font-size:32px; margin-bottom:8px; }
+        .upload-text { font-size:13px; color:#333; font-weight:600; }
+        .upload-hint { font-size:11.5px; color:#888; margin-top:4px; }
 
-        .pin-hint { font-size:11.5px; color:#888; margin-top:5px; }
+        .file-preview {
+          margin-top:12px; padding:12px; background:#f5f5f5; border-radius:8px;
+          display:flex; align-items:center; gap:12px;
+        }
+        .file-preview img { width:60px; height:60px; border-radius:6px; object-fit:cover; }
+        .file-info { text-align:left; flex:1; }
+        .file-name { font-size:12px; font-weight:600; color:#333; }
+        .file-size { font-size:11px; color:#888; margin-top:2px; }
+        .remove-file { color:#e53935; cursor:pointer; font-weight:600; font-size:12px; }
 
-        /* Amount breakdown */
         .amount-box {
           background:linear-gradient(135deg,#f0fdf9,#e8f5e9);
           border:1px solid #b2dfdb; border-radius:10px;
@@ -316,25 +312,7 @@ export default function BuyEPinPage() {
         .amount-row.total .amount-label { font-size:14px; font-weight:700; color:#1b5e20; }
         .amount-row.total .amount-val   { font-size:18px; font-weight:800; color:#26a69a; }
 
-        /* TXN Password */
-        .form-input {
-          width:100%; border:1.5px solid #d0d0d0; border-radius:8px;
-          padding:11px 14px; font-size:13.5px;
-          font-family:'Poppins',sans-serif; color:#333;
-          outline:none; transition:border-color .18s, box-shadow .18s;
-        }
-        .form-input:focus { border-color:#26a69a; box-shadow:0 0 0 3px rgba(38,166,154,0.12); }
-        .form-input::placeholder { color:#bbb; }
-
-        /* Error */
-        .form-error {
-          background:#fdecea; border-left:4px solid #e53935; border-radius:4px;
-          padding:9px 13px; font-size:13px; color:#c62828;
-          margin-bottom:16px; display:flex; align-items:center; gap:6px;
-        }
-
-        /* Buy button */
-        .buy-btn {
+        .submit-btn {
           width:100%; background:linear-gradient(90deg,#1976d2,#1565c0);
           color:#fff; border:none; border-radius:10px;
           padding:14px; font-size:15px; font-weight:700;
@@ -344,31 +322,10 @@ export default function BuyEPinPage() {
           box-shadow:0 4px 14px rgba(25,118,210,0.35);
           margin-top:4px;
         }
-        .buy-btn:hover  { opacity:0.91; transform:translateY(-1px); }
-        .buy-btn:active { transform:scale(0.99); }
-        .buy-btn:disabled { opacity:0.55; cursor:not-allowed; }
+        .submit-btn:hover  { opacity:0.91; transform:translateY(-1px); }
+        .submit-btn:active { transform:scale(0.99); }
+        .submit-btn:disabled { opacity:0.55; cursor:not-allowed; }
 
-        .razorpay-note {
-          display:flex; align-items:center; justify-content:center; gap:6px;
-          font-size:11.5px; color:#888; margin-top:10px;
-        }
-
-        /* ── PAYING STATE ── */
-        .paying-state {
-          padding:48px 24px; text-align:center;
-        }
-        .spinner {
-          width:52px; height:52px; border-radius:50%;
-          border:4px solid #e0e0e0;
-          border-top-color:#26a69a;
-          animation:spin 0.9s linear infinite;
-          margin:0 auto 18px;
-        }
-        @keyframes spin { to { transform:rotate(360deg); } }
-        .paying-title { font-size:16px; font-weight:600; color:#333; margin-bottom:6px; }
-        .paying-sub   { font-size:13px; color:#888; }
-
-        /* ── SUCCESS STATE ── */
         .success-state {
           padding:40px 24px; text-align:center;
         }
@@ -396,22 +353,6 @@ export default function BuyEPinPage() {
         .detail-key { color:#555; }
         .detail-val { font-weight:600; color:#1b5e20; }
 
-        .email-note {
-          background:#e3f2fd; border-radius:8px; padding:12px 14px;
-          font-size:12.5px; color:#1565c0; display:flex; align-items:center; gap:8px;
-          margin-bottom:20px; text-align:left;
-        }
-
-        .buy-again-btn {
-          background:linear-gradient(90deg,#26a69a,#1de9b6);
-          color:#fff; border:none; border-radius:8px;
-          padding:12px 32px; font-size:14px; font-weight:600;
-          font-family:'Poppins',sans-serif; cursor:pointer;
-          transition:opacity .18s; box-shadow:0 3px 12px rgba(38,166,154,0.3);
-        }
-        .buy-again-btn:hover { opacity:0.88; }
-
-        /* ── ERROR STATE ── */
         .error-state {
           padding:48px 24px; text-align:center;
         }
@@ -430,8 +371,6 @@ export default function BuyEPinPage() {
       `}</style>
 
       <div className="bp-root">
-
-        {/* TOP NAV */}
         <Navbar
           dropdownOpen={dropdownOpen}
           setDropdownOpen={setDropdownOpen}
@@ -457,7 +396,7 @@ export default function BuyEPinPage() {
               <div className="card-header-icon">🔑</div>
               <div className="card-header-text">
                 <h2>Buy E-Pin</h2>
-                <p>Secure purchase via Razorpay</p>
+                <p>Submit payment details & screenshot</p>
               </div>
             </div>
 
@@ -475,89 +414,121 @@ export default function BuyEPinPage() {
               </div>
             </div>
 
-            {/* ── STATES ── */}
-            {step === "paying" && (
-              <div className="paying-state">
-                <div className="spinner" />
-                <div className="paying-title">Processing Payment…</div>
-                <div className="paying-sub">Please complete the payment in the Razorpay window.</div>
-              </div>
-            )}
-
-            {step === "success" && (
+            {/* ── SUCCESS STATE ── */}
+            {step === "success" && successData && (
               <div className="success-state">
                 <div className="success-icon">
                   <svg width="36" height="36" viewBox="0 0 24 24" fill="white"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                 </div>
-                <div className="success-title">Payment Successful! 🎉</div>
+                <div className="success-title">Order Submitted! ✅</div>
                 <div className="success-sub">
-                  Your E-Pins have been purchased successfully.<br />
-                  A confirmation email has been sent to <strong>{user.email}</strong>
+                  Your payment request has been submitted successfully.<br />
+                  Admin will verify and credit the EPins within 24 hours.
                 </div>
 
                 <div className="success-details">
-                  <div className="detail-row"><span className="detail-key">Member Name</span><span className="detail-val">{user.userName}</span></div>
-                  <div className="detail-row"><span className="detail-key">Member ID</span><span className="detail-val">{user.memberId}</span></div>
-                  <div className="detail-row"><span className="detail-key">Package</span><span className="detail-val">{pkg.icon} {pkg.name}</span></div>
-                  <div className="detail-row"><span className="detail-key">Pins Purchased</span><span className="detail-val">{numPins} Pin{numPins > 1 ? "s" : ""}</span></div>
-                  <div className="detail-row"><span className="detail-key">Amount Paid</span><span className="detail-val">₹{totalAmount.toLocaleString("en-IN")}</span></div>
-                  <div className="detail-row"><span className="detail-key">Payment ID</span><span className="detail-val" style={{fontSize:11.5}}>{paymentId}</span></div>
+                  <div className="detail-row"><span className="detail-key">Order ID</span><span className="detail-val">{successData.orderId}</span></div>
+                  <div className="detail-row"><span className="detail-key">Member Name</span><span className="detail-val">{successData.userName}</span></div>
+                  <div className="detail-row"><span className="detail-key">Member ID</span><span className="detail-val">{successData.memberId}</span></div>
+                  <div className="detail-row"><span className="detail-key">Pins Ordered</span><span className="detail-val">{successData.pins} Pin{successData.pins > 1 ? "s" : ""}</span></div>
+                  <div className="detail-row"><span className="detail-key">Amount</span><span className="detail-val">₹{successData.amount.toLocaleString("en-IN")}</span></div>
+                  <div className="detail-row"><span className="detail-key">Transaction ID</span><span className="detail-val" style={{fontSize:11.5}}>{successData.transactionId}</span></div>
                 </div>
-
-                <div className="email-note">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="#1565c0"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
-                  Confirmation email with pin details has been sent to <strong style={{marginLeft:3}}>{user.email}</strong>
-                </div>
-
-                <button className="buy-again-btn" onClick={() => { setStep("form"); setNumPins(1); }}>
-                  Buy More Pins
-                </button>
               </div>
             )}
 
+            {/* ── ERROR STATE ── */}
             {step === "error" && (
               <div className="error-state">
                 <div className="error-icon">❌</div>
-                <div className="error-title">Payment Failed</div>
+                <div className="error-title">Submission Failed</div>
                 <div className="error-sub">{errorMsg}</div>
                 <button className="retry-btn" onClick={() => setStep("form")}>Try Again</button>
               </div>
             )}
 
+            {/* ── FORM STATE ── */}
             {step === "form" && (
               <div className="form-body">
-                {/* Package Selection */}
-                <div className="form-group">
-                  <label className="form-label"><span className="req">*</span>Select Package :</label>
-                  <div className="pkg-grid">
-                    {packages.map(p => (
-                      <div
-                        key={p.id}
-                        className={`pkg-card ${selectedPkg === p.id ? "selected" : ""}`}
-                        onClick={() => setSelectedPkg(p.id)}
-                      >
-                        <div className="pkg-icon">{p.icon}</div>
-                        <div className="pkg-name">{p.name}</div>
-                      </div>
-                    ))}
+
+                {/* Payment Image */}
+                <div className="form-group" style={{
+                  marginBottom: '24px',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center'
+                }}>
+                  <div style={{
+                    textAlign: 'center',
+                    width: '100%'
+                  }}>
+                    <img 
+                      src="/images/payment.png" 
+                      alt="Payment" 
+                      style={{
+                        width: '280px',
+                        height: 'auto',
+                        borderRadius: '8px',
+                        margin: '0 auto 12px',
+                        display: 'block'
+                      }}
+                    />
                   </div>
+                </div>
+
+                {/* User Details - Read Only */}
+                <div className="form-group">
+                  <label className="form-label">Member Name :</label>
+                  <input type="text" className="form-input" value={userData.userName} disabled />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Member ID :</label>
+                  <input type="text" className="form-input" value={userData.memberId} disabled />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Email :</label>
+                  <input type="email" className="form-input" value={userData.email} disabled />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Phone Number :</label>
+                  <input type="tel" className="form-input" value={userData.phone} disabled />
+                </div>
+
+                {/* Transaction ID */}
+                <div className="form-group">
+                  <label className="form-label"><span className="req">*</span>Transaction ID :</label>
+                  <input
+                    type="text"
+                    className="form-input"
+                    placeholder="Enter payment transaction ID (e.g., TXN123456)"
+                    value={transactionId}
+                    onChange={(e) => setTransactionId(e.target.value)}
+                  />
                 </div>
 
                 {/* Number of Pins */}
                 <div className="form-group">
                   <label className="form-label"><span className="req">*</span>Number of E-Pins :</label>
-                  <div className="pin-counter">
-                    <button className="counter-btn" onClick={() => handlePinChange(numPins - 1)}>−</button>
+                  <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'8px'}}>
+                    <button
+                      style={{width:'44px', height:'44px', border:'1.5px solid #d0d0d0', borderRadius:'8px', background:'#f5f5f5', cursor:'pointer', fontSize:'18px', fontWeight:'700'}}
+                      onClick={() => handlePinChange(numPins - 1)}
+                    >−</button>
                     <input
-                      className="counter-input"
                       type="number"
                       min={1} max={99}
                       value={numPins}
                       onChange={(e) => handlePinChange(parseInt(e.target.value) || 1)}
+                      style={{width:'70px', height:'44px', textAlign:'center', border:'1.5px solid #d0d0d0', borderRadius:'8px', fontSize:'18px', fontWeight:'700', outline:'none'}}
                     />
-                    <button className="counter-btn" onClick={() => handlePinChange(numPins + 1)}>+</button>
+                    <button
+                      style={{width:'44px', height:'44px', border:'1.5px solid #d0d0d0', borderRadius:'8px', background:'#f5f5f5', cursor:'pointer', fontSize:'18px', fontWeight:'700'}}
+                      onClick={() => handlePinChange(numPins + 1)}
+                    >+</button>
                   </div>
-                  <div className="pin-hint">Min: 1 pin &nbsp;|&nbsp; Max: 99 pins per order</div>
                 </div>
 
                 {/* Amount Breakdown */}
@@ -572,10 +543,6 @@ export default function BuyEPinPage() {
                       <span className="amount-label">Number of Pins</span>
                       <span className="amount-val">× {numPins}</span>
                     </div>
-                    <div className="amount-row">
-                      <span className="amount-label">GST / Tax</span>
-                      <span className="amount-val">Included</span>
-                    </div>
                     <div className="amount-row total">
                       <span className="amount-label">Total Payable</span>
                       <span className="amount-val">₹{totalAmount.toLocaleString("en-IN")}</span>
@@ -583,16 +550,130 @@ export default function BuyEPinPage() {
                   </div>
                 </div>
 
-                {/* Buy Button */}
-                <button className="buy-btn" onClick={handleBuy}>
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="white"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1s3.1 1.39 3.1 3.1v2z"/></svg>
-                  Pay ₹{totalAmount.toLocaleString("en-IN")} via Razorpay
-                </button>
+                {/* File Upload */}
+                <div className="form-group">
+                  <label className="form-label"><span className="req">*</span>Payment Screenshot :</label>
+                  <div style={{
+                    border: '2px dashed #26a69a',
+                    borderRadius: '10px',
+                    padding: '30px 20px',
+                    textAlign: 'center',
+                    cursor: uploading ? 'not-allowed' : 'pointer',
+                    backgroundColor: '#f0fdf9',
+                    transition: 'all 0.2s ease',
+                    marginTop: '8px',
+                    opacity: uploading ? 0.6 : 1
+                  }}
+                  onMouseOver={(e) => {
+                    if (!uploading) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = '#e0f7f4';
+                      (e.currentTarget as HTMLElement).style.borderColor = '#1de9b6';
+                    }
+                  }}
+                  onMouseOut={(e) => {
+                    if (!uploading) {
+                      (e.currentTarget as HTMLElement).style.backgroundColor = '#f0fdf9';
+                      (e.currentTarget as HTMLElement).style.borderColor = '#26a69a';
+                    }
+                  }}
+                  onClick={() => !uploading && document.getElementById('fileInput')?.click()}
+                  >
+                    {uploading ? (
+                      <>
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>⏳</div>
+                        <div style={{ fontSize: '13px', color: '#333', fontWeight: '600' }}>Uploading to cloud...</div>
+                        <div style={{ fontSize: '11.5px', color: '#888', marginTop: '4px' }}>Please wait</div>
+                      </>
+                    ) : (
+                      <>
+                        <div style={{ fontSize: '32px', marginBottom: '8px' }}>📸</div>
+                        <div style={{ fontSize: '13px', color: '#333', fontWeight: '600' }}>Click to upload payment screenshot</div>
+                        <div style={{ fontSize: '11.5px', color: '#888', marginTop: '4px' }}>JPG, PNG up to 5MB</div>
+                      </>
+                    )}
+                    <input
+                      id="fileInput"
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleFileChange}
+                      disabled={uploading}
+                    />
+                  </div>
 
-                <div className="razorpay-note">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="#888"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-                  Secured by Razorpay &nbsp;|&nbsp; 256-bit SSL Encryption
+                  {filePreview && (
+                    <div style={{
+                      marginTop: '16px',
+                      padding: '12px',
+                      backgroundColor: '#f5f5f5',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '12px'
+                    }}>
+                      <img src={filePreview} alt="Preview" style={{
+                        width: '60px',
+                        height: '60px',
+                        borderRadius: '6px',
+                        objectFit: 'cover'
+                      }} />
+                      <div style={{ textAlign: 'left', flex: 1 }}>
+                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#333' }}>{uploadedFile?.name}</div>
+                        <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{((uploadedFile?.size ?? 0) / 1024).toFixed(2)} KB</div>
+                        {cloudinaryUrl && <div style={{ fontSize: '11px', color: '#26a69a', marginTop: '2px' }}>✓ Uploaded to cloud</div>}
+                      </div>
+                      <div 
+                        style={{ 
+                          color: '#e53935', 
+                          cursor: 'pointer', 
+                          fontWeight: '600', 
+                          fontSize: '12px',
+                          padding: '6px 12px',
+                          backgroundColor: '#fff',
+                          borderRadius: '6px',
+                          border: '1px solid #e53935',
+                          transition: 'all 0.2s'
+                        }}
+                        onClick={() => { 
+                          setUploadedFile(null); 
+                          setFilePreview(""); 
+                          setCloudinaryUrl("");
+                        }}
+                        onMouseOver={(e) => {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = '#e53935';
+                          (e.currentTarget as HTMLElement).style.color = '#fff';
+                        }}
+                        onMouseOut={(e) => {
+                          (e.currentTarget as HTMLElement).style.backgroundColor = '#fff';
+                          (e.currentTarget as HTMLElement).style.color = '#e53935';
+                        }}
+                      >
+                        Remove
+                      </div>
+                    </div>
+                  )}
                 </div>
+
+                {/* Error */}
+                {errorMsg && (
+                  <div className="form-error">
+                    <AlertCircle size={16} />
+                    {errorMsg}
+                  </div>
+                )}
+
+                {/* Submit */}
+                <button className="submit-btn" onClick={handleSubmit} disabled={submitting || uploading || !cloudinaryUrl}>
+                  {submitting ? (
+                    <><Loader2 size={18} className="animate-spin" />Submitting...</>
+                  ) : uploading ? (
+                    <><Loader2 size={18} className="animate-spin" />Uploading Screenshot...</>
+                  ) : !cloudinaryUrl ? (
+                    <><AlertCircle size={18} />Upload Screenshot First</>
+                  ) : (
+                    <><Upload size={18} />Submit Payment Details</>
+                  )}
+                </button>
 
               </div>
             )}
@@ -603,3 +684,5 @@ export default function BuyEPinPage() {
     </>
   );
 }
+
+  

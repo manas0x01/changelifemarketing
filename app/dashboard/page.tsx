@@ -177,33 +177,23 @@ export default function Dashboard() {
         
         if (boosterResponse.ok) {
           const d = await boosterResponse.json();
-          console.log('✅ Booster Income:', d.boosterIncome);
           setBoosterIncome(d.boosterIncome || { LG: 0, RG: 0, totalBoosterMatching: 0 });
-        } else {
-          console.log('⚠️ Booster Income API failed');
         }
         
         if (boosterAmountResponse.ok) {
-          const d = await boosterAmountResponse.json();
-          console.log('✅ Booster Income Amount:', d.boosterIncomeAmount);
+          const d = await boosterAmountResponse.json()
           setBoosterIncomeAmount(d.boosterIncomeAmount || 0);
-        } else {
-          console.log('⚠️ Booster Income Amount API failed');
         }
-        
+
         if (profileResponse.ok) {
           const d = await profileResponse.json();
           if (d.user) {
             setUserProfile({ ...d.user, username: d.user.username || "N/A" });
           }
         }
-        
         if (totalDirectResponse.ok) {
           const d = await totalDirectResponse.json();
-          console.log('👥 Total Direct API:', d.totalDirect);
           setTotalDirect(d.totalDirect || { left: 0, right: 0 });
-        } else {
-          console.log('⚠️ Total Direct API failed');
         }
         
         if (totalIncomeResponse.ok) {
@@ -430,29 +420,28 @@ export default function Dashboard() {
                     className="stat-card"
                     style={{ background: card.gradient }}
                     onClick={() => {
-                      console.log('📊 Stat card clicked:', card.title);
                       if (card.title === "Total Team") {
-                        console.log('👥 Toggling Total Team info');
+            
                         setShowTotalTeamInfo(!showTotalTeamInfo);
                       }
                       else if (card.title === "Basic Income") {
-                        console.log('💰 Toggling Basic Income info');
+                
                         setShowBasicIncomeInfo(!showBasicIncomeInfo);
                       }
                       else if (card.title === "Booster Income") {
-                        console.log('🚀 Toggling Booster Income info');
+                   
                         setShowBoosterIncomeInfo(!showBoosterIncomeInfo);
                       }
                       else if (card.title === "Total Direct") {
-                        console.log('👤 Toggling Total Direct info');
+                
                         setShowTotalDirectInfo(!showTotalDirectInfo);
                       }
                       else if (card.title === "Total Pins") {
-                        console.log('📌 Toggling Total Pins info');
+                    
                         setShowTotalPinsInfo(!showTotalPinsInfo);
                       }
                       else if (card.title === "Total Income") {
-                        console.log('💳 Toggling Total Income info');
+                 
                         setShowTotalIncomeInfo(!showTotalIncomeInfo);
                       }
                     }}

@@ -7,22 +7,31 @@ import { checkBoosterQualification, BOOSTER_CONFIG } from '@/lib/incomeCalculati
 
 export async function POST(req: NextRequest) {
   try {
+    console.log('🟢 [POST] /api/user/booster-qualification - Entry');
     const session = await getServerSession(authOptions);
+    console.log('👤 Session:', session);
     if (!session?.user?.username) {
+      console.log('🔴 Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectDB();
+    console.log('✅ Database connected');
 
     const user = await User.findOne({ username: session.user.username })
       .select('basicIncomeRecords boosterStatus userId username fullName');
+    console.log('👤 User fetched:', user ? user.username : null);
 
     if (!user) {
+      console.log('🔴 User not found');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
     const totalRecords = (user.basicIncomeRecords || []);
+    console.log('📊 Total basic income records:', totalRecords.length);
     const totalPairsCompleted = totalRecords.length;
+    console.log('🔗 Total pairs completed:', totalPairsCompleted);
     const qualificationStatus = checkBoosterQualification(totalPairsCompleted);
+    console.log('📝 Qualification status:', qualificationStatus);
     if (qualificationStatus.isQualified && (!user.boosterStatus?.isBoosterLeft || !user.boosterStatus?.isBoosterRight)) {
       user.boosterStatus = {
         isBoosterLeft: true,
@@ -33,10 +42,11 @@ export async function POST(req: NextRequest) {
         pairsCompletedRight: totalPairsCompleted,
         ...user.boosterStatus
       };
-      
+      console.log('🏅 User newly qualified for booster:', user.boosterStatus);
       await user.save();
+      console.log('💾 User saved successfully');
 
-      return NextResponse.json({
+      const responsePayload = {
         success: true,
         status: 'NEWLY_QUALIFIED',
         message: `🎉 Congratulations! You've qualified for Booster status!`,
@@ -48,10 +58,13 @@ export async function POST(req: NextRequest) {
           qualificationDate: new Date(),
           nextMilestone: 'Booster Matching Income - Earn ₹20,000 daily cap'
         }
-      });
+      };
+      console.log('📤 Response payload:', responsePayload);
+      console.log('✅ [POST] /api/user/booster-qualification - Exit');
+      return NextResponse.json(responsePayload);
     }
     if (qualificationStatus.isQualified) {
-      return NextResponse.json({
+      const responsePayload = {
         success: true,
         status: 'ALREADY_QUALIFIED',
         data: {
@@ -62,9 +75,12 @@ export async function POST(req: NextRequest) {
           qualificationDate: user.boosterStatus?.boosterQualificationDateLeft || 'N/A',
           boosterSince: user.boosterStatus?.boosterQualificationDateLeft ? 'Active' : 'Pending'
         }
-      });
+      };
+      console.log('📤 Response payload:', responsePayload);
+      console.log('✅ [POST] /api/user/booster-qualification - Exit');
+      return NextResponse.json(responsePayload);
     }
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       status: 'NOT_QUALIFIED',
       data: {
@@ -76,8 +92,12 @@ export async function POST(req: NextRequest) {
         cuttingPositions: BOOSTER_CONFIG.CUTTING_POSITIONS,
         totalCuts: BOOSTER_CONFIG.CUTS_TOTAL
       }
-    });
+    };
+    console.log('📤 Response payload:', responsePayload);
+    console.log('✅ [POST] /api/user/booster-qualification - Exit');
+    return NextResponse.json(responsePayload);
   } catch (error) {
+    console.log('❌ Error in [POST] /api/user/booster-qualification:', error);
     return NextResponse.json(
       { error: 'Failed to check booster qualification' },
       { status: 500 }
@@ -87,25 +107,34 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    console.log('🟢 [GET] /api/user/booster-qualification - Entry');
     const session = await getServerSession(authOptions);
+    console.log('👤 Session:', session);
     if (!session?.user?.username) {
+      console.log('🔴 Unauthorized access attempt');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectDB();
+    console.log('✅ Database connected');
 
     const user = await User.findOne({ username: session.user.username })
       .select('basicIncomeRecords boosterStatus userId username');
+    console.log('👤 User fetched:', user ? user.username : null);
 
     if (!user) {
+      console.log('🔴 User not found');
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const totalRecords = (user.basicIncomeRecords || []);
+    console.log('📊 Total basic income records:', totalRecords.length);
     const totalPairsCompleted = totalRecords.length;
+    console.log('🔗 Total pairs completed:', totalPairsCompleted);
     const qualificationStatus = checkBoosterQualification(totalPairsCompleted);
+    console.log('📝 Qualification status:', qualificationStatus);
 
-    return NextResponse.json({
+    const responsePayload = {
       success: true,
       data: {
         isBooster: qualificationStatus.isQualified,
@@ -115,8 +144,12 @@ export async function GET(req: NextRequest) {
         boosterRight: user.boosterStatus?.isBoosterRight || false,
         qualificationThreshold: BOOSTER_CONFIG.QUALIFICATION_THRESHOLD
       }
-    });
+    };
+    console.log('📤 Response payload:', responsePayload);
+    console.log('✅ [GET] /api/user/booster-qualification - Exit');
+    return NextResponse.json(responsePayload);
   } catch (error) {
+    console.log('❌ Error in [GET] /api/user/booster-qualification:', error);
     return NextResponse.json(
       { error: 'Failed to get booster status' },
       { status: 500 }

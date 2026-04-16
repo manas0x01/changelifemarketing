@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     }
     await connectDB();
     const user = await User.findOne({ username: session.user.username })
-      .select('totalTeam')
+      .select('leftChild rightChild')
       .lean();
 
     if (!user) {
@@ -24,14 +24,21 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
-    const teamData = {
-      left: user.totalTeam?.left || 0,
-      right: user.totalTeam?.right || 0,
+
+    // Calculate Total Direct from leftChild and rightChild
+    const leftCount = user.leftChild && user.leftChild.trim() !== '' ? 1 : 0;
+    const rightCount = user.rightChild && user.rightChild.trim() !== '' ? 1 : 0;
+
+    console.log(`✅ [Total Direct] ${session.user.username} - Left: ${leftCount} | Right: ${rightCount}`);
+
+    const directData = {
+      left: leftCount,
+      right: rightCount,
     };
     return NextResponse.json(
       {
         success: true,
-        totalTeam: teamData,
+        totalDirect: directData,
       },
       { status: 200 }
     );

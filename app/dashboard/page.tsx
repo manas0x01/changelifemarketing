@@ -138,21 +138,20 @@ export default function Dashboard() {
         console.log('🚀 [DASHBOARD] Fetching all dashboard data...');
         setLoading(true);
         const [
-          teamResponse, directResponse,
+          teamResponse,
           incomeResponse, boosterResponse, boosterAmountResponse,
-          profileResponse, totalIncomeResponse, totalPinsResponse,
+          profileResponse, totalIncomeResponse, totalPinsResponse, totalDirectResponse,
         ] = await Promise.all([
           fetch('/api/user/total-team', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/total-direct', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/basic-income', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/booster-income', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/booster-income-amount', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/get-profile', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/total-income', { method: 'GET', credentials: 'include' }),
           fetch('/api/user/total-pins', { method: 'GET', credentials: 'include' }),
+          fetch('/api/user/total-direct', { method: 'GET', credentials: 'include' }),
         ]);
-        if (teamResponse.status === 401 || directResponse.status === 401 || 
-            incomeResponse.status === 401 || profileResponse.status === 401) {
+        if (teamResponse.status === 401 || incomeResponse.status === 401 || profileResponse.status === 401) {
           console.log('❌ Unauthorized - redirecting to login');
           window.location.href = '/auth/login';
           return;
@@ -166,14 +165,6 @@ export default function Dashboard() {
           setTotalTeam(d.totalTeam || { left: 0, right: 0 });
         } else {
           console.log('⚠️ Total Team API failed');
-        }
-        
-        if (directResponse.ok) {
-          const d = await directResponse.json();
-          console.log('✅ Total Direct:', d.totalDirect);
-          setTotalDirect(d.totalDirect || { left: 0, right: 0 });
-        } else {
-          console.log('⚠️ Total Direct API failed');
         }
         
         if (incomeResponse.ok) {
@@ -202,15 +193,21 @@ export default function Dashboard() {
         
         if (profileResponse.ok) {
           const d = await profileResponse.json();
-          console.log('✅ User Profile:', d.user?.userId);
-          if (d.user) setUserProfile({ ...d.user, username: d.user.username || "N/A" });
+          if (d.user) {
+            setUserProfile({ ...d.user, username: d.user.username || "N/A" });
+          }
+        }
+        
+        if (totalDirectResponse.ok) {
+          const d = await totalDirectResponse.json();
+          console.log('👥 Total Direct API:', d.totalDirect);
+          setTotalDirect(d.totalDirect || { left: 0, right: 0 });
         } else {
-          console.log('⚠️ User Profile API failed');
+          console.log('⚠️ Total Direct API failed');
         }
         
         if (totalIncomeResponse.ok) {
           const d = await totalIncomeResponse.json();
-          console.log('✅ Total Income:', d.totalIncome, '| Bank:', d.bankName);
           setTotalIncome(d.totalIncome || 0);
           setBankDetails({
             accountHolderName: d.fullName || "", 
@@ -218,94 +215,64 @@ export default function Dashboard() {
             ifscCode: d.ifsc || "", 
             bankName: d.bankName || "",
           });
-        } else {
-          console.log('⚠️ Total Income API failed');
         }
         
         if (totalPinsResponse.ok) {
           const d = await totalPinsResponse.json();
-          console.log('✅ Total Pins - Active:', d.activePins, '| Used:', d.usedPins, '| Total:', d.totalPins);
           setTotalPins({
             active: d.activePins || 0,
             used: d.usedPins || 0,
             total: d.totalPins || 0,
           });
-        } else {
-          console.log('⚠️ Total Pins API failed');
         }
       } catch (error: any) {
-        console.error('❌ Dashboard data fetch error:', error);
       } finally {
-        console.log('✅ Dashboard data fetch completed');
         setLoading(false);
       }
     };
     fetchDashboardData();
   }, []);
   const handleWithdraw = async () => {
-    console.log('💸 [WITHDRAW] Withdraw request initiated');
     setWithdrawError("");
     setWithdrawSuccess("");
-    
-    console.log('📝 Withdraw amount entered:', withdrawAmount);
     const amt = Number(withdrawAmount);
-    
     if (!withdrawAmount || isNaN(amt)) {
-      console.log('❌ Invalid amount entered:', withdrawAmount);
       setWithdrawError("Please enter a valid amount.");
       return;
     }
-    console.log('✅ Amount is valid:', amt);
-    
     if (amt < 800) {
-      console.log('❌ Amount below minimum (800):', amt);
       setWithdrawError("Minimum withdrawal amount is ₹800.");
       return;
     }
     
     if (amt > totalIncome) {
-      console.log('❌ Amount exceeds balance - Requested:', amt, '| Available:', totalIncome);
       setWithdrawError("Amount exceeds your total income balance.");
       return;
     }
-    
-    console.log('✅ All validations passed. Submitting withdrawal...');
     try {
-      setWithdrawLoading(true);
-      console.log('🚀 Sending withdraw API request:', { amount: amt });
-      
+      setWithdrawLoading(true);   
       const res = await fetch('/api/user/withdraw', {
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ amount: amt }),
       });
-      
       if (res.status === 401) {
-        console.log('❌ Unauthorized - redirecting to login');
         window.location.href = '/auth/login';
         return;
       }
-      
       const data = await res.json();
-      console.log('📋 Server response:', data);
-      
       if (!res.ok) {
-        console.log('❌ Withdrawal failed:', data.error || data.message);
         setWithdrawError(data.error || data.message || "Withdrawal failed.");
       } else {
-        console.log('✅ Withdrawal successful!');
-        console.log('📊 New balance:', data.remainingBalance);
         setWithdrawSuccess(data.message || "Withdrawal request submitted!");
         setTotalIncome(data.remainingBalance ?? totalIncome - amt);
         setWithdrawAmount("");
       }
     } catch (error: any) {
-      console.error('❌ Withdraw error:', error);
       setWithdrawError("Network error. Please try again.");
     } finally {
       setWithdrawLoading(false);
-      console.log('✅ Withdraw request processing completed');
     }
   };
 

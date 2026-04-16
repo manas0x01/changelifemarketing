@@ -3,10 +3,7 @@ import User from "@/models/User";
 
 export async function POST(req: Request) {
     try {
-        console.log('🔍 [API] CHECK USER ID AVAILABILITY - Starting...');
         const { userId } = await req.json();
-        console.log('📝 User ID received:', userId);
-        
         if (!userId || !userId.trim()) {
             console.log('❌ User ID is empty');
             return Response.json(

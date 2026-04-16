@@ -64,12 +64,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       { status: 200 }
     );
   } catch (error) {
-    console.error('[PATCH /api/admin/orders/[id]/status]', error);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }
 
-// ── DELETE /api/admin/orders/[id]/status ── hard delete (admin only) ─────────
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions);
@@ -98,7 +96,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
       { status: 200 }
     );
   } catch (error) {
-    console.error('[DELETE /api/admin/orders/[id]/status]', error);
     return NextResponse.json({ error: 'Internal server error.' }, { status: 500 });
   }
 }

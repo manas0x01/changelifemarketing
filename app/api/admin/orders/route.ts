@@ -105,12 +105,9 @@ export async function GET(req: NextRequest) {
       },
     });
   } catch (err: any) {
-    console.error('[GET /api/admin/orders]', err);
     return NextResponse.json({ success: false, message: 'Internal server error.' }, { status: 500 });
   }
 }
-
-// ─── PATCH /api/admin/orders?id=xxx  (update status) ─────────────────────────
 
 export async function PATCH(req: NextRequest) {
   try {
@@ -147,12 +144,9 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Order status updated.', data: updated });
   } catch (err: any) {
-    console.error('[PATCH /api/admin/orders]', err);
     return NextResponse.json({ success: false, message: 'Internal server error.' }, { status: 500 });
   }
 }
-
-// ─── DELETE /api/admin/orders?id=xxx ─────────────────────────────────────────
 
 export async function DELETE(req: NextRequest) {
   try {
@@ -174,7 +168,6 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({ success: true, message: 'Order deleted successfully.' });
   } catch (err: any) {
-    console.error('[DELETE /api/admin/orders]', err);
     return NextResponse.json({ success: false, message: 'Internal server error.' }, { status: 500 });
   }
 }

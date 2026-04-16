@@ -9,8 +9,6 @@ import {
   ChevronLeft, ChevronRight, ImageIcon, Award, MapPin, FileText,
   UserCheck, Save, AlertCircle,
 } from 'lucide-react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -508,64 +506,42 @@ export default function AdminAchieversPage() {
   const firstCnt = achievers.filter(a => a.isFirstBooster).length;
 
   return (
-    <div className="min-h-screen bg-[#F8FAF9] selection:bg-[#C9A84C]/30 selection:text-[#0A6E5A]">
-      <Header />
-
+    <div className="bg-[#F5F7F6]">
       {/* Page Header */}
-      <section className="bg-[#0A6E5A] pt-28 pb-12 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none opacity-10"
-          style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
-        <div className="absolute -top-40 -right-40 w-120 h-120 bg-[#C9A84C]/8 rounded-full blur-3xl pointer-events-none" />
-
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 relative z-10">
-          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-5">
-            <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-              <p className="font-['Roboto'] text-[0.68rem] uppercase tracking-[0.25em] text-[#C9A84C] mb-2">Admin Panel</p>
-              <h1 className="font-['Fraunces'] text-[2.25rem] sm:text-[3rem] text-[#FFFFFF] leading-tight">
-                Achievers Management
-              </h1>
-              <p className="font-['Roboto'] text-[#FFFFFF]/50 text-[0.875rem] mt-1.5">
-                Manage Hall of Fame achievers displayed on the public gallery.
-              </p>
-            </motion.div>
-
-            <motion.button
-              initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.25 }}
-              onClick={() => { setEditTarget(null); setFormMode('create'); }}
-              className="flex items-center gap-2 px-6 py-3.5 bg-[#C9A84C] hover:bg-[#C9A84C]/90 text-[#FFFFFF] font-['Roboto'] font-semibold text-[0.875rem] transition-all shrink-0 self-start sm:self-auto"
-            >
-              <Plus className="w-4 h-4" />Add Achiever
-            </motion.button>
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="sticky top-0 z-20 bg-[#FFFFFF]/95 backdrop-blur border-b border-[#0A6E5A]/10 px-6 md:px-8 py-6"
+      >
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="font-['Fraunces'] text-[2rem] md:text-[2.5rem] text-[#0A6E5A]">Achievers</h1>
+            <p className="font-['Roboto'] text-[#333333]/60 text-sm mt-1">Manage Hall of Fame achievers</p>
           </div>
-
-          {/* Stats strip */}
-          <motion.div
-            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8"
+          <motion.button
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.25 }}
+            onClick={() => { setEditTarget(null); setFormMode('create'); }}
+            className="flex items-center gap-2 px-5 py-2.5 bg-[#0A6E5A] hover:bg-[#0A6E5A]/90 text-[#FFFFFF] font-['Roboto'] font-semibold text-[0.875rem] transition-all"
           >
-            {[
-              { label: 'Total',        value: total,    Icon: Trophy },
-              { label: 'Visible',      value: visCount, Icon: Eye },
-              { label: 'Gold Members', value: goldCnt,  Icon: Crown },
-              { label: '1st Booster',  value: firstCnt, Icon: Star },
-            ].map(({ label, value, Icon }) => (
-              <div key={label} className="bg-[#FFFFFF]/10 backdrop-blur-sm px-4 py-3">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <Icon className="w-3.5 h-3.5 text-[#C9A84C]" />
-                  <span className="font-['Roboto'] text-[0.62rem] uppercase tracking-wider text-[#FFFFFF]/50">{label}</span>
-                </div>
-                <span className="font-['Fraunces'] text-[1.5rem] text-[#FFFFFF]">{value}</span>
-              </div>
-            ))}
-          </motion.div>
+            <Plus className="w-4 h-4" />Add Achiever
+          </motion.button>
         </div>
-      </section>
+      </motion.div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-8 space-y-6">
+      {/* Main Content */}
+      <main className="px-6 md:px-8 py-8 space-y-6">
 
         {/* Controls */}
-        <div className="bg-[#FFFFFF] border border-[#0A6E5A]/10 p-4">
-          <div className="flex flex-col sm:flex-row gap-3">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="bg-[#FFFFFF] border border-[#0A6E5A]/10 p-4 space-y-3"
+        >
+          <div className="flex flex-col md:flex-row gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[#0A6E5A]/35" />
               <input value={search} onChange={e => onSearch(e.target.value)}
@@ -578,17 +554,15 @@ export default function AdminAchieversPage() {
               )}
             </div>
 
-            {/* Visibility filter */}
-            <div className="flex gap-1.5">
+            <div className="flex gap-1.5 flex-wrap">
               {[['', 'All'], ['true', 'Visible'], ['false', 'Hidden']].map(([v, l]) => (
                 <button key={v} onClick={() => { setVisible(v); setPage(1); }}
-                  className={`px-3 py-2.5 font-['Roboto'] text-[0.75rem] font-medium uppercase tracking-wider transition-all ${visible === v ? 'bg-[#0A6E5A] text-[#FFFFFF]' : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}>
+                  className={`px-3 py-2.5 font-['Roboto'] text-[0.75rem] font-medium uppercase tracking-wider transition-all whitespace-nowrap ${visible === v ? 'bg-[#0A6E5A] text-[#FFFFFF]' : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}>
                   {l}
                 </button>
               ))}
             </div>
 
-            {/* View Toggle */}
             <div className="flex gap-1 border border-[#0A6E5A]/15 p-1">
               {(['grid', 'list'] as const).map(v => (
                 <button key={v} onClick={() => setViewMode(v)}
@@ -598,12 +572,35 @@ export default function AdminAchieversPage() {
               ))}
             </div>
 
-            <button onClick={() => load()} className="flex items-center gap-2 px-4 py-2.5 border border-[#0A6E5A]/20 text-[#0A6E5A] font-['Roboto'] text-[0.8rem] hover:bg-[#0A6E5A]/5 transition-colors">
+            <button onClick={() => load()} className="flex items-center gap-2 px-4 py-2.5 border border-[#0A6E5A]/20 text-[#0A6E5A] font-['Roboto'] text-[0.8rem] hover:bg-[#0A6E5A]/5 transition-colors whitespace-nowrap">
               <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
+              <span className="hidden md:inline">Refresh</span>
             </button>
           </div>
-        </div>
+
+          {/* Stats strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18 }}
+            className="grid grid-cols-2 sm:grid-cols-4 gap-2"
+          >
+            {[
+              { label: 'Total', value: total, Icon: Trophy },
+              { label: 'Visible', value: visCount, Icon: Eye },
+              { label: 'Gold', value: goldCnt, Icon: Crown },
+              { label: '1st', value: firstCnt, Icon: Star },
+            ].map(({ label, value, Icon }) => (
+              <div key={label} className="bg-[#0A6E5A]/5 px-3 py-2">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                  <Icon className="w-3 h-3 text-[#C9A84C]" />
+                  <span className="font-['Roboto'] text-[0.6rem] uppercase tracking-wider text-[#333333]/50">{label}</span>
+                </div>
+                <span className="font-['Fraunces'] text-[1.25rem] text-[#0A6E5A]">{value}</span>
+              </div>
+            ))}
+          </motion.div>
+        </motion.div>
 
         {/* Error */}
         {err && (
@@ -758,7 +755,7 @@ export default function AdminAchieversPage() {
         )}
       </main>
 
-      {/* Modals */}
+    {/* Modals */}
       <AnimatePresence>
         {formMode && (
           <FormModal mode={formMode}
@@ -795,8 +792,6 @@ export default function AdminAchieversPage() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <Footer />
     </div>
   );
 }

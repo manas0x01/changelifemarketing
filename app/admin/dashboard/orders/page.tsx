@@ -9,8 +9,6 @@ import {
   Phone, User, CreditCard, Clock, CheckCircle2, XCircle,
   Truck, IndianRupee, Eye, ChevronDown, Tag,
 } from 'lucide-react';
-import Header from '@/components/Header';
-import Footer from '@/components/Footer';
 
 {/* Types */}
 type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'completed' | 'cancelled';
@@ -67,7 +65,7 @@ const StatusBadge = ({ status }: { status: OrderStatus }) => {
   const cfg = S[status];
   return (
     <span className={`inline-flex items-center gap-1 px-2.5 py-1 text-[0.62rem] font-['Roboto'] font-bold uppercase tracking-wider border ${cfg.color} ${cfg.bg} ${cfg.border}`}>
-      <cfg.Icon className="w-3 h-3" />{cfg.label}TDS
+      <cfg.Icon className="w-3 h-3" />{cfg.label}
     </span>
   );
 };
@@ -268,7 +266,7 @@ const DeleteModal = ({ order, onClose, onConfirm }: {
 };
 
 {/* Main Page */}
-export default function AdminOrdersPage() {
+export default function AdminDashboardOrdersPage() {
   const [orders,      setOrders]      = useState<Order[]>([]);
   const [pagination,  setPagination]  = useState<Pagination | null>(null);
   const [summary,     setSummary]     = useState<Summary | null>(null);
@@ -386,22 +384,20 @@ export default function AdminOrdersPage() {
 
   return (
     <div className="min-h-screen bg-[#F8FAF9] selection:bg-[#C9A84C]/30 selection:text-[#0A6E5A]">
-      <Header />
-
       {/* ── Page Header ── */}
-      <section className="bg-[#0A6E5A] pt-28 pb-12 relative overflow-hidden">
+      <section className="bg-[#0A6E5A] pt-6 pb-8 relative overflow-hidden">
         <div className="absolute inset-0 pointer-events-none opacity-10"
           style={{ backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)', backgroundSize: '28px 28px' }} />
         <div className="absolute -top-40 -right-40 w-120 h-120 bg-[#C9A84C]/8 rounded-full blur-3xl pointer-events-none" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 relative z-10">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <p className="font-['Roboto'] text-[0.68rem] uppercase tracking-[0.25em] text-[#C9A84C] mb-2">Admin Panel</p>
-            <h1 className="font-['Fraunces'] text-[2.25rem] sm:text-[3rem] text-[#FFFFFF] leading-tight">
+            <p className="font-['Roboto'] text-[0.68rem] uppercase tracking-[0.25em] text-[#C9A84C] mb-1">Dashboard</p>
+            <h1 className="font-['Fraunces'] text-[2rem] sm:text-[2.5rem] text-[#FFFFFF] leading-tight">
               Order Management
             </h1>
-            <p className="font-['Roboto'] text-[#FFFFFF]/50 text-[0.875rem] mt-1.5">
-              View, manage, and update all customer orders in real time.
+            <p className="font-['Roboto'] text-[#FFFFFF]/50 text-[0.8rem] mt-1">
+              View, manage, and update all customer orders.
             </p>
           </motion.div>
 
@@ -409,15 +405,15 @@ export default function AdminOrdersPage() {
           {summary && (
             <motion.div
               initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
-              className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8"
+              className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-6"
             >
               {statCards.map(({ label, value, icon: Ic, color }) => (
-                <div key={label} className="bg-[#FFFFFF]/10 backdrop-blur-sm px-4 py-3">
-                  <div className="flex items-center gap-2 mb-0.5">
-                    <Ic className="w-3.5 h-3.5 text-[#C9A84C]" />
-                    <span className="font-['Roboto'] text-[0.62rem] uppercase tracking-wider text-[#FFFFFF]/50">{label}</span>
+                <div key={label} className="bg-[#FFFFFF]/10 backdrop-blur-sm px-3 py-2.5">
+                  <div className="flex items-center gap-1.5 mb-0.5">
+                    <Ic className="w-3 h-3 text-[#C9A84C]" />
+                    <span className="font-['Roboto'] text-[0.55rem] uppercase tracking-wider text-[#FFFFFF]/50">{label}</span>
                   </div>
-                  <span className={`font-['Fraunces'] text-[1.4rem] ${color} text-[#FFFFFF]`}>{value}</span>
+                  <span className={`font-['Fraunces'] text-[1.1rem] ${color} text-[#FFFFFF]`}>{value}</span>
                 </div>
               ))}
             </motion.div>
@@ -425,7 +421,7 @@ export default function AdminOrdersPage() {
         </div>
       </section>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-8 space-y-6">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 py-6 space-y-5">
 
         {/* ── Controls ── */}
         <div className="bg-[#FFFFFF] border border-[#0A6E5A]/10 p-4">
@@ -721,7 +717,6 @@ export default function AdminOrdersPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <Footer />
     </div>
   );
 }

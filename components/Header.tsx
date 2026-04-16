@@ -1,17 +1,15 @@
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { Menu, X, ChevronDown } from 'lucide-react';
-import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { Menu, X } from 'lucide-react';
+import Image from 'next/image';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [isAdminDropdownOpen, setIsAdminDropdownOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
   const { data: session } = useSession();
-  
-  const isAdmin = session?.user?.role === 'admin';
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -21,14 +19,6 @@ export default function Header() {
     { name: 'Achievers', path: '/achievers' },
     { name: 'Legal Documents', path: '/legal' },
     { name: 'Contact', path: '/contact' },
-  ];
-
-  const adminLinks = [
-    { name: 'Create Epin', path: '/admin/createepin' },
-    { name: 'Users', path: '/admin/users' },
-    { name: 'Withdraw Requests', path: '/admin/withdrawrequests' },
-    { name: 'Achievers', path: '/admin/achievers' },
-    {name:'Orders', path: '/admin/orders'},
   ];
 
   const isActive = (path: string) => {
@@ -47,6 +37,21 @@ export default function Header() {
           element.scrollIntoView({ behavior: 'smooth' });
         }
       }, 0);
+    }
+  };
+
+  const handleDashboardClick = () => {
+    if (!session) {
+      // Not logged in, go to login
+      router.push('/auth/login');
+    } else {
+      // Logged in, check role
+      const role = session.user?.role;
+      if (role === 'admin') {
+        router.push('/admin/dashboard');
+      } else {
+        router.push('/dashboard');
+      }
     }
   };
 
@@ -85,40 +90,16 @@ export default function Header() {
                 {link.name}
               </Link>
             ))}
-            
-            {/* Admin Dropdown - Only for Admin Users */}
-            {isAdmin && (
-              <div className="relative group">
-                <button className="flex items-center gap-2 font-['Roboto'] font-medium text-[#333333] hover:text-[#0A6E5A] transition-colors">
-                  Admin
-                  <ChevronDown className="w-4 h-4" />
-                </button>
-                <div className="absolute top-full left-0 mt-2 w-48 bg-white border border-[#ddd] rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
-                  {adminLinks.map((link) => (
-                    <Link
-                      key={link.path}
-                      href={link.path}
-                      className={`block px-4 py-3 font-['Roboto'] text-sm transition-colors first:rounded-t-lg last:rounded-b-lg hover:bg-[#f5f5f5] ${
-                        isActive(link.path)
-                          ? 'text-[#C9A84C] bg-[#f9f9f9]'
-                          : 'text-[#333333]'
-                      }`}
-                    >
-                      {link.name}
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
           </nav>
-
           {/* CTA Button */}
           <div className="hidden lg:block">
-            <Link href="/auth/login">
-              <button suppressHydrationWarning={true} className="bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors">
-                Login
-              </button>
-            </Link>
+            <button
+              onClick={handleDashboardClick}
+              suppressHydrationWarning={true}
+              className="bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors"
+            >
+              {session ? 'Dashboard' : 'Login'}
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -149,45 +130,16 @@ export default function Header() {
               </Link>
             ))}
             
-            {/* Admin Dropdown - Mobile */}
-            {isAdmin && (
-              <div>
-                <button
-                  onClick={() => setIsAdminDropdownOpen(!isAdminDropdownOpen)}
-                  className="flex items-center gap-2 font-['Roboto'] font-medium text-[#333333] hover:text-[#0A6E5A] py-2 w-full transition-colors"
-                >
-                  Admin
-                  <ChevronDown className={`w-4 h-4 transition-transform ${isAdminDropdownOpen ? 'rotate-180' : ''}`} />
-                </button>
-                {isAdminDropdownOpen && (
-                  <div className="ml-4 space-y-2 mt-2 border-l-2 border-[#C9A84C] pl-4">
-                    {adminLinks.map((link) => (
-                      <Link
-                        key={link.path}
-                        href={link.path}
-                        onClick={() => {
-                          setIsMenuOpen(false);
-                          setIsAdminDropdownOpen(false);
-                        }}
-                        className={`block font-['Roboto'] text-sm py-2 transition-colors ${
-                          isActive(link.path)
-                            ? 'text-[#C9A84C]'
-                            : 'text-[#333333] hover:text-[#0A6E5A]'
-                        }`}
-                      >
-                        {link.name}
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-            
-            <Link href="/auth/login" onClick={() => setIsMenuOpen(false)}>
-              <button suppressHydrationWarning={true} className="w-full bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors">
-                Login
-              </button>
-            </Link>
+            <button
+              onClick={() => {
+                setIsMenuOpen(false);
+                handleDashboardClick();
+              }}
+              suppressHydrationWarning={true}
+              className="w-full bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors"
+            >
+              {session ? 'Dashboard' : 'Login'}
+            </button>
           </nav>
         )}
       </div>

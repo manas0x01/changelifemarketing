@@ -13,15 +13,6 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
-    const username = session.user.username || session.user.email;
-    const userEmail = session.user.email;
-    const userId = (session.user as any)?.userId;
-    if (!username && !userEmail) {
-      return NextResponse.json(
-        { error: 'User information not found in session' },
-        { status: 400 }
-      );
-    }
     const { transactionPassword } = await request.json();
     if (!transactionPassword) {
       return NextResponse.json(
@@ -30,36 +21,17 @@ export async function POST(request: NextRequest) {
       );
     }
     await connectDB();
-    const searchQuery: any = {};
-    let searchMethod = '';
-    if (session.user.username) {
-      searchQuery.username = session.user.username;
-      searchMethod = 'username (from session)';
-    } 
-    else if (userId) {
-      searchQuery.userId = userId;
-      searchMethod = 'userId (from session)';
-    }
-    else if (userEmail) {
-      searchQuery.email = userEmail;
-      searchMethod = 'email (fallback)';
-    }
-    let user = await User.findOne(searchQuery).select('+transactionPassword');
-    if (!user) {
-      if (!user && session.user.username) {
-        user = await User.findOne({ username: session.user.username }).select('+transactionPassword');
-      }
-      if (!user && userId) {
-        user = await User.findOne({ userId: userId }).select('+transactionPassword');
-      }
 
-      if (!user && userEmail) {
-        user = await User.findOne({ email: userEmail }).select('+transactionPassword');
-      }
-      if (!user && username) {
-        user = await User.findOne({ mobileNo: username }).select('+transactionPassword');
-      }
+    const sessionUsername = (session.user as any)?.username;
+    if (!sessionUsername) {
+      return NextResponse.json(
+        { error: 'Username not found in session. Please login with your username.' },
+        { status: 400 }
+      );
     }
+
+    console.log('🔍 [VALIDATE_TXN] Searching user by username:', sessionUsername);
+    const user = await User.findOne({ username: sessionUsername }).select('+transactionPassword');
 
     if (!user) {
       return NextResponse.json(
@@ -77,6 +49,18 @@ export async function POST(request: NextRequest) {
         { status: 401 }
       );
     }
+    // Debug: log provided and stored password info to troubleshoot mismatches
+    try {
+      console.log('🔐 [VALIDATE_TXN] Provided txn password (raw):', transactionPassword);
+      const providedTrimmed = String(transactionPassword).trim();
+      console.log('🔐 [VALIDATE_TXN] Provided txn password (trimmed) length:', providedTrimmed.length);
+      console.log('🔐 [VALIDATE_TXN] Stored txn hash length:', String(user.transactionPassword).length);
+      console.log('🔐 [VALIDATE_TXN] Stored txn hash prefix:', String(user.transactionPassword).slice(0, 8));
+      console.log('🔐 [VALIDATE_TXN] Stored txn hash contains bcrypt signature ($2):', String(user.transactionPassword).includes('$2'));
+    } catch (dbgErr) {
+      console.log('🔐 [VALIDATE_TXN] Debug logging failed:', dbgErr);
+    }
+
     const isPasswordValid = await user.compareTransactionPassword(transactionPassword);
     if (!isPasswordValid) {
       return NextResponse.json(
@@ -86,7 +70,6 @@ export async function POST(request: NextRequest) {
     }
     const userEPins = user.ePins || [];
     const availableEPins = userEPins.filter((pin: any) => {
-      // Consider a pin as available if it's Active
       return pin.status === 'Active' || !pin.status;
     });
     if (!availableEPins || availableEPins.length === 0) {

@@ -50,7 +50,6 @@ interface Pagination {
   hasNextPage: boolean;
   hasPrevPage: boolean;
 }
-
 interface Summary {
   totalUsers: number;
   totalAdmin: number;
@@ -72,10 +71,13 @@ const AddUserModal = ({ onClose, onSuccess }: {
     email: '',
     fullName: '',
     mobileNo: '',
+    transactionPassword: '',
+    confirmTransactionPassword: '',
     role: 'user',
     memberType: 'active',
   });
   const [loading, setLoading] = useState(false);
+  const [createdCreds, setCreatedCreds] = useState<null | { username: string; password: string; transactionPassword: string }>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -97,26 +99,66 @@ const AddUserModal = ({ onClose, onSuccess }: {
       toast.error('Mobile number must be 10 digits');
       return;
     }
+    // Transaction password validations
+    if (!formData.transactionPassword || !formData.confirmTransactionPassword) {
+      toast.error('Transaction password and confirmation are required');
+      return;
+    }
+    if (formData.transactionPassword !== formData.confirmTransactionPassword) {
+      toast.error('Transaction passwords do not match');
+      return;
+    }
+    if (formData.transactionPassword.trim().length < 4) {
+      toast.error('Transaction Password must be at least 4 characters');
+      return;
+    }
 
     setLoading(true);
     try {
+      const payload = {
+        username: formData.username,
+        password: formData.password,
+        email: formData.email,
+        fullName: formData.fullName,
+        mobileNo: formData.mobileNo,
+        role: formData.role,
+        memberType: formData.memberType,
+        transactionPassword: formData.transactionPassword,
+      };
+
       const res = await fetch('/api/admin/users/add', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const json = await res.json();
       if (!res.ok) throw new Error(json.message);
-
-      toast.success('User created successfully');
-      onClose();
-      onSuccess();
+      setCreatedCreds({
+        username: json.user?.username ?? formData.username,
+        password: json.rawPassword ?? formData.password,
+        transactionPassword: json.rawTransactionPassword ?? formData.transactionPassword,
+      });
     } catch (error: any) {
       toast.error(error.message ?? 'Failed to create user');
     } finally {
       setLoading(false);
     }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied to clipboard');
+    } catch (e) {
+      toast.error('Failed to copy');
+    }
+  };
+
+  const handleDone = () => {
+    setCreatedCreds(null);
+    onClose();
+    onSuccess();
   };
 
   return (
@@ -125,7 +167,7 @@ const AddUserModal = ({ onClose, onSuccess }: {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0A6E5A]/40 backdrop-blur-sm"
-      onClick={onClose}
+      onClick={() => createdCreds ? handleDone() : onClose()}
     >
       <motion.div
         initial={{ scale: 0.9, opacity: 0, y: 20 }}
@@ -137,12 +179,13 @@ const AddUserModal = ({ onClose, onSuccess }: {
       >
         <div className="bg-[#0A6E5A] px-6 py-5 flex items-center justify-between">
           <h3 className="font-['Fraunces'] text-[1.25rem] text-[#FFFFFF]">Add New User</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full bg-[#FFFFFF]/10 hover:bg-[#FFFFFF]/20 flex items-center justify-center transition-colors" suppressHydrationWarning={true}>
+          <button onClick={() => createdCreds ? handleDone() : onClose()} className="w-8 h-8 rounded-full bg-[#FFFFFF]/10 hover:bg-[#FFFFFF]/20 flex items-center justify-center transition-colors" suppressHydrationWarning={true}>
             <X className="w-4 h-4 text-[#FFFFFF]" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto">
+        {!createdCreds ? (
+          <form onSubmit={handleSubmit} className="px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto">
           <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Username *</label>
             <input type="text" name="username" value={formData.username} onChange={handleChange} placeholder="Enter username" className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
@@ -164,6 +207,14 @@ const AddUserModal = ({ onClose, onSuccess }: {
             <input type="text" name="mobileNo" value={formData.mobileNo} onChange={handleChange} placeholder="Enter mobile number" maxLength={10} className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
           </div>
           <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Transaction Password *</label>
+            <input type="password" name="transactionPassword" value={formData.transactionPassword} onChange={handleChange} placeholder="Enter transaction password" className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+          </div>
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Confirm Transaction Password *</label>
+            <input type="password" name="confirmTransactionPassword" value={formData.confirmTransactionPassword} onChange={handleChange} placeholder="Confirm transaction password" className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+          </div>
+          <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Role</label>
             <select name="role" value={formData.role} onChange={handleChange} className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true}>
               <option value="user">User</option>
@@ -178,16 +229,57 @@ const AddUserModal = ({ onClose, onSuccess }: {
               <option value="gold">Gold</option>
             </select>
           </div>
-        </form>
+          </form>
+        ) : (
+          <div className="px-6 py-6 space-y-4 max-h-[70vh] overflow-y-auto">
+            <h4 className="font-['Fraunces'] text-[1rem] text-[#0A6E5A]">Credentials (shown once)</h4>
+            <div className="space-y-3">
+              <div className="bg-[#F8FAF9] border border-[#0A6E5A]/10 p-3 rounded">
+                <p className="text-[0.75rem] text-[#333333]/60">Username</p>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="font-medium">{createdCreds.username}</span>
+                  <button onClick={() => copyToClipboard(createdCreds.username)} className="text-sm text-[#0A6E5A]">Copy</button>
+                </div>
+              </div>
+              <div className="bg-[#F8FAF9] border border-[#0A6E5A]/10 p-3 rounded">
+                <p className="text-[0.75rem] text-[#333333]/60">Password</p>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="font-medium">{createdCreds.password}</span>
+                  <button onClick={() => copyToClipboard(createdCreds.password)} className="text-sm text-[#0A6E5A]">Copy</button>
+                </div>
+              </div>
+              <div className="bg-[#F8FAF9] border border-[#0A6E5A]/10 p-3 rounded">
+                <p className="text-[0.75rem] text-[#333333]/60">Transaction Password</p>
+                <div className="flex items-center justify-between mt-1">
+                  <span className="font-medium">{createdCreds.transactionPassword}</span>
+                  <button onClick={() => copyToClipboard(createdCreds.transactionPassword)} className="text-sm text-[#0A6E5A]">Copy</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="px-6 pb-6 flex gap-3 border-t border-[#0A6E5A]/10">
-          <button onClick={onClose} className="flex-1 py-3 border border-[#0A6E5A]/20 font-['Roboto'] text-[0.875rem] text-[#0A6E5A] hover:bg-[#0A6E5A]/5 transition-colors mt-4">
-            Cancel
-          </button>
-          <button onClick={handleSubmit} disabled={loading} className="flex-1 py-3 bg-[#0A6E5A] font-['Roboto'] text-[0.875rem] text-[#FFFFFF] hover:bg-[#0A6E5A]/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 mt-4">
-            {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-            {loading ? 'Creating...' : 'Create User'}
-          </button>
+          {!createdCreds ? (
+            <>
+              <button onClick={onClose} className="flex-1 py-3 border border-[#0A6E5A]/20 font-['Roboto'] text-[0.875rem] text-[#0A6E5A] hover:bg-[#0A6E5A]/5 transition-colors mt-4">
+                Cancel
+              </button>
+              <button onClick={handleSubmit} disabled={loading} className="flex-1 py-3 bg-[#0A6E5A] font-['Roboto'] text-[0.875rem] text-[#FFFFFF] hover:bg-[#0A6E5A]/90 transition-colors flex items-center justify-center gap-2 disabled:opacity-60 mt-4">
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                {loading ? 'Creating...' : 'Create User'}
+              </button>
+            </>
+          ) : (
+            <>
+              <button onClick={handleDone} className="flex-1 py-3 border border-[#0A6E5A]/20 font-['Roboto'] text-[0.875rem] text-[#0A6E5A] hover:bg-[#0A6E5A]/5 transition-colors mt-4">
+                Close
+              </button>
+              <button onClick={handleDone} className="flex-1 py-3 bg-[#0A6E5A] font-['Roboto'] text-[0.875rem] text-[#FFFFFF] hover:bg-[#0A6E5A]/90 transition-colors flex items-center justify-center gap-2 mt-4">
+                <Check className="w-4 h-4" /> Done
+              </button>
+            </>
+          )}
         </div>
       </motion.div>
     </motion.div>

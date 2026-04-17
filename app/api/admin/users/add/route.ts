@@ -6,9 +6,8 @@ export async function POST(req: NextRequest) {
   try {
     await connectDB();
 
-    const { username, password, email, fullName, mobileNo, role = 'user', memberType = 'active' } = await req.json();
+    const { username, password, email, fullName, mobileNo, role = 'user', memberType = 'active', transactionPassword } = await req.json();
 
-    // ── Validation ──
     if (!username || !password) {
       return NextResponse.json(
         { message: 'Username and password are required' },
@@ -29,15 +28,26 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
+    
+    if (!transactionPassword || !String(transactionPassword).trim()) {
+      return NextResponse.json(
+        { message: 'Transaction Password is required' },
+        { status: 400 }
+      );
+    }
+    if (String(transactionPassword).trim().length < 4) {
+      return NextResponse.json(
+        { message: 'Transaction Password must be at least 4 characters' },
+        { status: 400 }
+      );
+    }
 
-    // ── Check for existing user ──
-    const existingUser = await User.findOne({
-      $or: [{ username }, { email }]
-    });
+    // ── Check for existing user (username only) ──
+    const existingUser = await User.findOne({ username });
 
     if (existingUser) {
       return NextResponse.json(
-        { message: 'Username or email already exists' },
+        { message: 'Username already exists' },
         { status: 409 }
       );
     }
@@ -51,12 +61,14 @@ export async function POST(req: NextRequest) {
       mobileNo,
       role,
       memberType,
+      transactionPassword: String(transactionPassword).trim(),
       joiningDate: new Date().toLocaleDateString('en-IN'),
     });
 
-    await newUser.save();
+    try {
+      await newUser.save();
 
-    return NextResponse.json(
+      return NextResponse.json(
       { 
         message: 'User created successfully', 
         user: {
@@ -67,10 +79,20 @@ export async function POST(req: NextRequest) {
           mobileNo: newUser.mobileNo,
           role: newUser.role,
           memberType: newUser.memberType,
-        }
+        },
+        // Return raw credentials only in response (do NOT store plaintext in DB)
+        rawPassword: password,
+        rawTransactionPassword: transactionPassword,
       },
       { status: 201 }
-    );
+      );
+    } catch (err: any) {
+      if (err && err.code === 11000) {
+        const field = Object.keys(err.keyValue || {}).join(', ') || 'field';
+        return NextResponse.json({ message: `${field} already exists` }, { status: 409 });
+      }
+      throw err;
+    }
   } catch (error: any) {
     return NextResponse.json(
       { message: error.message ?? 'Failed to create user' },

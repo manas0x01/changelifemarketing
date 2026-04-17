@@ -1,122 +1,51 @@
 import User from '@/models/User';
 import mongoose from 'mongoose';
 
-/**
- * Calculate and update all user metrics (team, income, etc.)
- * This function recursively counts downline and calculates income
- */
-export async function calculateAndUpdateUserMetrics(userId: string | mongoose.Types.ObjectId) {
+export async function calculateAndUpdateUserMetrics(userId: string | mongoose.Types.ObjectId,
+  depth: number = 0) {
   try {
-    console.log('\n📊 [calculateAndUpdateUserMetrics] Starting metrics calculation for userId:', userId);
-    
-    console.log('🔍 [calculateAndUpdateUserMetrics] Fetching user from database...');
     const user = await User.findById(userId);
     
     if (!user) {
-      console.warn(`❌ [calculateAndUpdateUserMetrics] User not found: ${userId}`);
       return null;
     }
-    
-    console.log('✅ [calculateAndUpdateUserMetrics] User found:', {
-      username: user.username,
-      userId: user.userId,
-      email: user.email,
-      sponsorId: user.sponsorId,
-    });
-
-    // ── CALCULATE TOTAL TEAM (Left & Right) ──
-    console.log('\n🌳 [calculateAndUpdateUserMetrics] Calculating total downline team...');
     const leftDownline = await countDownlineMembers(user._id, 'left');
-    console.log(`  👈 Left downline members: ${leftDownline}`);
-    
     const rightDownline = await countDownlineMembers(user._id, 'right');
-    console.log(`  👉 Right downline members: ${rightDownline}`);
-    console.log(`  ✅ Total downline: Left(${leftDownline}) + Right(${rightDownline}) = ${leftDownline + rightDownline}`);
-
-    // ── CALCULATE DIRECT MEMBERS ──
-    console.log('\n👥 [calculateAndUpdateUserMetrics] Calculating direct members...');
     const directMembers = await User.find({
       $or: [
         { sponsorId: user.username },
         { sponsorId: user.userId }
       ]
     }).lean();
-    console.log(`  📋 Direct members found: ${directMembers.length}`);
-    
-    let leftTeamCount = 0;
-    let rightTeamCount = 0;
 
-    for (const member of directMembers) {
-      console.log(`  👤 Processing member: ${member.username} - Position: ${member.placementPosition}`);
-      if (member.placementPosition === 'left') {
-        leftTeamCount++;
-        console.log(`    ✓ Added to LEFT team`);
-      } else if (member.placementPosition === 'right') {
-        rightTeamCount++;
-        console.log(`    ✓ Added to RIGHT team`);
-      }
-    }
-    
-    console.log(`  ✅ Direct team count: Left(${leftTeamCount}) | Right(${rightTeamCount})`);
-
-    // ── CALCULATE BASIC INCOME (from pairs) ──
-    console.log('\n💰 [calculateAndUpdateUserMetrics] Calculating BASIC INCOME...');
-    const pairs = Math.min(leftDownline, rightDownline);
-    console.log(`  🔢 Pairs calculation: MIN(${leftDownline}, ${rightDownline}) = ${pairs}`);
-    
-    const basicIncome = pairs * 100; // 100 per pair (adjust as needed)
-    console.log(`  💹 Basic Income: ${pairs} × 100 = ₹${basicIncome}`);
-
-    // ── CALCULATE BOOSTER INCOME ──
-    console.log('\n🚀 [calculateAndUpdateUserMetrics] Calculating BOOSTER INCOME...');
     let boosterIncomeAmount = 0;
     let boosterLG = 0;
     let boosterRG = 0;
-    
-    // Example: Booster income from matching
-    console.log(`  📊 Checking booster qualification: Left(${leftDownline}) ≥ 2 && Right(${rightDownline}) ≥ 2`);
     if (leftDownline >= 2 && rightDownline >= 2) {
-      boosterLG = Math.floor(leftDownline / 2) * 50;
-      console.log(`  👈 Left Booster: FLOOR(${leftDownline} / 2) × 50 = ₹${boosterLG}`);
-      
+      boosterLG = Math.floor(leftDownline / 2) * 50;     
       boosterRG = Math.floor(rightDownline / 2) * 50;
-      console.log(`  👉 Right Booster: FLOOR(${rightDownline} / 2) × 50 = ₹${boosterRG}`);
-      
       boosterIncomeAmount = boosterLG + boosterRG;
-      console.log(`  ✅ Total Booster Income: ₹${boosterLG} + ₹${boosterRG} = ₹${boosterIncomeAmount}`);
-    } else {
-      console.log(`  ❌ Booster qualification not met - setting booster income to 0`);
     }
 
-    // ── UPDATE USER DOCUMENT ──
-    console.log('\n💾 [calculateAndUpdateUserMetrics] Updating user document in database...');
+    const basicIncome = user.basicIncome || 0;
     const updatePayload = {
-      totalTeam: {
-        left: leftDownline,
-        right: rightDownline
-      },
-      basicIncome: basicIncome,
-      boosterIncomeAmount: boosterIncomeAmount,
-      boosterIncome: {
-        LG: boosterLG,
-        RG: boosterRG,
-        totalBoosterMatching: boosterIncomeAmount
-      },
-      // Total income = basic income + booster income
-      totalIncome: basicIncome + boosterIncomeAmount
-    };
-    
-    console.log(`  📝 Update payload:`, updatePayload);
-    
+  boosterIncomeAmount: boosterIncomeAmount,
+  boosterIncome: {
+    LG: boosterLG,
+    RG: boosterRG,
+    totalBoosterMatching: boosterIncomeAmount
+  },
+  totalIncome: basicIncome + boosterIncomeAmount
+};
+
     const updatedUser = await User.findByIdAndUpdate(
       userId,
       updatePayload,
-      { new: true }
+      { returnDocument: "after" }
     );
     
     console.log(`  ✅ Database update successful - verified totalIncome: ₹${updatedUser?.totalIncome}`);
 
-    // ── RECURSIVELY UPDATE SPONSOR'S METRICS ──
     console.log('\n🔄 [calculateAndUpdateUserMetrics] Checking for sponsor update...');
     if (user.sponsorId) {
       console.log(`  👤 Sponsor ID found: ${user.sponsorId}`);
@@ -126,10 +55,13 @@ export async function calculateAndUpdateUserMetrics(userId: string | mongoose.Ty
           { userId: user.sponsorId }
         ]
       }).lean();
-
+      if (depth > 3) {
+    console.log("⛔ Max recursion depth reached");
+    return;
+  }
       if (sponsor) {
         console.log(`  ✅ Sponsor found (${sponsor.username}) - recursively updating metrics...`);
-        await calculateAndUpdateUserMetrics(sponsor._id);
+        await calculateAndUpdateUserMetrics(sponsor._id, depth + 1);
         console.log(`  ✅ Sponsor metrics updated`);
       } else {
         console.log(`  ⚠️ Sponsor not found in database`);
@@ -137,15 +69,6 @@ export async function calculateAndUpdateUserMetrics(userId: string | mongoose.Ty
     } else {
       console.log(`  ℹ️ No sponsor ID - this is a root/top member`);
     }
-    
-    console.log(`\n🎉 [calculateAndUpdateUserMetrics] ✅ COMPLETE for ${user.username}:`, {
-      basicIncome: `₹${basicIncome}`,
-      boosterIncome: `₹${boosterIncomeAmount}`,
-      totalIncome: `₹${basicIncome + boosterIncomeAmount}`,
-      downline: { left: leftDownline, right: rightDownline },
-      timestamp: new Date().toISOString(),
-    });
-
     return updatedUser;
   } catch (error) {
     console.error(`\n❌ [calculateAndUpdateUserMetrics] FATAL ERROR for userId ${userId}:`, {

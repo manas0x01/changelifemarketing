@@ -1,7 +1,7 @@
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import { calculateAndUpdateUserMetrics } from "@/lib/calculateMetrics";
+import { calculateAndUpdateUserMetrics } from "@/lib/calculateUserMetrics";
 import { autoCalculateBasicIncome } from "@/lib/autoCalculateBasicIncome";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
@@ -79,18 +79,32 @@ export async function POST(req: Request) {
             return Response.json({ error: "Sponsor ID not found" }, { status: 404 });
         }
         
-        // ✅ STEP 2A: Get logged-in user from session
+        // ✅ STEP 2A: Get logged-in user from session (allow username/email fallback)
         const session = await getServerSession(authOptions);
-        if (!session?.user?.userId) {
+        if (!session || !session.user) {
             return Response.json({ error: "Session expired. Please login again" }, { status: 401 });
         }
-        
-        const registrationUser = await User.findOne({
-            $or: [
-                { userId: session.user.userId },
-                { username: session.user.userId },
-            ]
-        });
+
+        const sessionUser: any = session.user;
+        console.log('🔍 [REGISTER] session.user:', sessionUser);
+        // Build a flexible search query using available session identifiers
+        const searchQuery: any = {};
+        if (sessionUser.username) searchQuery.username = sessionUser.username;
+        else if (sessionUser.userId) searchQuery.userId = sessionUser.userId;
+        else if (sessionUser.email) searchQuery.email = sessionUser.email;
+
+        let registrationUser = await User.findOne(searchQuery).select('+transactionPassword');
+        if (!registrationUser) {
+            // Fallback to broader OR search if the strict search didn't match
+            registrationUser = await User.findOne({
+                $or: [
+                    { userId: sessionUser.userId },
+                    { username: sessionUser.username },
+                    { email: sessionUser.email },
+                ]
+            }).select('+transactionPassword');
+        }
+
         if (!registrationUser) {
             return Response.json({ error: "User not found in database" }, { status: 404 });
         }

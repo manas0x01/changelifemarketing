@@ -349,27 +349,32 @@ userSchema.pre('save', async function (this: IUser) {
     this.password = await bcrypt.hash(this.password, salt);
   }
   
-  // Check transaction password - includes both modified existing and new documents
-  console.log('🔐 [PRE-SAVE] Checking transactionPassword...');
+  // Check transaction password - only hash when modified or on new documents
+  console.log('🔐 [PRE-SAVE] Checking transactionPassword modification state...');
   console.log('🔐 [PRE-SAVE] isModified("transactionPassword"):', this.isModified('transactionPassword'));
-  console.log('🔐 [PRE-SAVE] transactionPassword value:', this.transactionPassword ? `[PRESENT - ${this.transactionPassword.length} chars]` : '');
-  console.log('🔐 [PRE-SAVE] transactionPassword type:', typeof this.transactionPassword);
-  
-  if (this.transactionPassword) {
-    console.log('🔐 [PRE-SAVE] Transaction password found, processing...');
-    const trimmedTxnPassword = this.transactionPassword.toString().trim();
-    console.log('🔐 [PRE-SAVE] Trimmed length:', trimmedTxnPassword.length);
-    
-    if (trimmedTxnPassword.length > 0) {
-      console.log('🔐 [PRE-SAVE] Hashing transaction password with salt ', salt);
-      this.transactionPassword = await bcrypt.hash(trimmedTxnPassword, salt);
-      console.log('✅ [PRE-SAVE] Transaction password hashed successfully');
+  console.log('🔐 [PRE-SAVE] transactionPassword value present:', !!this.transactionPassword);
+
+  // Only process transactionPassword when it has been modified (or set on new docs)
+  if (this.isModified('transactionPassword')) {
+    if (this.transactionPassword) {
+      console.log('🔐 [PRE-SAVE] Transaction password modified, processing...');
+      const trimmedTxnPassword = this.transactionPassword.toString().trim();
+      console.log('🔐 [PRE-SAVE] Trimmed length:', trimmedTxnPassword.length);
+
+      if (trimmedTxnPassword.length > 0) {
+        console.log('🔐 [PRE-SAVE] Hashing transaction password with salt', salt);
+        this.transactionPassword = await bcrypt.hash(trimmedTxnPassword, salt);
+        console.log('✅ [PRE-SAVE] Transaction password hashed successfully');
+      } else {
+        console.log('⚠️ [PRE-SAVE] After trim, transaction password is empty; clearing field');
+        this.transactionPassword = undefined as any;
+      }
     } else {
-      console.log('⚠️ [PRE-SAVE] After trim, transaction password is empty');
-      this.transactionPassword = undefined;
+      console.log('⚠️ [PRE-SAVE] transactionPassword modified but value is falsy; clearing field');
+      this.transactionPassword = undefined as any;
     }
   } else {
-    console.log('⚠️ [PRE-SAVE] No transaction password provided, skipping hashing');
+    console.log('🔐 [PRE-SAVE] transactionPassword not modified; skipping hashing to avoid double-hash');
   }
 });
 

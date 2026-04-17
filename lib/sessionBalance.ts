@@ -54,9 +54,6 @@ export function isSameSession(date1: Date, date2: Date): boolean {
   return isSame;
 }
 
-/**
- * Calculate net income (no deductions applied)
- */
 export function calculateNetIncome(grossAmount: number) {
   const netIncome = grossAmount;
   return {

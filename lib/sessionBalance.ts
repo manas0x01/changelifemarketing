@@ -13,8 +13,10 @@ export const INCOME_TYPES = {
 };
 
 export const CAPS = {
-  BASIC_SESSION: 1000,           // ₹1,000 per session (1 pair)
-  BASIC_DAILY: 2000,             // ₹2,000 per 24 hours
+  // Basic caps temporarily disabled for testing:
+  // Set to Infinity so basic income won't be capped during session/daily calculations.
+  BASIC_SESSION: Number.POSITIVE_INFINITY, // was 1000
+  BASIC_DAILY: Number.POSITIVE_INFINITY,   // was 2000
   BOOSTER_SESSION: 10000,        // ₹10,000 per session
   BOOSTER_DAILY: 20000,          // ₹20,000 per 24 hours
   BOOSTER_PAIRS_SESSION: 10,     // 10 pairs per session

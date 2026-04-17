@@ -53,4 +53,82 @@ export function checkAwardQualification(totalBoosterPairs: number) {
   };
 }
 
-export default { AWARD_RANKS, checkAwardQualification };
+/* ------------------------- BASIC INCOME HELPERS ------------------------- */
+export const BASIC_INCOME_CONFIG = {
+  SESSION_CAP: 1000, // ₹ per session
+  DAILY_CAP: 2000, // ₹ per day
+  MAX_PAIRS_PER_SESSION: 9999, // no strict limit for basic
+};
+
+export function validateBasicIncomePairMatching(leftJoin: Date, rightJoin: Date) {
+  // Both must be in same 12-hour session (0-11 morning, 12-23 evening)
+  const leftHour = leftJoin.getHours();
+  const rightHour = rightJoin.getHours();
+  const leftSession = leftHour < 12 ? 'morning' : 'evening';
+  const rightSession = rightHour < 12 ? 'morning' : 'evening';
+  if (leftSession === rightSession) return { isValid: true, reason: 'Both members in same session' };
+  return { isValid: false, reason: `Left in ${leftSession}, Right in ${rightSession}` };
+}
+
+export function calculateBasicIncome(pairs: number, _sessionType: 'morning' | 'evening') {
+  const perPair = 1000; // value per pair (₹)
+  const gross = pairs * perPair;
+  const net = Math.min(gross, BASIC_INCOME_CONFIG.SESSION_CAP);
+  return net;
+}
+
+/* ------------------------- BOOSTER HELPERS ------------------------- */
+export const BOOSTER_CONFIG = {
+  QUALIFICATION_THRESHOLD: 10, // pairs required to qualify as booster
+  CUTTING_POSITIONS: [2, 3, 4], // example positions used for cutting logic
+  CUTS_TOTAL: 10,
+};
+
+export function checkBoosterQualification(totalPairs: number) {
+  const pairsNeeded = Math.max(0, BOOSTER_CONFIG.QUALIFICATION_THRESHOLD - totalPairs);
+  const isQualified = pairsNeeded === 0;
+  const pairsCut = Math.max(0, totalPairs - BOOSTER_CONFIG.QUALIFICATION_THRESHOLD);
+  const effectivePairs = Math.min(totalPairs, BOOSTER_CONFIG.QUALIFICATION_THRESHOLD);
+  return { isQualified, pairsNeeded, pairsCut, effectivePairs };
+}
+
+export const BOOSTER_MATCHING_CONFIG = {
+  DAILY_CAP: 20000,
+  SESSION_CAP: 10000,
+  MAX_PAIRS_PER_SESSION: 10,
+  CARRY_FORWARD_MAX: 10,
+  PAIR_VALUE: 1000,
+};
+
+export function calculateBoosterMatchingIncome(newPairsThisSession: number, previousCarryForward: number) {
+  const cfg = BOOSTER_MATCHING_CONFIG;
+  const availablePairs = (previousCarryForward || 0) + (newPairsThisSession || 0);
+  const pairsUsed = Math.min(availablePairs, cfg.MAX_PAIRS_PER_SESSION);
+  const pairsCarried = Math.max(0, availablePairs - pairsUsed);
+  const grossIncome = pairsUsed * cfg.PAIR_VALUE;
+  const sessionCapped = grossIncome > cfg.SESSION_CAP;
+  const netIncome = Math.min(grossIncome, cfg.SESSION_CAP);
+  const pairsFleshout = Math.max(0, pairsCarried - cfg.CARRY_FORWARD_MAX);
+  return {
+    availablePairs,
+    pairsUsed,
+    pairsCarried,
+    grossIncome,
+    netIncome,
+    sessionCapped,
+    pairsFleshout,
+    pairsFleshoutReason: pairsFleshout > 0 ? 'Exceeded carry-forward capacity' : null,
+  } as any;
+}
+
+export default {
+  AWARD_RANKS,
+  checkAwardQualification,
+  BASIC_INCOME_CONFIG,
+  validateBasicIncomePairMatching,
+  calculateBasicIncome,
+  BOOSTER_CONFIG,
+  checkBoosterQualification,
+  BOOSTER_MATCHING_CONFIG,
+  calculateBoosterMatchingIncome,
+};

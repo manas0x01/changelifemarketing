@@ -81,6 +81,11 @@ export interface IUser extends Document {
     status: 'Completed' | 'Pending';
   }[];
   totalTeam?: { left: number; right: number };
+  isBooster?: boolean;
+  boosterCount?: { left: number; right: number };
+  boosterAchievedAt?: Date;
+  boosterEnabled?: boolean;
+  boosterCuts?: number[];
   matchedPairs?: number;
   basicIncome?: number;
   boosterIncomeAmount?: number;
@@ -240,12 +245,17 @@ const userSchema = new Schema<IUser>(
       }, 
       default: { isBoosterLeft: false, isBoosterRight: false, pairsCompletedLeft: 0, pairsCompletedRight: 0 }
     },
+    isBooster: { type: Boolean, default: false },
+    boosterEnabled: { type: Boolean, default: false },
     boosterMatchingIncome: { type: Number, default: 0 },
     boosterMatchingRecords: { type: [{ srNo: Number, date: Date, fromLeftBoosterId: String, fromLeftBoosterName: String, fromRightBoosterId: String, fromRightBoosterName: String, pairsMatched: Number, grossIncome: Number, carryForwardPairs: Number, sessionType: String, tdsDeducted: Number, serviceChargeDeducted: Number, netIncome: Number, status: String }], default: [] },
     boosterCarryForward: { type: [{ date: Date, sessionType: String, pairsCarried: Number, reason: String }], default: [] },
     directMembers: { type: [{ memberId: String, name: String, joinDate: Date, position: String }], default: [] },
     sessionBasedIncome: { type: [{ sessionDate: Date, sessionType: String, leftMembersInSession: Number, rightMembersInSession: Number, pairsInSession: Number, grossIncome: Number, netIncome: Number, tdsDeducted: Number, serviceChargeDeducted: Number, status: String }], default: [] },
     totalTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
+    boosterCount: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
+    boosterAchievedAt: { type: Date, required: false },
+    boosterCuts: { type: [Number], default: [] },
     matchedPairs: { type: Number, default: 0 },
     basicIncome: { type: Number, default: 0 },
     boosterIncomeAmount: { type: Number, default: 0 },

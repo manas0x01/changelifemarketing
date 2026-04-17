@@ -3,42 +3,18 @@ import User from '@/models/User';
 
 export async function POST(req: Request) {
   try {
-    // console.log('\n📨 [AUTO-PLACEMENT] POST request received');
-    
-    // console.log('  🔍 Parsing request JSON...');
     const { sponsorId, position } = await req.json();
-    // console.log(`  ✅ Request parsed: sponsorId="${sponsorId}", position="${position}"`);
-
-    // console.log('  🔐 Validating required parameters...');
     if (!sponsorId || !position) {
-      console.error('  ❌ VALIDATION FAILED - Missing parameters');
-      // console.log(`    - sponsorId: ${sponsorId ? '✓' : '✗'}`);
-      // console.log(`    - position: ${position ? '✓' : '✗'}`);
       return Response.json(
         { error: "sponsorId and position are required" },
         { status: 400 }
       );
     }
-    // console.log('  ✅ All parameters valid');
-    
-    // console.log(`  🔤 Normalizing position: "${position}" → `);
-    const normalizedPosition = position.toLowerCase() as 'left' | 'right';
-    // console.log(`    "${normalizedPosition}"`);
-    
-    // console.log('  🗄️ Connecting to MongoDB...');
+    const normalizedPosition = position.toLowerCase() as 'left' | 'right'
     await connectDB();
-    // console.log('  ✅ Database connected');
-    
-    // console.log(`  👤 Searching for sponsor: ${sponsorId}...`);
     const sponsor = await User.findOne({
       $or: [{ username: sponsorId }, { userId: sponsorId }],
     });
-    // console.log(`  ${sponsor ? '✅' : '❌'} Sponsor search result: ${sponsor ? 'Found' : 'Not found'}`);
-    if (sponsor) {
-      // console.log(`    - Sponsor ID: ${sponsor.userId}`);
-      // console.log(`    - Sponsor Username: ${sponsor.username}`);
-      // console.log(`    - Sponsor Name: ${sponsor.fullName}`);
-    }
     if (!sponsor) {
       console.error('  ❌ Sponsor not found - Returning 404');
       return Response.json({ error: "Sponsor not found" }, { status: 404 });
@@ -51,53 +27,31 @@ export async function POST(req: Request) {
       rootId: string,
       requestedSide: 'left' | 'right'
     ): Promise<{ placementParentId: string; placementPosition: 'left' | 'right' }> => {
-      // console.log(`\n  🌳 [BFS ALGORITHM] Starting BFS traversal`);
-      // console.log(`    🎯 Root ID: "${rootId}"`);
-      // console.log(`    🎯 Requested Side: "${requestedSide}"`);
-      
       const queue: string[] = [rootId];
       const visited = new Set<string>();
       const BATCH_SIZE = 15; // Fetch 15 users per DB query
       
       let iterationCount = 0;
-      // console.log(`    📊 Batch size: ${BATCH_SIZE} users per query`);
-      
       while (queue.length > 0) {
         iterationCount++;
-        // console.log(`\n    ➡️ [Iteration ${iterationCount}] Queue length: ${queue.length}, Visited: ${visited.size}`);
         const batch = queue.splice(0, BATCH_SIZE);
-        // console.log(`      📦 Processing batch of ${batch.length} IDs: [${batch.join(', ')}]`);
         const orConditions = batch.flatMap(id => [
           { username: id },
           { userId: id }
         ]);
-        // console.log(`      🔍 Querying database for ${batch.length} users (${orConditions.length} conditions)...`);
         const users = await User.find({ $or: orConditions });
-        // console.log(`      ✅ Found ${users.length} users from database`);
-        
         if (users.length === 0) {
-          // console.log(`      ⏭️ Skipping empty batch - continuing to next iteration`);
           continue;
         }
         
         for (const currentNode of users) {
           const nodeId = currentNode.userId || currentNode.username;
-          // console.log(`\n      👤 Processing node: "${nodeId}"`);
-          
           if (visited.has(nodeId)) {
-            // console.log(`        ⏭️ Already visited - Skipping`);
             continue;
           }
           visited.add(nodeId);
-          // console.log(`        ✅ Marked as visited`);
-          
-          // console.log(`        🔍 Checking child nodes for "${nodeId}"...`);
           const leftChild = await User.findOne({ placementId: nodeId, placementPosition: 'left' }).select('username fullName');
-          // console.log(`          👈 Left child: ${leftChild ? `Found (${leftChild.username})` : 'Not found'}`);
-          
           const rightChild = await User.findOne({ placementId: nodeId, placementPosition: 'right' }).select('username fullName');
-          // console.log(`          👉 Right child: ${rightChild ? `Found (${rightChild.username})` : 'Not found'}`);
-          
           const hasRequestedSide = (requestedSide === 'left' ? !!leftChild : !!rightChild);
           // console.log(`          📍 Has ${requestedSide} side: ${hasRequestedSide ? 'Yes' : 'No'}`);
           

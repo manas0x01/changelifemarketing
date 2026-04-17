@@ -120,12 +120,9 @@ export default function Dashboard() {
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState("");
   useEffect(() => {
-    console.log('🔍 [DASHBOARD] Component mounted');
     if (typeof window !== 'undefined') {
       const shouldReload = sessionStorage.getItem('reloadDashboard');
-      console.log('📝 Reload flag:', shouldReload);
       if (shouldReload === 'true') {
-        console.log('🔄 Reloading dashboard due to session flag');
         sessionStorage.removeItem('reloadDashboard');
         window.location.reload();
       }
@@ -135,7 +132,6 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        console.log('🚀 [DASHBOARD] Fetching all dashboard data...');
         setLoading(true);
         const [
           teamResponse,
@@ -152,39 +148,25 @@ export default function Dashboard() {
           fetch('/api/user/total-direct', { method: 'GET', credentials: 'include' }),
         ]);
         if (teamResponse.status === 401 || incomeResponse.status === 401 || profileResponse.status === 401) {
-          console.log('❌ Unauthorized - redirecting to login');
           window.location.href = '/auth/login';
           return;
         }
-        
-        console.log('📊 Processing API responses...');
-        
         if (teamResponse.ok) {
           const d = await teamResponse.json();
-          console.log('✅ Total Team:', d.totalTeam);
           setTotalTeam(d.totalTeam || { left: 0, right: 0 });
-        } else {
-          console.log('⚠️ Total Team API failed');
         }
-        
         if (incomeResponse.ok) {
           const d = await incomeResponse.json();
-          console.log('✅ Basic Income:', d.basicIncome);
           setBasicIncome(d.basicIncome || 0);
-        } else {
-          console.log('⚠️ Basic Income API failed');
         }
-        
         if (boosterResponse.ok) {
           const d = await boosterResponse.json();
           setBoosterIncome(d.boosterIncome || { LG: 0, RG: 0, totalBoosterMatching: 0 });
         }
-        
         if (boosterAmountResponse.ok) {
           const d = await boosterAmountResponse.json()
           setBoosterIncomeAmount(d.boosterIncomeAmount || 0);
         }
-
         if (profileResponse.ok) {
           const d = await profileResponse.json();
           if (d.user) {
@@ -195,7 +177,6 @@ export default function Dashboard() {
           const d = await totalDirectResponse.json();
           setTotalDirect(d.totalDirect || { left: 0, right: 0 });
         }
-        
         if (totalIncomeResponse.ok) {
           const d = await totalIncomeResponse.json();
           setTotalIncome(d.totalIncome || 0);
@@ -206,7 +187,6 @@ export default function Dashboard() {
             bankName: d.bankName || "",
           });
         }
-        
         if (totalPinsResponse.ok) {
           const d = await totalPinsResponse.json();
           setTotalPins({
@@ -469,7 +449,6 @@ export default function Dashboard() {
                               className="withdraw-btn"
                               onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                 e.stopPropagation();
-                                console.log('💸 Withdraw button clicked - Opening dialog');
                                 setWithdrawOpen(true);
                                 setWithdrawError("");
                                 setWithdrawSuccess("");

@@ -27,8 +27,6 @@ export async function GET(req: NextRequest) {
     const leftCount = user.leftChild && user.leftChild.trim() !== '' ? 1 : 0;
     const rightCount = user.rightChild && user.rightChild.trim() !== '' ? 1 : 0;
 
-    console.log(`✅ [Total Direct] ${session.user.username} - Left: ${leftCount} | Right: ${rightCount}`);
-
     const directData = {
       left: leftCount,
       right: rightCount,

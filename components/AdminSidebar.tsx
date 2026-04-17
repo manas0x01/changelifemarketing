@@ -32,12 +32,12 @@ const navItems = [
   },
   {
     label: "Create PIN",
-    href: "/admin/dashboard/create-pin",
+    href: "/admin/dashboard/createepin",
     icon: KeyRound,
   },
   {
     label: "PIN Requests",
-    href: "/admin/dashboard/pin-requests",
+    href: "/admin/dashboard/pinrequests",
     icon: ClipboardList,
   },
   {

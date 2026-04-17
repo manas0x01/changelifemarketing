@@ -117,11 +117,6 @@ export async function POST(req: NextRequest) {
       hint: 'Increase booster pairs by building your left and right downline'
     });
   } catch (error) {
-    console.error(`  💥 ERROR caught in POST try-catch`);
-    console.error(`    - Error type: ${error instanceof Error ? error.name : typeof error}`);
-    console.error(`    - Error message: ${error instanceof Error ? error.message : String(error)}`);
-    console.error(`  ❌ Returning 500 error response\n`);
-    
     return NextResponse.json(
       { error: 'Failed to check award qualification' },
       { status: 500 }

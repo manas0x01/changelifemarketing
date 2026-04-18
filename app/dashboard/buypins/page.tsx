@@ -150,10 +150,6 @@ export default function BuyEPinPage() {
     try {
       const formData = new FormData();
       formData.append("userId", userData.memberId);
-      formData.append("username", userData.userName);
-      formData.append("name", userData.userName);
-      formData.append("email", userData.email);
-      formData.append("mobileNumber", userData.phone);
       formData.append("transactionId", transactionId);
       formData.append("quantity", String(numPins));
       formData.append("packageName", pkg.name);

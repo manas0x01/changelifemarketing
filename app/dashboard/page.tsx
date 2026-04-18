@@ -28,6 +28,23 @@ interface BankDetails {
   ifscCode: string;
   bankName: string;
 }
+interface BoosterIncome {
+  amount: number;
+  LG: number;
+  RG: number;
+  totalMatching: number;
+}
+interface DashboardData {
+  totalTeam: { left: number; right: number };
+  totalDirect: { left: number; right: number };
+  basicIncome: number;
+  boosterIncome: BoosterIncome;
+  totalPins: { active: number; used: number; total: number };
+  totalIncome: number;
+  userProfile: { fullName: string; userId: string; username: string; mobileNo: string; email: string; joiningDate: string };
+  bankDetails: BankDetails;
+  cycleHistory: CycleRow[];
+}
 
 const TeamIcon = () => (
   <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.9">
@@ -85,121 +102,86 @@ const statCards = [
   },
 ];
 
-// ── MAIN COMPONENT ──
 export default function Dashboard() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activePage, setActivePage] = useState<"dashboard" | "profile">("dashboard");
-
-  // Stat toggles
   const [showTotalTeamInfo, setShowTotalTeamInfo] = useState(false);
   const [showTotalDirectInfo, setShowTotalDirectInfo] = useState(false);
   const [showBasicIncomeInfo, setShowBasicIncomeInfo] = useState(false);
   const [showBoosterIncomeInfo, setShowBoosterIncomeInfo] = useState(false);
   const [showTotalPinsInfo, setShowTotalPinsInfo] = useState(false);
   const [showTotalIncomeInfo, setShowTotalIncomeInfo] = useState(false);
-
-  // Data states
-  const [totalTeam, setTotalTeam] = useState({ left: 0, right: 0 });
-  const [totalDirect, setTotalDirect] = useState({ left: 0, right: 0 });
-  const [basicIncome, setBasicIncome] = useState(0);
-  const [boosterIncomeAmount, setBoosterIncomeAmount] = useState(0);
-  const [boosterIncome, setBoosterIncome] = useState({ LG: 0, RG: 0, totalBoosterMatching: 0 });
-  const [totalPins, setTotalPins] = useState({ active: 0, used: 0, total: 0 });
-  const [totalIncome, setTotalIncome] = useState(0);
-  const [userProfile, setUserProfile] = useState({
-    fullName: "N/A", userId: "N/A", username: "N/A", mobileNo: "N/A", email: "N/A", joiningDate: "N/A",
+  const [dashboardData, setDashboardData] = useState<DashboardData>({
+    totalTeam: { left: 0, right: 0 },
+    totalDirect: { left: 0, right: 0 },
+    basicIncome: 0,
+    boosterIncome: { amount: 0, LG: 0, RG: 0, totalMatching: 0 },
+    totalPins: { active: 0, used: 0, total: 0 },
+    totalIncome: 0,
+    userProfile: { fullName: "N/A", userId: "N/A", username: "N/A", mobileNo: "N/A", email: "N/A", joiningDate: "N/A" },
+    bankDetails: { accountHolderName: "", accountNumber: "", ifscCode: "", bankName: "" },
+    cycleHistory: [] as CycleRow[],
   });
-  const [bankDetails, setBankDetails] = useState<BankDetails>({
-    accountHolderName: "", accountNumber: "", ifscCode: "", bankName: "",
-  });
-  const [cycleHistory, setCycleHistory] = useState<CycleRow[]>([]);
+  const { totalTeam, totalDirect, basicIncome, boosterIncome, totalPins, totalIncome, userProfile, bankDetails, cycleHistory } = dashboardData;
   const [loading, setLoading] = useState(true);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawError, setWithdrawError] = useState("");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState("");
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+
+      const res = await fetch("/api/user/dashboard", {
+        method: "GET",
+        credentials: "include",
+      });
+
+      if (res.status === 401) {
+        window.location.href = "/auth/login";
+        return;
+      }
+
+      const result = await res.json();
+
+      if (result.success) {
+        const d = result.data;
+        const incoming = d.boosterIncome || {};
+        const amount = d.boosterIncome?.amount ?? d.boosterIncomeAmount ?? 0;
+        const totalMatching = d.boosterIncome?.totalMatching ?? d.boosterIncome?.totalBoosterMatching ?? 0;
+        setDashboardData((prev: DashboardData) => ({
+          ...prev,
+          totalTeam: d.totalTeam ?? prev.totalTeam,
+          totalDirect: d.totalDirect ?? prev.totalDirect,
+          basicIncome: d.basicIncome ?? prev.basicIncome,
+          boosterIncome: { amount, LG: incoming.LG ?? 0, RG: incoming.RG ?? 0, totalMatching },
+          totalIncome: d.totalIncome ?? prev.totalIncome,
+          totalPins: d.totalPins ?? prev.totalPins,
+          userProfile: d.userProfile ?? prev.userProfile,
+          bankDetails: d.bankDetails ?? prev.bankDetails,
+          cycleHistory: d.cycleHistory ?? prev.cycleHistory,
+        }));
+      }
+    } catch (error: any) {
+      console.error("❌ Dashboard Error:", error?.message ?? error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const shouldReload = sessionStorage.getItem('reloadDashboard');
       if (shouldReload === 'true') {
         sessionStorage.removeItem('reloadDashboard');
-        window.location.reload();
+        fetchDashboardData();
       }
     }
   }, []);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
-      try {
-        setLoading(true);
-        const [
-          teamResponse,
-          incomeResponse, boosterResponse, boosterAmountResponse,
-          profileResponse, totalIncomeResponse, totalPinsResponse, totalDirectResponse,
-        ] = await Promise.all([
-          fetch('/api/user/total-team', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/basic-income', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/booster-income', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/booster-income-amount', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/get-profile', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/total-income', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/total-pins', { method: 'GET', credentials: 'include' }),
-          fetch('/api/user/total-direct', { method: 'GET', credentials: 'include' }),
-        ]);
-        if (teamResponse.status === 401 || incomeResponse.status === 401 || profileResponse.status === 401) {
-          window.location.href = '/auth/login';
-          return;
-        }
-        if (teamResponse.ok) {
-          const d = await teamResponse.json();
-          setTotalTeam(d.totalTeam || { left: 0, right: 0 });
-        }
-        if (incomeResponse.ok) {
-          const d = await incomeResponse.json();
-          setBasicIncome(d.basicIncome || 0);
-        }
-        if (boosterResponse.ok) {
-          const d = await boosterResponse.json();
-          setBoosterIncome(d.boosterIncome || { LG: 0, RG: 0, totalBoosterMatching: 0 });
-        }
-        if (boosterAmountResponse.ok) {
-          const d = await boosterAmountResponse.json()
-          setBoosterIncomeAmount(d.boosterIncomeAmount || 0);
-        }
-        if (profileResponse.ok) {
-          const d = await profileResponse.json();
-          if (d.user) {
-            setUserProfile({ ...d.user, username: d.user.username || "N/A" });
-          }
-        }
-        if (totalDirectResponse.ok) {
-          const d = await totalDirectResponse.json();
-          setTotalDirect(d.totalDirect || { left: 0, right: 0 });
-        }
-        if (totalIncomeResponse.ok) {
-          const d = await totalIncomeResponse.json();
-          setTotalIncome(d.totalIncome || 0);
-          setBankDetails({
-            accountHolderName: d.fullName || "", 
-            accountNumber: d.accountNo || "", 
-            ifscCode: d.ifsc || "", 
-            bankName: d.bankName || "",
-          });
-        }
-        if (totalPinsResponse.ok) {
-          const d = await totalPinsResponse.json();
-          setTotalPins({
-            active: d.activePins || 0,
-            used: d.usedPins || 0,
-            total: d.totalPins || 0,
-          });
-        }
-      } catch (error: any) {
-      } finally {
-        setLoading(false);
-      }
-    };
+    // Use the hoisted fetch function to populate dashboard data on mount
     fetchDashboardData();
   }, []);
   const handleWithdraw = async () => {
@@ -210,17 +192,17 @@ export default function Dashboard() {
       setWithdrawError("Please enter a valid amount.");
       return;
     }
-    if (amt < 800) {
-      setWithdrawError("Minimum withdrawal amount is ₹800.");
+    if (amt < 1000) {
+      setWithdrawError("Minimum withdrawal amount is ₹1000.");
       return;
     }
-    
+
     if (amt > totalIncome) {
       setWithdrawError("Amount exceeds your total income balance.");
       return;
     }
     try {
-      setWithdrawLoading(true);   
+      setWithdrawLoading(true);
       const res = await fetch('/api/user/withdraw', {
         method: 'POST',
         credentials: 'include',
@@ -236,7 +218,7 @@ export default function Dashboard() {
         setWithdrawError(data.error || data.message || "Withdrawal failed.");
       } else {
         setWithdrawSuccess(data.message || "Withdrawal request submitted!");
-        setTotalIncome(data.remainingBalance ?? totalIncome - amt);
+        setDashboardData((prev: DashboardData) => ({ ...prev, totalIncome: data.remainingBalance ?? (prev.totalIncome - amt) }));
         setWithdrawAmount("");
       }
     } catch (error: any) {
@@ -401,27 +383,27 @@ export default function Dashboard() {
                     style={{ background: card.gradient }}
                     onClick={() => {
                       if (card.title === "Total Team") {
-            
+
                         setShowTotalTeamInfo(!showTotalTeamInfo);
                       }
                       else if (card.title === "Basic Income") {
-                
+
                         setShowBasicIncomeInfo(!showBasicIncomeInfo);
                       }
                       else if (card.title === "Booster Income") {
-                   
+
                         setShowBoosterIncomeInfo(!showBoosterIncomeInfo);
                       }
                       else if (card.title === "Total Direct") {
-                
+
                         setShowTotalDirectInfo(!showTotalDirectInfo);
                       }
                       else if (card.title === "Total Pins") {
-                    
+
                         setShowTotalPinsInfo(!showTotalPinsInfo);
                       }
                       else if (card.title === "Total Income") {
-                 
+
                         setShowTotalIncomeInfo(!showTotalIncomeInfo);
                       }
                     }}
@@ -435,7 +417,7 @@ export default function Dashboard() {
                       ) : card.title === "Basic Income" && showBasicIncomeInfo ? (
                         <span className="stat-card-link">₹ {basicIncome}</span>
                       ) : card.title === "Booster Income" && showBoosterIncomeInfo ? (
-                        <span className="stat-card-link">₹ {boosterIncomeAmount} | LG : {boosterIncome.LG} | RG : {boosterIncome.RG} | Matching : {boosterIncome.totalBoosterMatching}</span>
+                        <span className="stat-card-link">₹ {boosterIncome.amount} | LG : {boosterIncome.LG} | RG : {boosterIncome.RG} | Matching : {boosterIncome.totalMatching}</span>
                       ) : card.title === "Total Direct" && showTotalDirectInfo ? (
                         <span className="stat-card-link">Left : {totalDirect.left} | Right : {totalDirect.right}</span>
                       ) : card.title === "Total Pins" && showTotalPinsInfo ? (
@@ -469,7 +451,7 @@ export default function Dashboard() {
                 ))}
               </div>
 
-              {/* ── BOTTOM GRID ── */}
+              {/* BOTTOM GRID */}
               <div className="bottom-grid">
                 {/* Cycle History */}
                 <div className="section-card">
@@ -498,7 +480,7 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* ── PROFILE + INSIGHT ── */}
+              {/* PROFILE + INSIGHT */}
               <div className="bottom-grid">
                 <div className="section-card">
                   <div className="profile-banner">

@@ -2,7 +2,6 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import { NextAuthOptions } from "next-auth";
 import User from "@/models/User";
 import { connectDB } from "./database";
-
 declare module "next-auth" {
   interface User {
     role?: string;
@@ -16,6 +15,7 @@ declare module "next-auth" {
     memberType?: string;
     registeredPackage?: string;
   }
+
   interface Session {
     user: {
       id?: string | null;
@@ -64,91 +64,90 @@ export const authOptions: NextAuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) {
-          throw new Error("Invalid credentials");
+          throw new Error("Invalid username or password");
         }
-
         try {
           await connectDB();
-          const user = await User.findOne({ username: credentials.username }).select("+password");
-          if (!user) {
-            throw new Error("User not found");
+          const user = await User.findOne({
+            username: credentials.username,
+          }).select("+password");
+          if (!user || !(await user.comparePassword(credentials.password))) {
+            throw new Error("Invalid username or password");
           }
-          const isPasswordValid = await user.comparePassword(credentials.password);
-          if (!isPasswordValid) {
-
-            throw new Error("Invalid password");
-          }
-
-          const userData = {
+          return {
             id: user._id.toString(),
-            email: user.email,
-            name: user.fullName || user.username,
+            email: user.email ?? undefined,
+            name: user.fullName ?? user.username,
             username: user.username,
-            role: user.role,
-            fullName: user.fullName,
-            mobileNo: user.mobileNo,
-            userId: user.userId,
-            sponsorId: user.sponsorId,
-            placementId: user.placementId,
-            placementPosition: user.placementPosition,
-            memberType: user.memberType,
-            registeredPackage: user.registeredPackage,
-          };
-          return userData;
-        } catch (error) {
-          throw new Error("Authorization failed");
+            role: user.role || "user",
+            fullName: user.fullName ?? undefined,
+            mobileNo: user.mobileNo ?? undefined,
+            userId: user.userId ?? undefined,
+            sponsorId: user.sponsorId ?? undefined,
+            placementId: user.placementId ?? undefined,
+            placementPosition: user.placementPosition ?? undefined,
+            memberType: user.memberType ?? undefined,
+            registeredPackage: user.registeredPackage ?? undefined,
+          } as any;
+
+        } catch (error: any) {
+          console.error("❌ AUTH ERROR:", error.message);
+          throw new Error(error.message || "Authorization failed");
         }
       },
     }),
   ],
+
   pages: {
     signIn: "/auth/login",
   },
+
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
+
   jwt: {
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
   callbacks: {
     async jwt({ token, user }) {
-
       if (user) {
-        token.id = user.id;
-        token.email = user.email;
-        token.name = user.name;
-        token.username = user.username;  // ⭐ CRITICAL: Username MUST come from user
-        token.userId = user.userId;      // ⭐ CRITICAL: UserId MUST come from user
-        token.role = user.role;
-        token.fullName = user.fullName;
-        token.mobileNo = user.mobileNo;
-        token.sponsorId = user.sponsorId;
-        token.placementId = user.placementId;
-        token.placementPosition = user.placementPosition;
-        token.memberType = user.memberType;
-        token.registeredPackage = user.registeredPackage;
+        token.id = user.id || null;
+        token.email = user.email || null;
+        token.name = user.name || null;
+        token.username = user.username || null;
+        token.userId = user.userId || null;
+        token.role = user.role || "user";
+        token.fullName = user.fullName || null;
+        token.mobileNo = user.mobileNo || null;
+        token.sponsorId = user.sponsorId || null;
+        token.placementId = user.placementId || null;
+        token.placementPosition = user.placementPosition || null;
+        token.memberType = user.memberType || null;
+        token.registeredPackage = user.registeredPackage || null;
       }
-      token.role = (user && (user.role as any)) || token.role || null;
+
       return token;
     },
+
     async session({ session, token }) {
-      if (session && session.user) {
-        (session.user as any).id = token.id || null;
-        (session.user as any).email = token.email || null;
-        (session.user as any).name = token.name || null;
-        (session.user as any).username = token.username || null;  // ⭐ CRITICAL: Username must be set
-        (session.user as any).userId = token.userId || null;      // ⭐ CRITICAL: UserId must be set  
-        (session.user as any).role = token.role || null; 
-        (session.user as any).fullName = token.fullName || null;
-        (session.user as any).mobileNo = token.mobileNo || null;
-        (session.user as any).sponsorId = token.sponsorId || null;
-        (session.user as any).placementId = token.placementId || null;
-        (session.user as any).placementPosition = token.placementPosition || null;
-        (session.user as any).memberType = token.memberType || null;
-        (session.user as any).registeredPackage = token.registeredPackage || null;
+      if (session?.user) {
+        session.user.id = token.id || null;
+        session.user.email = token.email || null;
+        session.user.name = token.name || null;
+        session.user.username = token.username || null;
+        session.user.userId = token.userId || null;
+        session.user.role = token.role || null;
+        session.user.fullName = token.fullName || null;
+        session.user.mobileNo = token.mobileNo || null;
+        session.user.sponsorId = token.sponsorId || null;
+        session.user.placementId = token.placementId || null;
+        session.user.placementPosition = token.placementPosition || null;
+        session.user.memberType = token.memberType || null;
+        session.user.registeredPackage = token.registeredPackage || null;
       }
-      
+
       return session;
     },
   },

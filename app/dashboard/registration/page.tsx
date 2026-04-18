@@ -25,7 +25,7 @@ const accountTypes   = ["-- Select --","Saving","Current","Salary","NRI","Joint"
 
 interface NewUserData {
   userId: string;
-  fullName: string;
+  fullName: string; 
   mobileNo: string;
   password: string;
   transactionPassword: string;
@@ -90,7 +90,7 @@ export default function NewRegisterPage() {
   useEffect(() => {
     const checkPinAvailability = async () => {
       try {
-        const res = await fetch('/api/auth/check-pin-availability');
+        const res = await fetch('/api/auth/checkpinavailability');
         const data = await res.json();
         if (!data.hasPins) {
           setHasPins(false);
@@ -115,13 +115,29 @@ export default function NewRegisterPage() {
     setTxnValidating(true);
     setTxnPasswordError("");
     try {
-      const response = await fetch('/api/auth/validate-transaction-password', {
+      // Log what we are about to send from the frontend (mask sensitive values)
+      console.log("[frontend -> validateTx] sending:", {
+        endpoint: '/api/auth/validatetransactionpassword',
+        payload: {
+          transactionPasswordMasked: txnPassword ? '***REDACTED***' : null,
+          transactionPasswordLength: txnPassword.trim().length,
+        },
+      });
+
+      const response = await fetch('/api/auth/validatetransactionpassword', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ transactionPassword: txnPassword.trim() }),
         credentials: 'include',
       });
       const data = await response.json();
+
+      // Log the backend response for inspection
+      console.log("[frontend <- validateTx] response:", {
+        status: response.status,
+        ok: response.ok,
+        body: data,
+      });
       if (response.status === 404) {
         setTxnPasswordError('API Route not found. Please check if the backend is running correctly.');
         setTxnValidating(false);
@@ -153,6 +169,7 @@ export default function NewRegisterPage() {
       }, 500);
 
     } catch (error) {
+      console.error('[frontend validateTx] network/error:', error);
       setTxnPasswordError("An error occurred. Please try again.");
     } finally {
       setTxnValidating(false);
@@ -166,19 +183,23 @@ export default function NewRegisterPage() {
     }
     setSponsorError("");
     try {
-      const nameResponse = await fetch('/api/user/get-name', {
+      const nameResponse = await fetch('/api/user/getname', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: sponsorId.trim() }),
         credentials: 'include',
       });
       const nameData = await nameResponse.json();
-      
-      if (!nameResponse.ok) {
+
+      if (!nameResponse.ok || !nameData) {
         setSponsorError("Sponsor ID not found");
         return;
       }
-      const childrenResponse = await fetch('/api/user/get-children-status', {
+
+      // normalize name field (API may return { success, data: { name } })
+      const sponsorDisplayName = nameData?.data?.name ?? nameData?.name ?? "";
+
+      const childrenResponse = await fetch('/api/user/getchildrenstatus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: sponsorId.trim() }),
@@ -186,32 +207,29 @@ export default function NewRegisterPage() {
       });
 
       let positionsToShow = ["-- Select --", "Left", "Right"];
-      
+
       if (childrenResponse.ok) {
         const childrenData = await childrenResponse.json();
-        const hasLeftChild = childrenData.leftChild && childrenData.leftChild.trim() !== "";
-        const hasRightChild = childrenData.rightChild && childrenData.rightChild.trim() !== "";
-        if (hasLeftChild && hasRightChild) {
+
+        // children API returns shape: { success, data: { leftFilled, rightFilled, availablePositions } }
+        const leftFilled = childrenData?.data?.leftFilled ?? childrenData?.leftFilled ?? false;
+        const rightFilled = childrenData?.data?.rightFilled ?? childrenData?.rightFilled ?? false;
+
+        if (leftFilled && rightFilled) {
           setSponsorError("Both Childs Are Already Filled Use The Different Sponsor Id");
           return;
-        } else if (hasLeftChild && !hasRightChild) {
+        } else if (leftFilled && !rightFilled) {
           positionsToShow = ["-- Select --", "Right"];
-        } else if (!hasLeftChild && hasRightChild) {
+        } else if (!leftFilled && rightFilled) {
           positionsToShow = ["-- Select --", "Left"];
         }
       }
+
       setAvailablePositions(positionsToShow);
       setPosition(positionsToShow[0]);
-      setSponsorName(nameData.name || "");
+      setSponsorName(sponsorDisplayName);
       setSponsorValidated(true);
       try {
-        const sessionResponse = await fetch('/api/auth/session', {
-          credentials: 'include',
-        });
-        
-        if (sessionResponse.ok) {
-          const sessionData = await sessionResponse.json();
-        }
         const pinsResponse = await fetch('/api/user/get-epins', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -249,7 +267,7 @@ export default function NewRegisterPage() {
     }
     setUserIdError("");
     try {
-      const response = await fetch('/api/auth/check-userid', {
+      const response = await fetch('/api/auth/checkuserid', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: userId.trim() }),
@@ -365,6 +383,8 @@ export default function NewRegisterPage() {
 
     try {
       const registrationData: any = {
+        username: userId,
+        placementPosition: position ? position.toLowerCase() : position,
         userId,
         sponsorId,
         position,

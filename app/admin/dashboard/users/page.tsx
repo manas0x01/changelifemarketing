@@ -35,6 +35,7 @@ interface UserRecord {
   city?: string;
   basicIncome?: number;
   boosterIncomeAmount?: number;
+  boosterIncome?: { amount?: number; LG?: number; RG?: number; totalMatching?: number };
   totalTeam?: { left: number; right: number };
   totalDirect?: { left: number; right: number };
   totalDirectAmount?: number;
@@ -428,7 +429,7 @@ const DeleteModal = ({ user, onClose, onConfirm }: { user: UserRecord; onClose: 
 };
 
 const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }) => {
-  const income = (user.basicIncome ?? 0) + (user.boosterIncomeAmount ?? 0);
+  const income = (user.basicIncome ?? 0) + ((user.boosterIncome?.amount ?? user.boosterIncomeAmount) ?? 0);
   const team = (user.totalTeam?.left ?? 0) + (user.totalTeam?.right ?? 0);
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 flex justify-end bg-[#0A6E5A]/30 backdrop-blur-sm" onClick={onClose}>
@@ -573,7 +574,7 @@ export default function AdminDashboardUsersPage() {
 
   const exportCSV = () => {
     const headers = ['User ID', 'Full Name', 'Username', 'Email', 'Phone', 'Role', 'Member Type', 'State', 'Package', 'Joined', 'Basic Income', 'Booster Income'];
-    const rows = users.map(u => [u.userId ?? '', u.fullName ?? '', u.username, u.email ?? '', u.phone ?? u.mobileNo ?? '', u.role ?? '', u.memberType ?? '', u.state ?? '', u.registeredPackage ?? '', u.joiningDate ?? '', u.basicIncome ?? 0, u.boosterIncomeAmount ?? 0]);
+    const rows = users.map(u => [u.userId ?? '', u.fullName ?? '', u.username, u.email ?? '', u.phone ?? u.mobileNo ?? '', u.role ?? '', u.memberType ?? '', u.state ?? '', u.registeredPackage ?? '', u.joiningDate ?? '', u.basicIncome ?? 0, u.boosterIncome?.amount ?? u.boosterIncomeAmount ?? 0]);
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
@@ -718,7 +719,7 @@ export default function AdminDashboardUsersPage() {
                     <tr><td colSpan={11} className="py-16 text-center"><UserX className="w-8 h-8 text-[#0A6E5A]/20 mx-auto mb-2" /><p className="font-['Roboto'] text-[0.875rem] text-[#333333]/40">No users found.</p></td></tr>
                   ) : (
                     users.map((user, i) => {
-                      const income = (user.basicIncome ?? 0) + (user.boosterIncomeAmount ?? 0);
+                    const income = (user.basicIncome ?? 0) + ((user.boosterIncome?.amount ?? user.boosterIncomeAmount) ?? 0);
                       const team = (user.totalTeam?.left ?? 0) + (user.totalTeam?.right ?? 0);
                       return (
                         <motion.tr key={user._id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }} className="hover:bg-[#0A6E5A]/2 group transition-colors">
@@ -783,7 +784,7 @@ export default function AdminDashboardUsersPage() {
                 </div>
               ) : (
                 users.map((user, i) => {
-                  const income = (user.basicIncome ?? 0) + (user.boosterIncomeAmount ?? 0);
+                  const income = (user.basicIncome ?? 0) + ((user.boosterIncome?.amount ?? user.boosterIncomeAmount) ?? 0);
                   const team = (user.totalTeam?.left ?? 0) + (user.totalTeam?.right ?? 0);
                   return (
                     <motion.div key={user._id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.04 }} className="p-4">

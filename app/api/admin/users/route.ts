@@ -95,16 +95,18 @@ export async function GET(req: NextRequest) {
       'joiningDate', 'basicIncome', 'boosterIncomeAmount',
     ]);
     const safeSort = allowedSorts.has(sortBy) ? sortBy : 'createdAt';
+    let sortKey: string = safeSort;
+    if (safeSort === 'boosterIncomeAmount') sortKey = 'boosterIncome.amount';
     const [users, total] = await Promise.all([
       User.find(filter)
         .select(
           'username userId fullName email phone mobileNo role memberType ' +
           'joiningDate sponsorId sponsorName placementId placementName ' +
           'placementPosition registeredPackage state district city ' +
-          'basicIncome boosterIncomeAmount totalTeam ' +
+          'basicIncome boosterIncome.amount boosterIncomeAmount totalTeam ' +
           'createdAt updatedAt'
         )
-        .sort({ [safeSort]: sortOrder })
+        .sort({ [sortKey]: sortOrder })
         .skip(skip)
         .limit(limit)
         .lean(),
@@ -118,7 +120,7 @@ export async function GET(req: NextRequest) {
           totalAdmin:    { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
           totalBooster:     { $sum: { $cond: [{ $eq: ['$memberType', 'gold'] }, 1, 0] } },
           totalActive:   { $sum: { $cond: [{ $eq: ['$memberType', 'active'] }, 1, 0] } },
-          totalIncome:   { $sum: { $add: ['$basicIncome', '$boosterIncomeAmount'] } },
+          totalIncome:   { $sum: { $add: ['$basicIncome', { $ifNull: [ { $ifNull: ['$boosterIncome.amount', '$boosterIncomeAmount'] }, 0 ] } ] } },
         },
       },
     ]);

@@ -35,8 +35,6 @@ export default function OrderDialog({
     userId: '',
     transactionDetails: '',
   });
-
-  // Fetch user details when dialog opens and user is logged in
   useEffect(() => {
     if (isOpen && session?.user?.name) {
       fetchUserDetails();
@@ -111,25 +109,24 @@ export default function OrderDialog({
         return;
       }
 
-      // Prepare order data
-      const orderData = {
-        userId: formData.userId || session?.user?.name || null,
-        username: formData.username || session?.user?.name || null,
-        name: formData.fullName,
-        mobileNumber: formData.mobileNumber,
+      // Prepare order data: only send canonical userId + transaction details
+      const orderData: any = {
+        userId: formData.userId || session?.user?.id || null,
         transactionDetails: formData.transactionDetails,
         orderType,
-        ...(orderType === 'product' && {
-          productId: itemId,
-          productName: itemName,
-          productPrice: itemPrice,
-        }),
-        ...(orderType === 'pack' && {
-          packId: itemId,
-          packName: itemName,
-          packPrice: itemPrice,
-        }),
       };
+
+      if (orderType === 'product') {
+        orderData.productId = itemId;
+        orderData.productName = itemName;
+        orderData.productPrice = itemPrice;
+      }
+
+      if (orderType === 'pack') {
+        orderData.packId = itemId;
+        orderData.packName = itemName;
+        orderData.packPrice = itemPrice;
+      }
 
       const response = await fetch('/api/orders/create', {
         method: 'POST',

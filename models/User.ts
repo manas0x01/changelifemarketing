@@ -36,15 +36,7 @@ export interface IUser extends Document {
   rightChild?: string;
   memberType?: 'gold' | 'active';
   role?: string;
-  basicRank?: string; // User rank for basic income eligibility
-  boosterStatus?: {
-    isBoosterLeft?: boolean;
-    isBoosterRight?: boolean;
-    boosterQualificationDateLeft?: Date;
-    boosterQualificationDateRight?: Date;
-    pairsCompletedLeft?: number;
-    pairsCompletedRight?: number;
-  };
+  basicRank?: string; 
   boosterMatchingIncome?: number;
   boosterMatchingRecords?: {
     srNo: number;
@@ -68,28 +60,42 @@ export interface IUser extends Document {
     pairsCarried: number;
     reason: string;
   }[];
+  boosterPairsCarryForward?: { left: number; right: number };
   sessionBasedIncome?: {
-    sessionDate: Date;
+    // Canonical fields (preferred): `date`, `sessionType`, `pairs`, `netIncome`
+    date: Date;
     sessionType: 'morning' | 'evening';
-    leftMembersInSession: number;
-    rightMembersInSession: number;
-    pairsInSession: number;
-    grossIncome: number;
+    pairs: number;
     netIncome: number;
-    tdsDeducted: number;
-    serviceChargeDeducted: number;
-    status: 'Completed' | 'Pending';
+    // Optional/compatibility fields
+    grossIncome?: number;
+    tdsDeducted?: number;
+    serviceChargeDeducted?: number;
+    status?: 'Completed' | 'Pending';
+    // Legacy aliases (kept for backward-compatibility)
+    sessionDate?: Date;
+    leftMembersInSession?: number;
+    rightMembersInSession?: number;
+    pairsInSession?: number;
+    pairCount?: number;
+    income?: number;
   }[];
+  basicFlushHistory?: { date: Date; left: number; right: number; reason: string }[];
   totalTeam?: { left: number; right: number };
+  lastSessionType?: 'morning' | 'evening';
+  lastSessionDate?: Date;
   isBooster?: boolean;
   boosterCount?: { left: number; right: number };
   boosterAchievedAt?: Date;
-  boosterEnabled?: boolean;
   boosterCuts?: number[];
+  basicPairs?: number;
+  boosterPairs?: number;
   matchedPairs?: number;
   basicIncome?: number;
-  boosterIncomeAmount?: number;
-  boosterIncome?: { LG: number; RG: number; totalBoosterMatching: number };
+  activePins?: number;
+  usedPins?: number;
+  totalPins?: number;
+  boosterIncome?: { amount: number; LG: number; RG: number; totalMatching: number };
   directMembers?: {
     memberId: string;
     name: string;
@@ -234,32 +240,28 @@ const userSchema = new Schema<IUser>(
     memberType: { type: String, required: false, enum: ['gold', 'active'], default: 'active' },
     role: { type: String, required: false, default: 'user', enum: ['user', 'admin', 'moderator'] },
     basicRank: { type: String, required: false, default: 'basic' },
-    boosterStatus: { 
-      type: { 
-        isBoosterLeft: { type: Boolean, default: false }, 
-        isBoosterRight: { type: Boolean, default: false },
-        boosterQualificationDateLeft: { type: Date, required: false },
-        boosterQualificationDateRight: { type: Date, required: false },
-        pairsCompletedLeft: { type: Number, default: 0 },
-        pairsCompletedRight: { type: Number, default: 0 }
-      }, 
-      default: { isBoosterLeft: false, isBoosterRight: false, pairsCompletedLeft: 0, pairsCompletedRight: 0 }
-    },
     isBooster: { type: Boolean, default: false },
-    boosterEnabled: { type: Boolean, default: false },
     boosterMatchingIncome: { type: Number, default: 0 },
     boosterMatchingRecords: { type: [{ srNo: Number, date: Date, fromLeftBoosterId: String, fromLeftBoosterName: String, fromRightBoosterId: String, fromRightBoosterName: String, pairsMatched: Number, grossIncome: Number, carryForwardPairs: Number, sessionType: String, tdsDeducted: Number, serviceChargeDeducted: Number, netIncome: Number, status: String }], default: [] },
     boosterCarryForward: { type: [{ date: Date, sessionType: String, pairsCarried: Number, reason: String }], default: [] },
+    boosterPairsCarryForward: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     directMembers: { type: [{ memberId: String, name: String, joinDate: Date, position: String }], default: [] },
     sessionBasedIncome: { type: [{ sessionDate: Date, sessionType: String, leftMembersInSession: Number, rightMembersInSession: Number, pairsInSession: Number, grossIncome: Number, netIncome: Number, tdsDeducted: Number, serviceChargeDeducted: Number, status: String }], default: [] },
     totalTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
+    basicFlushHistory: { type: [{ date: Date, left: Number, right: Number, reason: String }], default: [] },
+    lastSessionType: { type: String, enum: ['morning', 'evening'], required: false },
+    lastSessionDate: { type: Date, required: false },
     boosterCount: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     boosterAchievedAt: { type: Date, required: false },
     boosterCuts: { type: [Number], default: [] },
+    basicPairs: { type: Number, default: 0 },
+    boosterPairs: { type: Number, default: 0 },
     matchedPairs: { type: Number, default: 0 },
+    activePins: { type: Number, default: 0 },
+    usedPins: { type: Number, default: 0 },
+    totalPins: { type: Number, default: 0 },
     basicIncome: { type: Number, default: 0 },
-    boosterIncomeAmount: { type: Number, default: 0 },
-    boosterIncome: { type: { LG: { type: Number, default: 0 }, RG: { type: Number, default: 0 }, totalBoosterMatching: { type: Number, default: 0 } }, default: { LG: 0, RG: 0, totalBoosterMatching: 0 } },
+    boosterIncome: { type: { amount: { type: Number, default: 0 }, LG: { type: Number, default: 0 }, RG: { type: Number, default: 0 }, totalMatching: { type: Number, default: 0 } }, default: { amount: 0, LG: 0, RG: 0, totalMatching: 0 } },
     basicIncomeRecords: { type: [{ srNo: Number, amount: Number, pairCount: Number, date: Date, description: String, status: String }], default: [] },
     boosterIncomeRecords: { type: [{ srNo: Number, amount: Number, pairCount: Number, date: Date, description: String, status: String }], default: [] },
     awardIncome: { type: Number, default: 0 },
@@ -385,6 +387,98 @@ userSchema.pre('save', async function (this: IUser) {
     }
   } else {
     console.log('🔐 [PRE-SAVE] transactionPassword not modified; skipping hashing to avoid double-hash');
+  }
+
+  // Ensure `userId` exists and falls back to `username` when missing.
+  try {
+    if (!this.userId && this.username) {
+      console.log('💡 [PRE-SAVE] userId missing — setting from username');
+      this.userId = this.username;
+      if (typeof (this as any).markModified === 'function') {
+        try { (this as any).markModified('userId'); } catch (e) {}
+      }
+    }
+  } catch (err) {
+    console.error('❌ [PRE-SAVE] Error ensuring userId fallback:', err);
+  }
+  try {
+    if (this.isModified('sessionBasedIncome')) {
+      console.log('💡 [PRE-SAVE] sessionBasedIncome modified — deriving basicIncome and updating basicIncomeRecords');
+      const sessions = this.sessionBasedIncome || [];
+
+      // Snapshot helpful for debugging unexpected zero sums — prefer canonical fields
+      try {
+        console.log('💡 [PRE-SAVE] sessions snapshot:', sessions.map((s: any) => ({ date: s?.date || s?.sessionDate, status: s?.status, netIncome: s?.netIncome ?? s?.income ?? s?.grossIncome, pairs: s?.pairs || s?.pairsInSession || s?.pairCount })));
+      } catch (e) {}
+
+      const derivedBasicIncome = sessions.reduce((acc: number, s: any) => {
+        if (!s) return acc;
+        const status = (s.status || '').toString().toLowerCase();
+        // treat explicit 'pending' as excluded, otherwise include (backwards-compatible)
+        if (status === 'pending') return acc;
+        const value = (typeof s.netIncome === 'number')
+          ? s.netIncome
+          : (typeof s.grossIncome === 'number')
+            ? s.grossIncome
+            : (typeof s.income === 'number')
+              ? s.income
+              : 0;
+        return acc + (value || 0);
+      }, 0);
+
+      this.basicIncome = derivedBasicIncome;
+      if (!Array.isArray(this.basicIncomeRecords)) this.basicIncomeRecords = [];
+      let nextSrNo = (this.basicIncomeRecords?.length || 0) + 1;
+      for (const s of sessions) {
+        if (!s) continue;
+        const sessionDateValue = s.date || s.sessionDate;
+        if (!sessionDateValue) continue;
+        const sessionTime = new Date(sessionDateValue).getTime();
+        const existingIndex = this.basicIncomeRecords.findIndex((r: any) => r && r.date && new Date(r.date).getTime() === sessionTime);
+
+        const amountValue = (typeof s.netIncome === 'number')
+          ? s.netIncome
+          : (typeof s.grossIncome === 'number')
+            ? s.grossIncome
+            : (typeof s.income === 'number')
+              ? s.income
+              : 0;
+
+        if (existingIndex === -1) {
+          this.basicIncomeRecords.push({
+            srNo: nextSrNo++,
+            amount: amountValue,
+            pairCount: s.pairs || s.pairsInSession || s.pairCount || 0,
+            date: new Date(sessionDateValue),
+            description: `Derived from session ${s.sessionType || ''}`,
+            status: s.status || 'Completed',
+          } as any);
+        } else {
+          const rec: any = this.basicIncomeRecords[existingIndex];
+          rec.amount = amountValue;
+          rec.pairCount = s.pairs || s.pairsInSession || s.pairCount || 0;
+          rec.status = s.status || rec.status;
+        }
+      }
+
+      if (derivedBasicIncome === 0) {
+        console.warn('⚠️ [PRE-SAVE] derivedBasicIncome is 0 — check session entries logged above');
+      }
+    }
+  } catch (err) {
+    console.error('❌ [PRE-SAVE] Error deriving basicIncome from sessionBasedIncome:', err);
+  }
+  // Ensure totalIncome is derived from current income sources (single source of truth)
+  try {
+    const computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);
+    if (this.totalIncome !== computedTotal) {
+      this.totalIncome = computedTotal as any;
+      if (typeof (this as any).markModified === 'function') {
+        try { (this as any).markModified('totalIncome'); } catch (e) {}
+      }
+    }
+  } catch (err) {
+    console.error('❌ [PRE-SAVE] Error deriving totalIncome:', err);
   }
 });
 

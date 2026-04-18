@@ -1,208 +1,153 @@
-import { getServerSession } from "next-auth/next";
+import { NextRequest, NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
-export async function GET(req: Request) {
-    try {
-        const session = await getServerSession(authOptions);
-        const defaultData = {
-            id: null,
-            username: "",
-            fullName: "",
-            gender: "Male",
-            email: "",
-            phone: "",
-            mobileNo: "",
-            dateOfBirth: "",
-            panNo: "",
-            state: "Bihar",
-            district: "Patna",
-            city: "",
-            address: "",
-            pincode: "",
-            bankName: "",
-            branchName: "",
-            accountNo: "",
-            ifsc: "",
-            accountType: "",
-            nomineeName: "",
-            nomineeRelation: "Son",
-            joiningDate: "",
-            sponsorId: "",
-            sponsorName: "",
-            placementId: "",
-            placementName: "",
-            createdAt: new Date().toISOString(),
-        };
-        if (!session?.user?.username) {
-            return Response.json({
-                success: true,
-                data: defaultData,
-            });
-        }
-        await connectDB();
-        const user = await User.findOne({ username: session.user.username }).select("-password -transactionPassword");
+const ALLOWED_UPDATE_FIELDS = [
+  "fullName",
+  "gender",
+  "email",
+  "mobileNo",
+  "panNo",
+  "dateOfBirth",
+  "state",
+  "district",
+  "city",
+  "address",
+  "pincode",
+  "nomineeName",
+  "nomineeRelation",
+  "joiningDate",
+  "sponsorId",
+  "sponsorName",
+  "placementId",
+  "placementName",
+  "placementPosition",
+];
 
-        if (!user) {
-            return Response.json({
-                success: true,
-                data: defaultData,
-            });
-        }
-        const responseData = {
-            id: user._id,
-            username: user.username || "",
-            fullName: user.fullName || "",
-            gender: user.gender || "Male",
-            email: user.email || "",
-            phone: user.phone || "",
-            mobileNo: user.mobileNo || "",
-            dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString() : "",
-            panNo: user.panNo || "",
-            state: user.state || "Bihar",
-            district: user.district || "Patna",
-            city: user.city || "",
-            address: user.address || "",
-            pincode: user.pincode || "",
-            bankName: user.bankName || "",
-            branchName: user.branchName || "",
-            accountNo: user.accountNo || "",
-            ifsc: user.ifsc || "",
-            accountType: user.accountType || "",
-            nomineeName: user.nomineeName || "",
-            nomineeRelation: user.nomineeRelation || "Son",
-            joiningDate: user.joiningDate || "",
-            sponsorId: user.sponsorId || "",
-            sponsorName: user.sponsorName || "",
-            placementId: user.placementId || "",
-            placementName: user.placementName || "",
-            createdAt: user.createdAt ? user.createdAt.toISOString() : new Date().toISOString(),
-        };
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
 
-        return Response.json({
-            success: true,
-            data: responseData,
-        });
-    } catch (error) {
-        return Response.json({
-            success: true,
-            data: {
-                id: null,
-                username: "",
-                fullName: "",
-                gender: "Male",
-                email: "",
-                phone: "",
-                mobileNo: "",
-                dateOfBirth: "",
-                panNo: "",
-                state: "Bihar",
-                district: "Patna",
-                city: "",
-                address: "",
-                pincode: "",
-                bankName: "",
-                branchName: "",
-                accountNo: "",
-                ifsc: "",
-                accountType: "",
-                nomineeName: "",
-                nomineeRelation: "Son",
-                joiningDate: "",
-                sponsorId: "",
-                sponsorName: "",
-                placementId: "",
-                placementName: "",
-            },
-        });
+    const userId = session?.user?.id ?? session?.user?.userId ?? null;
+    const username = session?.user?.username ?? null;
+
+    if (!userId && !username) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
+
+    await connectDB();
+
+    const user = userId
+      ? await User.findById(userId).select(
+          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType"
+        )
+      : await User.findOne({ username }).select(
+          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType"
+        );
+
+    if (!user) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: {
+        fullName: user.fullName || "",
+        username: user.username || "",
+        userId: user.userId || (user as any)._id?.toString?.() || "",
+        email: user.email || "",
+        mobileNo: user.mobileNo || user.phone || "",
+        role: user.role || "user",
+        createdAt: user.createdAt,
+        dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth).toISOString() : undefined,
+        panNo: user.panNo || "",
+        state: user.state || "",
+        district: user.district || "",
+        city: user.city || "",
+        address: user.address || "",
+        pincode: user.pincode || "",
+        nomineeName: user.nomineeName || "",
+        nomineeRelation: user.nomineeRelation || "",
+        joiningDate: user.joiningDate || "",
+        sponsorId: user.sponsorId || "",
+        sponsorName: user.sponsorName || "",
+        placementId: user.placementId || "",
+        placementName: user.placementName || "",
+        placementPosition: user.placementPosition || "",
+        bankName: (user as any).bankName || "",
+        branchName: (user as any).branchName || "",
+        accountNo: (user as any).accountNo || "",
+        ifsc: (user as any).ifsc || "",
+        accountType: (user as any).accountType || "",
+      },
+    });
+  } catch (error: any) {
+    console.error("❌ GET update-profile error:", error);
+    return NextResponse.json({ success: false, message: "Failed to fetch profile" }, { status: 500 });
+  }
 }
 
-export async function POST(req: Request) {
-    try {
-        const session = await getServerSession(authOptions);
-        if (!session?.user?.username) {
-            return Response.json({
-                error: "Unauthorized - Please login"
-            }, { status: 401 });
-        }
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions);
 
-        const profileData = await req.json();
-        await connectDB();
+    const userId = session?.user?.id ?? session?.user?.userId ?? null;
+    const username = session?.user?.username ?? null;
 
-        if (profileData.mobileNo && !/^\d{10}$/.test(profileData.mobileNo)) {
-            return Response.json(
-                { error: "Mobile number must be 10 digits" },
-                { status: 400 }
-            );
-        }
-
-        if (profileData.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(profileData.ifsc)) {
-            return Response.json(
-                { error: "IFSC code format is invalid (e.g., CBIN0284349)" },
-                { status: 400 }
-            );
-        }
-
-        if (profileData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(profileData.panNo)) {
-            return Response.json(
-                { error: "PAN number format is invalid (e.g., ABCDE1234F)" },
-                { status: 400 }
-            );
-        }
-
-        const updateData: any = {};
-        if (profileData.fullName !== undefined) updateData.fullName = profileData.fullName;
-        if (profileData.gender !== undefined) updateData.gender = profileData.gender;
-        if (profileData.phone !== undefined) updateData.phone = profileData.phone;
-        if (profileData.mobileNo !== undefined) updateData.mobileNo = profileData.mobileNo;
-        if (profileData.dateOfBirth !== undefined) updateData.dateOfBirth = profileData.dateOfBirth ? new Date(profileData.dateOfBirth) : null;
-        if (profileData.panNo !== undefined) updateData.panNo = profileData.panNo ? profileData.panNo.toUpperCase() : null;
-        if (profileData.state !== undefined) updateData.state = profileData.state;
-        if (profileData.district !== undefined) updateData.district = profileData.district;
-        if (profileData.city !== undefined) updateData.city = profileData.city;
-        if (profileData.address !== undefined) updateData.address = profileData.address;
-        if (profileData.pincode !== undefined) updateData.pincode = profileData.pincode;
-        if (profileData.bankName !== undefined) updateData.bankName = profileData.bankName;
-        if (profileData.branchName !== undefined) updateData.branchName = profileData.branchName;
-        if (profileData.accountNo !== undefined) updateData.accountNo = profileData.accountNo;
-        if (profileData.ifsc !== undefined) updateData.ifsc = profileData.ifsc;
-        if (profileData.accountType !== undefined) updateData.accountType = profileData.accountType;
-        if (profileData.nomineeName !== undefined) updateData.nomineeName = profileData.nomineeName;
-        if (profileData.nomineeRelation !== undefined) updateData.nomineeRelation = profileData.nomineeRelation;
-        if (profileData.joiningDate !== undefined) updateData.joiningDate = profileData.joiningDate;
-        if (profileData.sponsorId !== undefined) updateData.sponsorId = profileData.sponsorId;
-        if (profileData.sponsorName !== undefined) updateData.sponsorName = profileData.sponsorName;
-        if (profileData.placementId !== undefined) updateData.placementId = profileData.placementId;
-        if (profileData.placementName !== undefined) updateData.placementName = profileData.placementName;
-
-        const user = await User.findOneAndUpdate(
-            { username: session.user.username },
-            updateData,
-            { new: true }
-        ).select('-password -transactionPassword');
-
-        if (!user) {
-            return Response.json(
-                { error: "User not found" },
-                { status: 404 }
-            );
-        }
-
-        return Response.json({
-            success: true,
-            message: "Profile updated successfully",
-            data: {
-                id: user._id,
-                username: user.username,
-                fullName: user.fullName,
-                email: user.email,
-            },
-        });
-    } catch (error) {
-        return Response.json({
-            error: "Failed to update profile"
-        }, { status: 500 });
+    if (!userId && !username) {
+      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
+
+    const body = await req.json();
+
+    // Build update object with allowed fields only
+    const update: any = {};
+    for (const key of ALLOWED_UPDATE_FIELDS) {
+      if (Object.prototype.hasOwnProperty.call(body, key)) {
+        update[key] = body[key];
+      }
+    }
+
+    // Basic validations
+    if (update.mobileNo && !/^\d{10}$/.test(String(update.mobileNo))) {
+      return NextResponse.json({ success: false, message: "Mobile number must be 10 digits" }, { status: 400 });
+    }
+
+    if (update.panNo) {
+      update.panNo = String(update.panNo).toUpperCase().trim();
+      if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(update.panNo)) {
+        return NextResponse.json({ success: false, message: "Invalid PAN number format" }, { status: 400 });
+      }
+    }
+
+    // Normalize dateOfBirth if provided
+    if (update.dateOfBirth) {
+      const d = new Date(update.dateOfBirth);
+      if (isNaN(d.getTime())) {
+        return NextResponse.json({ success: false, message: "Invalid dateOfBirth" }, { status: 400 });
+      }
+      update.dateOfBirth = d;
+    }
+
+    await connectDB();
+
+    const user = userId
+      ? await User.findById(userId)
+      : await User.findOne({ username });
+
+    if (!user) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
+    // Apply updates
+    (user as any).set(update);
+    await user.save();
+
+    return NextResponse.json({ success: true, message: "Profile updated" });
+  } catch (error: any) {
+    console.error("❌ POST update-profile error:", error);
+    return NextResponse.json({ success: false, message: "Failed to update profile" }, { status: 500 });
+  }
 }

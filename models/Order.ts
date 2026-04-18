@@ -3,9 +3,14 @@ import mongoose, { Schema, Document } from 'mongoose';
 export interface IOrder extends Document {
   userId?: string;
   username?: string;
-  name: string;
-  mobileNumber: string;
+  name?: string;
+  mobileNumber?: string;
   transactionDetails: string;
+  transactionId?: string;
+  email?: string;
+  screenshotUrl?: string;
+  amount?: number;
+  packageName?: string;
   productId?: string;
   productName?: string;
   productPrice?: number;
@@ -32,16 +37,38 @@ const OrderSchema = new Schema<IOrder>(
     },
     name: {
       type: String,
-      required: true,
+      default: null,
     },
     mobileNumber: {
       type: String,
-      required: true,
+      default: null,
       match: /^[0-9]{10}$/,
     },
     transactionDetails: {
       type: String,
       required: true,
+      unique: true,
+      index: true,
+    },
+    transactionId: {
+      type: String,
+      default: null,
+    },
+    email: {
+      type: String,
+      default: null,
+    },
+    screenshotUrl: {
+      type: String,
+      default: null,
+    },
+    amount: {
+      type: Number,
+      default: null,
+    },
+    packageName: {
+      type: String,
+      default: null,
     },
     productId: {
       type: String,

@@ -41,8 +41,7 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    // ── Check for existing user (username only) ──
+    
     const existingUser = await User.findOne({ username });
 
     if (existingUser) {
@@ -51,10 +50,9 @@ export async function POST(req: NextRequest) {
         { status: 409 }
       );
     }
-
-    // ── Create new user ──
     const newUser = new User({
       username,
+      userId: username,
       password,
       email,
       fullName,
@@ -80,7 +78,6 @@ export async function POST(req: NextRequest) {
           role: newUser.role,
           memberType: newUser.memberType,
         },
-        // Return raw credentials only in response (do NOT store plaintext in DB)
         rawPassword: password,
         rawTransactionPassword: transactionPassword,
       },

@@ -1,5 +1,7 @@
 export async function checkAwardRank(user: any) {
+  console.log('[DEBUG] checkAwardRank: entry', { userId: user?.userId, isBooster: user?.isBooster });
   if (!user.isBooster) {
+    console.log('[DEBUG] checkAwardRank: abort - not a booster', { userId: user?.userId });
     return {
       success: false,
       message: "User is not a booster",
@@ -21,6 +23,12 @@ export async function checkAwardRank(user: any) {
   if (!Array.isArray(user.awardRankRecords)) {
     user.awardRankRecords = [];
   }
+
+  console.log('[DEBUG] checkAwardRank: initial state', {
+    boosterCount: user.boosterCount,
+    boosterCountUsedForRank: user.boosterCountUsedForRank,
+    awardRankStatus: user.awardRankStatus,
+  });
 
   //////////////////////////////////////////////////////////////
   // 🔥 RANK CONFIG (INCREMENTAL)
@@ -59,6 +67,8 @@ export async function checkAwardRank(user: any) {
   const availableLeft = totalLeft - usedLeft;
   const availableRight = totalRight - usedRight;
 
+  console.log('[DEBUG] checkAwardRank: totals', { totalLeft, totalRight, usedLeft, usedRight, availableLeft, availableRight });
+
   let achievedRank = null;
 
   for (const r of RANKS) {
@@ -69,6 +79,7 @@ export async function checkAwardRank(user: any) {
   }
 
   if (!achievedRank) {
+    console.log('[DEBUG] checkAwardRank: no rank achieved', { userId: user.userId });
     return {
       success: false,
       message: "No new rank achieved",
@@ -80,11 +91,13 @@ export async function checkAwardRank(user: any) {
   //////////////////////////////////////////////////////////////
   user.boosterCountUsedForRank.left += achievedRank.left;
   user.boosterCountUsedForRank.right += achievedRank.right;
+  console.log('[DEBUG] checkAwardRank: updated boosterCountUsedForRank', { boosterCountUsedForRank: user.boosterCountUsedForRank });
 
   //////////////////////////////////////////////////////////////
   // 🔹 UPDATE RANK
   //////////////////////////////////////////////////////////////
   user.awardRankStatus.currentRank = achievedRank.rank;
+  console.log('[DEBUG] checkAwardRank: updated awardRankStatus', { currentRank: user.awardRankStatus.currentRank });
 
   //////////////////////////////////////////////////////////////
   // 📝 RECORD
@@ -95,6 +108,7 @@ export async function checkAwardRank(user: any) {
     usedLeft: achievedRank.left,
     usedRight: achievedRank.right,
   });
+  console.log('[DEBUG] checkAwardRank: pushed awardRankRecord', { latestRecord: user.awardRankRecords[user.awardRankRecords.length - 1] });
 
   return {
     success: true,

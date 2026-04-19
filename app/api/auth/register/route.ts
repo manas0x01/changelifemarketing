@@ -9,9 +9,12 @@ import { handleBinaryAndIncome } from "@/lib/mlmEngine";
 
 export async function POST(req: NextRequest) {
   const dbSession = await mongoose.startSession();
+  console.log('[DEBUG] register: DB session started');
 
   try {
     const session = await getServerSession(authOptions);
+
+    console.log('[DEBUG] register: session', { sessionUser: session?.user?.username });
 
     if (!session?.user?.username) {
       return NextResponse.json(
@@ -35,6 +38,8 @@ export async function POST(req: NextRequest) {
 
     const placementPosition: "left" | "right" = body.placementPosition;
 
+    console.log('[DEBUG] register: parsed body', { username, fullName, mobileNo, sponsorId, placementPosition, epin });
+
     //////////////////////////////////////////////////////////////
     // 🔹 VALIDATION
     //////////////////////////////////////////////////////////////
@@ -48,6 +53,7 @@ export async function POST(req: NextRequest) {
       !placementPosition ||
       !epin
     ) {
+      console.log('[DEBUG] register: validation failed - missing fields', { username, fullName, mobileNo, sponsorId, placementPosition, epin });
       return NextResponse.json(
         { success: false, message: "All fields are required" },
         { status: 400 }
@@ -55,6 +61,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!["left", "right"].includes(placementPosition)) {
+      console.log('[DEBUG] register: validation failed - invalid placementPosition', { placementPosition });
       return NextResponse.json(
         { success: false, message: "Invalid placement position" },
         { status: 400 }
@@ -62,6 +69,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!/^[A-Z0-9]+$/.test(username)) {
+      console.log('[DEBUG] register: validation failed - invalid username format', { username });
       return NextResponse.json(
         { success: false, message: "Invalid username format" },
         { status: 400 }
@@ -69,6 +77,7 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
+    console.log('[DEBUG] register: connected to DB');
 
     //////////////////////////////////////////////////////////////
     // 🔹 CHECK EXISTING USER
@@ -76,6 +85,7 @@ export async function POST(req: NextRequest) {
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
+      console.log('[DEBUG] register: username exists', { username });
       return NextResponse.json(
         { success: false, message: "Username already exists" },
         { status: 400 }
@@ -96,12 +106,14 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
+    console.log('[DEBUG] register: loggedInUser', { username: loggedInUser.username, userId: loggedInUser.userId, ePinsCount: Array.isArray(loggedInUser.ePins) ? loggedInUser.ePins.length : 0 });
 
     //////////////////////////////////////////////////////////////
     // 🔹 EPIN SAFE CHECK
     //////////////////////////////////////////////////////////////
 
     if (!Array.isArray(loggedInUser.ePins)) {
+      console.log('[DEBUG] register: loggedInUser has no ePins array');
       return NextResponse.json(
         { success: false, message: "No EPINs available" },
         { status: 400 }
@@ -112,7 +124,10 @@ export async function POST(req: NextRequest) {
       (p: any) => p.pin === epin && p.status === "Active"
     );
 
+    console.log('[DEBUG] register: epin check', { epin, pinIndex, ePinsLength: loggedInUser.ePins.length });
+
     if (pinIndex === -1) {
+      console.log('[DEBUG] register: invalid or used epin', { epin });
       return NextResponse.json(
         { success: false, message: "Invalid or used EPIN" },
         { status: 400 }
@@ -128,16 +143,20 @@ export async function POST(req: NextRequest) {
     });
 
     if (!sponsor) {
+      console.log('[DEBUG] register: sponsor not found', { sponsorId });
       return NextResponse.json(
         { success: false, message: "Invalid sponsor ID" },
         { status: 400 }
       );
     }
 
+    console.log('[DEBUG] register: sponsor found', { sponsorId: sponsor.userId || sponsor.username });
+
     const positionField =
       placementPosition === "left" ? "leftChild" : "rightChild";
 
     if (sponsor[positionField]) {
+      console.log('[DEBUG] register: sponsor position already filled', { positionField, filledBy: sponsor[positionField] });
       return NextResponse.json(
         { success: false, message: `${placementPosition} already filled` },
         { status: 400 }
@@ -148,6 +167,7 @@ export async function POST(req: NextRequest) {
     // 🔹 START TRANSACTION
     //////////////////////////////////////////////////////////////
 
+    console.log('[DEBUG] register: starting DB transaction');
     dbSession.startTransaction();
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -188,6 +208,7 @@ export async function POST(req: NextRequest) {
     //////////////////////////////////////////////////////////////
 
     await newUser.save({ session: dbSession });
+    console.log('[DEBUG] register: newUser saved', { userId: newUser.userId, username: newUser.username });
 
     //////////////////////////////////////////////////////////////
     // 🔹 UPDATE SPONSOR (LEFT / RIGHT CHILD)
@@ -195,6 +216,7 @@ export async function POST(req: NextRequest) {
 
     sponsor[positionField] = newUser.username;
     await sponsor.save({ session: dbSession });
+    console.log('[DEBUG] register: sponsor updated', { sponsorId: sponsor.userId || sponsor.username, positionField });
 
     //////////////////////////////////////////////////////////////
     // 🔹 UPDATE LOGGED-IN USER
@@ -239,6 +261,7 @@ export async function POST(req: NextRequest) {
     }
 
     await loggedInUser.save({ session: dbSession });
+    console.log('[DEBUG] register: loggedInUser updated', { userId: loggedInUser.userId || loggedInUser.username, usedPins: loggedInUser.usedPins, activePins: loggedInUser.activePins, totalTeam: loggedInUser.totalTeam });
 
     //////////////////////////////////////////////////////////////
     // 🔹 COMMIT
@@ -246,16 +269,19 @@ export async function POST(req: NextRequest) {
 
     await dbSession.commitTransaction();
     dbSession.endSession();
+    console.log('[DEBUG] register: transaction committed');
 
     //////////////////////////////////////////////////////////////
     // 🔥 MLM ENGINE
     //////////////////////////////////////////////////////////////
 
     try {
+      console.log('[DEBUG] register: calling MLM engine', { loggedInUserId: loggedInUser._id, placementPosition });
       await handleBinaryAndIncome(
         loggedInUser._id,
         placementPosition
       );
+      console.log('[DEBUG] register: MLM engine completed');
     } catch (err) {
       console.error("MLM Engine Error:", err);
     }

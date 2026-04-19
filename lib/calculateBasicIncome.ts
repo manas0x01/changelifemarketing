@@ -11,6 +11,8 @@ export async function calculateBasicIncome(user: any) {
   const today = now.toDateString();
   const sessionType = getSessionType(now);
 
+  console.log('[DEBUG] calculateBasicIncome: entry', { userId: user?.userId, username: user?.username, sessionType, today });
+
   if (!Array.isArray(user.sessionBasedIncome)) {
     user.sessionBasedIncome = [];
   }
@@ -22,6 +24,7 @@ export async function calculateBasicIncome(user: any) {
   );
 
   if (alreadyEarnedThisSession) {
+    console.log('[DEBUG] calculateBasicIncome: session limit reached', { userId: user?.userId, sessionType });
     return {
       success: false,
       reason: "Session limit reached (1 pair only)",
@@ -33,6 +36,7 @@ export async function calculateBasicIncome(user: any) {
   );
 
   if (todaySessions.length >= 2) {
+    console.log('[DEBUG] calculateBasicIncome: daily cap reached', { userId: user?.userId, todaySessionsCount: todaySessions.length });
     return {
       success: false,
       reason: "Daily cap reached (₹2000)",
@@ -54,6 +58,7 @@ export async function calculateBasicIncome(user: any) {
       : 0;
 
   if (leftCount < 1 || rightCount < 1) {
+    console.log('[DEBUG] calculateBasicIncome: pair incomplete', { userId: user?.userId, leftCount, rightCount });
     return {
       success: false,
       reason: "Pair not complete",
@@ -66,6 +71,7 @@ export async function calculateBasicIncome(user: any) {
   const newPairs = possiblePairs - alreadyGivenPairs;
 
   if (newPairs <= 0) {
+    console.log('[DEBUG] calculateBasicIncome: no new pairs', { userId: user?.userId, possiblePairs, alreadyGivenPairs });
     return {
       success: false,
       reason: "No new pair available",
@@ -90,6 +96,7 @@ export async function calculateBasicIncome(user: any) {
     serviceChargeDeducted: 0,
     status: 'Completed',
   });
+  console.log('[DEBUG] calculateBasicIncome: pushed session record', { userId: user?.userId, pairsToGive, income });
   // Ensure Mongoose detects the change to the subdocument array
   if (typeof (user as any).markModified === 'function') {
     try {
@@ -99,6 +106,8 @@ export async function calculateBasicIncome(user: any) {
     }
   }
   user.basicPairs = alreadyGivenPairs + pairsToGive;
+
+  console.log('[DEBUG] calculateBasicIncome: basicPairs updated', { userId: user?.userId, basicPairs: user.basicPairs });
 
   if (typeof (user as any).markModified === 'function') {
     try {

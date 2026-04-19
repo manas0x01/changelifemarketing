@@ -27,21 +27,32 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
       console.log('[MLM] handleBinaryAndIncome: incremented boosterPairsCarryForward', { username: user.username, position, carryForward: user.boosterPairsCarryForward });
     }
   }
+  //Aye Hata De Baad Mai Neeche Bala 
+  const left = user.totalTeam?.left || 0;
+  const right = user.totalTeam?.right || 0;
+  const possiblePairs = Math.min(left, right);
+  user.basicPairs = possiblePairs;
+  // await calculateBasicIncome(user);
 
-  await calculateBasicIncome(user);
   // mark modified to ensure pre-save hook triggers derived fields
   if (typeof (user as any).markModified === 'function') {
     try { (user as any).markModified('sessionBasedIncome'); } catch (e) {}
   }
   console.log('[MLM] handleBinaryAndIncome: after calculateBasicIncome', { basicIncome: user.basicIncome, basicPairs: user.basicPairs });
 
+  console.log('[MLM] handleBinaryAndIncome: calling checkBoosterQualification', { userId: user._id });
   await checkBoosterQualification(user);
   console.log('[MLM] handleBinaryAndIncome: after checkBoosterQualification', { isBooster: user.isBooster, boosterCuts: user.boosterCuts });
 
   if (user.isBooster) {
+    console.log('[MLM] handleBinaryAndIncome: calling calculateBoosterMatching', { userId: user._id });
     await calculateBoosterMatching(user);
+    console.log('[MLM] handleBinaryAndIncome: returned from calculateBoosterMatching', { userId: user._id, boosterMatchingIncome: user.boosterMatchingIncome });
+  } else {
+    console.log('[MLM] handleBinaryAndIncome: skipping calculateBoosterMatching (not a booster)', { userId: user._id });
   }
 
+  console.log('[MLM] handleBinaryAndIncome: calling checkAwardRank', { userId: user._id });
   await checkAwardRank(user);
   console.log('[MLM] handleBinaryAndIncome: after checkAwardRank', { awardRankStatus: user.awardRankStatus });
 

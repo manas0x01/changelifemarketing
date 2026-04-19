@@ -4,13 +4,16 @@ function getSessionType(date: Date): "morning" | "evening" {
 }
 
 export async function calculateBoosterMatching(user: any) {
+  console.log('[DEBUG] calculateBoosterMatching: entry', { userId: user?.userId, isBooster: user?.isBooster });
   if (!user.isBooster) {
+    console.log('[DEBUG] calculateBoosterMatching: abort - not a booster', { userId: user?.userId });
     return { success: false, message: "User is not a booster" };
   }
 
   const now = new Date();
   const today = now.toDateString();
   const sessionType = getSessionType(now);
+  console.log('[DEBUG] calculateBoosterMatching: session', { today, sessionType });
 
   if (!user.boosterMatchingRecords) user.boosterMatchingRecords = [];
   if (!user.boosterPairsCarryForward)
@@ -28,6 +31,7 @@ export async function calculateBoosterMatching(user: any) {
     lastRecord.sessionType === sessionType &&
     lastRecord.processed
   ) {
+    console.log('[DEBUG] calculateBoosterMatching: already processed this session', { userId: user?.userId, sessionType });
     return { success: false, message: "Already processed in this session" };
   }
 
@@ -42,6 +46,7 @@ export async function calculateBoosterMatching(user: any) {
     user.boosterPairsCarryForward.right,
     10
   );
+  console.log('[DEBUG] calculateBoosterMatching: carryForward capped', { carryForward: user.boosterPairsCarryForward });
 
   //////////////////////////////////////////////////////////////
   // 🔹 SESSION + DAILY CALC
@@ -56,6 +61,7 @@ export async function calculateBoosterMatching(user: any) {
     (sum: number, r: any) => sum + (r.pairs || 0),
     0
   );
+  console.log('[DEBUG] calculateBoosterMatching: sessionPairsUsed', { sessionPairsUsed });
 
   const todayRecords = user.boosterMatchingRecords.filter(
     (r: any) => new Date(r.date).toDateString() === today
@@ -65,6 +71,7 @@ export async function calculateBoosterMatching(user: any) {
     (sum: number, r: any) => sum + (r.income || 0),
     0
   );
+  console.log('[DEBUG] calculateBoosterMatching: dailyIncome', { dailyIncome });
 
   if (dailyIncome >= 20000) {
     return { success: false, message: "Daily cap reached (₹20000)" };
@@ -75,15 +82,18 @@ export async function calculateBoosterMatching(user: any) {
   //////////////////////////////////////////////////////////////
   const left = user.boosterPairsCarryForward.left;
   const right = user.boosterPairsCarryForward.right;
+  console.log('[DEBUG] calculateBoosterMatching: left/right', { left, right });
 
   let pairs = Math.min(left, right);
 
   if (pairs <= 0) {
+    console.log('[DEBUG] calculateBoosterMatching: no matching pairs', { userId: user?.userId });
     return { success: false, message: "No matching booster pairs" };
   }
 
   const remainingSessionPairs = 10 - sessionPairsUsed;
   if (remainingSessionPairs <= 0) {
+    console.log('[DEBUG] calculateBoosterMatching: session cap reached', { sessionPairsUsed });
     return { success: false, message: "Session cap reached (10 pairs)" };
   }
 
@@ -91,8 +101,10 @@ export async function calculateBoosterMatching(user: any) {
 
   const maxPairsByDaily = Math.floor((20000 - dailyIncome) / 1000);
   allowedPairs = Math.min(allowedPairs, maxPairsByDaily);
+  console.log('[DEBUG] calculateBoosterMatching: allowedPairs computed', { pairs, remainingSessionPairs, maxPairsByDaily, allowedPairs });
 
   if (allowedPairs <= 0) {
+    console.log('[DEBUG] calculateBoosterMatching: allowedPairs <= 0', { allowedPairs });
     return { success: false, message: "Daily income limit reached" };
   }
 
@@ -105,6 +117,7 @@ export async function calculateBoosterMatching(user: any) {
     (user.boosterMatchingIncome || 0) + income;
 
   user.totalIncome = (user.totalIncome || 0) + income;
+  console.log('[DEBUG] calculateBoosterMatching: income credited', { allowedPairs, income, boosterMatchingIncome: user.boosterMatchingIncome, totalIncome: user.totalIncome });
 
   //////////////////////////////////////////////////////////////
   // 🔥 SAFE CARRY FORWARD UPDATE
@@ -117,6 +130,7 @@ export async function calculateBoosterMatching(user: any) {
     0,
     right - allowedPairs
   );
+  console.log('[DEBUG] calculateBoosterMatching: carryForward updated', { carryForward: user.boosterPairsCarryForward });
 
   //////////////////////////////////////////////////////////////
   // 📝 RECORD
@@ -128,6 +142,7 @@ export async function calculateBoosterMatching(user: any) {
     income,
     processed: true,
   });
+  console.log('[DEBUG] calculateBoosterMatching: pushed record', { date: now.toISOString(), sessionType, pairs: allowedPairs, income });
 
   return {
     success: true,

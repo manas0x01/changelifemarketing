@@ -1,7 +1,8 @@
-import User from "@/models/User";
+import User, { IUser } from "@/models/User";
 
-export async function checkBoosterQualification(user: any) {
+export async function checkBoosterQualification(user: IUser) {
   if (user.isBooster) {
+    console.log("[BOOSTER] Already booster:", user.username);
     return { success: false, message: "Already a booster" };
   }
 
@@ -9,14 +10,13 @@ export async function checkBoosterQualification(user: any) {
     user.boosterCuts = [];
   }
 
-  //////////////////////////////////////////////////////////////
-  // 🔥 CORRECT PAIR COUNT (NOT basicPairs)
-  //////////////////////////////////////////////////////////////
-  const totalPairs = Math.min(
-    user.totalTeam?.left || 0,
-    user.totalTeam?.right || 0,
-  );
-
+  const totalPairs = user.basicPairs || 0;
+  console.log("🔥 [BOOSTER CHECK]", {
+    user: user.username,
+    totalPairs,
+    boosterCuts: user.boosterCuts,
+  });
+  
   const cutLevels = [3, 6, 9, 12];
   let newCuts: number[] = [];
 
@@ -27,29 +27,16 @@ export async function checkBoosterQualification(user: any) {
     }
   }
 
-  //////////////////////////////////////////////////////////////
-  // 🚀 BOOSTER ACTIVATION
-  //////////////////////////////////////////////////////////////
-  if (user.boosterCuts.length === 4 && !user.isBooster) {
+  if (user.boosterCuts.includes(12) && !user.isBooster) {
     user.isBooster = true;
     user.boosterAchievedAt = new Date();
+    console.log("🚀 BOOSTER ACTIVATED:", user.username);
+    console.log("📊 FINAL STATE:", {
+      pairs: totalPairs,
+      cuts: user.boosterCuts,
+    });
 
-    //////////////////////////////////////////////////////////////
-    // 🔥 UPDATE PARENT BOOSTER COUNT
-    //////////////////////////////////////////////////////////////
-    const parent = await User.findById(user.placementId);
-
-    if (parent) {
-      if (!parent.boosterCount) {
-        parent.boosterCount = { left: 0, right: 0 };
-      }
-
-      const position = user.placementPosition as "left" | "right";
-
-      parent.boosterCount[position] += 1;
-
-      await parent.save();
-    }
+    await user.save();
 
     return {
       success: true,
@@ -59,6 +46,7 @@ export async function checkBoosterQualification(user: any) {
     };
   }
 
+  await user.save();
   return {
     success: true,
     isBooster: false,

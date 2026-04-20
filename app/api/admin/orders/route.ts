@@ -37,8 +37,6 @@ export async function GET(req: NextRequest) {
     const sortBy    = searchParams.get('sortBy')            ?? 'createdAt';
     const sortOrder = searchParams.get('sortOrder') === 'asc' ? 1 : -1;
     const skip      = (page - 1) * limit;
-
-    // ── Filter ────────────────────────────────────────────────────────────────
     const filter: Record<string, any> = {};
     if (status)    filter.status    = status;
     if (orderType) filter.orderType = orderType;

@@ -27,6 +27,7 @@ export default function BuyEPinPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [filePreview, setFilePreview] = useState("");
   const [cloudinaryUrl, setCloudinaryUrl] = useState("");
+  const [cloudinaryPublicId, setCloudinaryPublicId] = useState("");
   const [uploading, setUploading] = useState(false);
   const [successData, setSuccessData] = useState<any>(null);
 
@@ -37,7 +38,7 @@ export default function BuyEPinPage() {
     }
     const fetchUserData = async () => {
       try {
-        const res = await fetch("/api/user/get-profile", {
+        const res = await fetch("/api/user/getprofile", {
           method: "GET",
           credentials: "include",
         });
@@ -53,13 +54,18 @@ export default function BuyEPinPage() {
           }
         }
       } catch (error: any) {
-        console.error("Error fetching user data:", error);
+        console.error("[buypins] Error fetching user data:", error);
       } finally {
         setLoading(false);
       }
     };
     fetchUserData();
   }, [session]);
+
+  useEffect(() => {
+    console.debug('[buypins] mounted', { user: session?.user?.id, memberId: userData.memberId });
+    return () => console.debug('[buypins] unmount');
+  }, []);
 
   const totalAmount = numPins * PIN_COST;
   const pkg = packages.find((p) => p.id === selectedPkg)!;
@@ -80,16 +86,13 @@ export default function BuyEPinPage() {
       }
       
       setUploadedFile(file);
-      
-      // Show preview
       const reader = new FileReader();
       reader.onload = (event) => {
         setFilePreview(event.target?.result as string);
       };
       reader.readAsDataURL(file);
-      
-      // Upload to Cloudinary
       setUploading(true);
+      console.debug('[buypins] file selected', { name: file.name, size: file.size });
       uploadToCloudinary(file);
     }
   };
@@ -98,27 +101,26 @@ export default function BuyEPinPage() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      formData.append("upload_preset", process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || "changelife");
-      formData.append("cloud_name", process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || "changelife");
 
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
-        {
-          method: "POST",
-          body: formData,
-        }
-      );
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
 
       if (!response.ok) {
-        throw new Error("Upload failed");
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.message || "Upload failed");
       }
 
       const data = await response.json();
-      setCloudinaryUrl(data.secure_url);
+      console.debug('[buypins] upload response', data);
+      setCloudinaryUrl(data.url || "");
+      setCloudinaryPublicId(data.public_id || data.raw?.public_id || "");
       toast.success("Screenshot uploaded successfully!");
       setUploading(false);
     } catch (error: any) {
-      console.error("Cloudinary upload error:", error);
+      console.error("[buypins] Cloudinary upload error:", error);
       setErrorMsg("Failed to upload screenshot to cloud. Please try again.");
       toast.error("Failed to upload screenshot");
       setUploading(false);
@@ -128,9 +130,10 @@ export default function BuyEPinPage() {
   const handleSubmit = async () => {
     setErrorMsg("");
 
-    if (!transactionId.trim()) {
-      setErrorMsg("Please enter Transaction ID");
-      toast.error("Please enter Transaction ID");
+    const txTrim = transactionId.trim();
+    if (txTrim.length < 8) {
+      setErrorMsg("Please enter a valid Transaction ID (min 8 characters)");
+      toast.error("Please enter a valid Transaction ID (min 8 characters)");
       return;
     }
 
@@ -145,6 +148,8 @@ export default function BuyEPinPage() {
       toast.error("Screenshot is still uploading. Please wait...");
       return;
     }
+
+    console.debug('[buypins] submit attempt', { memberId: userData.memberId, pins: numPins, amount: totalAmount });
 
     setSubmitting(true);
     try {
@@ -168,11 +173,14 @@ export default function BuyEPinPage() {
       const data = await res.json();
 
       if (!res.ok) {
+        console.warn('[buypins] order submit failed', { status: res.status, body: data });
         setErrorMsg(data.message || "Failed to submit order");
         setStep("error");
         toast.error(data.message || "Failed to submit order");
         return;
       }
+
+      console.info('[buypins] order submitted success', { orderId: data.orderId });
 
       setSuccessData({
         orderId: data.orderId,
@@ -185,7 +193,14 @@ export default function BuyEPinPage() {
       });
       setStep("success");
       toast.success("Payment details submitted successfully! Admin will verify within 24 hours.");
+      setNumPins(1);
+      setTransactionId("");
+      setUploadedFile(null);
+      setFilePreview("");
+      setCloudinaryUrl("");
+      setCloudinaryPublicId("");
     } catch (err: any) {
+      console.error('[buypins] submit error', err);
       setErrorMsg(err.message || "Something went wrong");
       setStep("error");
       toast.error(err.message || "Something went wrong");
@@ -630,10 +645,34 @@ export default function BuyEPinPage() {
                           border: '1px solid #e53935',
                           transition: 'all 0.2s'
                         }}
-                        onClick={() => { 
-                          setUploadedFile(null); 
-                          setFilePreview(""); 
+                        onClick={async () => {
+                          // If we have a public id, ask server to delete from Cloudinary
+                          if (cloudinaryPublicId) {
+                            try {
+                              const resp = await fetch('/api/upload', {
+                                method: 'DELETE',
+                                credentials: 'include',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ publicId: cloudinaryPublicId }),
+                              });
+                              if (!resp.ok) {
+                                const err = await resp.json().catch(() => ({}));
+                                toast.error(err.message || 'Failed to delete screenshot from cloud');
+                                return;
+                              }
+                              toast.success('Screenshot deleted from cloud');
+                            } catch (e) {
+                              console.error('Delete request failed', e);
+                              toast.error('Failed to delete screenshot from cloud');
+                              return;
+                            }
+                          }
+
+                          // Clear UI state
+                          setUploadedFile(null);
+                          setFilePreview("");
                           setCloudinaryUrl("");
+                          setCloudinaryPublicId("");
                         }}
                         onMouseOver={(e) => {
                           (e.currentTarget as HTMLElement).style.backgroundColor = '#e53935';

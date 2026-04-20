@@ -5,53 +5,43 @@ import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 import Order from "@/models/Order";
 
-const PIN_PRICE = 1299; // 🔥 FIXED PRICE (IMPORTANT)
-
-// Simple in-memory per-user rate limiter (rolling window).
-// NOTE: This is suitable for single-instance dev/testing only.
-// For production or multi-instance deployments, use a shared store (Redis).
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minute
-const RATE_LIMIT_MAX = 3; // max requests per window
+const PIN_PRICE = 1299;
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX = 3;
 const rateLimitMap: Map<string, number[]> = new Map();
 
 export async function POST(req: NextRequest) {
   try {
-    //////////////////////////////////////////////////////////////
-    // 🔐 AUTH CHECK
-    //////////////////////////////////////////////////////////////
     const session = await getServerSession(authOptions);
-
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 }
       );
     }
-
-    // Rate limiting: per-user rolling window
+    // Debug: request start (non-sensitive)
+    console.debug('[orders:create] request start', { userId: session.user.id });
     try {
       const userKey = String(session.user.id);
       const now = Date.now();
       const timestamps = rateLimitMap.get(userKey) || [];
-      // keep only timestamps within the window
       const recent = timestamps.filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+      console.debug('[orders:create] rate check', { userId: userKey, recentCount: recent.length, windowMs: RATE_LIMIT_WINDOW_MS, max: RATE_LIMIT_MAX });
       if (recent.length >= RATE_LIMIT_MAX) {
+        console.warn('[orders:create] rate limit exceeded', { userId: userKey });
         return NextResponse.json(
           { success: false, message: `Rate limit exceeded. Max ${RATE_LIMIT_MAX} requests per minute.` },
           { status: 429 }
         );
       }
-      // record current request
       recent.push(now);
       rateLimitMap.set(userKey, recent);
     } catch (rlErr) {
-      // If rate limiter fails for any reason, don't block the request — log and continue
-      console.warn('Rate limiter error', rlErr);
+      console.warn('[orders:create] Rate limiter error', rlErr);
     }
-
-    // Accept either JSON or multipart/form-data (FormData)
     let body: any = {};
     const contentType = req.headers.get("content-type") || "";
+    console.debug('[orders:create] content-type', { contentType });
 
     if (contentType.includes("application/json")) {
       body = await req.json();
@@ -65,7 +55,6 @@ export async function POST(req: NextRequest) {
         packageName: form.get("packageName"),
       };
     } else {
-      // Fallback: try JSON, then FormData
       try {
         body = await req.json();
       } catch (e) {
@@ -86,112 +75,103 @@ export async function POST(req: NextRequest) {
         }
       }
     }
-
-    // Normalize and coerce incoming fields to safe types
     const quantityRaw = body.quantity;
     const amountRaw = body.amount ?? body.packPrice ?? body.pack_price;
-    // Support both `transactionId` and legacy `transactionDetails`
     const txnRaw = body.transactionId ?? body.transactionDetails ?? null;
     const transactionId = String(txnRaw || "").trim();
     const screenshotUrl = String(body.screenshotUrl || "").trim();
-    // Support both `packageName` and `packName` from different callers
     const packageName = String(body.packageName || body.packName || body.pack_name || "").trim();
-
     const quantity = Number(quantityRaw);
     const amount = Number(amountRaw);
-
-    //////////////////////////////////////////////////////////////
-    // ❗ VALIDATION
-    //////////////////////////////////////////////////////////////
     if (!quantity || !transactionId || !screenshotUrl) {
+      console.debug('[orders:create] validation failed - missing fields', {
+        userId: session.user.id,
+        missingQuantity: !quantity,
+        missingTransactionId: !transactionId,
+        missingScreenshot: !screenshotUrl,
+      });
       return NextResponse.json(
         { success: false, message: "Missing required fields" },
         { status: 400 }
       );
     }
-
+    if (transactionId.length < 8) {
+      console.debug('[orders:create] validation failed - short transactionId', { userId: session.user.id });
+      return NextResponse.json(
+        { success: false, message: "Invalid transaction ID" },
+        { status: 400 }
+      );
+    }
     if (!Number.isInteger(quantity) || quantity <= 0 || quantity > 100) {
+      console.debug('[orders:create] validation failed - invalid quantity', { userId: session.user.id, quantity });
       return NextResponse.json(
         { success: false, message: "Invalid quantity" },
         { status: 400 }
       );
     }
-
-    //////////////////////////////////////////////////////////////
-    // 🔐 CONNECT DB
-    //////////////////////////////////////////////////////////////
     await connectDB();
-
-    //////////////////////////////////////////////////////////////
-    // 🔍 GET USER (DO NOT TRUST FRONTEND)
-    //////////////////////////////////////////////////////////////
     const user = await User.findById(session.user.id);
 
     if (!user) {
+      console.warn('[orders:create] user not found', { userId: session.user.id });
       return NextResponse.json(
         { success: false, message: "User not found" },
         { status: 404 }
       );
     }
-
-    //////////////////////////////////////////////////////////////
-    // 🔒 AMOUNT VALIDATION (ANTI-HACK)
-    //////////////////////////////////////////////////////////////
     const correctAmount = quantity * PIN_PRICE;
-
-    // Coerce and strictly compare numbers to prevent client tampering
     if (!Number.isFinite(amount) || amount !== correctAmount) {
+      console.warn('[orders:create] amount mismatch', { userId: session.user.id, quantity, amount, expected: correctAmount });
       return NextResponse.json(
         { success: false, message: "Invalid amount manipulation detected" },
         { status: 400 }
       );
     }
-
-    //////////////////////////////////////////////////////////////
-    // 🔒 DUPLICATE TRANSACTION CHECK (use transactionDetails field)
-    //////////////////////////////////////////////////////////////
-    // Normalize transaction key (many parts of app use `transactionDetails`)
     const txnKey = transactionId;
-    const existingTxn = txnKey ? await Order.findOne({ transactionDetails: txnKey }) : null;
-
+    const existingTxn = txnKey
+      ? await Order.findOne({
+          $or: [
+            { transactionDetails: txnKey },
+            { transactionId: txnKey },
+          ],
+        })
+      : null;
     if (existingTxn) {
+      console.warn('[orders:create] duplicate transaction detected', { userId: session.user.id });
       return NextResponse.json(
         { success: false, message: "Transaction already used" },
         { status: 409 }
       );
     }
-
-    //////////////////////////////////////////////////////////////
-    // 🔒 SCREENSHOT VALIDATION
-    //////////////////////////////////////////////////////////////
-    if (!screenshotUrl.includes("cloudinary.com")) {
-      return NextResponse.json(
-        { success: false, message: "Invalid screenshot source" },
-        { status: 400 }
-      );
+    const cloudNameCfg = process.env.CLOUDINARY_CLOUD_NAME;
+    if (cloudNameCfg) {
+      const expectedPrefix = `https://res.cloudinary.com/${cloudNameCfg}/`;
+      if (!screenshotUrl.startsWith(expectedPrefix)) {
+        console.warn('[orders:create] invalid screenshot source (prefix mismatch)', { userId: session.user.id, expectedPrefix });
+        return NextResponse.json(
+          { success: false, message: "Invalid screenshot source" },
+          { status: 400 }
+        );
+      }
+    } else {
+      if (!screenshotUrl.startsWith("https://res.cloudinary.com/")) {
+        console.warn('[orders:create] invalid screenshot source (fallback check failed)', { userId: session.user.id });
+        return NextResponse.json(
+          { success: false, message: "Invalid screenshot source" },
+          { status: 400 }
+        );
+      }
     }
-
-    //////////////////////////////////////////////////////////////
-    // 🧾 CREATE ORDER (map to canonical schema fields)
-    //////////////////////////////////////////////////////////////
     const order = new Order({
-      // only store canonical reference to the user; do not persist duplicated name/username from client
       userId: user.userId || user._id?.toString(),
-
-      // canonical transaction field used by admin UI
       transactionDetails: txnKey,
       transactionId: txnKey,
-
-      // pricing / package
       quantity,
       packName: packageName || body.packName || "PIN_PACKAGE",
       packPrice: correctAmount,
       amount: correctAmount,
       packageName: packageName || null,
-
-      // optional metadata
       screenshotUrl,
-
       status: "pending",
       orderType: "pack",
     });
@@ -199,8 +179,8 @@ export async function POST(req: NextRequest) {
     try {
       await order.save();
     } catch (saveErr: any) {
-      // Handle duplicate-key race condition
       if (saveErr && (saveErr.code === 11000 || saveErr.name === 'MongoServerError')) {
+        console.warn('[orders:create] save failed with duplicate key', { userId: session.user.id });
         return NextResponse.json(
           { success: false, message: "Transaction already used" },
           { status: 409 }
@@ -208,19 +188,13 @@ export async function POST(req: NextRequest) {
       }
       throw saveErr;
     }
-
-    //////////////////////////////////////////////////////////////
-    // ✅ RESPONSE
-    //////////////////////////////////////////////////////////////
+    console.info('[orders:create] order created', { userId: user.userId || user._id?.toString(), orderId: order._id?.toString() });
     return NextResponse.json({
       success: true,
       message: "Order submitted successfully",
       orderId: order._id,
     });
-
   } catch (error: any) {
-    console.error("❌ CREATE ORDER ERROR:", error);
-
     return NextResponse.json(
       { success: false, message: "Failed to create order" },
       { status: 500 }

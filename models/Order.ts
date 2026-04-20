@@ -111,7 +111,6 @@ const OrderSchema = new Schema<IOrder>(
   },
   { timestamps: true }
 );
-  OrderSchema.index({ transactionDetails: 1 }, { unique: true });
 const Order = mongoose.models.Order || mongoose.model<IOrder>('Order', OrderSchema);
 
 export default Order;

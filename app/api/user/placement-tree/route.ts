@@ -203,13 +203,13 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
           console.log(`[PLACEMENT TREE FLUSH] Removing left child descendants from tree: ${leftChildUser.userId}`);
           if (leftChildUser.leftChild) {
             const lc = await User.findOne({ $or: [{ username: leftChildUser.leftChild }, { userId: leftChildUser.leftChild }] });
-            if (lc) { lc.placementId = null; lc.placementName = null; lc.placementPosition = null; await lc.save(); await flushUserSubtree(lc); }
-            leftChildUser.leftChild = null;
+            if (lc) { lc.placementId = undefined; lc.placementName = undefined; lc.placementPosition = undefined; await lc.save(); await flushUserSubtree(lc); }
+            leftChildUser.leftChild = undefined;
           }
           if (leftChildUser.rightChild) {
             const rc = await User.findOne({ $or: [{ username: leftChildUser.rightChild }, { userId: leftChildUser.rightChild }] });
-            if (rc) { rc.placementId = null; rc.placementName = null; rc.placementPosition = null; await rc.save(); await flushUserSubtree(rc); }
-            leftChildUser.rightChild = null;
+            if (rc) { rc.placementId = undefined; rc.placementName = undefined; rc.placementPosition = undefined; await rc.save(); await flushUserSubtree(rc); }
+            leftChildUser.rightChild = undefined;
           }
           await leftChildUser.save();
         }
@@ -222,13 +222,13 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
           console.log(`[PLACEMENT TREE FLUSH] Removing right child descendants from tree: ${rightChildUser.userId}`);
           if (rightChildUser.leftChild) {
             const lc = await User.findOne({ $or: [{ username: rightChildUser.leftChild }, { userId: rightChildUser.leftChild }] });
-            if (lc) { lc.placementId = null; lc.placementName = null; lc.placementPosition = null; await lc.save(); await flushUserSubtree(lc); }
-            rightChildUser.leftChild = null;
+            if (lc) { lc.placementId = undefined; lc.placementName = undefined; lc.placementPosition = undefined; await lc.save(); await flushUserSubtree(lc); }
+            rightChildUser.leftChild = undefined;
           }
           if (rightChildUser.rightChild) {
             const rc = await User.findOne({ $or: [{ username: rightChildUser.rightChild }, { userId: rightChildUser.rightChild }] });
-            if (rc) { rc.placementId = null; rc.placementName = null; rc.placementPosition = null; await rc.save(); await flushUserSubtree(rc); }
-            rightChildUser.rightChild = null;
+            if (rc) { rc.placementId = undefined; rc.placementName = undefined; rc.placementPosition = undefined; await rc.save(); await flushUserSubtree(rc); }
+            rightChildUser.rightChild = undefined;
           }
           await rightChildUser.save();
         }
@@ -257,11 +257,11 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
       if (user.leftChild) {
         const lu = await User.findOne({ $or: [{ username: user.leftChild }, { userId: user.leftChild }] });
         if (lu) {
-          lu.placementId = null; lu.placementName = null; lu.placementPosition = null;
+          lu.placementId = undefined; lu.placementName = undefined; lu.placementPosition = undefined;
           await lu.save();
           await flushUserSubtree(lu);
         }
-        user.leftChild = null;
+        user.leftChild = undefined;
       }
       user.totalTeam = { left: 0, right: 0 };
       user.basicFlushHistory = user.basicFlushHistory || [];
@@ -275,11 +275,11 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
       if (user.rightChild) {
         const ru = await User.findOne({ $or: [{ username: user.rightChild }, { userId: user.rightChild }] });
         if (ru) {
-          ru.placementId = null; ru.placementName = null; ru.placementPosition = null;
+          ru.placementId = undefined; ru.placementName = undefined; ru.placementPosition = undefined;
           await ru.save();
           await flushUserSubtree(ru);
         }
-        user.rightChild = null;
+        user.rightChild = undefined;
       }
       user.totalTeam = { left: 0, right: 0 };
       user.basicFlushHistory = user.basicFlushHistory || [];

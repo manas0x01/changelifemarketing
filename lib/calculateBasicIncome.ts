@@ -104,9 +104,24 @@ export async function calculateBasicIncome(user: any) {
     };
   }
 
+  const currentPairNumber = user.sessionBasedIncome.filter((s: any) => s && s.status === 'Completed').length + 1;
+
+  if (currentPairNumber > 12) {
+    console.log('[DEBUG] calculateBasicIncome: user has already completed 12 pairs', { userId: user?.userId });
+    return {
+      success: false,
+      reason: "Maximum basic pairs reached",
+    };
+  }
+
   // Only give 1 pair per session maximum
   const pairsToGive = 1;
-  const income = pairsToGive * 1000;
+  let income = pairsToGive * 1000;
+  
+  // Enforce the 3rd, 6th, 9th, and 12th pair has zero income added to wallet
+  if (currentPairNumber === 3 || currentPairNumber === 6 || currentPairNumber === 9 || currentPairNumber === 12) {
+    income = 0;
+  }
   
   user.sessionBasedIncome.push({
     date: now,
@@ -123,7 +138,7 @@ export async function calculateBasicIncome(user: any) {
     serviceChargeDeducted: 0,
     status: 'Completed',
   });
-  console.log('[DEBUG] calculateBasicIncome: pushed session record', { userId: user?.userId, pairsToGive, income });
+  console.log('[DEBUG] calculateBasicIncome: pushed session record', { userId: user?.userId, pairsToGive, income, currentPairNumber });
   
   // Update basicPairs based on TOTAL completed sessions in sessionBasedIncome
   const totalCompletedPairs = user.sessionBasedIncome

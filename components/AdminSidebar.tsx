@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOut } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -157,9 +158,7 @@ export default function AdminSidebar() {
       {/* Logout */}
       <div className="px-3 pb-6 border-t border-[#FFFFFF]/10 pt-4">
         <button
-          onClick={() => {
-            /* handle logout */
-          }}
+          onClick={() => signOut({ callbackUrl: "/auth/login" })}
           suppressHydrationWarning={true}
           className={`
             w-full flex items-center gap-3 px-3 py-3 rounded-sm

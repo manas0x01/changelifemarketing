@@ -43,6 +43,7 @@ export default function NewRegisterPage() {
   const [txnValidated, setTxnValidated] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [newUserData, setNewUserData] = useState<NewUserData | null>(null);
+  const [registrationFrozen, setRegistrationFrozen] = useState(false);
   const [gender,       setGender]       = useState<"Male"|"Female">("Male");
   const [dobDay,       setDobDay]       = useState("1");
   const [dobMonth,     setDobMonth]     = useState("01");
@@ -53,6 +54,9 @@ export default function NewRegisterPage() {
   const [sponsorName,  setSponsorName]  = useState("");
   const [sponsorValidated, setSponsorValidated] = useState(false);
   const [sponsorError, setSponsorError] = useState("");
+  const [uplineId,     setUplineId]     = useState("");
+  const [uplineName,   setUplineName]   = useState("");
+  const [uplineError,  setUplineError]  = useState("");
   const [position,     setPosition]     = useState("-- Select --");
   const [pkg,          setPkg]          = useState("-- Select Package --");
   const [availableEPins, setAvailableEPins] = useState<string[]>([]);
@@ -183,6 +187,7 @@ export default function NewRegisterPage() {
     }
     setSponsorError("");
     try {
+      // Get sponsor name
       const nameResponse = await fetch('/api/user/getname', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -199,36 +204,46 @@ export default function NewRegisterPage() {
       // normalize name field (API may return { success, data: { name } })
       const sponsorDisplayName = nameData?.data?.name ?? nameData?.name ?? "";
 
-      const childrenResponse = await fetch('/api/user/getchildrenstatus', {
+      // Check available positions for this sponsor
+      const positionsResponse = await fetch('/api/user/check-positions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: sponsorId.trim() }),
+        body: JSON.stringify({ sponsorId: sponsorId.trim() }),
         credentials: 'include',
       });
 
-      let positionsToShow = ["-- Select --", "Left", "Right"];
-
-      if (childrenResponse.ok) {
-        const childrenData = await childrenResponse.json();
-
-        // children API returns shape: { success, data: { leftFilled, rightFilled, availablePositions } }
-        const leftFilled = childrenData?.data?.leftFilled ?? childrenData?.leftFilled ?? false;
-        const rightFilled = childrenData?.data?.rightFilled ?? childrenData?.rightFilled ?? false;
-
-        if (leftFilled && rightFilled) {
-          setSponsorError("Both Childs Are Already Filled Use The Different Sponsor Id");
-          return;
-        } else if (leftFilled && !rightFilled) {
-          positionsToShow = ["-- Select --", "Right"];
-        } else if (!leftFilled && rightFilled) {
-          positionsToShow = ["-- Select --", "Left"];
-        }
+      if (!positionsResponse.ok) {
+        setSponsorError("Failed to check sponsor positions");
+        return;
       }
 
+      const positionsData = await positionsResponse.json();
+
+      if (!positionsData.success) {
+        setSponsorError(positionsData.message || "Failed to check sponsor positions");
+        return;
+      }
+
+      const { availablePositions } = positionsData;
+
+      // If no positions available, show error
+      if (availablePositions.length === 0) {
+        setSponsorError("Both positions are already filled. Use a different sponsor ID.");
+        return;
+      }
+
+      // Always show available positions explicitly (Left, Right, or both)
+      let positionsToShow = ["-- Select --"];
+      availablePositions.forEach((pos: string) => {
+        positionsToShow.push(pos.charAt(0).toUpperCase() + pos.slice(1));
+      });
+      setPosition("-- Select --");
+
       setAvailablePositions(positionsToShow);
-      setPosition(positionsToShow[0]);
       setSponsorName(sponsorDisplayName);
       setSponsorValidated(true);
+
+      // Get available EPINs
       try {
         const pinsResponse = await fetch('/api/user/get-epins', {
           method: 'POST',
@@ -249,10 +264,11 @@ export default function NewRegisterPage() {
           }) || [];
           setAvailableEPins(pinStrings);
           setSelectedEPin(pinStrings[0] || "");
-        } else {
         }
       } catch (pinsError) {
+        // Silently handle EPIN error
       }
+
       toast.success("✓ Sponsor validated!");
     } catch (error) {
       setSponsorError("An error occurred. Please try again.");
@@ -289,7 +305,7 @@ export default function NewRegisterPage() {
     }
   };
 
-  const handleSponsorSubmit = () => {
+  const handleSponsorSubmit = async () => {
     if (!sponsorValidated) {
       alert("Please validate sponsor ID first");
       return;
@@ -297,6 +313,10 @@ export default function NewRegisterPage() {
     if (!position || position === "-- Select --") {
       toast.error("Please select a position");
       return;
+    }
+    // For first registration, position is auto-assigned, so no validation needed
+    if (position === "Default (Auto-assigned)") {
+      // Position will be determined during registration
     }
     if (!pkg || pkg === "-- Select Package --") {
       toast.error("Please select a package");
@@ -306,10 +326,49 @@ export default function NewRegisterPage() {
       toast.error("Please select a PIN");
       return;
     }
+    // Validate Upline ID matches Sponsor ID
+    if (!uplineId.trim()) {
+      setUplineError("Upline ID is required");
+      toast.error("Upline ID is required");
+      return;
+    }
+    if (uplineId.trim().toUpperCase() !== sponsorId.trim().toUpperCase()) {
+      setUplineError("Upline ID must match Sponsor ID");
+      toast.error("Upline ID must match Sponsor ID");
+      return;
+    }
+    setUplineError("");
+    // Validate Upline Name matches Sponsor Name
+    if (!uplineName.trim()) {
+      setUplineError("Upline Name is required");
+      toast.error("Upline Name is required");
+      return;
+    }
+    if (uplineName.trim().toUpperCase() !== sponsorName.trim().toUpperCase()) {
+      setUplineError("Upline Name must match Sponsor Name");
+      toast.error("Upline Name must match Sponsor Name");
+      return;
+    }
+
+    // Move to registration step
     setStep("register");
   };
 
   const handleRegistrationSubmit = async () => {
+    // Check if registration is frozen during transition period
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    
+    // Freeze period: 11:50 AM to 12:00 PM and 11:50 PM to 12:00 AM
+    const isFreezePeriod = (currentHour === 11 && currentMinute >= 50) || 
+                            (currentHour === 23 && currentMinute >= 50);
+    
+    if (isFreezePeriod) {
+      toast.error("Registration is frozen during system transition. Please try again after the session change.");
+      return;
+    }
+
     if (!userIdValidated) {
       toast.error("Please validate User ID first");
       return;
@@ -341,39 +400,34 @@ export default function NewRegisterPage() {
     }
     if (!password.trim()) {
       setPasswordError("Password is required");
-      toast.error("Password is required");
       return;
     }
-    setPasswordError("");
     if (!confirmPwd.trim()) {
       setConfirmPwdError("Confirm password is required");
       toast.error("Please confirm password");
       return;
     }
-    setConfirmPwdError("");
     if (password !== confirmPwd) {
       setPasswordError("Passwords don't match");
       setConfirmPwdError("Passwords don't match");
       toast.error("Passwords do not match");
       return;
     }
-    setPasswordError("");
     setConfirmPwdError("");
-
     if (!transactionPassword.trim()) {
-      setTransactionPasswordError("Transaction Password is required");
-      toast.error("Transaction Password is required");
+      setTransactionPasswordError("Transaction password is required");
+      toast.error("Transaction password is required");
       return;
     }
-    setTransactionPasswordError("");
     if (!confirmTxnPwd.trim()) {
-      setConfirmTxnPwdError("Confirm Transaction Password is required");
+      setConfirmTxnPwdError("Confirm transaction password is required");
+      toast.error("Please confirm transaction password");
       return;
     }
-    setConfirmTxnPwdError("");
     if (transactionPassword !== confirmTxnPwd) {
-      setTransactionPasswordError("Transaction Passwords don't match");
-      setConfirmTxnPwdError("Transaction Passwords don't match");
+      setTransactionPasswordError("Transaction passwords don't match");
+      setConfirmTxnPwdError("Transaction passwords do not match");
+      toast.error("Transaction passwords do not match");
       return;
     }
     setTransactionPasswordError("");
@@ -387,6 +441,8 @@ export default function NewRegisterPage() {
         placementPosition: position ? position.toLowerCase() : position,
         userId,
         sponsorId,
+        uplineId,
+        uplineName,
         position,
         package: pkg,
         epin: selectedEPin,
@@ -423,6 +479,7 @@ export default function NewRegisterPage() {
       });
       const data = await response.json();
       if (!response.ok) {
+        toast.error(data.message || data.error || "Registration failed");
         return;
       }
       
@@ -435,17 +492,19 @@ export default function NewRegisterPage() {
       });
       setShowCongratulations(true);
     } catch (error) {
+      console.error("Registration error:", error);
+      toast.error("Network error. Please check your connection and try again.");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+            <>
+              <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+                * { margin: 0; padding: 0; box-sizing: border-box; }
 
         .nr-root {
           font-family: 'Poppins', sans-serif;
@@ -1007,6 +1066,42 @@ export default function NewRegisterPage() {
                       </div>
                     </div>
 
+                    {/* Upline ID Field */}
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label"><span className="req">*</span>UPLINE ID :</label>
+                        <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                          <div style={{ flex: 1 }}>
+                            <input
+                              className="form-input"
+                              type="text"
+                              placeholder="ENTER UPLINE ID (MUST MATCH SPONSOR ID)"
+                              value={uplineId}
+                              onChange={(e) => setUplineId(e.target.value)}
+                              suppressHydrationWarning
+                            />
+                            {uplineError && <div className="txn-error">{uplineError}</div>}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Upline Name Field */}
+                    <div className="form-row">
+                      <div className="form-group">
+                        <label className="form-label"><span className="req">*</span>UPLINE NAME :</label>
+                        <input
+                          className="form-input"
+                          type="text"
+                          placeholder="ENTER UPLINE NAME (MUST MATCH SPONSOR NAME)"
+                          value={uplineName}
+                          onChange={(e) => setUplineName(e.target.value)}
+                          suppressHydrationWarning
+                        />
+                        {uplineError && <div className="txn-error">{uplineError}</div>}
+                      </div>
+                    </div>
+
                     {sponsorValidated && (
                       <>
                         <div className="form-row">
@@ -1069,7 +1164,7 @@ export default function NewRegisterPage() {
               <div className="section-header">New Member Registration</div>
               <div className="form-body">
 
-                {/* ── Sponsor Details ── */}
+                {/* ── Sponsor & Upline Details ── */}
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Sponsor ID :</label>
@@ -1078,6 +1173,17 @@ export default function NewRegisterPage() {
                   <div className="form-group">
                     <label className="form-label">Sponsor Name :</label>
                     <input className="form-input" type="text" value={sponsorName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
+                  </div>
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label"><span className="req">*</span>UPLINE ID :</label>
+                    <input className="form-input" type="text" value={uplineId} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label"><span className="req">*</span>UPLINE NAME :</label>
+                    <input className="form-input" type="text" value={uplineName} readOnly style={{ background: "#f5f5f5", color: "#777" }} />
                   </div>
                 </div>
 
@@ -1372,9 +1478,19 @@ export default function NewRegisterPage() {
 
                 {/* Submit */}
                 <div className="submit-wrap">
-                  <button className="proceed-btn" onClick={handleRegistrationSubmit} disabled={isSubmitting} suppressHydrationWarning={true}>
-                    REGISTER MEMBER
+                  <button 
+                    className={`proceed-btn ${registrationFrozen ? 'frozen' : ''}`}
+                    onClick={handleRegistrationSubmit} 
+                    disabled={isSubmitting || registrationFrozen} 
+                    suppressHydrationWarning={true}
+                  >
+                    {registrationFrozen ? '⏸ REGISTRATION FROZEN' : 'REGISTER MEMBER'}
                   </button>
+                  {registrationFrozen && (
+                    <div style={{ marginTop: '10px', textAlign: 'center', color: '#e53935', fontSize: '12px' }}>
+                      ⏸ System transition in progress (11:50 AM - 12:00 PM)
+                    </div>
+                  )}
                 </div>
 
               </div>
@@ -1430,15 +1546,27 @@ export default function NewRegisterPage() {
 
             <div className="congratulations-footer">
               <p>Please save these credentials securely. You can now log in to your account.</p>
-              <button
-                className="done-btn"
-                onClick={() => {
-                  window.location.href = "/dashboard";
-                }}
-                suppressHydrationWarning={true}
-              >
-                Done
-              </button>
+              <div style={{ display: "flex", gap: "10px", justifyContent: "center" }}>
+                <button
+                  className="done-btn"
+                  onClick={() => {
+                    window.location.href = "/dashboard";
+                  }}
+                >
+                  Go to Dashboard
+                </button>
+                <button
+                  className="done-btn"
+                  style={{ background: "#26a69a" }}
+                  onClick={() => {
+                    // Navigate to network tree with the selected position
+                    const selectedPos = position === "Default (Auto-assigned)" ? "left" : position;
+                    window.location.href = `/dashboard/networktree?userId=${encodeURIComponent(sponsorId)}&selectedPosition=${encodeURIComponent(selectedPos)}`;
+                  }}
+                >
+                  View Network Tree
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -19,6 +19,41 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
   console.log('[MLM] handleBinaryAndIncome: user found', { username: user.username, userId: user._id });
   console.log('[MLM] handleBinaryAndIncome: before - basicIncome, basicPairs, isBooster, boosterMatchingIncome', { basicIncome: user.basicIncome, basicPairs: user.basicPairs, isBooster: user.isBooster, boosterMatchingIncome: user.boosterMatchingIncome });
 
+  // Get current time and session
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentSessionType = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
+
+  // Check if we're in the same session as last activity
+  let sessionChanged = false;
+  if (user.lastSessionType && user.lastSessionDate) {
+    const lastSessionDate = new Date(user.lastSessionDate);
+    const lastSessionHour = lastSessionDate.getHours();
+    const lastSessionType = lastSessionHour >= 0 && lastSessionHour < 12 ? "morning" : "evening";
+    sessionChanged = lastSessionType !== currentSessionType;
+  }
+
+  // If session changed, flush previous pairs and reset
+  if (sessionChanged) {
+    console.log(`[MLM] Session changed from ${user.lastSessionType} to ${currentSessionType}, flushing pairs`);
+
+    // Add to flush history
+    const flushRecord = {
+      date: new Date(),
+      left: user.totalTeam?.left || 0,
+      right: user.totalTeam?.right || 0,
+      reason: `Session change: ${user.lastSessionType} to ${currentSessionType}`,
+    };
+
+    user.basicFlushHistory = user.basicFlushHistory || [];
+    user.basicFlushHistory.push(flushRecord);
+
+    // Note: Do NOT reset basicPairs here - it will be recalculated from sessionBasedIncome
+    // by calculateBasicIncome to ensure income persistence
+    user.lastSessionType = currentSessionType;
+    user.lastSessionDate = new Date();
+  }
+
   if (position === 'left' || position === 'right') {
     if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
     if (user.isBooster) {
@@ -27,18 +62,22 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
       console.log('[MLM] handleBinaryAndIncome: incremented boosterPairsCarryForward', { username: user.username, position, carryForward: user.boosterPairsCarryForward });
     }
   }
-  //Aye Hata De Baad Mai Neeche Bala 
-  const left = user.totalTeam?.left || 0;
-  const right = user.totalTeam?.right || 0;
-  const possiblePairs = Math.min(left, right);
-  user.basicPairs = possiblePairs;
-  // await calculateBasicIncome(user);
 
   // mark modified to ensure pre-save hook triggers derived fields
   if (typeof (user as any).markModified === 'function') {
     try { (user as any).markModified('sessionBasedIncome'); } catch (e) {}
   }
-  console.log('[MLM] handleBinaryAndIncome: after calculateBasicIncome', { basicIncome: user.basicIncome, basicPairs: user.basicPairs });
+
+  // 🔹 TRIGGER BASIC INCOME CALCULATION
+  console.log('[MLM] handleBinaryAndIncome: calling calculateBasicIncome', { userId: user._id });
+  const incomeResult = await calculateBasicIncome(user);
+  console.log('[MLM] handleBinaryAndIncome: calculateBasicIncome result', incomeResult);
+
+  // Update session info after calculation
+  user.lastSessionType = currentSessionType;
+  user.lastSessionDate = new Date();
+
+  console.log('[MLM] handleBinaryAndIncome: after updates', { basicIncome: user.basicIncome, basicPairs: user.basicPairs, sessionType: currentSessionType });
 
   console.log('[MLM] handleBinaryAndIncome: calling checkBoosterQualification', { userId: user._id });
   await checkBoosterQualification(user);

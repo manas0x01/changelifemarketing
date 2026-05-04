@@ -25,7 +25,13 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
-    console.log('[DASHBOARD] db user found:', { username: user.username, userId: user.userId, totalIncome: user.totalIncome || 0, basicIncome: user.basicIncome || 0 });
+    console.log('[DASHBOARD] db user found:', { username: user.username, userId: user.userId, totalIncome: user.totalIncome || 0, basicIncome: user.basicIncome || 0, sessionBasedIncomeCount: user.sessionBasedIncome?.length || 0, basicIncomeRecordsCount: user.basicIncomeRecords?.length || 0 });
+    
+    // ALWAYS save to trigger deduplication cleanup in pre-save hook
+    // This fixes any duplicate session records
+    await user.save();
+    console.log('[DASHBOARD] After cleanup - basicIncome:', user.basicIncome, 'basicPairs:', user.basicPairs);
+    
     const totalTeam = {
       left: (user.totalTeam && typeof user.totalTeam.left === 'number') ? user.totalTeam.left : 0,
       right: (user.totalTeam && typeof user.totalTeam.right === 'number') ? user.totalTeam.right : 0,
@@ -45,13 +51,12 @@ export async function GET(req: NextRequest) {
     })();
 
     console.log('[DASHBOARD] totalDirect (directMembers counts):', totalDirect);
-    let basicIncome = 0;
-    const sessionIncome = Array.isArray(user.sessionBasedIncome) ? user.sessionBasedIncome : [];
-    if (sessionIncome.length > 0) {
-      basicIncome = sessionIncome.reduce((sum: number, s: any) => sum + (s.netIncome || 0), 0);
-    } else {
-      basicIncome = user.basicIncome || 0;
-    }
+    
+    // Use the pre-calculated basicIncome from the User model
+    // The pre-save hook in User.ts correctly calculates this from basicIncomeRecords
+    const basicIncome = user.basicIncome || 0;
+    
+    console.log('[DASHBOARD] basicIncome from user model:', basicIncome);
     const schemaBooster: any = user.boosterIncome || {};
     const boosterIncomeAmount = typeof (user as any).boosterIncomeAmount === 'number'
       ? (user as any).boosterIncomeAmount

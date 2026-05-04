@@ -17,6 +17,7 @@ export async function calculateBasicIncome(user: any) {
     user.sessionBasedIncome = [];
   }
 
+  // Check if user already earned in this session - only 1 pair per session allowed
   const alreadyEarnedThisSession = user.sessionBasedIncome.find(
     (s: any) =>
       s.sessionType === sessionType &&
@@ -24,22 +25,10 @@ export async function calculateBasicIncome(user: any) {
   );
 
   if (alreadyEarnedThisSession) {
-    console.log('[DEBUG] calculateBasicIncome: session limit reached', { userId: user?.userId, sessionType });
+    console.log('[DEBUG] calculateBasicIncome: session limit reached - only 1 pair per session', { userId: user?.userId, sessionType });
     return {
       success: false,
       reason: "Session limit reached (1 pair only)",
-    };
-  }
-
-  const todaySessions = user.sessionBasedIncome.filter(
-    (s: any) => new Date(s.date || s.sessionDate).toDateString() === today
-  );
-
-  if (todaySessions.length >= 2) {
-    console.log('[DEBUG] calculateBasicIncome: daily cap reached', { userId: user?.userId, todaySessionsCount: todaySessions.length });
-    return {
-      success: false,
-      reason: "Daily cap reached (₹2000)",
     };
   }
 
@@ -78,7 +67,8 @@ export async function calculateBasicIncome(user: any) {
     };
   }
 
-  const pairsToGive = 1; // max 1 per session
+  // Only give 1 pair per session maximum
+  const pairsToGive = 1;
   const income = pairsToGive * 1000;
   
   user.sessionBasedIncome.push({
@@ -97,20 +87,19 @@ export async function calculateBasicIncome(user: any) {
     status: 'Completed',
   });
   console.log('[DEBUG] calculateBasicIncome: pushed session record', { userId: user?.userId, pairsToGive, income });
-  // Ensure Mongoose detects the change to the subdocument array
+  
+  // Update basicPairs based on TOTAL completed sessions in sessionBasedIncome
+  const totalCompletedPairs = user.sessionBasedIncome
+    .filter((s: any) => s.status === 'Completed')
+    .reduce((sum: number, s: any) => sum + (s.pairs || s.pairsInSession || 0), 0);
+  
+  user.basicPairs = totalCompletedPairs;
+  console.log('[DEBUG] calculateBasicIncome: basicPairs synced with records', { userId: user?.userId, basicPairs: user.basicPairs });
+
+  // Ensure Mongoose detects the changes
   if (typeof (user as any).markModified === 'function') {
     try {
       (user as any).markModified('sessionBasedIncome');
-    } catch (err) {
-      // non-fatal: markModified exists on mongoose documents
-    }
-  }
-  user.basicPairs = alreadyGivenPairs + pairsToGive;
-
-  console.log('[DEBUG] calculateBasicIncome: basicPairs updated', { userId: user?.userId, basicPairs: user.basicPairs });
-
-  if (typeof (user as any).markModified === 'function') {
-    try {
       (user as any).markModified('basicPairs');
     } catch (err) {}
   }

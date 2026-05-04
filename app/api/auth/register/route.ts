@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { handleBinaryAndIncome } from "@/lib/mlmEngine";
+import { updateTeamCounts } from "@/lib/teamUtils";
 
 export async function POST(req: NextRequest) {
   const dbSession = await mongoose.startSession();
@@ -36,7 +37,14 @@ export async function POST(req: NextRequest) {
     const sponsorId = (body.sponsorId || "").trim().toUpperCase();
     const epin = body.epin;
 
-    const placementPosition: "left" | "right" = body.placementPosition;
+    let placementPosition: "left" | "right" | undefined = body.placementPosition;
+
+    if (!placementPosition || !["left", "right"].includes(placementPosition)) {
+      return NextResponse.json(
+        { success: false, message: "Please select a position (Left or Right)" },
+        { status: 400 }
+      );
+    }
 
     console.log('[DEBUG] register: parsed body', { username, fullName, mobileNo, sponsorId, placementPosition, epin });
 
@@ -56,14 +64,6 @@ export async function POST(req: NextRequest) {
       console.log('[DEBUG] register: validation failed - missing fields', { username, fullName, mobileNo, sponsorId, placementPosition, epin });
       return NextResponse.json(
         { success: false, message: "All fields are required" },
-        { status: 400 }
-      );
-    }
-
-    if (!["left", "right"].includes(placementPosition)) {
-      console.log('[DEBUG] register: validation failed - invalid placementPosition', { placementPosition });
-      return NextResponse.json(
-        { success: false, message: "Invalid placement position" },
         { status: 400 }
       );
     }
@@ -139,7 +139,10 @@ export async function POST(req: NextRequest) {
     //////////////////////////////////////////////////////////////
 
     const sponsor = await User.findOne({
-      $or: [{ userId: sponsorId }, { username: sponsorId }],
+      $or: [
+        { userId: { $regex: new RegExp(`^${sponsorId}$`, 'i') } },
+        { username: { $regex: new RegExp(`^${sponsorId}$`, 'i') } }
+      ],
     });
 
     if (!sponsor) {
@@ -155,12 +158,53 @@ export async function POST(req: NextRequest) {
     const positionField =
       placementPosition === "left" ? "leftChild" : "rightChild";
 
+    // Check if position is filled - but also verify if it's currently valid (not flushed out)
+    const currentHour = new Date().getHours();
+    const currentSessionType = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
+    
+    // Check if session changed and would cause a flush
+    let effectiveLeftCount = sponsor.totalTeam?.left || 0;
+    let effectiveRightCount = sponsor.totalTeam?.right || 0;
+    
+    if (sponsor.lastSessionType && sponsor.lastSessionType !== currentSessionType) {
+      if (effectiveLeftCount !== effectiveRightCount) {
+        if (effectiveLeftCount > effectiveRightCount) effectiveLeftCount = effectiveRightCount;
+        else effectiveRightCount = effectiveLeftCount;
+      }
+    }
+
+    const sideValid = placementPosition === "left" ? effectiveLeftCount > 0 : effectiveRightCount > 0;
+
     if (sponsor[positionField]) {
-      console.log('[DEBUG] register: sponsor position already filled', { positionField, filledBy: sponsor[positionField] });
-      return NextResponse.json(
-        { success: false, message: `${placementPosition} already filled` },
-        { status: 400 }
-      );
+      const childUserId = sponsor[positionField];
+      console.log('[DEBUG] register: checking if child exists and is valid', { positionField, childUserId, sideValid });
+      
+      // If the side is flushed out (sideValid is false), we can overwrite it
+      if (!sideValid) {
+        console.log('[DEBUG] register: position flushed out, allowing overwrite', { positionField });
+        sponsor.set(positionField, undefined);
+      } else {
+        // Verify the child user actually exists in database
+        const childExists = await User.findOne({
+          $or: [
+            { userId: { $regex: new RegExp(`^${childUserId}$`, 'i') } },
+            { username: { $regex: new RegExp(`^${childUserId}$`, 'i') } }
+          ]
+        });
+        
+        if (childExists) {
+          console.log('[DEBUG] register: sponsor position already filled', { positionField, filledBy: childUserId });
+          return NextResponse.json(
+            { success: false, message: `${placementPosition} already filled` },
+            { status: 400 }
+          );
+        } else {
+          // Child reference exists but user doesn't - clear it
+          console.log('[DEBUG] register: child reference exists but user deleted, clearing position', { positionField, childUserId });
+          sponsor.set(positionField, undefined);
+          await sponsor.save();
+        }
+      }
     }
 
     //////////////////////////////////////////////////////////////
@@ -211,12 +255,20 @@ export async function POST(req: NextRequest) {
     console.log('[DEBUG] register: newUser saved', { userId: newUser.userId, username: newUser.username });
 
     //////////////////////////////////////////////////////////////
-    // 🔹 UPDATE SPONSOR (LEFT / RIGHT CHILD)
+    // 🔹 UPDATE SPONSOR (LEFT / RIGHT CHILD + TOTAL TEAM)
     //////////////////////////////////////////////////////////////
 
     sponsor[positionField] = newUser.username;
+    
+    // Recursive update for all ancestors - MUST PASS THE SESSION
+    await updateTeamCounts(sponsor.userId || sponsor.username, placementPosition, 1, dbSession);
+    
     await sponsor.save({ session: dbSession });
-    console.log('[DEBUG] register: sponsor updated', { sponsorId: sponsor.userId || sponsor.username, positionField });
+    console.log('[DEBUG] register: sponsor updated', { 
+      sponsorId: sponsor.userId || sponsor.username, 
+      positionField, 
+      totalTeam: sponsor.totalTeam 
+    });
 
     //////////////////////////////////////////////////////////////
     // 🔹 UPDATE LOGGED-IN USER
@@ -237,7 +289,71 @@ export async function POST(req: NextRequest) {
       loggedInUser.totalTeam = { left: 0, right: 0 };
     }
 
-    loggedInUser.totalTeam[placementPosition] += 1;
+    // Update team count for the placement position
+    loggedInUser.totalTeam[placementPosition] = (loggedInUser.totalTeam[placementPosition] || 0) + 1;
+
+    // Check if this completes a pair (both sides have at least 1)
+    const leftCount = loggedInUser.totalTeam.left || 0;
+    const rightCount = loggedInUser.totalTeam.right || 0;
+
+    console.log('[REGISTER] Pair check:', { userId: loggedInUser.userId, leftCount, rightCount, position: placementPosition });
+
+    if (leftCount > 0 && rightCount > 0) {
+      // Pair completed - but only 1 pair per session allowed
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentSessionType: "morning" | "evening" = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
+
+      console.log('[REGISTER] Pair detected! Checking session:', { currentSessionType, currentHour });
+
+      // Check if user already completed a pair this session
+      const sessionBasedIncome = loggedInUser.sessionBasedIncome || [];
+      const hasCompletedPairThisSession = sessionBasedIncome.some(
+        (record: any) => record.sessionType === currentSessionType && record.status === "Completed"
+      );
+
+      console.log('[REGISTER] Session check:', { hasCompletedPairThisSession, sessionRecords: sessionBasedIncome.length });
+
+      // Only allow 1 pair per session
+      if (!hasCompletedPairThisSession) {
+        const incomeAmount = 1000; // Only 1 pair = ₹1000
+        
+        // Count existing completed records and set basicPairs accordingly
+        const completedRecords = loggedInUser.sessionBasedIncome?.filter(
+          (r: any) => r.status === "Completed"
+        ) || [];
+        loggedInUser.basicPairs = completedRecords.length + 1;
+        loggedInUser.lastSessionType = currentSessionType;
+        loggedInUser.lastSessionDate = new Date();
+
+        const sessionIncomeRecord = {
+          date: new Date(),
+          sessionType: currentSessionType,
+          pairs: 1,
+          netIncome: incomeAmount,
+          status: "Completed" as const,
+        };
+
+        loggedInUser.sessionBasedIncome = loggedInUser.sessionBasedIncome || [];
+        loggedInUser.sessionBasedIncome.push(sessionIncomeRecord);
+        
+        // IMPORTANT: Mark the array as modified so Mongoose pre-save hook detects the change
+        loggedInUser.markModified('sessionBasedIncome');
+
+        // Check for booster upgrade (10 pairs)
+        if (loggedInUser.basicPairs >= 10) {
+          loggedInUser.isBooster = true;
+          loggedInUser.boosterAchievedAt = new Date();
+          loggedInUser.basicRank = "booster";
+        }
+
+        console.log('[REGISTER] Pair completed and income added:', { session: currentSessionType, basicPairs: loggedInUser.basicPairs, income: incomeAmount });
+      } else {
+        console.log('[REGISTER] Pair already completed this session - only 1 pair per session allowed');
+      }
+    } else {
+      console.log('[REGISTER] No pair yet - team count updated:', { left: leftCount, right: rightCount });
+    }
 
     //////////////////////////////////////////////////////////////
     // 🔹 DIRECT MEMBERS SAFE ADD

@@ -402,37 +402,59 @@ userSchema.pre('save', async function (this: IUser) {
     console.error('❌ [PRE-SAVE] Error ensuring userId fallback:', err);
   }
   try {
-    if (this.isModified('sessionBasedIncome')) {
-      console.log('💡 [PRE-SAVE] sessionBasedIncome modified — deriving basicIncome and updating basicIncomeRecords');
-      const sessions = this.sessionBasedIncome || [];
+    const hasSessionIncome = Array.isArray(this.sessionBasedIncome) && this.sessionBasedIncome.length > 0;
+    const hasBasicRecords = Array.isArray(this.basicIncomeRecords) && this.basicIncomeRecords.length > 0;
+    const isSessionModified = this.isModified('sessionBasedIncome');
+    
+    // Sync if sessionBasedIncome was modified OR if basicIncomeRecords is empty but sessionBasedIncome has data
+    if (isSessionModified || (hasSessionIncome && !hasBasicRecords)) {
+      if (isSessionModified) {
+        console.log('💡 [PRE-SAVE] sessionBasedIncome modified — syncing basicIncomeRecords');
+      } else {
+        console.log('💡 [PRE-SAVE] basicIncomeRecords empty but sessionBasedIncome has data — syncing');
+      }
+      
+      // DEDUPLICATE: Keep only 1 record per session type
+      const uniqueSessions = new Map();
+      for (const s of this.sessionBasedIncome || []) {
+        if (s && s.sessionType && s.status === "Completed") {
+          if (!uniqueSessions.has(s.sessionType)) {
+            uniqueSessions.set(s.sessionType, s);
+          }
+        }
+      }
+      const sessions = Array.from(uniqueSessions.values());
+      
+      // Update the array with deduplicated records
+      if (sessions.length !== (this.sessionBasedIncome?.length || 0)) {
+        console.log(`💡 [PRE-SAVE] Deduplicated: ${this.sessionBasedIncome?.length} -> ${sessions.length} records`);
+        this.sessionBasedIncome = sessions;
+      }
 
-      // Snapshot helpful for debugging unexpected zero sums — prefer canonical fields
-      try {
-        console.log('💡 [PRE-SAVE] sessions snapshot:', sessions.map((s: any) => ({ date: s?.date || s?.sessionDate, status: s?.status, netIncome: s?.netIncome ?? s?.income ?? s?.grossIncome, pairs: s?.pairs || s?.pairsInSession || s?.pairCount })));
-      } catch (e) {}
-
-      const derivedBasicIncome = sessions.reduce((acc: number, s: any) => {
-        if (!s) return acc;
-        const status = (s.status || '').toString().toLowerCase();
-        // treat explicit 'pending' as excluded, otherwise include (backwards-compatible)
-        if (status === 'pending') return acc;
-        const value = (typeof s.netIncome === 'number')
-          ? s.netIncome
-          : (typeof s.grossIncome === 'number')
-            ? s.grossIncome
-            : (typeof s.income === 'number')
-              ? s.income
-              : 0;
-        return acc + (value || 0);
-      }, 0);
-
-      this.basicIncome = derivedBasicIncome;
       if (!Array.isArray(this.basicIncomeRecords)) this.basicIncomeRecords = [];
       let nextSrNo = (this.basicIncomeRecords?.length || 0) + 1;
+      
+      console.log(`💡 [PRE-SAVE] Processing ${sessions.length} session records...`);
       for (const s of sessions) {
-        if (!s) continue;
-        const sessionDateValue = s.date || s.sessionDate;
-        if (!sessionDateValue) continue;
+        if (!s) {
+          console.log('💡 [PRE-SAVE] Skipping null session record');
+          continue;
+        }
+        // Check both date field names (schema uses sessionDate, code pushes date)
+        let sessionDateValue: Date | undefined = s.date || s.sessionDate;
+        console.log(`💡 [PRE-SAVE] Session record: date=${s.date}, sessionDate=${s.sessionDate}, netIncome=${s.netIncome}, grossIncome=${s.grossIncome}, status=${s.status}`);
+        if (!sessionDateValue) {
+          console.log(`💡 [PRE-SAVE] No date found, using current date for record with netIncome=${s.netIncome}`);
+          sessionDateValue = new Date(); // Use current date as fallback
+        }
+        
+        // Skip pending sessions
+        const status = (s.status || '').toString().toLowerCase();
+        if (status === 'pending') {
+          console.log('💡 [PRE-SAVE] Skipping pending session');
+          continue;
+        }
+        
         const sessionTime = new Date(sessionDateValue).getTime();
         const existingIndex = this.basicIncomeRecords.findIndex((r: any) => r && r.date && new Date(r.date).getTime() === sessionTime);
 
@@ -445,28 +467,57 @@ userSchema.pre('save', async function (this: IUser) {
               : 0;
 
         if (existingIndex === -1) {
+          // Add new record
+          console.log(`💡 [PRE-SAVE] Adding new basicIncomeRecord: amount=${amountValue}, date=${sessionDateValue}`);
           this.basicIncomeRecords.push({
             srNo: nextSrNo++,
             amount: amountValue,
             pairCount: s.pairs || s.pairsInSession || s.pairCount || 0,
             date: new Date(sessionDateValue),
-            description: `Derived from session ${s.sessionType || ''}`,
+            description: `Income from ${s.sessionType || ''} session`,
             status: s.status || 'Completed',
           } as any);
         } else {
+          // Update existing record
+          console.log(`💡 [PRE-SAVE] Updating existing basicIncomeRecord at index ${existingIndex}: amount=${amountValue}`);
           const rec: any = this.basicIncomeRecords[existingIndex];
           rec.amount = amountValue;
           rec.pairCount = s.pairs || s.pairsInSession || s.pairCount || 0;
           rec.status = s.status || rec.status;
         }
       }
+      console.log(`💡 [PRE-SAVE] Sync complete - basicIncomeRecords now has ${this.basicIncomeRecords.length} records`);
+    }
 
-      if (derivedBasicIncome === 0) {
-        console.warn('⚠️ [PRE-SAVE] derivedBasicIncome is 0 — check session entries logged above');
+    // DEDUPLICATE basicIncomeRecords too (keep only 1 per session description)
+    if (Array.isArray(this.basicIncomeRecords) && this.basicIncomeRecords.length > 0) {
+      const uniqueRecords = new Map();
+      for (const r of this.basicIncomeRecords) {
+        const key = r.description || r.date?.toString() || Math.random();
+        if (!uniqueRecords.has(key)) {
+          uniqueRecords.set(key, r);
+        }
+      }
+      const dedupedRecords = Array.from(uniqueRecords.values());
+      if (dedupedRecords.length !== this.basicIncomeRecords.length) {
+        console.log(`💡 [PRE-SAVE] Deduplicated basicIncomeRecords: ${this.basicIncomeRecords.length} -> ${dedupedRecords.length}`);
+        this.basicIncomeRecords = dedupedRecords;
       }
     }
+
+    // ALWAYS recalculate basicIncome from basicIncomeRecords to ensure it's correct
+    if (Array.isArray(this.basicIncomeRecords)) {
+      const totalFromRecords = this.basicIncomeRecords
+        .filter((r: any) => (r.status || '').toLowerCase() === 'completed')
+        .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
+      
+      this.basicIncome = totalFromRecords;
+      // Also fix basicPairs to match actual unique sessions
+      this.basicPairs = (this.sessionBasedIncome || []).filter((s: any) => s.status === "Completed").length;
+      console.log(`💰 [PRE-SAVE] basicIncome recalculated: ₹${this.basicIncome}, basicPairs: ${this.basicPairs}`);
+    }
   } catch (err) {
-    console.error('❌ [PRE-SAVE] Error deriving basicIncome from sessionBasedIncome:', err);
+    console.error('❌ [PRE-SAVE] Error deriving basicIncome:', err);
   }
   // Ensure totalIncome is derived from current income sources (single source of truth)
   try {

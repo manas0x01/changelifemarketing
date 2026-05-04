@@ -37,8 +37,36 @@ export async function POST(req: NextRequest) {
         { status: 404 }
       );
     }
-    const leftFilled = user.leftChild && user.leftChild !== "";
-    const rightFilled = user.rightChild && user.rightChild !== "";
+    // Verify child users actually exist in database
+    let leftFilled = false;
+    let rightFilled = false;
+    
+    if (user.leftChild && user.leftChild !== "") {
+      const leftChildExists = await User.findOne({
+        $or: [
+          { userId: { $regex: new RegExp(`^${user.leftChild}$`, 'i') } },
+          { username: { $regex: new RegExp(`^${user.leftChild}$`, 'i') } }
+        ]
+      });
+      leftFilled = !!leftChildExists;
+      if (!leftFilled) {
+        console.log('[CHILD-STATUS] leftChild reference exists but user not found:', user.leftChild);
+      }
+    }
+    
+    if (user.rightChild && user.rightChild !== "") {
+      const rightChildExists = await User.findOne({
+        $or: [
+          { userId: { $regex: new RegExp(`^${user.rightChild}$`, 'i') } },
+          { username: { $regex: new RegExp(`^${user.rightChild}$`, 'i') } }
+        ]
+      });
+      rightFilled = !!rightChildExists;
+      if (!rightFilled) {
+        console.log('[CHILD-STATUS] rightChild reference exists but user not found:', user.rightChild);
+      }
+    }
+    
     const availablePositions = [];
     if (!leftFilled) availablePositions.push("left");
     if (!rightFilled) availablePositions.push("right");

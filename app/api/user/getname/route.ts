@@ -45,9 +45,30 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine availability of left/right positions
-    const leftEmpty = !user.leftChild || String(user.leftChild).trim() === "";
-    const rightEmpty = !user.rightChild || String(user.rightChild).trim() === "";
+    // Determine availability of left/right positions - verify child users actually exist
+    let leftEmpty = true;
+    let rightEmpty = true;
+    
+    if (user.leftChild && String(user.leftChild).trim() !== "") {
+      const leftChildExists = await User.findOne({
+        $or: [
+          { userId: { $regex: new RegExp(`^${user.leftChild}$`, 'i') } },
+          { username: { $regex: new RegExp(`^${user.leftChild}$`, 'i') } }
+        ]
+      });
+      leftEmpty = !leftChildExists;
+    }
+    
+    if (user.rightChild && String(user.rightChild).trim() !== "") {
+      const rightChildExists = await User.findOne({
+        $or: [
+          { userId: { $regex: new RegExp(`^${user.rightChild}$`, 'i') } },
+          { username: { $regex: new RegExp(`^${user.rightChild}$`, 'i') } }
+        ]
+      });
+      rightEmpty = !rightChildExists;
+    }
+    
     const availablePositions: string[] = [];
     if (leftEmpty) availablePositions.push("left");
     if (rightEmpty) availablePositions.push("right");

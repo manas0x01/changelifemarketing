@@ -189,13 +189,14 @@ export async function POST(req: NextRequest) {
     console.log('[DEBUG] register: starting DB transaction');
     dbSession.startTransaction();
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const transactionPassword = body.transactionPassword;
 
     const newUser = new User({
       userId: username,
       username,
       fullName,
-      password: hashedPassword,
+      password: password,
+      transactionPassword: transactionPassword,
       mobileNo,
 
       sponsorId: sponsor.userId || sponsor.username,

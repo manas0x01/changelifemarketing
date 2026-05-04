@@ -73,9 +73,11 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
   const incomeResult = await calculateBasicIncome(user);
   console.log('[MLM] handleBinaryAndIncome: calculateBasicIncome result', incomeResult);
 
-  // Update session info after calculation
-  user.lastSessionType = currentSessionType;
-  user.lastSessionDate = new Date();
+  // Update session info after calculation ONLY if it changed
+  if (sessionChanged || !user.lastSessionDate) {
+    user.lastSessionType = currentSessionType;
+    user.lastSessionDate = new Date();
+  }
 
   console.log('[MLM] handleBinaryAndIncome: after updates', { basicIncome: user.basicIncome, basicPairs: user.basicPairs, sessionType: currentSessionType });
 

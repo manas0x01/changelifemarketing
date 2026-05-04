@@ -6,6 +6,46 @@ function getSessionType(date: Date) {
   return hour < 12 ? "morning" : "evening";
 }
 
+async function getDescendants(user: any): Promise<any[]> {
+  const list: any[] = [];
+  if (user.leftChild) {
+    const lc = await User.findOne({ $or: [{ username: user.leftChild }, { userId: user.leftChild }] });
+    if (lc) {
+      list.push(lc);
+      list.push(...await getDescendants(lc));
+    }
+  }
+  if (user.rightChild) {
+    const rc = await User.findOne({ $or: [{ username: user.rightChild }, { userId: user.rightChild }] });
+    if (rc) {
+      list.push(rc);
+      list.push(...await getDescendants(rc));
+    }
+  }
+  return list;
+}
+
+async function countCurrentSessionDescendants(user: any, side: "left" | "right", startTime: number): Promise<number> {
+  const childId = user[side === "left" ? "leftChild" : "rightChild"];
+  if (!childId) return 0;
+
+  const child = await User.findOne({
+    $or: [{ username: childId }, { userId: childId }]
+  });
+  if (!child) return 0;
+
+  const descendants = await getDescendants(child);
+  descendants.push(child);
+
+  const count = descendants.filter((d: any) => {
+    const jd = d.joiningDate || d.createdAt || d.date;
+    if (!jd) return false;
+    return new Date(jd).getTime() >= startTime;
+  }).length;
+
+  return count;
+}
+
 export async function calculateBasicIncome(user: any) {
   const now = new Date();
   const today = now.toDateString();
@@ -17,11 +57,17 @@ export async function calculateBasicIncome(user: any) {
     user.sessionBasedIncome = [];
   }
 
+  // Calculate start time of the current session
+  let sessionStartDate = user.lastSessionDate
+    ? new Date(user.lastSessionDate)
+    : new Date(user.createdAt || user.joiningDate || Date.now() - 12 * 60 * 60 * 1000);
+
   // Check if user already earned in this session - only 1 pair per session allowed
   const alreadyEarnedThisSession = user.sessionBasedIncome.find(
-    (s: any) =>
-      s.sessionType === sessionType &&
-      new Date(s.date || s.sessionDate).toDateString() === today
+    (s: any) => {
+      const recTime = new Date(s.date || s.sessionDate).getTime();
+      return recTime >= (sessionStartDate.getTime() - 5000);
+    }
   );
 
   if (alreadyEarnedThisSession) {
@@ -32,38 +78,29 @@ export async function calculateBasicIncome(user: any) {
     };
   }
 
-  const leftCount =
-    typeof user.totalTeam?.left === "number"
-      ? user.totalTeam.left
-      : user.leftChild && user.leftChild !== ""
-      ? 1
-      : 0;
+  // Buffer slightly to account for small delays when creating the user/session change
+  const startTime = sessionStartDate.getTime() - 5000;
 
-  const rightCount =
-    typeof user.totalTeam?.right === "number"
-      ? user.totalTeam.right
-      : user.rightChild && user.rightChild !== ""
-      ? 1
-      : 0;
+  const leftCount = await countCurrentSessionDescendants(user, "left", startTime);
+  const rightCount = await countCurrentSessionDescendants(user, "right", startTime);
+
+  console.log('[DEBUG] calculateBasicIncome: session counts', { userId: user?.userId, leftCount, rightCount, startTime: new Date(startTime).toISOString() });
 
   if (leftCount < 1 || rightCount < 1) {
-    console.log('[DEBUG] calculateBasicIncome: pair incomplete', { userId: user?.userId, leftCount, rightCount });
+    console.log('[DEBUG] calculateBasicIncome: pair incomplete in this session', { userId: user?.userId, leftCount, rightCount });
     return {
       success: false,
-      reason: "Pair not complete",
+      reason: "Pair not complete in this session",
     };
   }
 
   const possiblePairs = Math.min(leftCount, rightCount);
-  const alreadyGivenPairs = user.basicPairs || 0;
 
-  const newPairs = possiblePairs - alreadyGivenPairs;
-
-  if (newPairs <= 0) {
-    console.log('[DEBUG] calculateBasicIncome: no new pairs', { userId: user?.userId, possiblePairs, alreadyGivenPairs });
+  if (possiblePairs <= 0) {
+    console.log('[DEBUG] calculateBasicIncome: no new pairs in this session', { userId: user?.userId, possiblePairs });
     return {
       success: false,
-      reason: "No new pair available",
+      reason: "No new pair available in this session",
     };
   }
 
@@ -94,7 +131,8 @@ export async function calculateBasicIncome(user: any) {
     .reduce((sum: number, s: any) => sum + (s.pairs || s.pairsInSession || 0), 0);
   
   user.basicPairs = totalCompletedPairs;
-  console.log('[DEBUG] calculateBasicIncome: basicPairs synced with records', { userId: user?.userId, basicPairs: user.basicPairs });
+
+  console.log('[DEBUG] calculateBasicIncome: updated counts', { userId: user?.userId, basicPairs: user.basicPairs });
 
   // Ensure Mongoose detects the changes
   if (typeof (user as any).markModified === 'function') {

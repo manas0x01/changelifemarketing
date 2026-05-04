@@ -4,38 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
-// Helper function to recursively flush a user's entire subtree
-async function flushUserSubtree(user: any) {
-  if (!user) return;
-  
-  console.log(`[PLACEMENT TREE FLUSH] Flushing user ${user.userId} and their subtree`);
-  
-  // Set this user's team counts to 0 (marks them as flushed)
-  user.totalTeam = { left: 0, right: 0 };
-  
-  // Recursively flush left child
-  if (user.leftChild) {
-    const leftChild = await User.findOne({
-      $or: [{ username: user.leftChild }, { userId: user.leftChild }]
-    });
-    if (leftChild) {
-      await flushUserSubtree(leftChild);
-    }
-  }
-  
-  // Recursively flush right child
-  if (user.rightChild) {
-    const rightChild = await User.findOne({
-      $or: [{ username: user.rightChild }, { userId: user.rightChild }]
-    });
-    if (rightChild) {
-      await flushUserSubtree(rightChild);
-    }
-  }
-  
-  await user.save();
-  console.log(`[PLACEMENT TREE FLUSH] User ${user.userId} and subtree flushed`);
-}
+
 
 // Helper function to count actual children in tree
 async function countActualChildren(user: any) {
@@ -147,149 +116,6 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
   // Only flush on session change 
   if (isFirstTime || isSessionChange) {
     console.log(`[PLACEMENT TREE] Processing ${isFirstTime ? 'FIRST TIME' : 'SESSION CHANGE'} for user ${user.userId}`);
-    
-    // NEW: Add income for any new pairs formed in previous session
-    const completedPastPairs = user.sessionBasedIncome?.filter((r: any) => r.status === "Completed").length || 0;
-    const totalPairsInTree = Math.min(leftPairs, rightPairs);
-    const newPairs = totalPairsInTree - completedPastPairs;
-    
-    if (newPairs > 0) {
-      user.sessionBasedIncome = user.sessionBasedIncome || [];
-      user.sessionBasedIncome.push({
-        date: new Date(),
-        sessionType: currentSessionType,
-        pairs: 1,
-        netIncome: 1000,
-        status: "Completed" as const,
-      });
-      user.basicPairs = completedPastPairs + 1;
-      user.markModified('sessionBasedIncome');
-      incomeMessage = `✅ Session pair complete - ₹1000 added (Total: ₹${user.basicPairs * 1000})`;
-      console.log(`[PLACEMENT TREE] Income added for ${currentSessionType} session - Total pairs: ${user.basicPairs}`);
-    }
-
-    // Calculate users to flush - keep only 1 pair (2 users total)
-    const leftToFlush = Math.max(0, leftPairs - 1); // Keep only 1 left
-    const rightToFlush = Math.max(0, rightPairs - 1); // Keep only 1 right
-    const totalFlushed = leftToFlush + rightToFlush;
-    
-    console.log(`[PLACEMENT TREE FLUSH] Left: ${leftPairs}, Right: ${rightPairs}`);
-    console.log(`[PLACEMENT TREE FLUSH] Flushing: ${leftToFlush} left, ${rightToFlush} right, Total: ${totalFlushed} users`);
-    
-    if (totalFlushed > 0) {
-      // Record the flush
-      const flushRecord = {
-        date: new Date(),
-        left: leftPairs,
-        right: rightPairs,
-        flushedLeft: leftToFlush,
-        flushedRight: rightToFlush,
-        reason: `Session change ${lastSessionType || 'initial'} -> ${currentSessionType}: Only 1 pair allowed, ${totalFlushed} users flushed`,
-      };
-      
-      user.basicFlushHistory = user.basicFlushHistory || [];
-      user.basicFlushHistory.push(flushRecord);
-      
-      // Cap both sides to 1 (keep only 1 pair)
-      user.totalTeam.left = Math.min(leftPairs, 1);
-      user.totalTeam.right = Math.min(rightPairs, 1);
-      
-      // IMPORTANT: Remove the flushed users' descendants to keep exactly 1 pair
-      if (leftToFlush > 0 && user.leftChild) {
-        const leftChildUser = await User.findOne({
-          $or: [{ username: user.leftChild }, { userId: user.leftChild }]
-        });
-        if (leftChildUser) {
-          console.log(`[PLACEMENT TREE FLUSH] Removing left child descendants from tree: ${leftChildUser.userId}`);
-          if (leftChildUser.leftChild) {
-            const lc = await User.findOne({ $or: [{ username: leftChildUser.leftChild }, { userId: leftChildUser.leftChild }] });
-            if (lc) { lc.placementId = undefined; lc.placementName = undefined; lc.placementPosition = undefined; await lc.save(); await flushUserSubtree(lc); }
-            leftChildUser.leftChild = undefined;
-          }
-          if (leftChildUser.rightChild) {
-            const rc = await User.findOne({ $or: [{ username: leftChildUser.rightChild }, { userId: leftChildUser.rightChild }] });
-            if (rc) { rc.placementId = undefined; rc.placementName = undefined; rc.placementPosition = undefined; await rc.save(); await flushUserSubtree(rc); }
-            leftChildUser.rightChild = undefined;
-          }
-          await leftChildUser.save();
-        }
-      }
-      if (rightToFlush > 0 && user.rightChild) {
-        const rightChildUser = await User.findOne({
-          $or: [{ username: user.rightChild }, { userId: user.rightChild }]
-        });
-        if (rightChildUser) {
-          console.log(`[PLACEMENT TREE FLUSH] Removing right child descendants from tree: ${rightChildUser.userId}`);
-          if (rightChildUser.leftChild) {
-            const lc = await User.findOne({ $or: [{ username: rightChildUser.leftChild }, { userId: rightChildUser.leftChild }] });
-            if (lc) { lc.placementId = undefined; lc.placementName = undefined; lc.placementPosition = undefined; await lc.save(); await flushUserSubtree(lc); }
-            rightChildUser.leftChild = undefined;
-          }
-          if (rightChildUser.rightChild) {
-            const rc = await User.findOne({ $or: [{ username: rightChildUser.rightChild }, { userId: rightChildUser.rightChild }] });
-            if (rc) { rc.placementId = undefined; rc.placementName = undefined; rc.placementPosition = undefined; await rc.save(); await flushUserSubtree(rc); }
-            rightChildUser.rightChild = undefined;
-          }
-          await rightChildUser.save();
-        }
-      }
-      console.log(`[PLACEMENT TREE FLUSH] Removed ${leftToFlush} left and ${rightToFlush} right users from tree`);
-      
-      flushedOut = true;
-      flushMessage = `${totalFlushed} users flashed out - only 1 pair (1 left + 1 right) kept`;
-      
-      console.log(`[PLACEMENT TREE FLASH OUT] ${flushMessage}`);
-    } else {
-      console.log(`[PLACEMENT TREE] No flush needed - already at 1 pair or less (${leftPairs} left, ${rightPairs} right)`);
-    }
-
-    // ─────────────────────────────────────────────────────────────────────
-    // CRITICAL: Remove any UNPAIRED user from the tree on session change.
-    // Runs only when the session changed. If one side has a child and the
-    // other is empty, the lone user is permanently removed from the tree.
-    // ─────────────────────────────────────────────────────────────────────
-    const liveActual = await countActualChildren(user);
-    const liveLeft  = liveActual.left;
-    const liveRight = liveActual.right;
-
-    if (liveLeft > 0 && liveRight === 0) {
-      console.log(`[PLACEMENT TREE FLUSH] Unpaired left child (left=${liveLeft}, right=0). Removing permanently.`);
-      if (user.leftChild) {
-        const lu = await User.findOne({ $or: [{ username: user.leftChild }, { userId: user.leftChild }] });
-        if (lu) {
-          lu.placementId = undefined; lu.placementName = undefined; lu.placementPosition = undefined;
-          await lu.save();
-          await flushUserSubtree(lu);
-        }
-        user.leftChild = undefined;
-      }
-      user.totalTeam = { left: 0, right: 0 };
-      user.basicFlushHistory = user.basicFlushHistory || [];
-      user.basicFlushHistory.push({ date: new Date(), left: liveLeft, right: liveRight,
-        reason: `Unpaired left user removed on session change (${lastSessionType || 'initial'} -> ${currentSessionType})` });
-      flushedOut = true;
-      flushMessage = (flushMessage ? flushMessage + '; ' : '') + 'Unpaired left user permanently removed from tree';
-      console.log(`[PLACEMENT TREE FLUSH] Unpaired left user removed. Tree reset to 0/0.`);
-    } else if (liveRight > 0 && liveLeft === 0) {
-      console.log(`[PLACEMENT TREE FLUSH] Unpaired right child (left=0, right=${liveRight}). Removing permanently.`);
-      if (user.rightChild) {
-        const ru = await User.findOne({ $or: [{ username: user.rightChild }, { userId: user.rightChild }] });
-        if (ru) {
-          ru.placementId = undefined; ru.placementName = undefined; ru.placementPosition = undefined;
-          await ru.save();
-          await flushUserSubtree(ru);
-        }
-        user.rightChild = undefined;
-      }
-      user.totalTeam = { left: 0, right: 0 };
-      user.basicFlushHistory = user.basicFlushHistory || [];
-      user.basicFlushHistory.push({ date: new Date(), left: liveLeft, right: liveRight,
-        reason: `Unpaired right user removed on session change (${lastSessionType || 'initial'} -> ${currentSessionType})` });
-      flushedOut = true;
-      flushMessage = (flushMessage ? flushMessage + '; ' : '') + 'Unpaired right user permanently removed from tree';
-      console.log(`[PLACEMENT TREE FLUSH] Unpaired right user removed. Tree reset to 0/0.`);
-    }
-    // ─────────────────────────────────────────────────────────────────────
     
     // Update last session info
     user.lastSessionType = currentSessionType;
@@ -549,10 +375,14 @@ export async function POST(req: NextRequest) {
     const now = new Date();
     const currentHour = now.getHours();
     const realSessionType = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
+    
+    // Default to stored lastSessionType if present, fallback to realSessionType
+    const defaultSessionType = user.lastSessionType || realSessionType;
+
     const currentSessionType: "morning" | "evening" = 
       (forceSessionType === "morning" || forceSessionType === "evening")
         ? forceSessionType
-        : realSessionType;
+        : defaultSessionType;
 
     // If forceSessionType is provided and different from the user's stored session,
     // temporarily flip lastSessionType to the opposite so isSessionChange fires correctly

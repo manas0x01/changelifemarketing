@@ -96,9 +96,7 @@ export async function POST(req: NextRequest) {
         user.lastSessionType = currentSessionType;
         user.lastSessionDate = new Date();
         
-        // CRITICAL: Flush out unpaired IDs after session end
-        // Unpaired IDs from previous session are flushed out
-        console.log(`[PAIR] Flushing unpaired IDs from previous session: ${user.lastSessionType}`);
+
         
         // Income addition to user's total income
         const sessionIncomeAmount = 1000; // Income per completed pair

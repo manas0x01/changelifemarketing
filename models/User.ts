@@ -357,8 +357,12 @@ userSchema.pre('save', async function (this: IUser) {
   const salt = await bcrypt.genSalt(12);
   
   if (this.isModified('password')) {
-    console.log('🔒 [PRE-SAVE] Password is modified, hashing...');
-    this.password = await bcrypt.hash(this.password, salt);
+    if (!this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
+      console.log('🔒 [PRE-SAVE] Password is modified and not hashed, hashing...');
+      this.password = await bcrypt.hash(this.password, salt);
+    } else {
+      console.log('🔒 [PRE-SAVE] Password is already hashed, skipping.');
+    }
   }
   
   // Check transaction password - only hash when modified or on new documents
@@ -374,9 +378,13 @@ userSchema.pre('save', async function (this: IUser) {
       console.log('🔐 [PRE-SAVE] Trimmed length:', trimmedTxnPassword.length);
 
       if (trimmedTxnPassword.length > 0) {
-        console.log('🔐 [PRE-SAVE] Hashing transaction password with salt', salt);
-        this.transactionPassword = await bcrypt.hash(trimmedTxnPassword, salt);
-        console.log('✅ [PRE-SAVE] Transaction password hashed successfully');
+        if (!trimmedTxnPassword.startsWith('$2a$') && !trimmedTxnPassword.startsWith('$2b$')) {
+          console.log('🔐 [PRE-SAVE] Hashing transaction password with salt', salt);
+          this.transactionPassword = await bcrypt.hash(trimmedTxnPassword, salt);
+          console.log('✅ [PRE-SAVE] Transaction password hashed successfully');
+        } else {
+          console.log('🔐 [PRE-SAVE] Transaction password is already hashed, skipping.');
+        }
       } else {
         console.log('⚠️ [PRE-SAVE] After trim, transaction password is empty; clearing field');
         this.transactionPassword = undefined as any;

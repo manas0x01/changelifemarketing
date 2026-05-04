@@ -399,18 +399,18 @@ export default function NewRegisterPage() {
       return;
     }
     if (!password.trim()) {
-      setPasswordError("Password is required");
+      setPasswordError("New Password is required");
       return;
     }
     if (!confirmPwd.trim()) {
-      setConfirmPwdError("Confirm password is required");
-      toast.error("Please confirm password");
+      setConfirmPwdError("Confirm New Password is required");
+      toast.error("Please confirm new password");
       return;
     }
     if (password !== confirmPwd) {
-      setPasswordError("Passwords don't match");
-      setConfirmPwdError("Passwords don't match");
-      toast.error("Passwords do not match");
+      setPasswordError("New Passwords don't match");
+      setConfirmPwdError("New Passwords don't match");
+      toast.error("New Passwords do not match");
       return;
     }
     setConfirmPwdError("");
@@ -1406,11 +1406,11 @@ export default function NewRegisterPage() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Password :</label>
+                    <label className="form-label"><span className="req">*</span>New Password :</label>
                     <input 
                       className="form-input" 
                       type="password" 
-                      placeholder="Create Password" 
+                      placeholder="Create New Password" 
                       value={password} 
                       onChange={(e) => {
                         setPassword(e.target.value);
@@ -1422,11 +1422,11 @@ export default function NewRegisterPage() {
                     {passwordError && <div className="txn-error">{passwordError}</div>}
                   </div>
                   <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Confirm Password :</label>
+                    <label className="form-label"><span className="req">*</span>Confirm New Password :</label>
                     <input 
                       className="form-input" 
                       type="password" 
-                      placeholder="Confirm Password" 
+                      placeholder="Confirm New Password" 
                       value={confirmPwd} 
                       onChange={(e) => {
                         setConfirmPwd(e.target.value);
@@ -1533,7 +1533,7 @@ export default function NewRegisterPage() {
                 </div>
 
                 <div className="detail-row">
-                  <span className="detail-label">Password</span>
+                  <span className="detail-label">New Password</span>
                   <span className="detail-value">{newUserData.password}</span>
                 </div>
 

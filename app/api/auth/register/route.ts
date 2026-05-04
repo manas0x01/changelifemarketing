@@ -191,13 +191,41 @@ export async function POST(req: NextRequest) {
 
     const transactionPassword = body.transactionPassword;
 
+    // Hash the password and transaction password explicitly before saving to prevent plain text saving or hooks skipping
+    const salt = await bcrypt.genSalt(12);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    let hashedTransactionPassword = undefined;
+    if (transactionPassword) {
+      const trimmedTxn = String(transactionPassword).trim();
+      if (trimmedTxn.length > 0) {
+        hashedTransactionPassword = await bcrypt.hash(trimmedTxn, salt);
+      }
+    }
+
     const newUser = new User({
       userId: username,
       username,
       fullName,
-      password: password,
-      transactionPassword: transactionPassword,
+      password: hashedPassword,
+      transactionPassword: hashedTransactionPassword,
       mobileNo,
+      email: body.email,
+      gender: body.gender,
+      dateOfBirth: body.dateOfBirth,
+      panNo: body.panNo,
+      state: body.state,
+      district: body.district,
+      city: body.city,
+      address: body.address,
+      pincode: body.pincode,
+      nomineeName: body.nomineeName,
+      nomineeRelation: body.nomineeRelation,
+      bankName: body.bankName,
+      branchName: body.branchName,
+      accountNo: body.accountNo,
+      ifsc: body.ifsc,
+      accountType: body.accountType,
+      registeredPackage: body.package,
 
       sponsorId: sponsor.userId || sponsor.username,
       sponsorName: sponsor.fullName || sponsor.username,

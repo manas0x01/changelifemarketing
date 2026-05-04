@@ -69,7 +69,11 @@ export const authOptions: NextAuthOptions = {
         try {
           await connectDB();
           const user = await User.findOne({
-            username: credentials.username,
+            $or: [
+              { username: { $regex: new RegExp(`^${credentials.username}$`, 'i') } },
+              { userId: { $regex: new RegExp(`^${credentials.username}$`, 'i') } },
+              { email: { $regex: new RegExp(`^${credentials.username}$`, 'i') } },
+            ],
           }).select("+password");
           if (!user || !(await user.comparePassword(credentials.password))) {
             throw new Error("Invalid username or password");

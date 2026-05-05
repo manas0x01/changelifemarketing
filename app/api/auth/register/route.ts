@@ -5,7 +5,7 @@ import { connectDB } from "@/lib/database";
 import mongoose from "mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import { handleBinaryAndIncome } from "@/lib/mlmEngine";
+import { processAllAncestorsIncome } from "@/lib/mlmEngine";
 import { updateTeamCounts } from "@/lib/teamUtils";
 
 export async function POST(req: NextRequest) {
@@ -348,9 +348,9 @@ export async function POST(req: NextRequest) {
     //////////////////////////////////////////////////////////////
 
     try {
-      console.log('[DEBUG] register: calling MLM engine', { loggedInUserId: loggedInUser._id, placementPosition });
-      await handleBinaryAndIncome(
-        loggedInUser._id,
+      console.log('[DEBUG] register: calling MLM engine for all ancestors', { sponsorUsername: sponsor.username, placementPosition });
+      await processAllAncestorsIncome(
+        sponsor.username,
         placementPosition
       );
       console.log('[DEBUG] register: MLM engine completed');

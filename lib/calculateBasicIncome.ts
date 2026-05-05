@@ -6,45 +6,7 @@ function getSessionType(date: Date) {
   return hour < 12 ? "morning" : "evening";
 }
 
-async function getDescendants(user: any): Promise<any[]> {
-  const list: any[] = [];
-  if (user.leftChild) {
-    const lc = await User.findOne({ $or: [{ username: user.leftChild }, { userId: user.leftChild }] });
-    if (lc) {
-      list.push(lc);
-      list.push(...await getDescendants(lc));
-    }
-  }
-  if (user.rightChild) {
-    const rc = await User.findOne({ $or: [{ username: user.rightChild }, { userId: user.rightChild }] });
-    if (rc) {
-      list.push(rc);
-      list.push(...await getDescendants(rc));
-    }
-  }
-  return list;
-}
 
-async function countCurrentSessionDescendants(user: any, side: "left" | "right", startTime: number): Promise<number> {
-  const childId = user[side === "left" ? "leftChild" : "rightChild"];
-  if (!childId) return 0;
-
-  const child = await User.findOne({
-    $or: [{ username: childId }, { userId: childId }]
-  });
-  if (!child) return 0;
-
-  const descendants = await getDescendants(child);
-  descendants.push(child);
-
-  const count = descendants.filter((d: any) => {
-    const jd = d.joiningDate || d.createdAt || d.date;
-    if (!jd) return false;
-    return new Date(jd).getTime() >= startTime;
-  }).length;
-
-  return count;
-}
 
 export async function calculateBasicIncome(user: any) {
   const now = new Date();
@@ -78,13 +40,10 @@ export async function calculateBasicIncome(user: any) {
     };
   }
 
-  // Buffer slightly to account for small delays when creating the user/session change
-  const startTime = sessionStartDate.getTime() - 5000;
+  const leftCount = user.sessionTeam?.left || 0;
+  const rightCount = user.sessionTeam?.right || 0;
 
-  const leftCount = await countCurrentSessionDescendants(user, "left", startTime);
-  const rightCount = await countCurrentSessionDescendants(user, "right", startTime);
-
-  console.log('[DEBUG] calculateBasicIncome: session counts', { userId: user?.userId, leftCount, rightCount, startTime: new Date(startTime).toISOString() });
+  console.log('[DEBUG] calculateBasicIncome: session counts', { userId: user?.userId, leftCount, rightCount });
 
   if (leftCount < 1 || rightCount < 1) {
     console.log('[DEBUG] calculateBasicIncome: pair incomplete in this session', { userId: user?.userId, leftCount, rightCount });

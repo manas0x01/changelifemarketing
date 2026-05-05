@@ -1,4 +1,4 @@
-import User from "@/models/User";
+import User, { IUser } from "@/models/User";
 import { calculateBasicIncome } from "./calculateBasicIncome";
 import { calculateBoosterMatching } from "./calculateBoosterMatching";
 import { checkBoosterQualification } from "./checkBoosterQualification";
@@ -6,6 +6,36 @@ import { checkAwardRank } from "./checkAwardRank";
 function getSessionType(date: Date) {
   const hour = date.getHours();
   return hour < 12 ? "morning" : "evening";
+}
+
+export async function processAllAncestorsIncome(sponsorUsername: string, initialPosition: "left" | "right") {
+  let currentUserId: string | undefined = sponsorUsername;
+  let currentPosition: "left" | "right" | undefined = initialPosition;
+
+  while (currentUserId) {
+    const ancestor: IUser | null = await User.findOne({
+      $or: [
+        { userId: currentUserId },
+        { username: currentUserId }
+      ]
+    });
+
+    if (!ancestor) break;
+
+    // Call MLM engine for this ancestor
+    try {
+      if (currentPosition) {
+        console.log(`[MLM] processAllAncestorsIncome: processing ${currentUserId} (position: ${currentPosition})`);
+        await handleBinaryAndIncome(ancestor._id, currentPosition);
+      }
+    } catch (err) {
+      console.error(`[MLM] Error processing MLM for ${currentUserId}:`, err);
+    }
+
+    // Move to next ancestor
+    currentUserId = ancestor.placementId;
+    currentPosition = ancestor.placementPosition;
+  }
 }
 
 export async function handleBinaryAndIncome(userId: any, position: "left" | "right") {
@@ -24,35 +54,7 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
   const currentHour = now.getHours();
   const currentSessionType = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
 
-  // Check if we're in the same session as last activity
-  let sessionChanged = false;
-  if (user.lastSessionType && user.lastSessionDate) {
-    const lastSessionDate = new Date(user.lastSessionDate);
-    const lastSessionHour = lastSessionDate.getHours();
-    const lastSessionType = lastSessionHour >= 0 && lastSessionHour < 12 ? "morning" : "evening";
-    sessionChanged = lastSessionType !== currentSessionType;
-  }
-
-  // If session changed, flush previous pairs and reset
-  if (sessionChanged) {
-    console.log(`[MLM] Session changed from ${user.lastSessionType} to ${currentSessionType}, flushing pairs`);
-
-    // Add to flush history
-    const flushRecord = {
-      date: new Date(),
-      left: user.totalTeam?.left || 0,
-      right: user.totalTeam?.right || 0,
-      reason: `Session change: ${user.lastSessionType} to ${currentSessionType}`,
-    };
-
-    user.basicFlushHistory = user.basicFlushHistory || [];
-    user.basicFlushHistory.push(flushRecord);
-
-    // Note: Do NOT reset basicPairs here - it will be recalculated from sessionBasedIncome
-    // by calculateBasicIncome to ensure income persistence
-    user.lastSessionType = currentSessionType;
-    user.lastSessionDate = new Date();
-  }
+  // Session flushing and tracking is now handled entirely within teamUtils.ts (updateTeamCounts)
 
   if (position === 'left' || position === 'right') {
     if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
@@ -73,11 +75,7 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
   const incomeResult = await calculateBasicIncome(user);
   console.log('[MLM] handleBinaryAndIncome: calculateBasicIncome result', incomeResult);
 
-  // Update session info after calculation ONLY if it changed
-  if (sessionChanged || !user.lastSessionDate) {
-    user.lastSessionType = currentSessionType;
-    user.lastSessionDate = new Date();
-  }
+
 
   console.log('[MLM] handleBinaryAndIncome: after updates', { basicIncome: user.basicIncome, basicPairs: user.basicPairs, sessionType: currentSessionType });
 

@@ -82,6 +82,7 @@ export interface IUser extends Document {
   }[];
   basicFlushHistory?: { date: Date; left: number; right: number; reason: string }[];
   totalTeam?: { left: number; right: number };
+  sessionTeam?: { left: number; right: number };
   lastSessionType?: 'morning' | 'evening';
   lastSessionDate?: Date;
   isBooster?: boolean;
@@ -248,6 +249,7 @@ const userSchema = new Schema<IUser>(
     directMembers: { type: [{ memberId: String, name: String, joinDate: Date, position: String }], default: [] },
     sessionBasedIncome: { type: [{ sessionDate: Date, sessionType: String, leftMembersInSession: Number, rightMembersInSession: Number, pairsInSession: Number, grossIncome: Number, netIncome: Number, tdsDeducted: Number, serviceChargeDeducted: Number, status: String }], default: [] },
     totalTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
+    sessionTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     basicFlushHistory: { type: [{ date: Date, left: Number, right: Number, reason: String }], default: [] },
     lastSessionType: { type: String, enum: ['morning', 'evening'], required: false },
     lastSessionDate: { type: Date, required: false },

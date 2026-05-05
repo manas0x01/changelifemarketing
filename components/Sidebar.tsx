@@ -90,16 +90,7 @@ const menuItems: MenuItem[] = [
     ),
     children: [{ label: "Basic Income" }, { label: "Booster Counting" },{ label: "Booster Income" }],
   },
-  {
-    id: "time-slots",
-    label: "Time Slots",
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <circle cx="12" cy="12" r="10"/>
-        <polyline points="12 6 12 12 16 14"/>
-      </svg>
-    ),
-  },
+
   {
     id: "daily-payout",
     label: "Daily Payout",
@@ -196,7 +187,7 @@ export default function Sidebar() {
       { pattern: "/dashboard/boosterincome", activeId: "reports", submenuId: "reports-Booster Income", menuToOpen: "reports" },
       { pattern: "/dashboard/changepassword", activeId: "settings", submenuId: "settings-Change Password", menuToOpen: "settings" },
       { pattern: "/dashboard/changetransactionpassword", activeId: "settings", submenuId: "settings-Change Transaction Password", menuToOpen: "settings" },
-      { pattern: "/dashboard/time-slots", activeId: "time-slots", submenuId: null },
+
       { pattern: "/dashboard/registration", activeId: "registration", submenuId: null },
     ];
 
@@ -227,7 +218,7 @@ export default function Sidebar() {
     "epin": "/dashboard/epin",
     "my-network": "/dashboard/network",
     "reports": "/dashboard/reports",
-    "time-slots": "/dashboard/time-slots",
+
     "daily-payout": "/dashboard/payout",
     "chat-support": "/dashboard/chatsupport",
     "settings": "/dashboard/settings",

@@ -39,25 +39,37 @@ export async function updateTeamCounts(
     const currentSessionType = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
     let sessionChanged = false;
     
-    if (user.lastSessionType && user.lastSessionDate) {
-      const lastSessionDate = new Date(user.lastSessionDate);
-      const lastSessionHour = lastSessionDate.getHours();
-      const lastSessionType = lastSessionHour >= 0 && lastSessionHour < 12 ? "morning" : "evening";
-      sessionChanged = lastSessionType !== currentSessionType;
+    const lastSessionDate = user.lastSessionDate ? new Date(user.lastSessionDate) : null;
+    const lastSessionType = user.lastSessionType;
+
+    if (lastSessionDate && lastSessionType) {
+      const lastDateStr = lastSessionDate.toDateString();
+      const nowDateStr = now.toDateString();
+      sessionChanged = (lastDateStr !== nowDateStr) || (lastSessionType !== currentSessionType);
     } else {
       sessionChanged = true;
     }
 
     if (!user.sessionTeam || sessionChanged) {
       if (sessionChanged && user.lastSessionType) {
-        const flushRecord = {
-          date: new Date(),
-          left: user.totalTeam?.left || 0,
-          right: user.totalTeam?.right || 0,
-          reason: `Session change: ${user.lastSessionType} to ${currentSessionType}`,
-        };
-        if (!user.basicFlushHistory) user.basicFlushHistory = [];
-        user.basicFlushHistory.push(flushRecord);
+        // FLUSH LOGIC: Incomplete pairs expire when session changes
+        const currentLeft = user.totalTeam?.left || 0;
+        const currentRight = user.totalTeam?.right || 0;
+
+        if (currentLeft !== currentRight) {
+          const minPairs = Math.min(currentLeft, currentRight);
+          user.totalTeam = { left: minPairs, right: minPairs };
+
+          const flushRecord = {
+            date: now,
+            left: currentLeft,
+            right: currentRight,
+            reason: `Auto-flush on session change: ${user.lastSessionType} to ${currentSessionType}`,
+          };
+          if (!user.basicFlushHistory) user.basicFlushHistory = [];
+          user.basicFlushHistory.push(flushRecord);
+          console.log(`[TEAM UTILS] Flushed unpaired members for ${user.userId} on session change`);
+        }
       }
       user.sessionTeam = { left: 0, right: 0 };
       user.lastSessionType = currentSessionType;

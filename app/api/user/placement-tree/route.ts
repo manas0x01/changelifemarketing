@@ -375,6 +375,7 @@ export async function POST(req: NextRequest) {
     // Determine current session type
     const now = new Date();
     const currentHour = now.getHours();
+    const realSessionType = currentHour < 12 ? "morning" : "evening";
     const currentSessionType: "morning" | "evening" = 
       (forceSessionType === "morning" || forceSessionType === "evening")
         ? forceSessionType

@@ -307,9 +307,14 @@ export async function POST(req: NextRequest) {
     }
 
     // Update team count for the placement position
-    upToDateLoggedInUser.totalTeam[placementPosition] = (upToDateLoggedInUser.totalTeam[placementPosition] || 0) + 1;
-
-    console.log('[REGISTER] Team count updated via placement-tree:', { left: upToDateLoggedInUser.totalTeam.left, right: upToDateLoggedInUser.totalTeam.right });
+    // Update team count for the placement position 
+    // ONLY if not already updated by updateTeamCounts (which happens if sponsor == loggedInUser)
+    if (sponsor.username !== session.user.username) {
+      upToDateLoggedInUser.totalTeam[placementPosition] = (upToDateLoggedInUser.totalTeam[placementPosition] || 0) + 1;
+      console.log('[REGISTER] Team count updated for logged-in user:', { left: upToDateLoggedInUser.totalTeam.left, right: upToDateLoggedInUser.totalTeam.right });
+    } else {
+      console.log('[REGISTER] Skipping redundant team count update (already updated via updateTeamCounts)');
+    }
 
     //////////////////////////////////////////////////////////////
     // 🔹 DIRECT MEMBERS SAFE ADD

@@ -33,10 +33,15 @@ export async function calculateBasicIncome(user: any) {
   );
 
   if (alreadyEarnedThisSession) {
-    console.log('[DEBUG] calculateBasicIncome: session limit reached - only 1 pair per session', { userId: user?.userId, sessionType });
+    console.log('[DEBUG] calculateBasicIncome: session limit reached', { 
+      userId: user?.userId, 
+      sessionType,
+      alreadyEarnedRecordDate: alreadyEarnedThisSession.date || alreadyEarnedThisSession.sessionDate,
+      sessionStartDate: sessionStartDate.toISOString()
+    });
     return {
       success: false,
-      reason: "Session limit reached (1 pair only)",
+      reason: `Session limit reached (Already earned at ${new Date(alreadyEarnedThisSession.date || alreadyEarnedThisSession.sessionDate).toLocaleString()})`,
     };
   }
 

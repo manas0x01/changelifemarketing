@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
+import { calculateBasicIncome } from "@/lib/calculateBasicIncome";
 
 
 
@@ -90,58 +91,19 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
   if (isFirstTime || isSessionChange) {
     console.log(`[PLACEMENT TREE] Processing ${isFirstTime ? 'FIRST TIME' : 'SESSION CHANGE'} for user ${user.userId}`);
     
-    // FLUSH LOGIC: Incomplete pairs expire when session changes
-    const currentLeft = user.totalTeam?.left || 0;
-    const currentRight = user.totalTeam?.right || 0;
+    // Visual Tree members stay forever. No flushing.
+    const flushedOut = false;
+    const flushMessage = "";
     
-    if (currentLeft !== currentRight) {
-      flushedOut = true;
-      const excess = Math.abs(currentLeft - currentRight);
-      const side = currentLeft > currentRight ? "left" : "right";
-      flushMessage = `Session changed: ${excess} unpaired ${side} members expired.`;
-      
-      // Equalize to the minimum (flush the unpaired ones)
-      const minPairs = Math.min(currentLeft, currentRight);
-      user.totalTeam = { left: minPairs, right: minPairs };
-      
-      // Record flush history
-      user.basicFlushHistory = user.basicFlushHistory || [];
-      user.basicFlushHistory.push({
-        date: now,
-        left: currentLeft,
-        right: currentRight,
-        reason: `Auto-flush on session change (${lastSessionType || 'none'} to ${currentSessionType})`
-      });
-      
-      console.log(`[PLACEMENT TREE] Flushed ${excess} members on ${side} side`);
-    }
-
-    // Reset session team counts for the new session
+    // INCOME FLUSH: Save final income for previous session before reset
+    await calculateBasicIncome(user, currentSessionType);
+    
+    // Reset session-only counts to 0 so unpaired income is lost.
     user.sessionTeam = { left: 0, right: 0 };
     
     // Update last session info
     user.lastSessionType = currentSessionType;
     user.lastSessionDate = now;
-    
-    // Cleanup duplicate session records if any
-    if (user.sessionBasedIncome && user.sessionBasedIncome.length > 0) {
-      const uniqueSessions = new Map();
-      const cleanedRecords = [];
-      for (const record of user.sessionBasedIncome) {
-        if (record.status === "Completed" && record.sessionType) {
-          const sessionKey = `${new Date(record.date || record.sessionDate).toDateString()}-${record.sessionType}`;
-          if (!uniqueSessions.has(sessionKey)) {
-            uniqueSessions.set(sessionKey, true);
-            cleanedRecords.push(record);
-          }
-        }
-      }
-      if (cleanedRecords.length !== user.sessionBasedIncome.length) {
-        user.sessionBasedIncome = cleanedRecords;
-        user.basicPairs = cleanedRecords.length;
-        user.markModified('sessionBasedIncome');
-      }
-    }
     
     // Perform update atomically to avoid VersionError
     await User.findByIdAndUpdate(user._id, {
@@ -155,8 +117,17 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
         basicFlushHistory: user.basicFlushHistory
       }
     });
-
     console.log(`[PLACEMENT TREE] Session change and flush saved for ${user.userId}`);
+    // 🔥 AUTOMATICALLY TRIGGER INCOME FOR ALL ANCESTORS ON SESSION CHANGE
+    // This ensures carry-forward members are matched in the new session.
+    try {
+      const { processAllAncestorsIncome } = await import('@/lib/mlmEngine');
+      // We trigger it for the user themselves to check their own matching
+      await processAllAncestorsIncome(user.username, "left", currentSessionType); 
+      console.log(`[PLACEMENT TREE] Automatic income check triggered for ${user.userId}`);
+    } catch (err) {
+      console.error(`[PLACEMENT TREE] Error triggering automatic income:`, err);
+    }
   }
 
   return { flushedOut, flushMessage, incomeMessage: "", leftPairs: user.totalTeam?.left || 0, rightPairs: user.totalTeam?.right || 0 };
@@ -404,26 +375,22 @@ export async function POST(req: NextRequest) {
     // Determine current session type
     const now = new Date();
     const currentHour = now.getHours();
-    const realSessionType = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
-    
     const currentSessionType: "morning" | "evening" = 
       (forceSessionType === "morning" || forceSessionType === "evening")
         ? forceSessionType
-        : realSessionType;
+        : (user.lastSessionType || realSessionType);
 
-    // If forceSessionType is provided and different from the user's stored session,
-    // temporarily flip lastSessionType to the opposite so isSessionChange fires correctly
-    if (forceSessionType && forceSessionType !== user.lastSessionType) {
-      console.log(`[PLACEMENT TREE] forceSessionType=${forceSessionType}, triggering manual override for ${user.userId}`);
-      // We don't manually flip lastSessionType here anymore; 
-      // processSessionChange will detect the change based on currentSessionType vs user.lastSessionType
-    }
-    
     // Process session change to flush out unpaired users BEFORE building tree
+    // We pass forceSessionType to detect the manual change
     const { flushedOut, flushMessage, incomeMessage, leftPairs, rightPairs } = await processSessionChange(user, currentSessionType);
     
-    // IMPORTANT: Re-sync the user object from the database after saving changes in processSessionChange
-    // to ensure buildPlacementTree uses the updated counts and session state.
+    // If a manual override was provided and it successfully changed the session, make it STICKY now
+    if (forceSessionType && forceSessionType !== user.lastSessionType) {
+      console.log(`[PLACEMENT TREE] Saving sticky session override: ${forceSessionType} for ${user.userId}`);
+      await User.findByIdAndUpdate(user._id, { $set: { lastSessionType: forceSessionType } });
+    }
+
+    // IMPORTANT: Re-sync the user object from the database
     const updatedUser = await User.findById(user._id);
 
     // Build the placement tree starting from this user as root

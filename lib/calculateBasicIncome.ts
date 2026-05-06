@@ -1,133 +1,119 @@
-import User from "@/models/User";
+import User from "../models/User";
 
-// 🔹 Session helper
-function getSessionType(date: Date) {
-  const hour = date.getHours();
-  return hour < 12 ? "morning" : "evening";
-}
+/**
+ * Statistically recalculates the basic income based on total team counts and session history.
+ * This "Allocation-Based" approach ensures that even if sessions are changed or counts are reset,
+ * the income always matches the actual members present in the tree.
+ */
+export async function calculateBasicIncome(user: any, manualSessionType?: string) {
+  try {
+    const today = new Date().toDateString();
+    const currentHour = new Date().getHours();
+    const sessionType = manualSessionType || user.lastSessionType || (currentHour < 12 ? "morning" : "evening");
+    const currentSessionKey = `${today}-${sessionType}`;
 
+    // 1. Get the TOTAL pairs currently in the tree
+    const totalLeft = user.totalTeam?.left || 0;
+    const totalRight = user.totalTeam?.right || 0;
+    const totalPairsInTree = Math.min(totalLeft, totalRight);
 
-
-export async function calculateBasicIncome(user: any) {
-  const now = new Date();
-  const today = now.toDateString();
-  const sessionType = getSessionType(now);
-
-  console.log('[DEBUG] calculateBasicIncome: entry', { userId: user?.userId, username: user?.username, sessionType, today });
-
-  if (!Array.isArray(user.sessionBasedIncome)) {
-    user.sessionBasedIncome = [];
-  }
-
-  // Calculate start time of the current session
-  let sessionStartDate = user.lastSessionDate
-    ? new Date(user.lastSessionDate)
-    : new Date(user.createdAt || user.joiningDate || Date.now() - 12 * 60 * 60 * 1000);
-
-  const leftCount = user.sessionTeam?.left || 0;
-  const rightCount = user.sessionTeam?.right || 0;
-  
-  // Calculate unique sessions already processed
-  const uniqueSessions = new Set(
-    user.sessionBasedIncome
-      .filter((s: any) => s.status === 'Completed')
-      .map((s: any) => `${new Date(s.date || s.sessionDate).toDateString()}-${s.sessionType}`)
-  );
-  
-  const currentSessionKey = `${today}-${sessionType}`;
-  const isFirstPairOfSession = !uniqueSessions.has(currentSessionKey);
-  const sessionSequenceNumber = uniqueSessions.has(currentSessionKey) 
-    ? uniqueSessions.size 
-    : uniqueSessions.size + 1;
-
-  // How many pairs already recorded for THIS specific session
-  const currentSessionPairs = user.sessionBasedIncome.filter(
-    (s: any) => {
-      const recDate = new Date(s.date || s.sessionDate).toDateString();
-      return recDate === today && s.sessionType === sessionType && s.status === 'Completed';
+    if (totalPairsInTree === 0) {
+      user.basicIncome = 0;
+      user.basicPairs = 0;
+      return { success: true, income: 0, currentBasicIncome: 0 };
     }
-  ).length;
 
-  console.log('[DEBUG] calculateBasicIncome: session sequence', { 
-    userId: user?.userId, 
-    sessionSequenceNumber,
-    isFirstPairOfSession,
-    currentSessionPairs,
-    totalUniqueSessions: uniqueSessions.size
-  });
+    // 2. Prepare the session history
+    if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
 
-  // Calculate how many pairs are theoretically possible in this session
-  const possiblePairsInSession = Math.min(leftCount, rightCount);
+    // Ensure we have enough sessions in history to hold all pairs from the tree
+    // (At least one session per pair)
+    const requiredSessions = Math.max(1, totalPairsInTree);
+    while (user.sessionBasedIncome.length < requiredSessions) {
+      const lastSession = user.sessionBasedIncome[user.sessionBasedIncome.length - 1];
+      let nextType: "morning" | "evening" = "morning";
+      let nextDate = new Date();
 
-  if (possiblePairsInSession <= currentSessionPairs) {
-    console.log('[DEBUG] calculateBasicIncome: no new pair completed in this session', { possiblePairsInSession, currentSessionPairs });
+      if (lastSession) {
+        nextType = lastSession.sessionType === "morning" ? "evening" : "morning";
+        nextDate = new Date(lastSession.sessionDate);
+        if (nextType === "morning") {
+          nextDate.setDate(nextDate.getDate() + 1); // Move to next day if we just finished evening
+        }
+      }
+
+      user.sessionBasedIncome.push({
+        sessionDate: nextDate,
+        sessionType: nextType,
+        leftMembersInSession: 0,
+        rightMembersInSession: 0,
+        pairsInSession: 0,
+        grossIncome: 0,
+        netIncome: 0,
+        status: 'Completed'
+      });
+    }
+
+    // 3. ALLOCATE pairs to sessions
+    // We distribute the totalPairsInTree across valid sessions (1 pair per session)
+    let remainingPairsToAllocate = totalPairsInTree;
+    let totalIncome = 0;
+    let totalPairsCounted = 0;
+
+    // Filter to valid sessions (those that aren't skipped by the %3 rule)
+    for (let i = 0; i < user.sessionBasedIncome.length; i++) {
+      const session = user.sessionBasedIncome[i];
+      const sessionNumber = i + 1;
+
+      // Reset this session's values to be recalculated
+      session.leftMembersInSession = 0;
+      session.rightMembersInSession = 0;
+      session.pairsInSession = 0;
+      session.grossIncome = 0;
+      session.netIncome = 0;
+
+      if (remainingPairsToAllocate > 0) {
+        // This session gets 1 pair
+        session.leftMembersInSession = 1;
+        session.rightMembersInSession = 1;
+        session.pairsInSession = 1;
+        remainingPairsToAllocate--;
+
+        // Calculate income for this session (Flush Out rule: max 1000 per session, skip every 3rd)
+        if (sessionNumber % 3 !== 0) {
+          session.grossIncome = 1000;
+          session.netIncome = 1000;
+          totalIncome += 1000;
+          totalPairsCounted += 1;
+        }
+      }
+    }
+
+    // 4. Update the user model
+    user.basicIncome = totalIncome;
+    user.basicPairs = totalPairsCounted;
+    
+    // Update basicIncomeRecords for the dashboard history table
+    user.basicIncomeRecords = user.sessionBasedIncome.map((s: any, i: number) => ({
+      srNo: i + 1,
+      amount: s.netIncome || 0,
+      pairCount: s.pairsInSession || 0,
+      date: s.sessionDate,
+      description: `Income from ${s.sessionType} session`,
+      status: 'Completed'
+    }));
+
+    // Derived values
+    user.totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardRankIncome || 0);
+
     return {
-      success: false,
-      reason: "Pair not complete or already processed in this session",
+      success: true,
+      income: totalIncome,
+      currentBasicIncome: totalIncome
     };
+
+  } catch (error) {
+    console.error("Error in calculateBasicIncome:", error);
+    return { success: false, error: "Internal Server Error" };
   }
-
-  // If we reach here, a NEW pair has been completed in this session
-  const currentPairNumber = user.sessionBasedIncome.filter((s: any) => s && s.status === 'Completed').length + 1;
-
-  if (currentPairNumber > 12) { 
-    console.log('[DEBUG] calculateBasicIncome: user has already completed 12 basic pairs', { userId: user?.userId });
-    return {
-      success: false,
-      reason: "Maximum basic pairs reached (12 total)",
-    };
-  }
-
-  // LOGIC: Only the 1st pair of a session can earn income.
-  // AND: The session sequence number must not be a multiple of 3.
-  let income = 0;
-  
-  if (isFirstPairOfSession && sessionSequenceNumber % 3 !== 0) {
-    console.log(`[DEBUG] calculateBasicIncome: Session ${sessionSequenceNumber}, Pair ${currentPairNumber}. Income set to 1000.`, { userId: user?.userId });
-    income = 1000;
-  } else {
-    const reason = !isFirstPairOfSession 
-      ? "Not the 1st pair in this session" 
-      : `Session ${sessionSequenceNumber} is a "Placed Out" multiple of 3`;
-    console.log(`[DEBUG] calculateBasicIncome: Session ${sessionSequenceNumber}, Pair ${currentPairNumber}. Income set to 0. Reason: ${reason}`, { userId: user?.userId });
-    income = 0;
-  }
-  
-  user.sessionBasedIncome.push({
-    date: now,
-    sessionType,
-    pairs: 1,
-    grossIncome: income,
-    netIncome: income,
-    // keep old-style fields for compatibility
-    sessionDate: now,
-    pairsInSession: 1,
-    leftMembersInSession: leftCount,
-    rightMembersInSession: rightCount,
-    tdsDeducted: 0,
-    serviceChargeDeducted: 0,
-    status: 'Completed',
-  });
-  console.log('[DEBUG] calculateBasicIncome: pushed session record', { userId: user?.userId, income, currentPairNumber });
-  
-  // Update basicPairs based on TOTAL completed sessions in sessionBasedIncome
-  const totalCompletedPairs = user.sessionBasedIncome
-    .filter((s: any) => s.status === 'Completed')
-    .length;
-  
-  user.basicPairs = totalCompletedPairs;
-
-  // Ensure Mongoose detects the changes
-  if (typeof (user as any).markModified === 'function') {
-    try {
-      (user as any).markModified('sessionBasedIncome');
-      (user as any).markModified('basicPairs');
-    } catch (err) {}
-  }
-
-  return {
-    success: true,
-    income,
-    message: income > 0 ? "Basic income credited" : "Pair completed (Placed Out)",
-  };
 }

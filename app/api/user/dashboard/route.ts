@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import { connectDB } from "@/lib/database";
-import User from "@/models/User";
+import { authOptions } from "../../../../lib/auth";
+import { connectDB } from "../../../../lib/database";
+import User from "../../../../models/User";
+import { calculateBasicIncome } from "../../../../lib/calculateBasicIncome";
+import { countActualChildren } from "../../../../lib/teamUtils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -25,12 +27,44 @@ export async function GET(req: NextRequest) {
         { status: 404 }
       );
     }
-    console.log('[DASHBOARD] db user found:', { username: user.username, userId: user.userId, totalIncome: user.totalIncome || 0, basicIncome: user.basicIncome || 0, sessionBasedIncomeCount: user.sessionBasedIncome?.length || 0, basicIncomeRecordsCount: user.basicIncomeRecords?.length || 0 });
+    console.log('[DASHBOARD] db user found:', { username: user.username, userId: user.userId });
+    console.log('[DASHBOARD DEBUG] sessionBasedIncome:', JSON.stringify(user.sessionBasedIncome, null, 2));
     
-    // ALWAYS save to trigger deduplication cleanup in pre-save hook
-    // This fixes any duplicate session records
-    await user.save();
-    console.log('[DASHBOARD] After cleanup - basicIncome:', user.basicIncome, 'basicPairs:', user.basicPairs);
+    // 1. RECURSIVE SYNC: Count entire tree depth to ensure accurate income
+    const actualCounts = await countActualChildren(user);
+    console.log(`[DASHBOARD SYNC] ${user.username} Actual Tree:`, actualCounts);
+
+    let updatedUser = await User.findOneAndUpdate(
+      { _id: user._id },
+      { 
+        $set: { 
+          "totalTeam.left": actualCounts.left,
+          "totalTeam.right": actualCounts.right
+        } 
+      },
+      { new: true, returnDocument: 'after' }
+    ) || user;
+
+    // 2. ALLOCATION ENGINE: Sync basicIncome based on total tree state
+    await calculateBasicIncome(updatedUser);
+
+    if (updatedUser) {
+      // Trigger one save to ensure pre-save income logic runs, but handle the version error gracefully
+      try {
+        await updatedUser.save();
+        user.basicIncome = updatedUser.basicIncome;
+        user.totalTeam = updatedUser.totalTeam;
+      } catch (saveError) {
+        // If parallel request already saved it, we just ignore the error and use the latest data
+        const latestUser = await User.findById(user._id);
+        if (latestUser) {
+           user.basicIncome = latestUser.basicIncome;
+           user.totalTeam = latestUser.totalTeam;
+        }
+      }
+    }
+
+    console.log('[DASHBOARD] After sync - basicIncome:', user.basicIncome);
     
     const totalTeam = {
       left: (user.totalTeam && typeof user.totalTeam.left === 'number') ? user.totalTeam.left : 0,

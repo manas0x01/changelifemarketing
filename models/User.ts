@@ -1,5 +1,6 @@
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 import bcrypt from 'bcryptjs';
+import { calculateBasicIncome } from '../lib/calculateBasicIncome';
 
 export interface IUser extends Document {
   username: string;
@@ -93,6 +94,7 @@ export interface IUser extends Document {
   boosterPairs?: number;
   matchedPairs?: number;
   basicIncome?: number;
+  totalDirect?: number;
   activePins?: number;
   usedPins?: number;
   totalPins?: number;
@@ -262,6 +264,7 @@ const userSchema = new Schema<IUser>(
     activePins: { type: Number, default: 0 },
     usedPins: { type: Number, default: 0 },
     totalPins: { type: Number, default: 0 },
+    totalDirect: { type: Number, default: 0 },
     basicIncome: { type: Number, default: 0 },
     boosterIncome: { type: { amount: { type: Number, default: 0 }, LG: { type: Number, default: 0 }, RG: { type: Number, default: 0 }, totalMatching: { type: Number, default: 0 } }, default: { amount: 0, LG: 0, RG: 0, totalMatching: 0 } },
     basicIncomeRecords: { type: [{ srNo: Number, amount: Number, pairCount: Number, date: Date, description: String, status: String }], default: [] },
@@ -411,43 +414,10 @@ userSchema.pre('save', async function (this: IUser) {
   } catch (err) {
     console.error('❌ [PRE-SAVE] Error ensuring userId fallback:', err);
   }
-    if (Array.isArray(this.sessionBasedIncome)) {
-      console.log(`💡 [PRE-SAVE] Rebuilding basicIncomeRecords and basicIncome from sessionBasedIncome`);
-      
-      // 1. Rebuild basicIncomeRecords exactly from sessionBasedIncome
-      this.basicIncomeRecords = this.sessionBasedIncome
-        .filter((s: any) => s && s.status === 'Completed')
-        .map((s: any, idx: number) => {
-          const amountValue = (typeof s.netIncome === 'number')
-            ? s.netIncome
-            : (typeof s.grossIncome === 'number')
-              ? s.grossIncome
-              : (typeof s.income === 'number')
-                ? s.income
-                : 0;
 
-          return {
-            srNo: idx + 1,
-            amount: amountValue,
-            pairCount: s.pairs || s.pairsInSession || s.pairCount || 0,
-            date: s.date ? new Date(s.date) : (s.sessionDate ? new Date(s.sessionDate) : new Date()),
-            description: `Income from ${s.sessionType || ''} session`,
-            status: s.status || 'Completed',
-          };
-        });
-
-      // 2. Recalculate basicIncome directly from rebuilt basicIncomeRecords
-      const totalFromRecords = this.basicIncomeRecords
-        .filter((r: any) => {
-          const s = (r.status || '').toLowerCase();
-          return s === 'completed' || s === 'paid';
-        })
-        .reduce((sum: number, r: any) => sum + (r.amount || 0), 0);
-      
-      this.basicIncome = totalFromRecords;
-      this.basicPairs = this.sessionBasedIncome.filter((s: any) => s && s.status === "Completed").length;
-      console.log(`💰 [PRE-SAVE] basicIncome recalculated: ₹${this.basicIncome}, basicPairs: ${this.basicPairs}`);
-    }
+  // Use the new allocation-based engine to ensure income matches the tree
+  await calculateBasicIncome(this);
+  console.log(`💰 [PRE-SAVE] basicIncome recalculated (Allocation): ₹${this.basicIncome}`);
   // Ensure totalIncome is derived from current income sources (single source of truth)
   try {
     const computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);

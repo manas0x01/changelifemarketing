@@ -262,16 +262,20 @@ export async function POST(req: NextRequest) {
     // 🔹 UPDATE SPONSOR (LEFT / RIGHT CHILD + TOTAL TEAM)
     //////////////////////////////////////////////////////////////
 
-    sponsor[positionField] = newUser.username;
+    // Use findByIdAndUpdate to avoid VersionError since updateTeamCounts already saved this document
+    await User.findByIdAndUpdate(sponsor._id, {
+      $set: {
+        [positionField]: newUser.username,
+        totalDirect: (sponsor.totalDirect || 0) + 1
+      }
+    }, { session: dbSession });
     
-    // Recursive update for all ancestors - MUST PASS THE SESSION
-    await updateTeamCounts(sponsor.userId || sponsor.username, placementPosition, 1, dbSession);
+    // Recursive update for all ancestors - MUST PASS THE SESSION AND THE SESSION TYPE
+    await updateTeamCounts(sponsor.userId || sponsor.username, placementPosition, 1, dbSession, loggedInUser.lastSessionType);
     
-    await sponsor.save({ session: dbSession });
     console.log('[DEBUG] register: sponsor updated', { 
       sponsorId: sponsor.userId || sponsor.username, 
-      positionField, 
-      totalTeam: sponsor.totalTeam 
+      positionField
     });
 
     //////////////////////////////////////////////////////////////
@@ -337,7 +341,14 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    await upToDateLoggedInUser.save({ session: dbSession });
+    // Use findByIdAndUpdate to avoid VersionError
+    await User.findByIdAndUpdate(upToDateLoggedInUser._id, {
+      $set: {
+        totalTeam: upToDateLoggedInUser.totalTeam,
+        usedPins: upToDateLoggedInUser.usedPins,
+        ePins: upToDateLoggedInUser.ePins
+      }
+    }, { session: dbSession });
     console.log('[DEBUG] register: loggedInUser updated', { userId: upToDateLoggedInUser.userId || upToDateLoggedInUser.username, usedPins: upToDateLoggedInUser.usedPins, activePins: upToDateLoggedInUser.activePins, totalTeam: upToDateLoggedInUser.totalTeam });
 
     //////////////////////////////////////////////////////////////

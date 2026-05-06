@@ -8,7 +8,7 @@ function getSessionType(date: Date) {
   return hour < 12 ? "morning" : "evening";
 }
 
-export async function processAllAncestorsIncome(sponsorUsername: string, initialPosition: "left" | "right") {
+export async function processAllAncestorsIncome(sponsorUsername: string, initialPosition: "left" | "right", manualSessionType?: string) {
   let currentUserId: string | undefined = sponsorUsername;
   let currentPosition: "left" | "right" | undefined = initialPosition;
 
@@ -26,7 +26,7 @@ export async function processAllAncestorsIncome(sponsorUsername: string, initial
     try {
       if (currentPosition) {
         console.log(`[MLM] processAllAncestorsIncome: processing ${currentUserId} (position: ${currentPosition})`);
-        await handleBinaryAndIncome(ancestor._id, currentPosition);
+        await handleBinaryAndIncome(ancestor._id, currentPosition, manualSessionType);
       }
     } catch (err) {
       console.error(`[MLM] Error processing MLM for ${currentUserId}:`, err);
@@ -38,7 +38,7 @@ export async function processAllAncestorsIncome(sponsorUsername: string, initial
   }
 }
 
-export async function handleBinaryAndIncome(userId: any, position: "left" | "right") {
+export async function handleBinaryAndIncome(userId: any, position: "left" | "right", manualSessionType?: string) {
   console.log('[MLM] handleBinaryAndIncome: entry', { userId, position });
   const user = await User.findById(userId);
   if (!user) {
@@ -51,8 +51,7 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
 
   // Get current time and session
   const now = new Date();
-  const currentHour = now.getHours();
-  const currentSessionType = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
+  const currentSessionType = manualSessionType || (now.getHours() < 12 ? "morning" : "evening");
 
   // Session flushing and tracking is now handled entirely within teamUtils.ts (updateTeamCounts)
 
@@ -71,15 +70,7 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
   }
 
   // 🔹 TRIGGER BASIC INCOME CALCULATION
-  console.log('[MLM] handleBinaryAndIncome: checking state', { 
-    userId: user._id, 
-    username: user.username, 
-    sessionTeam: user.sessionTeam,
-    totalTeam: user.totalTeam,
-    sessionBasedIncomeCount: user.sessionBasedIncome?.length
-  });
-  console.log('[MLM] handleBinaryAndIncome: calling calculateBasicIncome', { userId: user._id, username: user.username });
-  const incomeResult = await calculateBasicIncome(user);
+  const incomeResult = await calculateBasicIncome(user, currentSessionType);
   console.log('[MLM] handleBinaryAndIncome: calculateBasicIncome result', { 
     username: user.username, 
     success: incomeResult.success, 

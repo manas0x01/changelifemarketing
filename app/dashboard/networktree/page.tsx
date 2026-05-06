@@ -478,12 +478,11 @@ export default function NetworkTreePage() {
   };
 
   const checkSessionChangeAndRefresh = () => {
-    const currentSession = getCurrentSession();
-    if (lastSessionRef.current && lastSessionRef.current !== currentSession && memberId && treeRoot) {
-      console.log(`[NETWORK TREE] Session changed from ${lastSessionRef.current} to ${currentSession}, refreshing tree`);
+    // Session logic is now server-authoritative and sticky in the database.
+    // We only refresh the tree to keep it up to date.
+    if (memberId && treeRoot) {
       fetchTree(memberId);
     }
-    lastSessionRef.current = currentSession;
   };
 
   const fetchTree = async (uid: string, selectedPosition?: "left" | "right", forceSessionType?: "morning" | "evening") => {

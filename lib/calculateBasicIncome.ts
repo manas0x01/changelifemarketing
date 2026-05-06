@@ -24,50 +24,50 @@ export async function calculateBasicIncome(user: any) {
     ? new Date(user.lastSessionDate)
     : new Date(user.createdAt || user.joiningDate || Date.now() - 12 * 60 * 60 * 1000);
 
-  // Check if user already earned in this session - only 1 pair per session allowed
-  const alreadyEarnedThisSession = user.sessionBasedIncome.find(
-    (s: any) => {
-      const recTime = new Date(s.date || s.sessionDate).getTime();
-      return recTime >= (sessionStartDate.getTime() - 5000);
-    }
-  );
-
-  if (alreadyEarnedThisSession) {
-    console.log('[DEBUG] calculateBasicIncome: session limit reached', { 
-      userId: user?.userId, 
-      sessionType,
-      alreadyEarnedRecordDate: alreadyEarnedThisSession.date || alreadyEarnedThisSession.sessionDate,
-      sessionStartDate: sessionStartDate.toISOString()
-    });
-    return {
-      success: false,
-      reason: `Session limit reached (Already earned at ${new Date(alreadyEarnedThisSession.date || alreadyEarnedThisSession.sessionDate).toLocaleString()})`,
-    };
-  }
-
   const leftCount = user.sessionTeam?.left || 0;
   const rightCount = user.sessionTeam?.right || 0;
+  
+  // Calculate unique sessions already processed
+  const uniqueSessions = new Set(
+    user.sessionBasedIncome
+      .filter((s: any) => s.status === 'Completed')
+      .map((s: any) => `${new Date(s.date || s.sessionDate).toDateString()}-${s.sessionType}`)
+  );
+  
+  const currentSessionKey = `${today}-${sessionType}`;
+  const isFirstPairOfSession = !uniqueSessions.has(currentSessionKey);
+  const sessionSequenceNumber = uniqueSessions.has(currentSessionKey) 
+    ? uniqueSessions.size 
+    : uniqueSessions.size + 1;
 
-  console.log('[DEBUG] calculateBasicIncome: session counts', { userId: user?.userId, leftCount, rightCount });
+  // How many pairs already recorded for THIS specific session
+  const currentSessionPairs = user.sessionBasedIncome.filter(
+    (s: any) => {
+      const recDate = new Date(s.date || s.sessionDate).toDateString();
+      return recDate === today && s.sessionType === sessionType && s.status === 'Completed';
+    }
+  ).length;
 
-  if (leftCount < 1 || rightCount < 1) {
-    console.log('[DEBUG] calculateBasicIncome: pair incomplete in this session', { userId: user?.userId, leftCount, rightCount });
+  console.log('[DEBUG] calculateBasicIncome: session sequence', { 
+    userId: user?.userId, 
+    sessionSequenceNumber,
+    isFirstPairOfSession,
+    currentSessionPairs,
+    totalUniqueSessions: uniqueSessions.size
+  });
+
+  // Calculate how many pairs are theoretically possible in this session
+  const possiblePairsInSession = Math.min(leftCount, rightCount);
+
+  if (possiblePairsInSession <= currentSessionPairs) {
+    console.log('[DEBUG] calculateBasicIncome: no new pair completed in this session', { possiblePairsInSession, currentSessionPairs });
     return {
       success: false,
-      reason: "Pair not complete in this session",
+      reason: "Pair not complete or already processed in this session",
     };
   }
 
-  const possiblePairs = Math.min(leftCount, rightCount);
-
-  if (possiblePairs <= 0) {
-    console.log('[DEBUG] calculateBasicIncome: no new pairs in this session', { userId: user?.userId, possiblePairs });
-    return {
-      success: false,
-      reason: "No new pair available in this session",
-    };
-  }
-
+  // If we reach here, a NEW pair has been completed in this session
   const currentPairNumber = user.sessionBasedIncome.filter((s: any) => s && s.status === 'Completed').length + 1;
 
   if (currentPairNumber > 12) { 
@@ -78,43 +78,44 @@ export async function calculateBasicIncome(user: any) {
     };
   }
 
-  // Only give 1 pair per session maximum
-  const pairsToGive = 1;
-  let income = pairsToGive * 1000;
+  // LOGIC: Only the 1st pair of a session can earn income.
+  // AND: The session sequence number must not be a multiple of 3.
+  let income = 0;
   
-  // Enforce the 3rd, 6th, 9th, 12th... pair has zero income added to wallet (Placed Out)
-  if (currentPairNumber % 3 === 0) {
-    console.log(`[DEBUG] calculateBasicIncome: Pair ${currentPairNumber} is a "Placed Out" pair. Income set to 0.`, { userId: user?.userId });
-    income = 0;
+  if (isFirstPairOfSession && sessionSequenceNumber % 3 !== 0) {
+    console.log(`[DEBUG] calculateBasicIncome: Session ${sessionSequenceNumber}, Pair ${currentPairNumber}. Income set to 1000.`, { userId: user?.userId });
+    income = 1000;
   } else {
-    console.log(`[DEBUG] calculateBasicIncome: Pair ${currentPairNumber} is a regular pair. Income set to 1000.`, { userId: user?.userId });
+    const reason = !isFirstPairOfSession 
+      ? "Not the 1st pair in this session" 
+      : `Session ${sessionSequenceNumber} is a "Placed Out" multiple of 3`;
+    console.log(`[DEBUG] calculateBasicIncome: Session ${sessionSequenceNumber}, Pair ${currentPairNumber}. Income set to 0. Reason: ${reason}`, { userId: user?.userId });
+    income = 0;
   }
   
   user.sessionBasedIncome.push({
     date: now,
     sessionType,
-    pairs: pairsToGive,
+    pairs: 1,
     grossIncome: income,
     netIncome: income,
     // keep old-style fields for compatibility
     sessionDate: now,
-    pairsInSession: pairsToGive,
+    pairsInSession: 1,
     leftMembersInSession: leftCount,
     rightMembersInSession: rightCount,
     tdsDeducted: 0,
     serviceChargeDeducted: 0,
     status: 'Completed',
   });
-  console.log('[DEBUG] calculateBasicIncome: pushed session record', { userId: user?.userId, pairsToGive, income, currentPairNumber });
+  console.log('[DEBUG] calculateBasicIncome: pushed session record', { userId: user?.userId, income, currentPairNumber });
   
   // Update basicPairs based on TOTAL completed sessions in sessionBasedIncome
   const totalCompletedPairs = user.sessionBasedIncome
     .filter((s: any) => s.status === 'Completed')
-    .reduce((sum: number, s: any) => sum + (s.pairs || s.pairsInSession || 0), 0);
+    .length;
   
   user.basicPairs = totalCompletedPairs;
-
-  console.log('[DEBUG] calculateBasicIncome: updated counts', { userId: user?.userId, basicPairs: user.basicPairs });
 
   // Ensure Mongoose detects the changes
   if (typeof (user as any).markModified === 'function') {
@@ -124,12 +125,9 @@ export async function calculateBasicIncome(user: any) {
     } catch (err) {}
   }
 
-  //////////////////////////////////////////////////////////////
-  // ✅ SUCCESS
-  //////////////////////////////////////////////////////////////
   return {
     success: true,
     income,
-    message: "Basic income credited",
+    message: income > 0 ? "Basic income credited" : "Pair completed (Placed Out)",
   };
 }

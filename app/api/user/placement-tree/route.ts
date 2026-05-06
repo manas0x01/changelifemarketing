@@ -86,19 +86,6 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
   
   console.log(`[PLACEMENT TREE SESSION CHANGE] User ${user.userId}: ${lastSessionType} -> ${currentSessionType}, ACTUAL Left: ${leftPairs}, Right: ${rightPairs} (isSessionChange: ${isSessionChange})`);
 
-  // ALWAYS: Reset income to 0 if tree is completely empty (no users at all)
-  if (leftPairs === 0 && rightPairs === 0) {
-    console.log(`[PLACEMENT TREE] Tree is empty - resetting income to 0`);
-    user.basicIncome = 0;
-    user.basicPairs = 0;
-    user.sessionBasedIncome = [];
-    user.basicIncomeRecords = [];
-    user.lastSessionType = currentSessionType;
-    user.lastSessionDate = now;
-    await user.save();
-    return { flushedOut: false, flushMessage: "", incomeMessage: "", leftPairs: 0, rightPairs: 0 };
-  }
-  
   // Only flush/reset on session change 
   if (isFirstTime || isSessionChange) {
     console.log(`[PLACEMENT TREE] Processing ${isFirstTime ? 'FIRST TIME' : 'SESSION CHANGE'} for user ${user.userId}`);
@@ -156,7 +143,19 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
       }
     }
     
-    await user.save();
+    // Perform update atomically to avoid VersionError
+    await User.findByIdAndUpdate(user._id, {
+      $set: {
+        sessionTeam: user.sessionTeam,
+        lastSessionType: currentSessionType,
+        lastSessionDate: now,
+        sessionBasedIncome: user.sessionBasedIncome,
+        basicPairs: user.basicPairs,
+        totalTeam: user.totalTeam,
+        basicFlushHistory: user.basicFlushHistory
+      }
+    });
+
     console.log(`[PLACEMENT TREE] Session change and flush saved for ${user.userId}`);
   }
 

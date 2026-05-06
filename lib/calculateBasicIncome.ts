@@ -27,8 +27,8 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
 
     // Ensure we have enough sessions in history to hold all pairs from the tree
-    // (At least one session per pair)
-    const requiredSessions = Math.max(1, totalPairsInTree);
+    // CAP: Maximum 12 sessions allowed for basic income (8 paid, 4 skipped = 8000 total)
+    const requiredSessions = Math.min(12, Math.max(1, totalPairsInTree));
     while (user.sessionBasedIncome.length < requiredSessions) {
       const lastSession = user.sessionBasedIncome[user.sessionBasedIncome.length - 1];
       let nextType: "morning" | "evening" = "morning";
@@ -62,6 +62,8 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
 
     // Filter to valid sessions (those that aren't skipped by the %3 rule)
     for (let i = 0; i < user.sessionBasedIncome.length; i++) {
+      if (i >= 12) break; // Hard cap at 12 sessions total
+
       const session = user.sessionBasedIncome[i];
       const sessionNumber = i + 1;
 

@@ -71,9 +71,15 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
   }
 
   // 🔹 TRIGGER BASIC INCOME CALCULATION
-  console.log('[MLM] handleBinaryAndIncome: calling calculateBasicIncome', { userId: user._id });
+  console.log('[MLM] handleBinaryAndIncome: calling calculateBasicIncome', { userId: user._id, username: user.username });
   const incomeResult = await calculateBasicIncome(user);
-  console.log('[MLM] handleBinaryAndIncome: calculateBasicIncome result', incomeResult);
+  console.log('[MLM] handleBinaryAndIncome: calculateBasicIncome result', { 
+    username: user.username, 
+    success: incomeResult.success, 
+    income: incomeResult.income, 
+    reason: (incomeResult as any).reason,
+    currentBasicIncome: user.basicIncome 
+  });
 
 
 

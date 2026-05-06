@@ -65,11 +65,11 @@ export async function calculateBasicIncome(user: any) {
 
   const currentPairNumber = user.sessionBasedIncome.filter((s: any) => s && s.status === 'Completed').length + 1;
 
-  if (currentPairNumber > 12) {
-    console.log('[DEBUG] calculateBasicIncome: user has already completed 12 pairs', { userId: user?.userId });
+  if (currentPairNumber > 12) { 
+    console.log('[DEBUG] calculateBasicIncome: user has already completed 12 basic pairs', { userId: user?.userId });
     return {
       success: false,
-      reason: "Maximum basic pairs reached",
+      reason: "Maximum basic pairs reached (12 total)",
     };
   }
 
@@ -77,9 +77,12 @@ export async function calculateBasicIncome(user: any) {
   const pairsToGive = 1;
   let income = pairsToGive * 1000;
   
-  // Enforce the 3rd, 6th, 9th, and 12th pair has zero income added to wallet
-  if (currentPairNumber === 3 || currentPairNumber === 6 || currentPairNumber === 9 || currentPairNumber === 12) {
+  // Enforce the 3rd, 6th, 9th, 12th... pair has zero income added to wallet (Placed Out)
+  if (currentPairNumber % 3 === 0) {
+    console.log(`[DEBUG] calculateBasicIncome: Pair ${currentPairNumber} is a "Placed Out" pair. Income set to 0.`, { userId: user?.userId });
     income = 0;
+  } else {
+    console.log(`[DEBUG] calculateBasicIncome: Pair ${currentPairNumber} is a regular pair. Income set to 1000.`, { userId: user?.userId });
   }
   
   user.sessionBasedIncome.push({

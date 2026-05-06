@@ -29,11 +29,13 @@ export async function checkBoosterQualification(user: IUser) {
 
   if (user.boosterCuts.includes(12) && !user.isBooster) {
     user.isBooster = true;
+    user.basicRank = "Booster"; // Update rank for visibility
     user.boosterAchievedAt = new Date();
     console.log("🚀 BOOSTER ACTIVATED:", user.username);
     console.log("📊 FINAL STATE:", {
       pairs: totalPairs,
       cuts: user.boosterCuts,
+      rank: user.basicRank
     });
 
     await user.save();

@@ -7,58 +7,68 @@ import { calculateBasicIncome } from "@/lib/calculateBasicIncome";
 
 
 
-// Helper function to count actual children in tree
+// Helper function to count actual children in tree using $graphLookup (MUCH FASTER)
 async function countActualChildren(user: any) {
-  let leftCount = 0;
-  let rightCount = 0;
-  
-  // Count direct left children
-  if (user.leftChild) {
-    const leftChild = await User.findOne({
-      $or: [{ username: user.leftChild }, { userId: user.leftChild }]
+  const targetId = user.username || user.userId;
+  if (!targetId) return { left: 0, right: 0 };
+
+  try {
+    const result = await User.aggregate([
+      { $match: { placementId: targetId } },
+      {
+        $graphLookup: {
+          from: "users",
+          startWith: "$username",
+          connectFromField: "username",
+          connectToField: "placementId",
+          as: "descendants"
+        }
+      },
+      {
+        $project: {
+          placementPosition: 1,
+          descendantCount: { $size: "$descendants" }
+        }
+      }
+    ]);
+    
+    let left = 0;
+    let right = 0;
+    result.forEach(r => {
+      if (r.placementPosition === 'left') left = 1 + r.descendantCount;
+      if (r.placementPosition === 'right') right = 1 + r.descendantCount;
     });
-    if (leftChild) {
-      leftCount = 1 + await countTotalDescendants(leftChild);
-    }
+    return { left, right };
+  } catch (err) {
+    console.error(`[PLACEMENT TREE] Error in countActualChildren for ${targetId}:`, err);
+    return { left: 0, right: 0 };
   }
-  
-  // Count direct right children
-  if (user.rightChild) {
-    const rightChild = await User.findOne({
-      $or: [{ username: user.rightChild }, { userId: user.rightChild }]
-    });
-    if (rightChild) {
-      rightCount = 1 + await countTotalDescendants(rightChild);
-    }
-  }
-  
-  return { left: leftCount, right: rightCount };
 }
 
-// Helper to count total descendants
+// Helper to count total descendants using $graphLookup
 async function countTotalDescendants(user: any): Promise<number> {
   if (!user) return 0;
-  let count = 0;
+  const targetId = user.username || user.userId;
   
-  if (user.leftChild) {
-    const leftChild = await User.findOne({
-      $or: [{ username: user.leftChild }, { userId: user.leftChild }]
-    });
-    if (leftChild) {
-      count += 1 + await countTotalDescendants(leftChild);
-    }
+  try {
+    const result = await User.aggregate([
+      { $match: { username: targetId } },
+      {
+        $graphLookup: {
+          from: "users",
+          startWith: "$username",
+          connectFromField: "username",
+          connectToField: "placementId",
+          as: "descendants"
+        }
+      },
+      { $project: { count: { $size: "$descendants" } } }
+    ]);
+    return result[0]?.count || 0;
+  } catch (err) {
+    console.error(`[PLACEMENT TREE] Error in countTotalDescendants for ${targetId}:`, err);
+    return 0;
   }
-  
-  if (user.rightChild) {
-    const rightChild = await User.findOne({
-      $or: [{ username: user.rightChild }, { userId: user.rightChild }]
-    });
-    if (rightChild) {
-      count += 1 + await countTotalDescendants(rightChild);
-    }
-  }
-  
-  return count;
 }
 
 // Helper function to check and process session change with flash out
@@ -170,16 +180,9 @@ async function buildPlacementTree(
   // Compute ACTUAL descendant counts from the live tree structure
   // (totalTeam can be stale; this ensures the displayed count is always correct
   //  and never includes the root user itself)
-  let actualLeftCount = 0;
-  let actualRightCount = 0;
-  if (currentUser.leftChild) {
-    const lc = await User.findOne({ $or: [{ username: currentUser.leftChild }, { userId: currentUser.leftChild }] });
-    if (lc) actualLeftCount = 1 + await countTotalDescendants(lc);
-  }
-  if (currentUser.rightChild) {
-    const rc = await User.findOne({ $or: [{ username: currentUser.rightChild }, { userId: currentUser.rightChild }] });
-    if (rc) actualRightCount = 1 + await countTotalDescendants(rc);
-  }
+  const actualCounts = await countActualChildren(currentUser);
+  let actualLeftCount = actualCounts.left;
+  let actualRightCount = actualCounts.right;
 
   const node: TreeNode = {
     id: currentUser.userId || currentUser.username,

@@ -5,7 +5,6 @@ import { connectDB } from "@/lib/database";
 import mongoose from "mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
-import { processAllAncestorsIncome } from "@/lib/mlmEngine";
 import { updateTeamCounts } from "@/lib/teamUtils";
 
 export async function POST(req: NextRequest) {
@@ -358,21 +357,6 @@ export async function POST(req: NextRequest) {
     await dbSession.commitTransaction();
     dbSession.endSession();
     console.log('[DEBUG] register: transaction committed');
-
-    //////////////////////////////////////////////////////////////
-    // 🔥 MLM ENGINE
-    //////////////////////////////////////////////////////////////
-
-    try {
-      console.log('[DEBUG] register: calling MLM engine for all ancestors', { sponsorUsername: sponsor.username, placementPosition });
-      await processAllAncestorsIncome(
-        sponsor.username,
-        placementPosition
-      );
-      console.log('[DEBUG] register: MLM engine completed');
-    } catch (err) {
-      console.error("MLM Engine Error:", err);
-    }
 
     //////////////////////////////////////////////////////////////
     // ✅ RESPONSE

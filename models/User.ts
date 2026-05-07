@@ -355,6 +355,12 @@ const userSchema = new Schema<IUser>(
   { timestamps: true }
 );
 
+// Add indexes for performance
+userSchema.index({ placementId: 1 });
+userSchema.index({ leftChild: 1 });
+userSchema.index({ rightChild: 1 });
+userSchema.index({ sponsorId: 1 });
+
 userSchema.pre('save', async function (this: IUser) {
   console.log('💾 [PRE-SAVE] Starting save hook for user:', this.username || this.userId);
   console.log('💾 [PRE-SAVE] Is new document:', this.isNew);

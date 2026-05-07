@@ -38,9 +38,15 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     // - Everything else is flashed.
     // - RULE: Every 3rd pair (3, 6, 9, 12) is cut (0 income).
     
-    const pairSequenceNumber = (user.basicPairs || 0) + 1;
-    const isCutPair = pairSequenceNumber <= 12 && pairSequenceNumber % 3 === 0;
+    const currentLifetimePairs = user.basicPairs || 0;
+    const pairSequenceNumber = currentLifetimePairs + 1;
     
+    // Explicitly check for 3, 6, 9, 12 to avoid any math ambiguity
+    const cutLevels = [3, 6, 9, 12];
+    const isCutPair = cutLevels.includes(pairSequenceNumber);
+    
+    console.log(`🔍 [BASIC INCOME CHECK] User: ${user.username} | Lifetime Pairs: ${currentLifetimePairs} | New Pair #: ${pairSequenceNumber} | Is Cut? ${isCutPair}`);
+
     const paidPairs = 1; // Always max 1 pair for Basic
     const newIncome = isCutPair ? 0 : 1000; // 0 if it's a cut session, else 1000
 

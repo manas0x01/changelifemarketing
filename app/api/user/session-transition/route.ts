@@ -64,33 +64,9 @@ export async function POST(req: NextRequest) {
         // BASIC LOGIC: 1 pair per session with Flush-Out
         await calculateBasicIncome(user, currentSessionType);
         
-        // Handle Basic Flush-Out (Reset unpaired counts for Basic level)
-        const leftPairs = user.totalTeam?.left || 0;
-        const rightPairs = user.totalTeam?.right || 0;
-        
-        if (leftPairs !== rightPairs) {
-          const pairsToFlush = Math.abs(leftPairs - rightPairs);
-          const sideToFlush = leftPairs > rightPairs ? "left" : "right";
-          
-          user.basicFlushHistory = user.basicFlushHistory || [];
-          user.basicFlushHistory.push({
-            date: new Date(),
-            left: leftPairs,
-            right: rightPairs,
-            reason: `Unpaired ${sideToFlush} positions flushed during ${currentSessionType} transition (Basic Level)`,
-          });
-          
-          if (!user.totalTeam) user.totalTeam = { left: 0, right: 0 };
-          
-          if (sideToFlush === "left") {
-            user.totalTeam.left = rightPairs;
-          } else {
-            user.totalTeam.right = leftPairs;
-          }
-          
-          totalPairsFlushed += pairsToFlush;
-          console.log(`[SESSION TRANSITION] Basic ${user.username} flushed ${pairsToFlush} ${sideToFlush} positions`);
-        }
+        // Note: TotalTeam is a lifetime count and should NOT be flushed.
+        // SessionTeam is the one that resets (flashes out) at the end of the session.
+        console.log(`[SESSION TRANSITION] Basic ${user.username}: Income processed for ${currentSessionType}`);
       }
 
       // Reset session team counts for everyone

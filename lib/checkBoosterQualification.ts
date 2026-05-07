@@ -14,10 +14,9 @@ export async function checkBoosterQualification(user: IUser) {
     user.boosterCuts = [];
   }
 
-  // Qualification is based on standard member pairs (Basic)
-  const totalLeft = user.totalTeam?.left || 0;
-  const totalRight = user.totalTeam?.right || 0;
-  const basicPairsMatched = Math.min(totalLeft, totalRight);
+  // Qualification is based on lifetime matched pairs (basicPairs)
+  // We use user.basicPairs because totalTeam is subject to session flash-outs.
+  const basicPairsMatched = user.basicPairs || 0;
 
   console.log("🔥 [BOOSTER QUALIFICATION CHECK]", {
     user: user.username,

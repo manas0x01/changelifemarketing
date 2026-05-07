@@ -45,8 +45,8 @@ export async function GET(req: NextRequest) {
       { new: true, returnDocument: 'after' }
     ) || user;
 
-    // 2. ALLOCATION ENGINE: Sync basicIncome based on total tree state
-    await calculateBasicIncome(updatedUser);
+    // 2. ALLOCATION ENGINE: No longer needed here as basicIncome is event-driven
+    // The dashboard will show the latest basicIncome calculated during registrations.
 
     if (updatedUser) {
       // Trigger one save to ensure pre-save income logic runs, but handle the version error gracefully

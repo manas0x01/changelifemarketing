@@ -10,8 +10,12 @@ import { checkBoosterQualification } from "./checkBoosterQualification";
  * - Max 1 pair paid per session (1000 Rs).
  * - All unpaired BV and extra pairs are "flashed out" (removed) at session end.
  */
-export async function calculateBasicIncome(user: any, sessionType: 'morning' | 'evening') {
+export async function calculateBasicIncome(user: any, manualSessionType?: string) {
   try {
+    const currentHour = new Date().getHours();
+    const sessionType = (manualSessionType === "morning" || manualSessionType === "evening") 
+      ? manualSessionType 
+      : (currentHour < 12 ? "morning" : "evening");
     // 1. Get joins from this session (stored in sessionTeam)
     // In this system, 1 user = 1000 BV. sessionTeam currently stores counts (1, 2, 3...).
     const sessionLeft = user.sessionTeam?.left || 0;

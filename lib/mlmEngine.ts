@@ -59,7 +59,6 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
     if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
     if (user.isBooster) {
       user.boosterPairsCarryForward[position] = (user.boosterPairsCarryForward[position] || 0) + 1;
-      user.boosterPairsCarryForward[position] = Math.min(user.boosterPairsCarryForward[position], 10);
       console.log('[MLM] handleBinaryAndIncome: incremented boosterPairsCarryForward', { username: user.username, position, carryForward: user.boosterPairsCarryForward });
     }
   }

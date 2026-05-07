@@ -422,9 +422,6 @@ userSchema.pre('save', async function (this: IUser) {
     console.error('❌ [PRE-SAVE] Error ensuring userId fallback:', err);
   }
 
-  // Use the new allocation-based engine to ensure income matches the tree
-  await calculateBasicIncome(this);
-  console.log(`💰 [PRE-SAVE] basicIncome recalculated (Allocation): ₹${this.basicIncome}`);
   // Ensure totalIncome is derived from current income sources (single source of truth)
   try {
     const computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);

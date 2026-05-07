@@ -122,7 +122,6 @@ export async function updateTeamCounts(
     currentPosition = user.placementPosition;
   }
 }
-}
 
 // Helper to count total descendants using $graphLookup (MUCH FASTER)
 export async function countTotalDescendants(user: any): Promise<number> {

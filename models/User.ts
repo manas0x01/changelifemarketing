@@ -47,6 +47,7 @@ export interface IUser extends Document {
     fromRightBoosterId?: string;
     fromRightBoosterName?: string;
     pairsMatched: number;
+    paidPairs: number;
     grossIncome: number;
     carryForwardPairs: number;
     sessionType: 'morning' | 'evening';
@@ -245,7 +246,7 @@ const userSchema = new Schema<IUser>(
     basicRank: { type: String, required: false, default: 'basic' },
     isBooster: { type: Boolean, default: false },
     boosterMatchingIncome: { type: Number, default: 0 },
-    boosterMatchingRecords: { type: [{ srNo: Number, date: Date, fromLeftBoosterId: String, fromLeftBoosterName: String, fromRightBoosterId: String, fromRightBoosterName: String, pairsMatched: Number, grossIncome: Number, carryForwardPairs: Number, sessionType: String, tdsDeducted: Number, serviceChargeDeducted: Number, netIncome: Number, status: String }], default: [] },
+    boosterMatchingRecords: { type: [{ srNo: Number, date: Date, fromLeftBoosterId: String, fromLeftBoosterName: String, fromRightBoosterId: String, fromRightBoosterName: String, pairsMatched: Number, paidPairs: Number, grossIncome: Number, carryForwardPairs: Number, sessionType: String, tdsDeducted: Number, serviceChargeDeducted: Number, netIncome: Number, status: String }], default: [] },
     boosterCarryForward: { type: [{ date: Date, sessionType: String, pairsCarried: Number, reason: String }], default: [] },
     boosterPairsCarryForward: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     directMembers: { type: [{ memberId: String, name: String, joinDate: Date, position: String }], default: [] },

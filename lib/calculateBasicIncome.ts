@@ -1,4 +1,5 @@
 import User from "../models/User";
+import { checkBoosterQualification } from "./checkBoosterQualification";
 
 /**
  * Statistically recalculates the basic income based on total team counts and session history.
@@ -106,7 +107,12 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     }));
 
     // Derived values
-    user.totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardRankIncome || 0);
+    user.totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);
+
+    // 5. Check for Booster Upgrade
+    if (!user.isBooster) {
+      await checkBoosterQualification(user);
+    }
 
     return {
       success: true,

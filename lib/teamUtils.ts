@@ -1,5 +1,6 @@
 import User, { IUser } from "../models/User";
 import { calculateBasicIncome } from "./calculateBasicIncome";
+import { calculateBoosterIncome } from "./calculateBoosterIncome";
 
 /**
  * Recursively updates team counts for all ancestors up the tree.
@@ -45,7 +46,12 @@ export async function updateTeamCounts(
       console.log(`[TEAM UTILS] Session changed for ${user.username} (${user.lastSessionType} -> ${currentSessionType}). Finalizing old session counts.`);
       
       // IMPORTANT: Record the final income for the session that just finished BEFORE wiping the counts
-      await calculateBasicIncome(user, currentSessionType); 
+      if (user.isBooster) {
+        const previousSessionType = (user.lastSessionType || (currentHour < 12 ? "evening" : "morning")) as "morning" | "evening";
+        await calculateBoosterIncome(user, previousSessionType);
+      } else {
+        await calculateBasicIncome(user, currentSessionType); 
+      }
 
       user.sessionTeam = { left: 0, right: 0 };
       user.lastSessionType = currentSessionType as any;
@@ -61,8 +67,15 @@ export async function updateTeamCounts(
       user.sessionTeam.right = (user.sessionTeam.right || 0) + increment;
     }
 
-    // Recalculate income immediately so deletions instantly affect wallet
-    await calculateBasicIncome(user);
+    // Recalculate income immediately so additions/deletions instantly affect wallet
+    if (user.isBooster) {
+      const now = new Date();
+      const currentHour = now.getHours();
+      const currentSessionType = (manualSessionType || (currentHour < 12 ? "morning" : "evening")) as "morning" | "evening";
+      await calculateBoosterIncome(user, currentSessionType);
+    } else {
+      await calculateBasicIncome(user);
+    }
 
     // Ensure sessionTeam is initialized
     if (!user.sessionTeam) user.sessionTeam = { left: 0, right: 0 };

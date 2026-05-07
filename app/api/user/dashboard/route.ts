@@ -91,17 +91,20 @@ export async function GET(req: NextRequest) {
     const basicIncome = user.basicIncome || 0;
     
     console.log('[DASHBOARD] basicIncome from user model:', basicIncome);
-    const schemaBooster: any = user.boosterIncome || {};
-    const boosterIncomeAmount = typeof (user as any).boosterIncomeAmount === 'number'
-      ? (user as any).boosterIncomeAmount
-      : schemaBooster.amount ?? 0;
+    
+    // Booster Income Logic
+    const boosterMatchingIncome = user.boosterMatchingIncome || 0;
+    const boosterCarryForward = user.boosterPairsCarryForward || { left: 0, right: 0 };
+    
     const boosterIncome = {
-      amount: boosterIncomeAmount,
-      LG: schemaBooster.LG ?? 0,
-      RG: schemaBooster.RG ?? 0,
-      totalMatching: schemaBooster.totalMatching ?? schemaBooster.totalBoosterMatching ?? 0,
+      amount: boosterMatchingIncome,
+      carryForward: boosterCarryForward,
+      isBooster: user.isBooster || false,
+      totalMatching: user.boosterMatchingRecords?.length || 0,
     };
-    const totalIncome = user.totalIncome || 0;
+
+    const totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);
+
     const totalPins = {
       active: user.activePins || 0,
       used: user.usedPins || 0,
@@ -120,12 +123,13 @@ export async function GET(req: NextRequest) {
       totalDirect,
       basicIncome,
       boosterIncome,
-      boosterIncomeAmount,
+      boosterIncomeAmount: boosterIncome.amount,
+      isBooster: boosterIncome.isBooster,
       totalIncome,
       totalPins,
       userProfile,
     };
-    console.log('[DASHBOARD] responding with:', { basicIncome, boosterIncome, totalIncome });
+    console.log('[DASHBOARD] responding with:', { basicIncome, boosterIncome, totalIncome, isBooster: boosterIncome.isBooster });
     return NextResponse.json({ success: true, data: respData });
 
   } catch (error: any) {

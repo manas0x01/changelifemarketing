@@ -10,10 +10,13 @@ export async function checkBoosterQualification(user: IUser) {
     user.boosterCuts = [];
   }
 
-  const totalPairs = user.basicPairs || 0;
+  const totalLeft = user.totalTeam?.left || 0;
+  const totalRight = user.totalTeam?.right || 0;
+  const totalPairsInTree = Math.min(totalLeft, totalRight);
+
   console.log("🔥 [BOOSTER CHECK]", {
     user: user.username,
-    totalPairs,
+    totalPairsInTree,
     boosterCuts: user.boosterCuts,
   });
   
@@ -21,7 +24,7 @@ export async function checkBoosterQualification(user: IUser) {
   let newCuts: number[] = [];
 
   for (const cut of cutLevels) {
-    if (totalPairs >= cut && !user.boosterCuts.includes(cut)) {
+    if (totalPairsInTree >= cut && !user.boosterCuts.includes(cut)) {
       user.boosterCuts.push(cut);
       newCuts.push(cut);
     }
@@ -33,12 +36,10 @@ export async function checkBoosterQualification(user: IUser) {
     user.boosterAchievedAt = new Date();
     console.log("🚀 BOOSTER ACTIVATED:", user.username);
     console.log("📊 FINAL STATE:", {
-      pairs: totalPairs,
+      pairs: totalPairsInTree,
       cuts: user.boosterCuts,
       rank: user.basicRank
     });
-
-    await user.save();
 
     return {
       success: true,
@@ -48,7 +49,7 @@ export async function checkBoosterQualification(user: IUser) {
     };
   }
 
-  await user.save();
+
   return {
     success: true,
     isBooster: false,

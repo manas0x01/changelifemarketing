@@ -450,7 +450,7 @@ userSchema.pre('save', async function (this: IUser) {
     }
 
     if (Array.isArray(this.boosterMatchingRecords)) {
-      const sumBooster = this.boosterMatchingRecords.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
+      const sumBooster = this.boosterMatchingRecords.reduce((acc: number, curr: any) => acc + (curr.netIncome || 0), 0);
       if (this.boosterMatchingIncome !== sumBooster) {
         console.log(`[SELF-HEALING] Correcting boosterMatchingIncome for ${this.username}: ${this.boosterMatchingIncome} -> ${sumBooster}`);
         this.boosterMatchingIncome = sumBooster;

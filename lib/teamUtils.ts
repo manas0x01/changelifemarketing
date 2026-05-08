@@ -85,13 +85,21 @@ export async function updateTeamCounts(
       user.lastSessionDate = now;
     }
 
-    // Update the count for the specific side (1 user = 1000 BV)
+    // Update the Booster counts for the specific side (1 user = 1000 BV)
     if (currentPosition === 'left') {
       user.totalTeam.left = (user.totalTeam.left || 0) + increment;
       user.sessionTeam.left = (user.sessionTeam.left || 0) + increment;
+      if (user.isBooster) {
+        if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
+        user.boosterPairsCarryForward.left = (user.boosterPairsCarryForward.left || 0) + increment;
+      }
     } else if (currentPosition === 'right') {
       user.totalTeam.right = (user.totalTeam.right || 0) + increment;
       user.sessionTeam.right = (user.sessionTeam.right || 0) + increment;
+      if (user.isBooster) {
+        if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
+        user.boosterPairsCarryForward.right = (user.boosterPairsCarryForward.right || 0) + increment;
+      }
     }
 
     // Recalculate Basic Income for the CURRENT session
@@ -108,8 +116,7 @@ export async function updateTeamCounts(
     }
 
     if (user.isBooster) {
-      // Note: calculateBoosterMatching is now triggered primarily by downline upgrades.
-      // But we can keep a check here for any existing carry forward matches.
+      // Trigger matching for both Booster Upgrades and Standard Joins
       await calculateBoosterMatching(user);
       await checkAwardRank(user);
     }

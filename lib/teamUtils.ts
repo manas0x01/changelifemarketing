@@ -70,13 +70,9 @@ export async function updateTeamCounts(
       // Determine what session we are closing
       const previousSessionType = (user.lastSessionType || (currentHour < 12 ? "evening" : "morning")) as "morning" | "evening";
 
-      if (user.isBooster) {
-        // Booster matching is usually real-time, but we can do a final check here
-        await calculateBoosterMatching(user);
-      } else {
-        // BASIC INCOME: Match for the session that just ended
-        await calculateBasicIncome(user, previousSessionType); 
-      }
+      // Match for the session that just ended
+      // This now handles both 1-pair (basic) and 10-pair (booster) binary logic
+      await calculateBasicIncome(user, previousSessionType); 
 
       // FLASH OUT: Resetting sessionTeam effectively flashes out any unpaired BV for Basic users.
       // For Booster users, unpaired BV is already in boosterPairsCarryForward.
@@ -89,35 +85,30 @@ export async function updateTeamCounts(
     if (currentPosition === 'left') {
       user.totalTeam.left = (user.totalTeam.left || 0) + increment;
       user.sessionTeam.left = (user.sessionTeam.left || 0) + increment;
-      if (user.isBooster) {
-        if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
-        user.boosterPairsCarryForward.left = (user.boosterPairsCarryForward.left || 0) + increment;
-      }
+      
+      // Track booster pairs for everyone (used for both hold and released income)
+      if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
+      user.boosterPairsCarryForward.left = (user.boosterPairsCarryForward.left || 0) + increment;
     } else if (currentPosition === 'right') {
       user.totalTeam.right = (user.totalTeam.right || 0) + increment;
       user.sessionTeam.right = (user.sessionTeam.right || 0) + increment;
-      if (user.isBooster) {
-        if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
-        user.boosterPairsCarryForward.right = (user.boosterPairsCarryForward.right || 0) + increment;
-      }
+      
+      if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
+      user.boosterPairsCarryForward.right = (user.boosterPairsCarryForward.right || 0) + increment;
     }
 
-    // Recalculate Basic Income for the CURRENT session
+    // Calculate Basic Binary Income (handles both basic and booster phases)
+    await calculateBasicIncome(user, currentSessionType as any);
+    
+    // Check for Booster Upgrade
     if (!user.isBooster) {
-      await calculateBasicIncome(user, currentSessionType as any);
-      
-      // Check for Booster Upgrade
       const qualResult = await checkBoosterQualification(user);
       if (qualResult.success && qualResult.isBooster) {
-        // 🚀 USER JUST BECAME A BOOSTER!
-        // We must propagate this up to ancestors so they get Booster Matching income.
         await handleBoosterUpgrade(user.username, user.placementId, user.placementPosition, session);
       }
     }
 
     if (user.isBooster) {
-      // Trigger matching for both Booster Upgrades and Standard Joins
-      await calculateBoosterMatching(user);
       await checkAwardRank(user);
     }
 
@@ -188,8 +179,9 @@ export async function handleBoosterUpgrade(
     console.log(`🚀 [BOOSTER PROPAGATION] Updating ${user.username}: New Booster from ${currentPosition} (${boosterId})`);
 
     // 1. Calculate matching income for this ancestor
+    await calculateBoosterMatching(user);
+    
     if (user.isBooster) {
-      await calculateBoosterMatching(user);
       await checkAwardRank(user);
     }
 

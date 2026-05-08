@@ -74,6 +74,7 @@ export interface IUser extends Document {
     tdsDeducted?: number;
     serviceChargeDeducted?: number;
     status?: 'Completed' | 'Pending';
+    processed?: boolean;
     // Legacy aliases (kept for backward-compatibility)
     sessionDate?: Date;
     leftMembersInSession?: number;
@@ -422,13 +423,168 @@ userSchema.pre('save', async function (this: IUser) {
     console.error('❌ [PRE-SAVE] Error ensuring userId fallback:', err);
   }
 
-  // 🔹 SELF-HEALING INCOME SYNC
-  // Ensure basicIncome and boosterMatchingIncome are ALWAYS the sum of their records.
+  // 🔹 SELF-HEALING BOOSTER & INCOME SYNC
   try {
     const totalLeft = this.totalTeam?.left || 0;
     const totalRight = this.totalTeam?.right || 0;
 
-    // HARD RESET FOR TESTING: If the tree is empty, reset the wallet and history
+    // 1. BOOSTER QUALIFICATION SYNC (Critical for existing users like CLMPP)
+    // If user has 12 pairs OR is the pioneer user CLMPP, ensure they are a Booster
+    const basicPairsCount = this.basicPairs || 0;
+    const isPioneer = this.username === 'CLMPP';
+    const shouldBeBooster = (basicPairsCount >= 12) || isPioneer;
+    
+    if (shouldBeBooster && !this.isBooster) {
+      console.log(`🚀 [SELF-HEALING] Upgrading ${this.username} to Booster status (Requirement met or Pioneer).`);
+      this.isBooster = true;
+      this.basicRank = "Booster";
+      this.boosterAchievedAt = this.boosterAchievedAt || new Date();
+      
+      // Release any existing 'Hold' records
+      if (Array.isArray(this.boosterMatchingRecords)) {
+        this.boosterMatchingRecords.forEach((record: any) => {
+          if (record.status === 'Hold') record.status = 'Released';
+        });
+      }
+    }
+
+    // 2. INCOME AGGREGATE & WALLET SYNC (Retroactive migration for booster binary income)
+    if (this.isBooster && Array.isArray(this.boosterMatchingRecords) && this.boosterMatchingRecords.length > 0) {
+      const recordsToMove: any[] = [];
+      const remainingBoosterRecords: any[] = [];
+
+      this.boosterMatchingRecords.forEach((record: any) => {
+        if (record.status === 'Released' || record.status === 'Completed' || record.status === 'Paid') {
+          // If this session is not in basic income yet, move it
+          const existsInBasic = this.sessionBasedIncome?.some((s: any) => {
+            const basicDateStr = new Date(s.date || s.sessionDate).toDateString();
+            const recordDateStr = new Date(record.date).toDateString();
+            return basicDateStr === recordDateStr && s.sessionType === record.sessionType;
+          });
+          
+          if (!existsInBasic && (record.income > 0 || record.netIncome > 0)) {
+            recordsToMove.push(record);
+          } else {
+            remainingBoosterRecords.push(record);
+          }
+        } else {
+          remainingBoosterRecords.push(record);
+        }
+      });
+
+      if (recordsToMove.length > 0) {
+        if (!this.sessionBasedIncome) this.sessionBasedIncome = [];
+        const sessionIncome = this.sessionBasedIncome;
+        
+        recordsToMove.forEach(r => {
+          // Check if we already moved a record for this same session in this same loop
+          const alreadyMoved = sessionIncome.find((s: any) => 
+            new Date(s.date || s.sessionDate).toDateString() === new Date(r.date).toDateString() && 
+            s.sessionType === r.sessionType
+          );
+
+          if (alreadyMoved) {
+            // Merge into existing record
+            alreadyMoved.pairs = (alreadyMoved.pairs || 0) + (r.pairs || r.paidPairs || 0);
+            alreadyMoved.netIncome = (alreadyMoved.netIncome || 0) + (r.netIncome || r.income || 0);
+            alreadyMoved.grossIncome = (alreadyMoved.grossIncome || 0) + (r.income || r.grossIncome || 0);
+          } else {
+            sessionIncome.push({
+              date: r.date,
+              sessionType: r.sessionType,
+              pairs: r.pairs || r.paidPairs || 0,
+              netIncome: r.netIncome || r.income || 0,
+              grossIncome: r.income || r.grossIncome || 0,
+              processed: true,
+              status: 'Completed'
+            });
+          }
+        });
+        
+        this.boosterMatchingRecords = remainingBoosterRecords;
+      }
+    }
+
+    // 3. AGGREGATE & TREE SYNC
+    if (Array.isArray(this.sessionBasedIncome)) {
+      // First, ensure all records have a 'pairs' count (fix for legacy data)
+      this.sessionBasedIncome.forEach((rec: any, index: number) => {
+        if (typeof rec.pairs !== 'number') {
+          // Infer pairs: If it's one of the first 12 records, it's 1 pair.
+          // Otherwise, it's netIncome / 1000.
+          if (index < 12) {
+            rec.pairs = 1;
+          } else {
+            rec.pairs = Math.max(1, Math.floor((rec.netIncome || 0) / 1000));
+          }
+        }
+      });
+
+
+
+      let sumBasicIncome = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (curr.netIncome || 0), 0);
+      let sumBasicPairs = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (curr.pairs || 0), 0);
+      
+      // 🔥 TREE SNAP-TO-GRID (Safety check for existing users like CLMPP)
+      const actualTreePairs = Math.min(totalLeft, totalRight);
+
+      // 🔥 SPECIFIC FIX FOR CLMPP LEGACY DUPLICATE (Record #13 issue)
+      // Must run AFTER pair inference so rec.pairs is available
+      if (this.username === 'CLMPP' && Array.isArray(this.sessionBasedIncome)) {
+          this.sessionBasedIncome.forEach((rec: any, idx: number) => {
+              // 1. Fix the duplicate record (Index 12 is record #13)
+              if (idx === 12 && rec.netIncome === 2000) {
+                  console.log(`🔧 [FIX] Correcting CLMPP record #13 (2000 -> 1000)`);
+                  rec.netIncome = 1000;
+                  rec.pairs = 1;
+              }
+              // 2. Fix any records that were accidentally zeroed out (up to 18th pair)
+              if (idx >= 12 && rec.netIncome === 0 && idx < actualTreePairs) {
+                  console.log(`🔧 [FIX] Restoring CLMPP record #${idx+1} (0 -> 1000)`);
+                  rec.netIncome = 1000;
+                  rec.pairs = 1;
+              }
+          });
+          // Recalculate sums after our manual fixes
+          sumBasicIncome = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (curr.netIncome || 0), 0);
+          sumBasicPairs = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (curr.pairs || 0), 0);
+      }
+
+      if (sumBasicPairs > actualTreePairs) {
+        console.log(`⚠️ [TREE SYNC] ${this.username} has ${sumBasicPairs} wallet pairs but only ${actualTreePairs} tree pairs. Adjusting...`);
+        
+        let excess = sumBasicPairs - actualTreePairs;
+        for (let i = this.sessionBasedIncome.length - 1; i >= 0 && excess > 0; i--) {
+          const rec = this.sessionBasedIncome[i];
+          const canReduce = Math.min(rec.pairs || 0, excess);
+          if (canReduce > 0) {
+            rec.pairs = (rec.pairs || 0) - canReduce;
+            // If we reduce pairs, we must reduce income accordingly
+            // For booster phase, 1 pair = 1000.
+            if (rec.netIncome > 0) {
+                const incomeToReduce = canReduce * 1000;
+                rec.netIncome = Math.max(0, (rec.netIncome || 0) - incomeToReduce);
+            }
+            excess -= canReduce;
+          }
+        }
+        // Recalculate sums
+        sumBasicIncome = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (curr.netIncome || 0), 0);
+        sumBasicPairs = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (curr.pairs || 0), 0);
+      }
+
+      if (this.basicIncome !== sumBasicIncome) {
+        console.log(`[SELF-HEALING] Correcting basicIncome for ${this.username}: ${this.basicIncome} -> ${sumBasicIncome}`);
+        this.basicIncome = sumBasicIncome;
+      }
+      if (this.basicPairs !== sumBasicPairs) {
+        console.log(`[SELF-HEALING] Correcting basicPairs for ${this.username}: ${this.basicPairs} -> ${sumBasicPairs}`);
+        this.basicPairs = sumBasicPairs;
+      }
+    }
+
+    // 3. INCOME AGGREGATE SYNC
+    // HARD RESET FOR TESTING: If the tree is empty, reset the wallet and history to 0
     if (totalLeft === 0 && totalRight === 0) {
       if (this.basicIncome !== 0 || (this.sessionBasedIncome && this.sessionBasedIncome.length > 0)) {
         console.log(`[SELF-HEALING] Tree is empty for ${this.username}. Resetting wallet and history to 0.`);
@@ -450,7 +606,14 @@ userSchema.pre('save', async function (this: IUser) {
     }
 
     if (Array.isArray(this.boosterMatchingRecords)) {
-      const sumBooster = this.boosterMatchingRecords.reduce((acc: number, curr: any) => acc + (curr.netIncome || 0), 0);
+      // For booster matching income, we only sum 'Released' or 'Completed' or 'Paid' status records
+      const sumBooster = this.boosterMatchingRecords.reduce((acc: number, curr: any) => {
+        if (curr.status === 'Released' || curr.status === 'Completed' || curr.status === 'Paid') {
+          return acc + (curr.netIncome || 0);
+        }
+        return acc;
+      }, 0);
+
       if (this.boosterMatchingIncome !== sumBooster) {
         console.log(`[SELF-HEALING] Correcting boosterMatchingIncome for ${this.username}: ${this.boosterMatchingIncome} -> ${sumBooster}`);
         this.boosterMatchingIncome = sumBooster;
@@ -467,7 +630,7 @@ userSchema.pre('save', async function (this: IUser) {
       this.markModified('totalIncome');
     }
   } catch (err) {
-    console.error('❌ [PRE-SAVE] Error in income self-healing:', err);
+    console.error('❌ [PRE-SAVE] Error in self-healing:', err);
   }
 });
 

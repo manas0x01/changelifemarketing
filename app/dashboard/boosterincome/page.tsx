@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "@/components/Navbar";
 
-const statuses  = ["--All--", "Paid", "Pending", "Hold"];
+const statuses  = ["--All--", "Paid", "Pending", "Hold", "Released"];
 const pageSizes = [10, 20, 50, 100];
 
 interface IncomeRow {
@@ -16,10 +16,11 @@ interface IncomeRow {
   status: "Paid" | "Pending" | "Hold";
 }
 
-const statusColor: Record<IncomeRow["status"], string> = {
-  Paid:    "#26a69a",
-  Pending: "#f57c00",
-  Hold:    "#e53935",
+const statusColor: Record<string, string> = {
+  Paid:     "#26a69a",
+  Pending:  "#f57c00",
+  Hold:     "#e53935",
+  Released: "#7C3AED", // Purple for released
 };
 
 export default function BoosterIncomePage() {

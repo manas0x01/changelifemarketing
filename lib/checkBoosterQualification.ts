@@ -40,6 +40,24 @@ export async function checkBoosterQualification(user: IUser) {
     user.isBooster = true;
     user.basicRank = "Booster";
     user.boosterAchievedAt = new Date();
+
+    // 🔥 RELEASE HOLD RECORDS
+    // When a user becomes a booster, we convert all their 'Hold' booster income records 
+    // to 'Released' and add that income to boosterMatchingIncome.
+    if (Array.isArray(user.boosterMatchingRecords)) {
+      let releasedIncomeTotal = 0;
+      user.boosterMatchingRecords.forEach((record: any) => {
+        if (record.status === 'Hold') {
+          record.status = 'Released';
+          releasedIncomeTotal += (record.netIncome || 0);
+        }
+      });
+
+      if (releasedIncomeTotal > 0) {
+        console.log(`🔓 [BOOSTER RELEASE] Releasing ₹${releasedIncomeTotal} for ${user.username}. Adding to Booster Wallet.`);
+        user.boosterMatchingIncome = (user.boosterMatchingIncome || 0) + releasedIncomeTotal;
+      }
+    }
     
     console.log("🚀 BOOSTER RANK ACHIEVED (via 12 Basic Pairs):", user.username);
     

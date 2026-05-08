@@ -80,6 +80,7 @@ export async function calculateBoosterMatching(user: any) {
   const leftStock = user.boosterPairsCarryForward.left;
   const rightStock = user.boosterPairsCarryForward.right;
   
+  // Total pairs that CAN be matched right now
   let pairsAvailable = Math.min(leftStock, rightStock);
 
   if (pairsAvailable <= 0) {
@@ -89,26 +90,28 @@ export async function calculateBoosterMatching(user: any) {
 
   // Session Cap: 10 pairs (₹10,000) per session
   const remainingSessionPairs = 10 - sessionPairsUsed;
-  if (remainingSessionPairs <= 0) {
-    console.log('[DEBUG] calculateBoosterMatching: session cap reached', { sessionPairsUsed });
-    return { success: false, message: "Session cap reached (10 pairs)" };
-  }
-
-  let allowedPairs = Math.min(pairsAvailable, remainingSessionPairs);
-
-  // Daily Cap: ₹20,000
-  const maxPairsByDaily = Math.floor((20000 - dailyIncome) / 1000);
-  allowedPairs = Math.min(allowedPairs, maxPairsByDaily);
   
-  console.log('[DEBUG] calculateBoosterMatching: allowedPairs computed', { 
+  // Daily Cap: ₹20,000 (Total 20 pairs per day)
+  const maxPairsByDaily = Math.floor((20000 - dailyIncome) / 1000);
+
+  // How many pairs can we actually PAY for?
+  let allowedPairs = Math.min(pairsAvailable, remainingSessionPairs, maxPairsByDaily);
+  allowedPairs = Math.max(0, allowedPairs); // Ensure not negative
+
+  // How many pairs are being FLASHED OUT?
+  // (Total matched - Paid pairs = Flashed pairs)
+  const flushedPairs = pairsAvailable - allowedPairs;
+  
+  console.log('[DEBUG] calculateBoosterMatching: pair breakdown', { 
     pairsAvailable, 
+    paidPairs: allowedPairs, 
+    flushedPairs,
     remainingSessionPairs, 
-    maxPairsByDaily, 
-    allowedPairs 
+    maxPairsByDaily 
   });
 
-  if (allowedPairs <= 0) {
-    return { success: false, message: "Daily income limit reached" };
+  if (allowedPairs <= 0 && flushedPairs <= 0) {
+    return { success: false, message: "Limits reached and no extra pairs to flush" };
   }
 
   //////////////////////////////////////////////////////////////
@@ -120,12 +123,16 @@ export async function calculateBoosterMatching(user: any) {
   user.totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);
 
   //////////////////////////////////////////////////////////////
-  // 🔥 UPDATE CARRY FORWARD (Deduct Matched Pairs)
+  // 🔥 UPDATE CARRY FORWARD (Deduct ALL Matched Pairs - STRICT FLUSH OUT)
   //////////////////////////////////////////////////////////////
-  user.boosterPairsCarryForward.left = Math.max(0, leftStock - allowedPairs);
-  user.boosterPairsCarryForward.right = Math.max(0, rightStock - allowedPairs);
+  // We deduct ALL pairsAvailable so that extra pairs are GONE forever.
+  user.boosterPairsCarryForward.left = Math.max(0, leftStock - pairsAvailable);
+  user.boosterPairsCarryForward.right = Math.max(0, rightStock - pairsAvailable);
   
-  console.log('[DEBUG] calculateBoosterMatching: stock updated', { 
+  console.log('[DEBUG] calculateBoosterMatching: stock updated with flush-out', { 
+    consumed: pairsAvailable,
+    paid: allowedPairs,
+    flushed: flushedPairs,
     leftBvRemaining: user.boosterPairsCarryForward.left * 1000,
     rightBvRemaining: user.boosterPairsCarryForward.right * 1000 
   });
@@ -135,12 +142,19 @@ export async function calculateBoosterMatching(user: any) {
   // 📝 RECORD
   //////////////////////////////////////////////////////////////
   user.boosterMatchingRecords.push({
+    srNo: user.boosterMatchingRecords.length + 1,
     date: now,
     sessionType,
-    pairs: allowedPairs,
+    pairsMatched: pairsAvailable, // Total identified
+    paidPairs: allowedPairs,      // Actually paid
+    flashedPairs: flushedPairs,   // Lost to caps (Company Profit)
+    pairs: allowedPairs,          // Alias for UI compatibility
     income,
+    netIncome: income,
+    status: 'Completed',
     processed: true,
   });
+  console.log('[DEBUG] calculateBoosterMatching: pushed record with flush info', { sessionType, paid: allowedPairs, flashed: flushedPairs });
   console.log('[DEBUG] calculateBoosterMatching: pushed record', { date: now.toISOString(), sessionType, pairs: allowedPairs, income });
 
   return {

@@ -30,39 +30,23 @@ export async function GET(req: NextRequest) {
     console.log('[DASHBOARD] db user found:', { username: user.username, userId: user.userId });
     console.log('[DASHBOARD DEBUG] sessionBasedIncome:', JSON.stringify(user.sessionBasedIncome, null, 2));
     
-    // 1. RECURSIVE SYNC: Count entire tree depth to ensure accurate income
+    // 1. RECURSIVE SYNC: Count entire tree depth and trigger self-healing
     const actualCounts = await countActualChildren(user);
     console.log(`[DASHBOARD SYNC] ${user.username} Actual Tree:`, actualCounts);
 
-    let updatedUser = await User.findOneAndUpdate(
-      { _id: user._id },
-      { 
-        $set: { 
-          "totalTeam.left": actualCounts.left,
-          "totalTeam.right": actualCounts.right
-        } 
-      },
-      { new: true, returnDocument: 'after' }
-    ) || user;
+    try {
+      user.totalTeam = {
+        left: actualCounts.left,
+        right: actualCounts.right
+      };
+      // Explicitly saving triggers the "Self-Healing" pre-save hook in User.ts
+      await user.save();
+    } catch (saveError) {
+      console.log('[DASHBOARD SYNC] Concurrent save detected, skipping manual save');
+    }
 
     // 2. ALLOCATION ENGINE: No longer needed here as basicIncome is event-driven
-    // The dashboard will show the latest basicIncome calculated during registrations.
-
-    if (updatedUser) {
-      // Trigger one save to ensure pre-save income logic runs, but handle the version error gracefully
-      try {
-        await updatedUser.save();
-        user.basicIncome = updatedUser.basicIncome;
-        user.totalTeam = updatedUser.totalTeam;
-      } catch (saveError) {
-        // If parallel request already saved it, we just ignore the error and use the latest data
-        const latestUser = await User.findById(user._id);
-        if (latestUser) {
-           user.basicIncome = latestUser.basicIncome;
-           user.totalTeam = latestUser.totalTeam;
-        }
-      }
-    }
+    // Self-healing is handled by the pre-save hook in User.ts.
 
     console.log('[DASHBOARD] After sync - basicIncome:', user.basicIncome);
     

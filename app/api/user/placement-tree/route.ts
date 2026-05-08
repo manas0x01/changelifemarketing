@@ -105,39 +105,22 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
     const flushedOut = false;
     const flushMessage = "";
     
-    // INCOME FLUSH: Save final income for previous session before reset
-    await calculateBasicIncome(user, currentSessionType);
-    
-    // Reset session-only counts to 0 so unpaired income is lost.
+    // 108: RESET SESSION COUNTS: We reset the session counts so that the new session starts fresh.
     user.sessionTeam = { left: 0, right: 0 };
     
     // Update last session info
     user.lastSessionType = currentSessionType;
     user.lastSessionDate = now;
     
-    // Perform update atomically to avoid VersionError
+    // Perform update atomically
     await User.findByIdAndUpdate(user._id, {
       $set: {
         sessionTeam: user.sessionTeam,
         lastSessionType: currentSessionType,
-        lastSessionDate: now,
-        sessionBasedIncome: user.sessionBasedIncome,
-        basicPairs: user.basicPairs,
-        totalTeam: user.totalTeam,
-        basicFlushHistory: user.basicFlushHistory
+        lastSessionDate: now
       }
     });
-    console.log(`[PLACEMENT TREE] Session change and flush saved for ${user.userId}`);
-    // 🔥 AUTOMATICALLY TRIGGER INCOME FOR ALL ANCESTORS ON SESSION CHANGE
-    // This ensures carry-forward members are matched in the new session.
-    try {
-      const { processAllAncestorsIncome } = await import('@/lib/mlmEngine');
-      // We trigger it for the user themselves to check their own matching
-      await processAllAncestorsIncome(user.username, "left", currentSessionType); 
-      console.log(`[PLACEMENT TREE] Automatic income check triggered for ${user.userId}`);
-    } catch (err) {
-      console.error(`[PLACEMENT TREE] Error triggering automatic income:`, err);
-    }
+    console.log(`[PLACEMENT TREE] Session reset for ${user.userId} completed.`);
   }
 
   return { flushedOut, flushMessage, incomeMessage: "", leftPairs: user.totalTeam?.left || 0, rightPairs: user.totalTeam?.right || 0 };

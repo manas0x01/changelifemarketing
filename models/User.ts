@@ -422,17 +422,52 @@ userSchema.pre('save', async function (this: IUser) {
     console.error('❌ [PRE-SAVE] Error ensuring userId fallback:', err);
   }
 
-  // Ensure totalIncome is derived from current income sources (single source of truth)
+  // 🔹 SELF-HEALING INCOME SYNC
+  // Ensure basicIncome and boosterMatchingIncome are ALWAYS the sum of their records.
   try {
-    const computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);
-    if (this.totalIncome !== computedTotal) {
-      this.totalIncome = computedTotal as any;
-      if (typeof (this as any).markModified === 'function') {
-        try { (this as any).markModified('totalIncome'); } catch (e) {}
+    const totalLeft = this.totalTeam?.left || 0;
+    const totalRight = this.totalTeam?.right || 0;
+
+    // HARD RESET FOR TESTING: If the tree is empty, reset the wallet and history
+    if (totalLeft === 0 && totalRight === 0) {
+      if (this.basicIncome !== 0 || (this.sessionBasedIncome && this.sessionBasedIncome.length > 0)) {
+        console.log(`[SELF-HEALING] Tree is empty for ${this.username}. Resetting wallet and history to 0.`);
+        this.basicIncome = 0;
+        this.basicPairs = 0;
+        this.sessionBasedIncome = [];
+        this.basicIncomeRecords = [];
+        this.totalIncome = (this.boosterMatchingIncome || 0);
+      }
+    } else {
+      // Standard sync from records
+      if (Array.isArray(this.sessionBasedIncome)) {
+        const sumBasic = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (curr.netIncome || 0), 0);
+        if (this.basicIncome !== sumBasic) {
+          console.log(`[SELF-HEALING] Correcting basicIncome for ${this.username}: ${this.basicIncome} -> ${sumBasic}`);
+          this.basicIncome = sumBasic;
+        }
       }
     }
+
+    if (Array.isArray(this.boosterMatchingRecords)) {
+      const sumBooster = this.boosterMatchingRecords.reduce((acc: number, curr: any) => acc + (curr.amount || 0), 0);
+      if (this.boosterMatchingIncome !== sumBooster) {
+        console.log(`[SELF-HEALING] Correcting boosterMatchingIncome for ${this.username}: ${this.boosterMatchingIncome} -> ${sumBooster}`);
+        this.boosterMatchingIncome = sumBooster;
+      }
+    }
+
+    // Ensure totalIncome is the sum of all income sources
+    const computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);
+    this.totalIncome = computedTotal as any;
+
+    if (typeof (this as any).markModified === 'function') {
+      this.markModified('basicIncome');
+      this.markModified('boosterMatchingIncome');
+      this.markModified('totalIncome');
+    }
   } catch (err) {
-    console.error('❌ [PRE-SAVE] Error deriving totalIncome:', err);
+    console.error('❌ [PRE-SAVE] Error in income self-healing:', err);
   }
 });
 

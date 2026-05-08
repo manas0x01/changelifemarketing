@@ -89,6 +89,13 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     user.basicIncome = (user.basicIncome || 0) + newIncome;
     user.basicPairs = (user.basicPairs || 0) + paidPairs;
 
+    // Consume the points from sessionTeam so they can't be matched again
+    if (user.sessionTeam) {
+      user.sessionTeam.left = Math.max(0, (user.sessionTeam.left || 0) - paidPairs);
+      user.sessionTeam.right = Math.max(0, (user.sessionTeam.right || 0) - paidPairs);
+      console.log(`📉 [POINTS CONSUMED] ${user.username}: Subtracted ${paidPairs} pair from sessionTeam. Remaining: ${user.sessionTeam.left}L / ${user.sessionTeam.right}R`);
+    }
+
     // Update basicIncomeRecords for display
     user.basicIncomeRecords = user.sessionBasedIncome.map((s: any, i: number) => ({
       srNo: i + 1,

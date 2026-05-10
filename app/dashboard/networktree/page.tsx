@@ -143,13 +143,21 @@ function AvatarActive({ x, y, r }: { x: number; y: number; r: number }) {
   const f = (v: number) => r * v;
   return (
     <g>
-      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#1565c0" strokeWidth="2.5" />
-      <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7" />
-      <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f" />
-      <rect x={x - f(0.56)} y={y - f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a" />
-      <rect x={x - f(0.38)} y={y - f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a" />
-      <path d={`M${x - f(0.76)},${y + r} Q${x - f(0.6)},${y + f(0.5)} ${x},${y + f(0.46)} Q${x + f(0.6)},${y + f(0.5)} ${x + f(0.76)},${y + r}`}
-        fill="#1976d2" />
+      <defs>
+        <filter id="blueHalo" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="6" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+      <circle cx={x} cy={y} r={r + 6} fill="none" stroke="#00d2ff" strokeWidth="3" filter="url(#blueHalo)" opacity="0.8" />
+      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#00d2ff" strokeWidth="2" />
+      <g opacity="0.9">
+        <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7" />
+        <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f" />
+        <rect x={x - f(0.56)} y={y - f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a" />
+        <rect x={x - f(0.38)} y={y - f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a" />
+        <path d={`M${x - f(0.76)},${y + r} Q${x - f(0.6)},${y + f(0.5)} ${x},${y + f(0.46)} Q${x + f(0.6)},${y + f(0.5)} ${x + f(0.76)},${y + r}`} fill="#1a237e" />
+      </g>
     </g>
   );
 }
@@ -158,13 +166,21 @@ function AvatarBooster({ x, y, r }: { x: number; y: number; r: number }) {
   const f = (v: number) => r * v;
   return (
     <g>
-      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#f57c00" strokeWidth="2.5" />
-      <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7" />
-      <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f" />
-      <rect x={x - f(0.56)} y={y - f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a" />
-      <rect x={x - f(0.38)} y={y - f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a" />
-      <path d={`M${x - f(0.76)},${y + r} Q${x - f(0.6)},${y + f(0.5)} ${x},${y + f(0.46)} Q${x + f(0.6)},${y + f(0.5)} ${x + f(0.76)},${y + r}`}
-        fill="#f9a825" />
+      <defs>
+        <filter id="goldHalo" x="-100%" y="-100%" width="300%" height="300%">
+          <feGaussianBlur stdDeviation="8" result="blur" />
+          <feComposite in="SourceGraphic" in2="blur" operator="over" />
+        </filter>
+      </defs>
+      <circle cx={x} cy={y} r={r + 8} fill="none" stroke="#FFD700" strokeWidth="4" filter="url(#goldHalo)" opacity="0.9" />
+      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#FFD700" strokeWidth="3" />
+      <g opacity="1">
+        <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7" />
+        <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f" />
+        <rect x={x - f(0.56)} y={y - f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a" />
+        <rect x={x - f(0.38)} y={y - f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a" />
+        <path d={`M${x - f(0.76)},${y + r} Q${x - f(0.6)},${y + f(0.5)} ${x},${y + f(0.46)} Q${x + f(0.6)},${y + f(0.5)} ${x + f(0.76)},${y + r}`} fill="#e65100" />
+      </g>
     </g>
   );
 }
@@ -223,13 +239,17 @@ function TreeSVG({
         // Simple straight orthogonal lines for a clean, professional look
         const midY = (e.y1 + e.y2) / 2;
         return (
-          <path
-            key={`e-${i}`}
-            d={`M${e.x1},${e.y1} L${e.x1},${midY} L${e.x2},${midY} L${e.x2},${e.y2}`}
-            stroke="rgba(255, 255, 255, 0.5)"
-            strokeWidth="2"
-            fill="none"
-          />
+          <g key={`e-${i}`}>
+            <path
+              d={`M${e.x1},${e.y1} L${e.x1},${midY} L${e.x2},${midY} L${e.x2},${e.y2}`}
+              stroke="#fff"
+              strokeWidth="2.5"
+              fill="none"
+              opacity="0.9"
+            />
+            {/* Glowing intersection dot */}
+            <circle cx={e.x1} cy={midY} r="4" fill="#fff" filter="url(#blueHalo)" />
+          </g>
         );
       })}
 
@@ -238,10 +258,9 @@ function TreeSVG({
 
         if (slot) {
           const isOpen = n.type === "open";
-          const col = isOpen ? "#27ae60" : "#e53935";  // Green for open, Red for closed
-          const bg = isOpen ? "#e8f5e9" : "#ffebee";  // Light green for open, Light red for closed
-          const half = BS / 2;
-          const label = isOpen ? "Open" : "Close";
+          const col = isOpen ? "#2e7d32" : "#c62828";
+          const cardW = 140;
+          const cardH = 90;
 
           return (
             <g
@@ -251,17 +270,28 @@ function TreeSVG({
                 if (isOpen) { e.stopPropagation(); onNodeClick(n, e); }
               }}
             >
+              {/* Dotted Slot Box */}
               <rect
-                x={x - half} y={y - half}
-                width={BS} height={BS} rx="10"
-                fill={bg} stroke={col} strokeWidth="3.5"
+                x={x - cardW / 2} y={y}
+                width={cardW} height={cardH} rx="12"
+                fill="none" stroke={col} strokeWidth="2.5" strokeDasharray="6,4" opacity="0.8"
               />
+              <circle cx={x} cy={y - 15} r="24" fill="none" stroke={col} strokeWidth="2" strokeDasharray="4,2" opacity="0.8" />
+              <path d={`M${x - 8},${y - 22} a8,8 0 1,1 16,0 a8,8 0 1,1 -16,0 M${x - 14},${y - 6} q0,-10 14,-10 q14,0 14,10`} fill="none" stroke={col} strokeWidth="2" opacity="0.8" />
+
               <text
-                x={x} y={y + half + 16}
-                textAnchor="middle" fontSize="12" fontWeight="700"
-                fill={col} fontFamily="Poppins,sans-serif"
+                x={x} y={y + cardH - 25}
+                textAnchor="middle" fontSize="11" fontWeight="900"
+                fill={col} fontFamily="Poppins,sans-serif" letterSpacing="1"
               >
-                {label}
+                {isOpen ? "OPEN" : "CLOSED"}
+              </text>
+              <text
+                x={x} y={y + cardH - 10}
+                textAnchor="middle" fontSize="11" fontWeight="900"
+                fill={col} fontFamily="Poppins,sans-serif" letterSpacing="1"
+              >
+                POSITION
               </text>
             </g>
           );
@@ -283,38 +313,44 @@ function TreeSVG({
 
             {booster ? <AvatarBooster x={x} y={y} r={AR} /> : <AvatarActive x={x} y={y} r={AR} />}
 
-            {/* Premium Card Design */}
+            {/* Card with Separator */}
             <rect
               x={x - NW / 2} y={cardTop}
-              width={NW} height={NH} rx="20"
-              fill="rgba(255, 255, 255, 0.98)"
+              width={NW} height={NH} rx="14"
+              fill="#fff"
               stroke={booster ? "#FFD700" : "#00BCD4"}
-              strokeWidth="5"
+              strokeWidth="2.5"
               filter="url(#nodeShadow)"
+            />
+
+            <line
+              x1={x - NW / 2 + 20} y1={cardTop + NH * 0.55}
+              x2={x + NW / 2 - 20} y2={cardTop + NH * 0.55}
+              stroke="#f0f0f0" strokeWidth="1.5"
             />
 
             <text
               x={x} y={cardTop + NH * 0.35}
-              textAnchor="middle" fontSize="22" fontWeight="800"
-              fill="#263238"
+              textAnchor="middle" fontSize="22" fontWeight="900"
+              fill="#1a237e"
               fontFamily="Poppins,sans-serif"
             >
               {n.id}
             </text>
 
             <text
-              x={x} y={cardTop + NH * 0.72}
-              textAnchor="middle" fontSize="16" fontWeight="600"
-              fill="#546e7a"
+              x={x} y={cardTop + NH * 0.82}
+              textAnchor="middle" fontSize="14" fontWeight="600"
+              fill="#78909c"
               fontFamily="Poppins,sans-serif"
             >
               {n.name.length > 20 ? n.name.slice(0, 20) + "…" : n.name}
             </text>
 
-            {/* Status Badge */}
-            <g transform={`translate(${x - 65}, ${cardTop - 20})`}>
-              <rect width="130" height="36" rx="18" fill={booster ? "#FFD700" : "#00BCD4"} />
-              <text x="65" y="24" textAnchor="middle" fontSize="15" fill="white" fontWeight="900" letterSpacing="1">
+            {/* Floating Status Badge */}
+            <g transform={`translate(${x - 55}, ${cardTop - 18})`}>
+              <rect width="110" height="30" rx="15" fill={booster ? "#FFD700" : "#00BCD4"} />
+              <text x="55" y="20" textAnchor="middle" fontSize="11" fill="white" fontWeight="900" letterSpacing="1">
                 {booster ? "BOOSTER" : "ACTIVE"}
               </text>
             </g>
@@ -338,8 +374,9 @@ function TreeSVG({
 function SkeletonNode() {
   return (
     <g>
-      <circle cx="0" cy="0" r={AR} fill="#e0e0e0" opacity="0.6" />
-      <rect x="-65" y="32" width="130" height="44" rx="8" fill="#e0e0e0" opacity="0.6" />
+      <rect x="-80" y="20" width="160" height="100" rx="12" fill="none" stroke="#2e7d32" strokeWidth="2" strokeDasharray="6,4" opacity="0.6" />
+      <circle cx="0" cy="-10" r="28" fill="none" stroke="#2e7d32" strokeWidth="2" strokeDasharray="4,2" opacity="0.6" />
+      <text y="65" textAnchor="middle" fontSize="12" fill="#2e7d32" fontWeight="900" opacity="0.6">OPEN POSITION</text>
     </g>
   );
 }
@@ -385,6 +422,57 @@ function FilterSkeleton() {
           <div style={{ height: "38px", background: "#e0e0e0", borderRadius: "6px" }} />
         </div>
         <div style={{ height: "38px", background: "#e0e0e0", borderRadius: "6px", width: "90px" }} />
+      </div>
+    </div>
+  );
+}
+
+function TreeLegend() {
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      gap: "24px",
+      padding: "15px 30px",
+      background: "rgba(0, 0, 0, 0.4)",
+      backdropFilter: "blur(10px)",
+      borderRadius: "50px",
+      border: "1px solid rgba(255,255,255,0.1)",
+      margin: "0 auto 30px auto",
+      width: "fit-content",
+      flexWrap: "wrap"
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <svg width="24" height="24" viewBox="0 0 40 40">
+          <AvatarActive x={20} y={20} r={16} />
+        </svg>
+        <div style={{ textAlign: "left" }}>
+          <div style={{ fontSize: "10px", fontWeight: "900", color: "#00d2ff", letterSpacing: "0.5px" }}>ACTIVE</div>
+          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.7)", fontWeight: "500" }}>Active Member</div>
+        </div>
+      </div>
+
+
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <div style={{ width: 24, height: 24, borderRadius: "50%", border: "2px solid #2e7d32", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{ width: 8, height: 8, borderRadius: "50%", background: "#2e7d32" }} />
+        </div>
+        <div style={{ textAlign: "left" }}>
+          <div style={{ fontSize: "10px", fontWeight: "900", color: "#2e7d32", letterSpacing: "0.5px" }}>OPEN POSITION</div>
+          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.7)", fontWeight: "500" }}>Available Slot</div>
+        </div>
+      </div>
+
+
+      <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+        <svg width="24" height="24" viewBox="0 0 40 40">
+          <AvatarBooster x={20} y={20} r={16} />
+        </svg>
+        <div style={{ textAlign: "left" }}>
+          <div style={{ fontSize: "10px", fontWeight: "900", color: "#FFD700", letterSpacing: "0.5px" }}>BOOSTER</div>
+          <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.7)", fontWeight: "500" }}>Upline / Sponsor</div>
+        </div>
       </div>
     </div>
   );
@@ -554,7 +642,7 @@ export default function NetworkTreePage() {
           bs: 100,
           sw: 180,
           hg: 160,
-          vs: 400,  // Deepest vertical stretch
+          vs: 500,  // Deepest vertical stretch
           maxd: 2
         });
       } else {
@@ -1002,28 +1090,6 @@ export default function NetworkTreePage() {
               <span className="nt-hdr-title">Network Tree (Placement Tree)</span>
             </div>
 
-            <div className="nt-legend">
-              <div className="nt-leg-item">
-                <svg width="42" height="42" viewBox="-4 -4 60 60" xmlns="http://www.w3.org/2000/svg">
-                  <AvatarActive x={26} y={26} r={26} />
-                </svg>
-                <span className="nt-leg-lbl">Active ID</span>
-              </div>
-              <div className="nt-leg-item">
-                <svg width="42" height="42" viewBox="-4 -4 60 60" xmlns="http://www.w3.org/2000/svg">
-                  <AvatarBooster x={26} y={26} r={26} />
-                </svg>
-                <span className="nt-leg-lbl">Booster Id</span>
-              </div>
-              <div className="nt-leg-item">
-                <div style={{ width: 32, height: 32, borderRadius: 8, border: "2.5px solid #e53935", background: "#ffebee", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, color: "#e53935" }}>CLOSE</div>
-                <span className="nt-leg-lbl">Closed</span>
-              </div>
-              <div className="nt-leg-item">
-                <div style={{ width: 32, height: 32, borderRadius: 8, border: "2.5px solid #27ae60", background: "#e8f5e9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, color: "#27ae60" }}>OPEN</div>
-                <span className="nt-leg-lbl">Open Slot</span>
-              </div>
-            </div>
 
             <div className="nt-filter">
               {loading ? <FilterSkeleton /> : (
@@ -1039,16 +1105,6 @@ export default function NetworkTreePage() {
                         onChange={e => setMemberId(e.target.value)}
                         onKeyDown={e => e.key === "Enter" && fetchTree(memberId)}
                       />
-                      {history.length > 0 && (
-                        <button
-                          className="nt-f-btn"
-                          onClick={handleGoBack}
-                          title="Go back to previous user"
-                          style={{ background: "#607d8b", padding: "0 15px" }}
-                        >
-                          ⬅️ Back
-                        </button>
-                      )}
                     </div>
                   </div>
                   <button className="nt-f-btn" onClick={() => { setHistory([]); fetchTree(memberId); }} disabled={loading}>
@@ -1168,7 +1224,33 @@ export default function NetworkTreePage() {
                 </div>
               </div>
 
-              <div className="nt-canvas" ref={scrollRef}>
+              <div className="nt-canvas" ref={scrollRef} style={{ position: "relative" }}>
+                {history.length > 0 && (
+                  <button
+                    onClick={handleGoBack}
+                    style={{
+                      position: "absolute",
+                      top: "15px",
+                      left: "15px",
+                      zIndex: 100,
+                      background: "rgba(255, 255, 255, 0.95)",
+                      color: "#1565c0",
+                      border: "1.5px solid #1565c0",
+                      borderRadius: "6px",
+                      padding: "4px 10px",
+                      fontSize: "10px",
+                      fontWeight: "800",
+                      cursor: "pointer",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.15)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px",
+                      fontFamily: "Poppins,sans-serif"
+                    }}
+                  >
+                    ⬅️ BACK
+                  </button>
+                )}
                 <div className="nt-canvas-inner">
                   {loading
                     ? <TreeSkeletonSVG />
@@ -1180,6 +1262,7 @@ export default function NetworkTreePage() {
                       maxd={dimensions.maxd}
                     />
                   }
+                  <TreeLegend />
                 </div>
               </div>
             </div>

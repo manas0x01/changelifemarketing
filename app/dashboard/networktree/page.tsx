@@ -174,11 +174,13 @@ function TreeSVG({
   onNodeClick,
   onNodeHover,
   onNodeLeave,
+  maxd,
 }: {
   root: MNode | null;
   onNodeClick: (node: MNode, e: React.MouseEvent) => void;
   onNodeHover: (node: MNode, e: React.MouseEvent) => void;
   onNodeLeave: () => void;
+  maxd: number;
 }) {
   if (!root) {
     return (
@@ -191,8 +193,8 @@ function TreeSVG({
   const rootW = treeW(root, 0);
   const cx = Math.max(rootW / 2 + 100, 440);
   const svgW = cx * 2;
-  const svgH = (MAXD + 1) * VS + AR + NH + 60; // Reduced bottom padding
-  const rootLN = buildLayout(root, cx, AR + 30, 0); // Reduced top padding
+  const svgH = (maxd + 1) * VS + AR + NH + 150;
+  const rootLN = buildLayout(root, cx, AR + 40, 0);
   const nodes = flatNodes(rootLN);
   const edges = flatEdges(rootLN);
 
@@ -200,7 +202,7 @@ function TreeSVG({
     <svg
       viewBox={`0 0 ${svgW} ${svgH}`}
       width="100%"
-      height={svgH}
+      height="auto"
       style={{ display: "block" }}
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -218,21 +220,16 @@ function TreeSVG({
         </filter>
       </defs>
       {edges.map((e, i) => {
-        // High-split orthogonal lines for better clarity (Standard MLM style)
-        const splitY = e.y1 + 40;
+        // Simple straight orthogonal lines for a clean, professional look
+        const midY = (e.y1 + e.y2) / 2;
         return (
-          <g key={`e-${i}`}>
-            <path
-              d={`M${e.x1},${e.y1} L${e.x1},${splitY} L${e.x2},${splitY} L${e.x2},${e.y2}`}
-              stroke="#BDBDBD"
-              strokeWidth="2.5"
-              fill="none"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-            {/* Decorative dot at the split point */}
-            <circle cx={e.x1} cy={splitY} r="3.5" fill="#9E9E9E" />
-          </g>
+          <path
+            key={`e-${i}`}
+            d={`M${e.x1},${e.y1} L${e.x1},${midY} L${e.x2},${midY} L${e.x2},${e.y2}`}
+            stroke="rgba(255, 255, 255, 0.5)"
+            strokeWidth="2"
+            fill="none"
+          />
         );
       })}
 
@@ -271,7 +268,7 @@ function TreeSVG({
         }
 
         const booster = n.type === "booster";
-        const cardTop = y + AR + 8;
+        const cardTop = y + AR + 16;
 
         return (
           <g
@@ -289,16 +286,16 @@ function TreeSVG({
             {/* Premium Card Design */}
             <rect
               x={x - NW / 2} y={cardTop}
-              width={NW} height={NH} rx="14"
+              width={NW} height={NH} rx="20"
               fill="rgba(255, 255, 255, 0.98)"
               stroke={booster ? "#FFD700" : "#00BCD4"}
-              strokeWidth="3.5"
+              strokeWidth="5"
               filter="url(#nodeShadow)"
             />
 
             <text
-              x={x} y={cardTop + 26}
-              textAnchor="middle" fontSize="16" fontWeight="800"
+              x={x} y={cardTop + 42}
+              textAnchor="middle" fontSize="26" fontWeight="800"
               fill="#263238"
               fontFamily="Poppins,sans-serif"
             >
@@ -306,8 +303,8 @@ function TreeSVG({
             </text>
 
             <text
-              x={x} y={cardTop + 54}
-              textAnchor="middle" fontSize="12" fontWeight="600"
+              x={x} y={cardTop + 84}
+              textAnchor="middle" fontSize="19" fontWeight="600"
               fill="#546e7a"
               fontFamily="Poppins,sans-serif"
             >
@@ -315,13 +312,22 @@ function TreeSVG({
             </text>
 
             {/* Status Badge */}
-            <g transform={`translate(${x - 45}, ${cardTop - 12})`}>
-              <rect width="90" height="24" rx="12" fill={booster ? "#FFD700" : "#00BCD4"} />
-              <text x="45" y="16" textAnchor="middle" fontSize="10" fill="white" fontWeight="900" letterSpacing="0.6">
+            <g transform={`translate(${x - 65}, ${cardTop - 20})`}>
+              <rect width="130" height="36" rx="18" fill={booster ? "#FFD700" : "#00BCD4"} />
+              <text x="65" y="24" textAnchor="middle" fontSize="15" fill="white" fontWeight="900" letterSpacing="1">
                 {booster ? "BOOSTER" : "ACTIVE"}
               </text>
             </g>
 
+            {/* More Downline Indicator */}
+            {depth === maxd && n.children && n.children.length > 0 && (
+              <g transform={`translate(${x}, ${cardTop + NH + 30})`}>
+                <rect x="-80" y="-15" width="160" height="30" rx="15" fill="rgba(21, 101, 192, 0.15)" stroke="#1565c0" strokeWidth="1.5" />
+                <text textAnchor="middle" y="6" fontSize="12" fill="#1565c0" fontWeight="900" fontFamily="Poppins,sans-serif" letterSpacing="0.8">
+                  MORE LEVELS BELOW
+                </text>
+              </g>
+            )}
           </g>
         );
       })}
@@ -349,7 +355,7 @@ function TreeSkeletonSVG() {
     <svg
       viewBox="0 0 520 400"
       width="100%"
-      height={400}
+      height="auto"
       style={{ display: "block" }}
       xmlns="http://www.w3.org/2000/svg"
     >
@@ -542,25 +548,25 @@ export default function NetworkTreePage() {
       const isMobile = window.innerWidth < 768;
       if (isMobile) {
         setDimensions({
-          ar: 36,   
-          nw: 140,  
-          nh: 64,
-          bs: 52,
-          sw: 130,  
-          hg: 100,   
-          vs: 160,  // Tighter vertical gap
-          maxd: 1   
+          ar: 78,   // Super massive avatars for mobile
+          nw: 160,  // Super wide cards
+          nh: 70,
+          bs: 100,
+          sw: 180,
+          hg: 160,
+          vs: 400,  // Deepest vertical stretch
+          maxd: 2
         });
       } else {
         setDimensions({
-          ar: 38,   
-          nw: 170,  
-          nh: 72,
-          bs: 56,
-          sw: 150,  
-          hg: 200,  
-          vs: 200,  // Tighter vertical gap
-          maxd: 2   
+          ar: 58,
+          nw: 230,
+          nh: 110,
+          bs: 72,
+          sw: 190,
+          hg: 420,
+          vs: 360,
+          maxd: 2
         });
       }
     };
@@ -893,20 +899,20 @@ export default function NetworkTreePage() {
         .nt-bc a { color:#666; text-decoration:none; }
         .nt-bc a:hover { text-decoration:underline; }
 
-        .nt-body { padding:8px 8px 30px; }
-        @media(min-width:600px)  { .nt-body { padding:12px 14px 30px; } }
-        @media(min-width:1024px) { .nt-body { padding:14px 16px 30px; } }
+        .nt-body { padding:14px 10px 44px; }
+        @media(min-width:600px)  { .nt-body { padding:18px 16px 44px; } }
+        @media(min-width:1024px) { .nt-body { padding:20px 20px 44px; } }
 
         .nt-card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,0.08); }
 
-        .nt-hdr { background:linear-gradient(90deg,#26a69a,#1de9b6); padding:10px 14px;
+        .nt-hdr { background:linear-gradient(90deg,#26a69a,#1de9b6); padding:12px 16px;
                   display:flex; align-items:center; justify-content:space-between; }
-        .nt-hdr-title { font-size:12px; font-weight:700; color:#fff; letter-spacing:.6px; text-transform:uppercase; }
+        .nt-hdr-title { font-size:13px; font-weight:700; color:#fff; letter-spacing:.8px; text-transform:uppercase; }
 
-        .nt-legend { display:flex; align-items:center; justify-content:center; gap:14px;
-                     padding:8px 14px 8px; flex-wrap:wrap; border-bottom:1px solid #f0f0f0; }
-        .nt-leg-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
-        .nt-leg-lbl  { font-size:10px; color:#555; font-weight:500; }
+        .nt-legend { display:flex; align-items:center; justify-content:center; gap:18px;
+                     padding:12px 16px 10px; flex-wrap:wrap; border-bottom:1px solid #f0f0f0; }
+        .nt-leg-item { display:flex; flex-direction:column; align-items:center; gap:5px; }
+        .nt-leg-lbl  { font-size:11px; color:#555; font-weight:500; }
 
         .nt-filter { padding:12px 14px 14px; }
         .nt-f-row  { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; }
@@ -951,21 +957,23 @@ export default function NetworkTreePage() {
           flex:1;
           overflow: auto; /* Enable scrolling for the large tree */
           background: radial-gradient(circle at 50% 50%, #1a237e 0%, #010409 100%);
-          height: 420px; /* Fixed height to keep section compact */
+          min-height: 650px; /* Increased for the large mobile tree */
           position:relative;
           -webkit-overflow-scrolling: touch; /* Smooth mobile scroll */
         }
-        @media(min-width:1024px) { .nt-canvas { height: 500px; } }
+        @media(min-width:480px)  { .nt-canvas { min-height:520px; } }
+        @media(min-width:768px)  { .nt-canvas { min-height:520px; } }
+        @media(min-width:1024px) { .nt-canvas { min-height:600px; } }
 
         .nt-canvas-inner {
-          padding:8px 8px 10px;
+          padding:12px 12px 16px;
           width: fit-content; /* Allow inner container to grow with the tree */
           min-width: 100%;
         }
           
-        @media(min-width:480px)  { .nt-canvas-inner { padding:10px 12px 14px; } }
-        @media(min-width:600px)  { .nt-canvas-inner { padding:14px 16px 20px; } }
-        @media(min-width:1024px) { .nt-canvas-inner { padding:18px 20px 24px; } }
+        @media(min-width:480px)  { .nt-canvas-inner { padding:16px 20px 24px; } }
+        @media(min-width:600px)  { .nt-canvas-inner { padding:26px 28px 36px; } }
+        @media(min-width:1024px) { .nt-canvas-inner { padding:32px 36px 44px; } }
 
         .nt-spin { display:inline-block; width:34px; height:34px;
                    border:4px solid rgba(255,255,255,.25); border-top-color:#fff;
@@ -1169,6 +1177,7 @@ export default function NetworkTreePage() {
                       onNodeClick={handleNodeClick}
                       onNodeHover={handleNodeHover}
                       onNodeLeave={handleNodeLeave}
+                      maxd={dimensions.maxd}
                     />
                   }
                 </div>

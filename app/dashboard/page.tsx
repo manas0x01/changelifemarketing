@@ -37,6 +37,11 @@ interface BoosterIncome {
 interface DashboardData {
   totalTeam: { left: number; right: number };
   totalDirect: { left: number; right: number };
+  totalActiveDirect: number;
+  totalLeftBasicUser: number;
+  totalRightBasicUser: number;
+  totalLeftBoosterUser: number;
+  totalRightBoosterUser: number;
   basicIncome: number;
   boosterIncome: BoosterIncome;
   totalPins: { active: number; used: number; total: number };
@@ -91,6 +96,21 @@ const statCards = [
     icon: <TeamIcon />,
   },
   {
+    title: "Active Direct",
+    gradient: "linear-gradient(135deg, #8E44AD 0%, #732D91 100%)",
+    icon: <TeamIcon />,
+  },
+  {
+    title: "Basic Users",
+    gradient: "linear-gradient(135deg, #E67E22 0%, #D35400 100%)",
+    icon: <TeamIcon />,
+  },
+  {
+    title: "Booster Users",
+    gradient: "linear-gradient(135deg, #27AE60 0%, #1E8449 100%)",
+    icon: <TeamIcon />,
+  },
+  {
     title: "Total Pins",
     gradient: "linear-gradient(135deg, #FF6B6B 0%, #FF4757 100%)",
     icon: <PinIcon />,
@@ -107,6 +127,9 @@ export default function Dashboard() {
   const [activePage, setActivePage] = useState<"dashboard" | "profile">("dashboard");
   const [showTotalTeamInfo, setShowTotalTeamInfo] = useState(false);
   const [showTotalDirectInfo, setShowTotalDirectInfo] = useState(false);
+  const [showActiveDirectInfo, setShowActiveDirectInfo] = useState(false);
+  const [showBasicUsersInfo, setShowBasicUsersInfo] = useState(false);
+  const [showBoosterUsersInfo, setShowBoosterUsersInfo] = useState(false);
   const [showBasicIncomeInfo, setShowBasicIncomeInfo] = useState(false);
   const [showBoosterIncomeInfo, setShowBoosterIncomeInfo] = useState(false);
   const [showTotalPinsInfo, setShowTotalPinsInfo] = useState(false);
@@ -114,6 +137,11 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     totalTeam: { left: 0, right: 0 },
     totalDirect: { left: 0, right: 0 },
+    totalActiveDirect: 0,
+    totalLeftBasicUser: 0,
+    totalRightBasicUser: 0,
+    totalLeftBoosterUser: 0,
+    totalRightBoosterUser: 0,
     basicIncome: 0,
     boosterIncome: { amount: 0, LG: 0, RG: 0, totalMatching: 0 },
     totalPins: { active: 0, used: 0, total: 0 },
@@ -122,7 +150,13 @@ export default function Dashboard() {
     bankDetails: { accountHolderName: "", accountNumber: "", ifscCode: "", bankName: "" },
     cycleHistory: [] as CycleRow[],
   });
-  const { totalTeam, totalDirect, basicIncome, boosterIncome, totalPins, totalIncome, userProfile, bankDetails, cycleHistory } = dashboardData;
+  const { 
+    totalTeam, totalDirect, totalActiveDirect, 
+    totalLeftBasicUser, totalRightBasicUser, 
+    totalLeftBoosterUser, totalRightBoosterUser,
+    basicIncome, boosterIncome, totalPins, totalIncome, 
+    userProfile, bankDetails, cycleHistory 
+  } = dashboardData;
   const [loading, setLoading] = useState(true);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
@@ -154,6 +188,11 @@ export default function Dashboard() {
           ...prev,
           totalTeam: d.totalTeam ?? prev.totalTeam,
           totalDirect: d.totalDirect ?? prev.totalDirect,
+          totalActiveDirect: d.totalActiveDirect ?? prev.totalActiveDirect,
+          totalLeftBasicUser: d.totalLeftBasicUser ?? prev.totalLeftBasicUser,
+          totalRightBasicUser: d.totalRightBasicUser ?? prev.totalRightBasicUser,
+          totalLeftBoosterUser: d.totalLeftBoosterUser ?? prev.totalLeftBoosterUser,
+          totalRightBoosterUser: d.totalRightBoosterUser ?? prev.totalRightBoosterUser,
           basicIncome: d.basicIncome ?? prev.basicIncome,
           boosterIncome: { amount, LG: incoming.LG ?? 0, RG: incoming.RG ?? 0, totalMatching },
           totalIncome: d.totalIncome ?? prev.totalIncome,
@@ -395,8 +434,16 @@ export default function Dashboard() {
                         setShowBoosterIncomeInfo(!showBoosterIncomeInfo);
                       }
                       else if (card.title === "Total Direct") {
-
                         setShowTotalDirectInfo(!showTotalDirectInfo);
+                      }
+                      else if (card.title === "Active Direct") {
+                        setShowActiveDirectInfo(!showActiveDirectInfo);
+                      }
+                      else if (card.title === "Basic Users") {
+                        setShowBasicUsersInfo(!showBasicUsersInfo);
+                      }
+                      else if (card.title === "Booster Users") {
+                        setShowBoosterUsersInfo(!showBoosterUsersInfo);
                       }
                       else if (card.title === "Total Pins") {
 
@@ -420,6 +467,12 @@ export default function Dashboard() {
                         <span className="stat-card-link">₹ {boosterIncome.amount} | LG : {boosterIncome.LG} | RG : {boosterIncome.RG} | Matching : {boosterIncome.totalMatching}</span>
                       ) : card.title === "Total Direct" && showTotalDirectInfo ? (
                         <span className="stat-card-link">Left : {totalDirect.left} | Right : {totalDirect.right}</span>
+                      ) : card.title === "Active Direct" && showActiveDirectInfo ? (
+                        <span className="stat-card-link">Total : {totalActiveDirect}</span>
+                      ) : card.title === "Basic Users" && showBasicUsersInfo ? (
+                        <span className="stat-card-link">Left : {totalLeftBasicUser} | Right : {totalRightBasicUser}</span>
+                      ) : card.title === "Booster Users" && showBoosterUsersInfo ? (
+                        <span className="stat-card-link">Left : {totalLeftBoosterUser} | Right : {totalRightBoosterUser}</span>
                       ) : card.title === "Total Pins" && showTotalPinsInfo ? (
                         <span className="stat-card-link">Active : {totalPins.active} | Used : {totalPins.used} | Total : {totalPins.total}</span>
                       ) : card.title === "Total Income" ? (

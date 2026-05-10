@@ -140,6 +140,8 @@ interface TreeNode {
   leftCount?: number;
   rightCount?: number;
   totalCount?: number;
+  totalLeftBoosterUser?: number;
+  totalRightBoosterUser?: number;
   totalDirect?: { left: number; right: number };
   children?: TreeNode[];
 }
@@ -161,8 +163,6 @@ async function buildPlacementTree(
   const isBooster = currentUser.isBooster || false;
 
   // Compute ACTUAL descendant counts from the live tree structure
-  // (totalTeam can be stale; this ensures the displayed count is always correct
-  //  and never includes the root user itself)
   const actualCounts = await countActualChildren(currentUser);
   let actualLeftCount = actualCounts.left;
   let actualRightCount = actualCounts.right;
@@ -178,6 +178,8 @@ async function buildPlacementTree(
     leftCount: actualLeftCount,
     rightCount: actualRightCount,
     totalCount: actualLeftCount + actualRightCount,
+    totalLeftBoosterUser: currentUser.boosterCount?.left || 0,
+    totalRightBoosterUser: currentUser.boosterCount?.right || 0,
     totalDirect: {
       left: currentUser.directMembers?.filter((m: any) => m.position === "left").length || 0,
       right: currentUser.directMembers?.filter((m: any) => m.position === "right").length || 0,
@@ -380,8 +382,8 @@ export async function POST(req: NextRequest) {
     // IMPORTANT: Re-sync the user object from the database
     const updatedUser = await User.findById(user._id);
 
-    // Build the placement tree starting from this user as root
-    const tree = await buildPlacementTree(updatedUser || user, 0, 3, true, selectedPosition, currentSessionType);
+    // Build the placement tree starting from this user as root (Limit to 3 levels: 0, 1, 2)
+    const tree = await buildPlacementTree(updatedUser || user, 0, 2, true, selectedPosition, currentSessionType);
 
     return NextResponse.json({
       success: true,

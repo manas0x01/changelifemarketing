@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
+import { countDetailedTree } from "@/lib/teamUtils";
+
 export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -41,7 +43,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Get left and right children - leftChild/rightChild store usernames, not ObjectIds
+    // Use countDetailedTree for real-time accurate counts
+    const detailedStats = await countDetailedTree(user);
+
+    // Get left and right children
     const leftChild = user.leftChild ? await User.findOne({
       $or: [
         { userId: { $regex: new RegExp(`^${user.leftChild}$`, 'i') } },
@@ -55,9 +60,13 @@ export async function POST(req: NextRequest) {
       ]
     }) : null;
 
-    // Count direct members
-    const leftDirectCount = user.directMembers?.filter((m: any) => m.position === "left").length || 0;
-    const rightDirectCount = user.directMembers?.filter((m: any) => m.position === "right").length || 0;
+    // Direct members activity check
+    let totalActiveDirect = 0;
+    if (Array.isArray(user.directMembers) && user.directMembers.length > 0) {
+      const directIds = user.directMembers.map((m: any) => m.memberId);
+      const directDocs = await User.find({ $or: [{ userId: { $in: directIds } }, { username: { $in: directIds } }] });
+      totalActiveDirect = directDocs.filter(d => d.registeredPackage || d.joiningDate).length;
+    }
 
     const card = {
       sponsorId: user.sponsorId || "",
@@ -65,13 +74,18 @@ export async function POST(req: NextRequest) {
       package: user.registeredPackage || "",
       leftId: leftChild?.userId || leftChild?.username || "",
       rightId: rightChild?.userId || rightChild?.username || "",
-      leftCount: user.totalTeam?.left || 0,
-      rightCount: user.totalTeam?.right || 0,
-      totalCount: (user.totalTeam?.left || 0) + (user.totalTeam?.right || 0),
+      leftCount: detailedStats.leftTotal,
+      rightCount: detailedStats.rightTotal,
+      totalCount: detailedStats.leftTotal + detailedStats.rightTotal,
       totalDirect: {
-        left: leftDirectCount,
-        right: rightDirectCount,
+        left: user.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === 'left').length || 0,
+        right: user.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === 'right').length || 0,
       },
+      totalActiveDirect,
+      totalLeftBasicUser: detailedStats.leftBasic,
+      totalRightBasicUser: detailedStats.rightBasic,
+      totalLeftBoosterUser: detailedStats.leftBooster,
+      totalRightBoosterUser: detailedStats.rightBooster,
     };
 
     return NextResponse.json({

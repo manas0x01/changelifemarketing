@@ -4,7 +4,7 @@ import { authOptions } from "../../../../lib/auth";
 import { connectDB } from "../../../../lib/database";
 import User from "../../../../models/User";
 import { calculateBasicIncome } from "../../../../lib/calculateBasicIncome";
-import { countActualChildren } from "../../../../lib/teamUtils";
+import { countDetailedTree } from "../../../../lib/teamUtils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -31,13 +31,13 @@ export async function GET(req: NextRequest) {
     console.log('[DASHBOARD DEBUG] sessionBasedIncome:', JSON.stringify(user.sessionBasedIncome, null, 2));
     
     // 1. RECURSIVE SYNC: Count entire tree depth and trigger self-healing
-    const actualCounts = await countActualChildren(user);
-    console.log(`[DASHBOARD SYNC] ${user.username} Actual Tree:`, actualCounts);
+    const detailedStats = await countDetailedTree(user);
+    console.log(`[DASHBOARD SYNC] ${user.username} Detailed Tree Stats:`, detailedStats);
 
     try {
       user.totalTeam = {
-        left: actualCounts.left,
-        right: actualCounts.right
+        left: detailedStats.leftTotal,
+        right: detailedStats.rightTotal
       };
       // Explicitly saving triggers the "Self-Healing" pre-save hook in User.ts
       await user.save();
@@ -55,18 +55,25 @@ export async function GET(req: NextRequest) {
       right: (user.totalTeam && typeof user.totalTeam.right === 'number') ? user.totalTeam.right : 0,
     };
     // Prefer `directMembers` as the source of truth for direct counts.
-    const totalDirect = (() => {
+    const directStats = await (async () => {
       if (Array.isArray(user.directMembers) && user.directMembers.length > 0) {
         const left = user.directMembers.filter((m: any) => (m.position || '').toString().toLowerCase() === 'left').length;
         const right = user.directMembers.filter((m: any) => (m.position || '').toString().toLowerCase() === 'right').length;
-        return { left, right };
+        
+        // Fetch full documents to check activity status
+        const directIds = user.directMembers.map((m: any) => m.memberId);
+        const directDocs = await User.find({ $or: [{ userId: { $in: directIds } }, { username: { $in: directIds } }] });
+        
+        // Activity check: A user is active if they have a registeredPackage or joiningDate
+        const activeCount = directDocs.filter(d => d.registeredPackage || d.joiningDate).length;
+        
+        return { left, right, active: activeCount };
       }
-      // Fallback for legacy single-slot fields (`leftChild` / `rightChild`)
-      return {
-        left: user.leftChild && user.leftChild.trim() !== "" ? 1 : 0,
-        right: user.rightChild && user.rightChild.trim() !== "" ? 1 : 0,
-      };
+      return { left: 0, right: 0, active: 0 };
     })();
+
+    const totalDirect = { left: directStats.left, right: directStats.right };
+    const totalActiveDirect = directStats.active;
 
     console.log('[DASHBOARD] totalDirect (directMembers counts):', totalDirect);
     
@@ -105,6 +112,11 @@ export async function GET(req: NextRequest) {
     const respData = {
       totalTeam,
       totalDirect,
+      totalActiveDirect,
+      totalLeftBasicUser: detailedStats.leftBasic,
+      totalRightBasicUser: detailedStats.rightBasic,
+      totalLeftBoosterUser: detailedStats.leftBooster,
+      totalRightBoosterUser: detailedStats.rightBooster,
       basicIncome,
       boosterIncome,
       boosterIncomeAmount: boosterIncome.amount,

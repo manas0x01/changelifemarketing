@@ -81,20 +81,13 @@ export async function updateTeamCounts(
       user.lastSessionDate = now;
     }
 
-    // Update the Booster counts for the specific side (1 user = 1000 BV)
+    // Update the counts for the specific side (Basic Binary)
     if (currentPosition === 'left') {
       user.totalTeam.left = (user.totalTeam.left || 0) + increment;
       user.sessionTeam.left = (user.sessionTeam.left || 0) + increment;
-      
-      // Track booster pairs for everyone (used for both hold and released income)
-      if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
-      user.boosterPairsCarryForward.left = (user.boosterPairsCarryForward.left || 0) + increment;
     } else if (currentPosition === 'right') {
       user.totalTeam.right = (user.totalTeam.right || 0) + increment;
       user.sessionTeam.right = (user.sessionTeam.right || 0) + increment;
-      
-      if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
-      user.boosterPairsCarryForward.right = (user.boosterPairsCarryForward.right || 0) + increment;
     }
 
     // Calculate Basic Binary Income (handles both basic and booster phases)
@@ -232,10 +225,14 @@ export async function countTotalDescendants(user: any): Promise<number> {
   }
 }
 
-// Helper to count actual children in tree branches using $graphLookup (MUCH FASTER)
-export async function countActualChildren(user: any) {
+// Helper to count actual children in tree branches with details (Basic/Booster) using $graphLookup
+export async function countDetailedTree(user: any) {
   const targetId = user.username || user.userId;
-  if (!targetId) return { left: 0, right: 0 };
+  if (!targetId) return { 
+    leftBasic: 0, leftBooster: 0, 
+    rightBasic: 0, rightBooster: 0,
+    leftTotal: 0, rightTotal: 0
+  };
 
   try {
     const result = await User.aggregate([
@@ -252,20 +249,51 @@ export async function countActualChildren(user: any) {
       {
         $project: {
           placementPosition: 1,
-          descendantCount: { $size: "$descendants" }
+          isBooster: 1,
+          descendants: {
+            $map: {
+              input: "$descendants",
+              as: "d",
+              in: { isBooster: "$$d.isBooster" }
+            }
+          }
         }
       }
     ]);
     
-    let leftCount = 0;
-    let rightCount = 0;
+    let stats = {
+      leftBasic: 0, leftBooster: 0,
+      rightBasic: 0, rightBooster: 0,
+      leftTotal: 0, rightTotal: 0
+    };
+
     result.forEach(r => {
-      if (r.placementPosition === 'left') leftCount = 1 + r.descendantCount;
-      if (r.placementPosition === 'right') rightCount = 1 + r.descendantCount;
+      const isLeft = r.placementPosition === 'left';
+      const isRight = r.placementPosition === 'right';
+      
+      if (isLeft) {
+        if (r.isBooster) stats.leftBooster++; else stats.leftBasic++;
+        r.descendants.forEach((d: any) => {
+          if (d.isBooster) stats.leftBooster++; else stats.leftBasic++;
+        });
+        stats.leftTotal = 1 + r.descendants.length;
+      }
+      if (isRight) {
+        if (r.isBooster) stats.rightBooster++; else stats.rightBasic++;
+        r.descendants.forEach((d: any) => {
+          if (d.isBooster) stats.rightBooster++; else stats.rightBasic++;
+        });
+        stats.rightTotal = 1 + r.descendants.length;
+      }
     });
-    return { left: leftCount, right: rightCount };
+
+    return stats;
   } catch (err) {
-    console.error(`[TEAM UTILS] Error in countActualChildren for ${targetId}:`, err);
-    return { left: 0, right: 0 };
+    console.error(`[TEAM UTILS] Error in countDetailedTree for ${targetId}:`, err);
+    return { 
+      leftBasic: 0, leftBooster: 0, 
+      rightBasic: 0, rightBooster: 0,
+      leftTotal: 0, rightTotal: 0
+    };
   }
 }

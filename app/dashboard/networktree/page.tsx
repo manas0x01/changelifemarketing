@@ -9,10 +9,10 @@ const AR   = 26;
 const NW   = 130;
 const NH   = 44;
 const BS   = 44;
-const SW   = 100;  // Increased slot width for better separation
-const HG   = 180;  // Increased horizontal gap between left and right branches
-const VS   = 158;
-const MAXD = 2;
+const SW   = 105;  // Slot width
+const HG   = 220;  // Increased horizontal gap to reduce congestion
+const VS   = 165;  // Vertical spacing
+const MAXD = 2;    // Show 3 levels (Root, children, grandchildren)
 
 type NodeType = "active" | "booster" | "open" | "close";
 
@@ -31,6 +31,11 @@ interface MNode {
   rightCount ?: number;
   totalCount ?: number;
   totalDirect?: { left: number; right: number };
+  totalActiveDirect?: number;
+  totalLeftBasicUser?: number;
+  totalRightBasicUser?: number;
+  totalLeftBoosterUser?: number;
+  totalRightBoosterUser?: number;
   children   ?: MNode[];
 }
 
@@ -381,6 +386,14 @@ function MemberPopup({
     { label: "TOTAL", val: (n.totalDirect?.left ?? 0) + (n.totalDirect?.right ?? 0), col: "#6a1b9a" },
   ];
 
+  const detailBadges = [
+    { label: "ACT. DIR", val: n.totalActiveDirect ?? 0, col: "#d32f2f" },
+    { label: "L. BASIC", val: n.totalLeftBasicUser ?? 0, col: "#e67e22" },
+    { label: "R. BASIC", val: n.totalRightBasicUser ?? 0, col: "#e67e22" },
+    { label: "L. BOOST", val: n.totalLeftBoosterUser ?? 0, col: "#27ae60" },
+    { label: "R. BOOST", val: n.totalRightBoosterUser ?? 0, col: "#27ae60" },
+  ];
+
   return (
     <div
       onMouseEnter={onMouseEnter}
@@ -434,8 +447,18 @@ function MemberPopup({
           {countBadges.map(b => (
             <div key={b.label} style={{ flex:1, textAlign:"center", padding:"8px 4px",
                                          borderRadius:9, background:`${b.col}11`, border:`1.5px solid ${b.col}30` }}>
-              <p style={{ margin:0, fontSize:20, fontWeight:700, color:b.col, lineHeight:1 }}>{b.val}</p>
-              <p style={{ margin:"3px 0 0", fontSize:9, fontWeight:700, color:b.col, letterSpacing:0.6 }}>{b.label}</p>
+              <p style={{ margin:0, fontSize:18, fontWeight:700, color:b.col, lineHeight:1 }}>{b.val}</p>
+              <p style={{ margin:"3px 0 0", fontSize:8, fontWeight:700, color:b.col, letterSpacing:0.6 }}>{b.label}</p>
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display:"grid", gridTemplateColumns: "repeat(3, 1fr)", gap:6, marginTop:8 }}>
+          {detailBadges.map(b => (
+            <div key={b.label} style={{ textAlign:"center", padding:"6px 2px",
+                                         borderRadius:8, background:`${b.col}11`, border:`1.2px solid ${b.col}25` }}>
+              <p style={{ margin:0, fontSize:15, fontWeight:700, color:b.col, lineHeight:1 }}>{b.val}</p>
+              <p style={{ margin:"2px 0 0", fontSize:7, fontWeight:700, color:b.col, letterSpacing:0.4 }}>{b.label}</p>
             </div>
           ))}
         </div>
@@ -468,6 +491,7 @@ export default function NetworkTreePage() {
   const [popup,     setPopup]       = useState<PopupState | null>(null);
   const [flushMsg,  setFlushMsg]    = useState<string>("");
   const [currentSession, setCurrentSession] = useState<"morning" | "evening" | null>(null);
+  const [history,   setHistory]     = useState<string[]>([]);
   const scrollRef                   = useRef<HTMLDivElement>(null);
   const lastSessionRef              = useRef<"morning" | "evening" | null>(null);
   const sessionCheckRef             = useRef<NodeJS.Timeout | null>(null);
@@ -669,6 +693,11 @@ export default function NetworkTreePage() {
               rightCount : card.rightCount,
               totalCount : card.totalCount,
               totalDirect: card.totalDirect || { left: 0, right: 0 },
+              totalActiveDirect: card.totalActiveDirect,
+              totalLeftBasicUser: card.totalLeftBasicUser,
+              totalRightBasicUser: card.totalRightBasicUser,
+              totalLeftBoosterUser: card.totalLeftBoosterUser,
+              totalRightBoosterUser: card.totalRightBoosterUser,
             },
             left: lft,
             top,
@@ -731,9 +760,28 @@ export default function NetworkTreePage() {
   const handleNodeClick = (n: MNode, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isSlot(n)) { handleSlotClick(n, e); return; }
+    
+    // Save current user to history before moving down
+    if (memberId && memberId !== n.userId) {
+      setHistory(prev => [...prev, memberId]);
+    }
+    
     setMemberId(n.userId);
     fetchTree(n.userId);
     setPopup(null);
+  };
+
+  const handleGoBack = () => {
+    if (history.length === 0) return;
+    
+    const newHistory = [...history];
+    const prevId = newHistory.pop();
+    
+    if (prevId) {
+      setHistory(newHistory);
+      setMemberId(prevId);
+      fetchTree(prevId);
+    }
   };
 
   const handleRootClick = () => {
@@ -896,17 +944,29 @@ export default function NetworkTreePage() {
                 <div className="nt-f-row">
                   <div className="nt-f-grp">
                     <label className="nt-f-lbl">Username :</label>
-                    <input
-                      className="nt-f-in"
-                      type="text"
-                      placeholder="Enter Username (e.g., CLM2026001)"
-                      value={memberId}
-                      onChange={e => setMemberId(e.target.value)}
-                      onKeyDown={e => e.key === "Enter" && fetchTree(memberId)}
-                    />
+                    <div style={{ display: "flex", gap: "8px" }}>
+                      <input
+                        className="nt-f-in"
+                        type="text"
+                        placeholder="Enter Username"
+                        value={memberId}
+                        onChange={e => setMemberId(e.target.value)}
+                        onKeyDown={e => e.key === "Enter" && fetchTree(memberId)}
+                      />
+                      {history.length > 0 && (
+                        <button 
+                          className="nt-f-btn" 
+                          onClick={handleGoBack}
+                          title="Go back to previous user"
+                          style={{ background: "#607d8b", padding: "0 15px" }}
+                        >
+                          ⬅️ Back
+                        </button>
+                      )}
+                    </div>
                   </div>
-                  <button className="nt-f-btn" onClick={() => fetchTree(memberId)} disabled={loading}>
-                    {loading ? "Loading…" : "Filter"}
+                  <button className="nt-f-btn" onClick={() => { setHistory([]); fetchTree(memberId); }} disabled={loading}>
+                    {loading ? "Loading…" : "Search"}
                   </button>
                   {treeRoot && (
                     <button
@@ -984,12 +1044,50 @@ export default function NetworkTreePage() {
                     </span>
                   </div>
                   {treeRoot && (
-                    <div style={{ marginTop: "8px", fontSize: "10px", color: "#666" }}>
-                      <div style={{ fontWeight: "600", color: treeRoot.type === "booster" ? "#f57c00" : "#1565c0" }}>
-                        {treeRoot.type === "booster" ? "⭐ BOOSTER" : "✅ ACTIVE"}
+                    <div style={{ marginTop: "12px", width: "100%" }}>
+                      <div style={{ 
+                        fontSize: "11px", 
+                        fontWeight: "700", 
+                        color: "#333", 
+                        borderBottom: "1px solid #eee", 
+                        paddingBottom: "4px",
+                        marginBottom: "8px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px"
+                      }}>
+                        Stats Summary
                       </div>
-                      <div style={{ marginTop: "2px" }}>
-                        Team: {treeRoot.totalCount || 0}
+                      
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
+                        <div style={{ background: "#f5f5f5", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
+                          <div style={{ fontSize: "9px", color: "#666", fontWeight: "600" }}>LEFT USER</div>
+                          <div style={{ fontSize: "14px", fontWeight: "700", color: "#1976d2" }}>{treeRoot.leftCount || 0}</div>
+                        </div>
+                        <div style={{ background: "#f5f5f5", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
+                          <div style={{ fontSize: "9px", color: "#666", fontWeight: "600" }}>RIGHT USER</div>
+                          <div style={{ fontSize: "14px", fontWeight: "700", color: "#d32f2f" }}>{treeRoot.rightCount || 0}</div>
+                        </div>
+                        <div style={{ background: "#fff8e1", padding: "6px", borderRadius: "6px", textAlign: "center", border: "1px solid #ffe082" }}>
+                          <div style={{ fontSize: "9px", color: "#f57c00", fontWeight: "700" }}>L BOOSTER</div>
+                          <div style={{ fontSize: "14px", fontWeight: "800", color: "#ff8f00" }}>{treeRoot.totalLeftBoosterUser || 0}</div>
+                        </div>
+                        <div style={{ background: "#fff8e1", padding: "6px", borderRadius: "6px", textAlign: "center", border: "1px solid #ffe082" }}>
+                          <div style={{ fontSize: "9px", color: "#f57c00", fontWeight: "700" }}>R BOOSTER</div>
+                          <div style={{ fontSize: "14px", fontWeight: "800", color: "#ff8f00" }}>{treeRoot.totalRightBoosterUser || 0}</div>
+                        </div>
+                      </div>
+
+                      <div style={{ 
+                        marginTop: "10px", 
+                        padding: "6px 8px", 
+                        background: treeRoot.type === "booster" ? "#fff9c4" : "#e1f5fe", 
+                        borderRadius: "4px",
+                        textAlign: "center",
+                        fontSize: "10px",
+                        fontWeight: "700",
+                        color: treeRoot.type === "booster" ? "#f57f17" : "#0277bd"
+                      }}>
+                         Status: {treeRoot.type === "booster" ? "BOOSTER" : "ACTIVE"}
                       </div>
                     </div>
                   )}

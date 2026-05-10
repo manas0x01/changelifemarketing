@@ -5,53 +5,54 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
-const AR   = 26;
-const NW   = 130;
-const NH   = 44;
-const BS   = 44;
-const SW   = 105;  // Slot width
-const HG   = 220;  // Increased horizontal gap to reduce congestion
-const VS   = 165;  // Vertical spacing
-const MAXD = 2;    // Show 3 levels (Root, children, grandchildren)
+// Premium Visual constants
+let AR = 38;   // Larger Avatar Radius
+let NW = 160;  // Wider Node Card
+let NH = 72;   // Taller Node Card
+let BS = 56;   // Box Size (for slots)
+let SW = 140;  // Slot spacing
+let HG = 180;  // Gap between branches
+let VS = 240;  // Generous vertical spacing to prevent any overlap
+let MAXD = 2;
 
 type NodeType = "active" | "booster" | "open" | "close";
 
 interface MNode {
-  id          : string;
-  name        : string;
-  userId      : string;
-  type        : NodeType;
-  position   ?: "left" | "right";
-  sponsorId  ?: string;
+  id: string;
+  name: string;
+  userId: string;
+  type: NodeType;
+  position?: "left" | "right";
+  sponsorId?: string;
   joiningDate?: string;
-  package    ?: string;
-  leftId     ?: string;
-  rightId    ?: string;
-  leftCount  ?: number;
-  rightCount ?: number;
-  totalCount ?: number;
+  package?: string;
+  leftId?: string;
+  rightId?: string;
+  leftCount?: number;
+  rightCount?: number;
+  totalCount?: number;
   totalDirect?: { left: number; right: number };
   totalActiveDirect?: number;
   totalLeftBasicUser?: number;
   totalRightBasicUser?: number;
   totalLeftBoosterUser?: number;
   totalRightBoosterUser?: number;
-  children   ?: MNode[];
+  children?: MNode[];
 }
 
 interface LayoutNode {
-  node  : MNode;
-  x     : number;
-  y     : number;
-  depth : number;
-  ch    : LayoutNode[];
-  slot  : boolean;
+  node: MNode;
+  x: number;
+  y: number;
+  depth: number;
+  ch: LayoutNode[];
+  slot: boolean;
 }
 
 interface PopupState {
-  node : MNode;
-  left : number;
-  top  : number;
+  node: MNode;
+  left: number;
+  top: number;
 }
 
 const isSlot = (n: MNode) => n.type === "open" || n.type === "close";
@@ -63,19 +64,19 @@ function treeW(node: MNode | null, depth: number): number {
   }
   if (depth >= MAXD) return NW;
   const ch = node.children ?? [];
-  const L  = ch.find(c => c.position === "left")  ?? null;
-  const R  = ch.find(c => c.position === "right") ?? null;
-  const virtOpen: MNode = { id:"v", name:"open", userId:"", type:"open", position:"left" };
+  const L = ch.find(c => c.position === "left") ?? null;
+  const R = ch.find(c => c.position === "right") ?? null;
+  const virtOpen: MNode = { id: "v", name: "open", userId: "", type: "open", position: "left" };
   const lw = L ? treeW(L, depth + 1) : treeW(virtOpen, depth + 1);
   const rw = R ? treeW(R, depth + 1) : treeW(virtOpen, depth + 1);
   return Math.max(NW, lw + HG + rw);
 }
 
 function buildLayout(
-  node    : MNode,
-  cx      : number,
-  cy      : number,
-  depth   : number,
+  node: MNode,
+  cx: number,
+  cy: number,
+  depth: number,
   virtSlot: boolean = false,
 ): LayoutNode {
   const ln: LayoutNode = {
@@ -86,8 +87,8 @@ function buildLayout(
   if (isSlot(node) && node.userId) return ln;
 
   const ch = node.children ?? [];
-  const L  = ch.find(c => c.position === "left")  ?? null;
-  const R  = ch.find(c => c.position === "right") ?? null;
+  const L = ch.find(c => c.position === "left") ?? null;
+  const R = ch.find(c => c.position === "right") ?? null;
   const cd = depth + 1;
 
   // For active/booster nodes, show open slots; for others (including close slots), don't create children
@@ -101,9 +102,9 @@ function buildLayout(
     id: `vr-${node.id}`, name: isSlot(node) ? "close" : (parentIsActive ? "open" : "close"), userId: "", type: isSlot(node) ? "close" : slotT, position: "right",
   };
 
-  const virtSlotNode: MNode = { id:"v", name:"open", userId:"", type:"open", position:"left" };
-  const lw   = L ? treeW(L, cd) : treeW(virtSlotNode, cd);
-  const rw   = R ? treeW(R, cd) : treeW(virtSlotNode, cd);
+  const virtSlotNode: MNode = { id: "v", name: "open", userId: "", type: "open", position: "left" };
+  const lw = L ? treeW(L, cd) : treeW(virtSlotNode, cd);
+  const rw = R ? treeW(R, cd) : treeW(virtSlotNode, cd);
   const half = (lw + HG + rw) / 2;
 
   ln.ch.push(buildLayout(lNode, cx - half + lw / 2, cy + VS, cd, !L));
@@ -118,7 +119,7 @@ function flatNodes(ln: LayoutNode, out: LayoutNode[] = []): LayoutNode[] {
 }
 
 function flatEdges(
-  ln : LayoutNode,
+  ln: LayoutNode,
   out: { x1: number; y1: number; x2: number; y2: number }[] = [],
 ) {
   const py = ln.slot ? ln.y + BS / 2 : ln.y + AR + NH + 4;
@@ -138,32 +139,32 @@ function flatEdges(
   return out;
 }
 
-function AvatarActive({ x, y }: { x: number; y: number }) {
-  const r = AR, f = (v: number) => r * v;
+function AvatarActive({ x, y, r }: { x: number; y: number; r: number }) {
+  const f = (v: number) => r * v;
   return (
     <g>
-      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#1565c0" strokeWidth="2.5"/>
-      <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7"/>
-      <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f"/>
-      <rect x={x-f(0.56)} y={y-f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a"/>
-      <rect x={x-f(0.38)} y={y-f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a"/>
-      <path d={`M${x-f(0.76)},${y+r} Q${x-f(0.6)},${y+f(0.5)} ${x},${y+f(0.46)} Q${x+f(0.6)},${y+f(0.5)} ${x+f(0.76)},${y+r}`}
-            fill="#1976d2"/>
+      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#1565c0" strokeWidth="2.5" />
+      <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7" />
+      <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f" />
+      <rect x={x - f(0.56)} y={y - f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a" />
+      <rect x={x - f(0.38)} y={y - f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a" />
+      <path d={`M${x - f(0.76)},${y + r} Q${x - f(0.6)},${y + f(0.5)} ${x},${y + f(0.46)} Q${x + f(0.6)},${y + f(0.5)} ${x + f(0.76)},${y + r}`}
+        fill="#1976d2" />
     </g>
   );
 }
 
-function AvatarBooster({ x, y }: { x: number; y: number }) {
-  const r = AR, f = (v: number) => r * v;
+function AvatarBooster({ x, y, r }: { x: number; y: number; r: number }) {
+  const f = (v: number) => r * v;
   return (
     <g>
-      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#f57c00" strokeWidth="2.5"/>
-      <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7"/>
-      <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f"/>
-      <rect x={x-f(0.56)} y={y-f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a"/>
-      <rect x={x-f(0.38)} y={y-f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a"/>
-      <path d={`M${x-f(0.76)},${y+r} Q${x-f(0.6)},${y+f(0.5)} ${x},${y+f(0.46)} Q${x+f(0.6)},${y+f(0.5)} ${x+f(0.76)},${y+r}`}
-            fill="#f9a825"/>
+      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#f57c00" strokeWidth="2.5" />
+      <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7" />
+      <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f" />
+      <rect x={x - f(0.56)} y={y - f(0.54)} width={f(1.12)} height={f(0.19)} rx="2" fill="#1a1a1a" />
+      <rect x={x - f(0.38)} y={y - f(0.75)} width={f(0.76)} height={f(0.28)} rx="2" fill="#2a2a2a" />
+      <path d={`M${x - f(0.76)},${y + r} Q${x - f(0.6)},${y + f(0.5)} ${x},${y + f(0.46)} Q${x + f(0.6)},${y + f(0.5)} ${x + f(0.76)},${y + r}`}
+        fill="#f9a825" />
     </g>
   );
 }
@@ -174,10 +175,10 @@ function TreeSVG({
   onNodeHover,
   onNodeLeave,
 }: {
-  root        : MNode | null;
-  onNodeClick : (node: MNode, e: React.MouseEvent) => void;
-  onNodeHover : (node: MNode, e: React.MouseEvent) => void;
-  onNodeLeave : () => void;
+  root: MNode | null;
+  onNodeClick: (node: MNode, e: React.MouseEvent) => void;
+  onNodeHover: (node: MNode, e: React.MouseEvent) => void;
+  onNodeLeave: () => void;
 }) {
   if (!root) {
     return (
@@ -187,32 +188,51 @@ function TreeSVG({
     );
   }
 
-  const rootW  = treeW(root, 0);
-  const cx     = Math.max(rootW / 2 + 100, 440);
-  const svgW   = cx * 2;
-  const svgH   = (MAXD + 1) * VS + AR + NH + 110;
-  const rootLN = buildLayout(root, cx, AR + 40, 0);
-  const nodes  = flatNodes(rootLN);
-  const edges  = flatEdges(rootLN);
+  const rootW = treeW(root, 0);
+  const cx = Math.max(rootW / 2 + 100, 440);
+  const svgW = cx * 2;
+  const svgH = (MAXD + 1) * VS + AR + NH + 60; // Reduced bottom padding
+  const rootLN = buildLayout(root, cx, AR + 30, 0); // Reduced top padding
+  const nodes = flatNodes(rootLN);
+  const edges = flatEdges(rootLN);
 
   return (
     <svg
       viewBox={`0 0 ${svgW} ${svgH}`}
       width="100%"
-      height="auto"
+      height={svgH}
       style={{ display: "block" }}
       xmlns="http://www.w3.org/2000/svg"
     >
+      <defs>
+        <filter id="nodeShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="3" />
+          <feOffset dx="0" dy="2" result="offsetblur" />
+          <feComponentTransfer>
+            <feFuncA type="linear" slope="0.3" />
+          </feComponentTransfer>
+          <feMerge>
+            <feMergeNode />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
       {edges.map((e, i) => {
-        const mid = (e.y1 + e.y2) / 2;
+        // High-split orthogonal lines for better clarity (Standard MLM style)
+        const splitY = e.y1 + 40;
         return (
-          <path
-            key={`e-${i}`}
-            d={`M${e.x1},${e.y1} L${e.x1},${mid} L${e.x2},${mid} L${e.x2},${e.y2}`}
-            stroke="#64b5f6"
-            strokeWidth="1.8"
-            fill="none"
-          />
+          <g key={`e-${i}`}>
+            <path
+              d={`M${e.x1},${e.y1} L${e.x1},${splitY} L${e.x2},${splitY} L${e.x2},${e.y2}`}
+              stroke="#BDBDBD"
+              strokeWidth="2.5"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            {/* Decorative dot at the split point */}
+            <circle cx={e.x1} cy={splitY} r="3.5" fill="#9E9E9E" />
+          </g>
         );
       })}
 
@@ -221,10 +241,10 @@ function TreeSVG({
 
         if (slot) {
           const isOpen = n.type === "open";
-          const col    = isOpen ? "#27ae60" : "#e53935";  // Green for open, Red for closed
-          const bg     = isOpen ? "#e8f5e9" : "#ffebee";  // Light green for open, Light red for closed
-          const half   = BS / 2;
-          const label  = isOpen ? "Open" : "Close";
+          const col = isOpen ? "#27ae60" : "#e53935";  // Green for open, Red for closed
+          const bg = isOpen ? "#e8f5e9" : "#ffebee";  // Light green for open, Light red for closed
+          const half = BS / 2;
+          const label = isOpen ? "Open" : "Close";
 
           return (
             <g
@@ -251,7 +271,7 @@ function TreeSVG({
         }
 
         const booster = n.type === "booster";
-        const cardTop = y + AR + 4;
+        const cardTop = y + AR + 8;
 
         return (
           <g
@@ -260,42 +280,48 @@ function TreeSVG({
             onMouseEnter={e => { e.stopPropagation(); onNodeHover(n, e); }}
             onMouseLeave={e => { e.stopPropagation(); onNodeLeave(); }}
             style={{ cursor: "pointer" }}
-            role="button"
-            aria-label={`View details for ${n.id}`}
           >
-            <circle cx={x} cy={y} r={AR + 8} fill="transparent"/>
-            {depth === 0 && (
-              <circle
-                cx={x} cy={y} r={AR + 5}
-                fill="none"
-                stroke={booster ? "#f9a825" : "#26a69a"}
-                strokeWidth="2"
-                opacity="0.5"
-              />
-            )}
-            {booster ? <AvatarBooster x={x} y={y}/> : <AvatarActive x={x} y={y}/>}
+            {/* Outer Aura */}
+            <circle cx={x} cy={y} r={AR + 18} fill={booster ? "rgba(255, 215, 0, 0.1)" : "rgba(0, 255, 255, 0.05)"} />
+
+            {booster ? <AvatarBooster x={x} y={y} r={AR} /> : <AvatarActive x={x} y={y} r={AR} />}
+
+            {/* Premium Card Design */}
             <rect
               x={x - NW / 2} y={cardTop}
-              width={NW} height={NH} rx="8"
-              fill={booster ? "#fff8e1" : "#ffffff"}
-              stroke={booster ? "#f9a825" : "#90caf9"}
-              strokeWidth="1.5"
+              width={NW} height={NH} rx="14"
+              fill="rgba(255, 255, 255, 0.98)"
+              stroke={booster ? "#FFD700" : "#00BCD4"}
+              strokeWidth="3.5"
+              filter="url(#nodeShadow)"
             />
+
             <text
-              x={x} y={cardTop + 16}
-              textAnchor="middle" fontSize="10.5" fontWeight="700"
-              fill={booster ? "#e65100" : "#1565c0"}
+              x={x} y={cardTop + 26}
+              textAnchor="middle" fontSize="16" fontWeight="800"
+              fill="#263238"
               fontFamily="Poppins,sans-serif"
             >
               {n.id}
             </text>
+
             <text
-              x={x} y={cardTop + 31}
-              textAnchor="middle" fontSize="9.5" fill="#555"
+              x={x} y={cardTop + 54}
+              textAnchor="middle" fontSize="12" fontWeight="600"
+              fill="#546e7a"
               fontFamily="Poppins,sans-serif"
             >
-              {n.name.length > 17 ? n.name.slice(0, 17) + "…" : n.name}
+              {n.name.length > 20 ? n.name.slice(0, 20) + "…" : n.name}
             </text>
+
+            {/* Status Badge */}
+            <g transform={`translate(${x - 45}, ${cardTop - 12})`}>
+              <rect width="90" height="24" rx="12" fill={booster ? "#FFD700" : "#00BCD4"} />
+              <text x="45" y="16" textAnchor="middle" fontSize="10" fill="white" fontWeight="900" letterSpacing="0.6">
+                {booster ? "BOOSTER" : "ACTIVE"}
+              </text>
+            </g>
+
           </g>
         );
       })}
@@ -306,8 +332,8 @@ function TreeSVG({
 function SkeletonNode() {
   return (
     <g>
-      <circle cx="0" cy="0" r={AR} fill="#e0e0e0" opacity="0.6"/>
-      <rect x="-65" y="32" width="130" height="44" rx="8" fill="#e0e0e0" opacity="0.6"/>
+      <circle cx="0" cy="0" r={AR} fill="#e0e0e0" opacity="0.6" />
+      <rect x="-65" y="32" width="130" height="44" rx="8" fill="#e0e0e0" opacity="0.6" />
     </g>
   );
 }
@@ -315,30 +341,30 @@ function SkeletonNode() {
 function TreeSkeletonSVG() {
   const skNodes = [
     { x: 200, y: 50 },
-    { x: 80,  y: 180 }, { x: 320, y: 180 },
-    { x: 40,  y: 310 }, { x: 120, y: 310 },
+    { x: 80, y: 180 }, { x: 320, y: 180 },
+    { x: 40, y: 310 }, { x: 120, y: 310 },
     { x: 280, y: 310 }, { x: 360, y: 310 },
   ];
   return (
     <svg
       viewBox="0 0 520 400"
       width="100%"
-      height="auto"
+      height={400}
       style={{ display: "block" }}
       xmlns="http://www.w3.org/2000/svg"
     >
       {[
-        { x1:200,y1:90,  x2:80,  y2:130 },
-        { x1:200,y1:90,  x2:320, y2:130 },
-        { x1:80, y1:220, x2:40,  y2:250 },
-        { x1:80, y1:220, x2:120, y2:250 },
-        { x1:320,y1:220, x2:280, y2:250 },
-        { x1:320,y1:220, x2:360, y2:250 },
+        { x1: 200, y1: 90, x2: 80, y2: 130 },
+        { x1: 200, y1: 90, x2: 320, y2: 130 },
+        { x1: 80, y1: 220, x2: 40, y2: 250 },
+        { x1: 80, y1: 220, x2: 120, y2: 250 },
+        { x1: 320, y1: 220, x2: 280, y2: 250 },
+        { x1: 320, y1: 220, x2: 360, y2: 250 },
       ].map((l, i) => (
-        <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#e0e0e0" strokeWidth="1.5"/>
+        <line key={i} x1={l.x1} y1={l.y1} x2={l.x2} y2={l.y2} stroke="#e0e0e0" strokeWidth="1.5" />
       ))}
       {skNodes.map((n, i) => (
-        <g key={i} transform={`translate(${n.x},${n.y})`}><SkeletonNode/></g>
+        <g key={i} transform={`translate(${n.x},${n.y})`}><SkeletonNode /></g>
       ))}
     </svg>
   );
@@ -347,12 +373,12 @@ function TreeSkeletonSVG() {
 function FilterSkeleton() {
   return (
     <div style={{ padding: "12px 14px 14px" }}>
-      <div style={{ display:"flex", alignItems:"flex-end", gap:"10px", flexWrap:"wrap" }}>
-        <div style={{ flex:"1", minWidth:"190px" }}>
-          <div style={{ height:"16px", background:"#e0e0e0", borderRadius:"4px", marginBottom:"6px", width:"60%" }}/>
-          <div style={{ height:"38px", background:"#e0e0e0", borderRadius:"6px" }}/>
+      <div style={{ display: "flex", alignItems: "flex-end", gap: "10px", flexWrap: "wrap" }}>
+        <div style={{ flex: "1", minWidth: "190px" }}>
+          <div style={{ height: "16px", background: "#e0e0e0", borderRadius: "4px", marginBottom: "6px", width: "60%" }} />
+          <div style={{ height: "38px", background: "#e0e0e0", borderRadius: "6px" }} />
         </div>
-        <div style={{ height:"38px", background:"#e0e0e0", borderRadius:"6px", width:"90px" }}/>
+        <div style={{ height: "38px", background: "#e0e0e0", borderRadius: "6px", width: "90px" }} />
       </div>
     </div>
   );
@@ -364,8 +390,8 @@ function MemberPopup({
   onMouseEnter,
   onMouseLeave,
 }: {
-  state        : PopupState;
-  onClose      : () => void;
+  state: PopupState;
+  onClose: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
 }) {
@@ -373,15 +399,15 @@ function MemberPopup({
   const booster = n.type === "booster";
 
   const infoRows = [
-    { label: "Sponsor ID",   val: n.sponsorId   || "—" },
-    { label: "Joining Date", val: n.joiningDate  || "—" },
-    { label: "Package",      val: n.package      || "—" },
-    { label: "Left ID",      val: n.leftId       || "—" },
-    { label: "Right ID",     val: n.rightId      || "—" },
+    { label: "Sponsor ID", val: n.sponsorId || "—" },
+    { label: "Joining Date", val: n.joiningDate || "—" },
+    { label: "Package", val: n.package || "—" },
+    { label: "Left ID", val: n.leftId || "—" },
+    { label: "Right ID", val: n.rightId || "—" },
   ];
 
   const countBadges = [
-    { label: "LEFT",  val: n.totalDirect?.left  ?? 0, col: "#1565c0" },
+    { label: "LEFT", val: n.totalDirect?.left ?? 0, col: "#1565c0" },
     { label: "RIGHT", val: n.totalDirect?.right ?? 0, col: "#2e7d32" },
     { label: "TOTAL", val: (n.totalDirect?.left ?? 0) + (n.totalDirect?.right ?? 0), col: "#6a1b9a" },
   ];
@@ -399,14 +425,14 @@ function MemberPopup({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       style={{
-        position:"fixed", left, top,
-        zIndex:2200, width:308,
-        borderRadius:14, overflow:"hidden",
-        boxShadow:"0 16px 48px rgba(0,0,0,0.28), 0 4px 12px rgba(0,0,0,0.12)",
-        border:`2.5px solid ${booster ? "#f9a825" : "#26a69a"}`,
-        fontFamily:"Poppins,sans-serif",
-        animation:"ntPopIn .2s cubic-bezier(.16,1,.3,1)",
-        maxWidth:"calc(100vw - 20px)",
+        position: "fixed", left, top,
+        zIndex: 2200, width: 308,
+        borderRadius: 14, overflow: "hidden",
+        boxShadow: "0 16px 48px rgba(0,0,0,0.28), 0 4px 12px rgba(0,0,0,0.12)",
+        border: `2.5px solid ${booster ? "#f9a825" : "#26a69a"}`,
+        fontFamily: "Poppins,sans-serif",
+        animation: "ntPopIn .2s cubic-bezier(.16,1,.3,1)",
+        maxWidth: "calc(100vw - 20px)",
       }}
       onClick={e => e.stopPropagation()}
     >
@@ -414,62 +440,72 @@ function MemberPopup({
         background: booster
           ? "linear-gradient(135deg,#e65100,#f9a825)"
           : "linear-gradient(135deg,#26a69a,#1de9b6)",
-        padding:"11px 14px",
-        display:"flex", alignItems:"center", justifyContent:"space-between",
+        padding: "11px 14px",
+        display: "flex", alignItems: "center", justifyContent: "space-between",
       }}>
-        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
-          <div style={{ width:36, height:36, borderRadius:"50%", background:"rgba(255,255,255,0.22)",
-                        display:"flex", alignItems:"center", justifyContent:"center", fontSize:18 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: "50%", background: "rgba(255,255,255,0.22)",
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 18
+          }}>
             {booster ? "👑" : "👤"}
           </div>
           <div>
-            <p style={{ color:"#fff", fontWeight:700, fontSize:13, margin:0 }}>{n.id}</p>
-            <p style={{ color:"rgba(255,255,255,0.82)", fontSize:10.5, margin:0 }}>{n.name}</p>
+            <p style={{ color: "#fff", fontWeight: 700, fontSize: 13, margin: 0 }}>{n.id}</p>
+            <p style={{ color: "rgba(255,255,255,0.82)", fontSize: 10.5, margin: 0 }}>{n.name}</p>
           </div>
         </div>
         <button onClick={onClose}
-          style={{ background:"rgba(255,255,255,0.18)", border:"none", borderRadius:7,
-                   color:"#fff", cursor:"pointer", padding:"4px 9px", fontSize:13, fontWeight:700 }}>
+          style={{
+            background: "rgba(255,255,255,0.18)", border: "none", borderRadius: 7,
+            color: "#fff", cursor: "pointer", padding: "4px 9px", fontSize: 13, fontWeight: 700
+          }}>
           ✕
         </button>
       </div>
 
-      <div style={{ background:"#fff", padding:"12px 14px 14px" }}>
+      <div style={{ background: "#fff", padding: "12px 14px 14px" }}>
         {infoRows.map(row => (
-          <div key={row.label} style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-                                        padding:"5.5px 0", borderBottom:"1px solid #f2f2f2" }}>
-            <span style={{ fontSize:11, color:"#888", fontWeight:500 }}>{row.label}</span>
-            <span style={{ fontSize:11.5, color:"#222", fontWeight:600 }}>{row.val}</span>
+          <div key={row.label} style={{
+            display: "flex", justifyContent: "space-between", alignItems: "center",
+            padding: "5.5px 0", borderBottom: "1px solid #f2f2f2"
+          }}>
+            <span style={{ fontSize: 11, color: "#888", fontWeight: 500 }}>{row.label}</span>
+            <span style={{ fontSize: 11.5, color: "#222", fontWeight: 600 }}>{row.val}</span>
           </div>
         ))}
 
-        <div style={{ display:"flex", gap:8, marginTop:13 }}>
+        <div style={{ display: "flex", gap: 8, marginTop: 13 }}>
           {countBadges.map(b => (
-            <div key={b.label} style={{ flex:1, textAlign:"center", padding:"8px 4px",
-                                         borderRadius:9, background:`${b.col}11`, border:`1.5px solid ${b.col}30` }}>
-              <p style={{ margin:0, fontSize:18, fontWeight:700, color:b.col, lineHeight:1 }}>{b.val}</p>
-              <p style={{ margin:"3px 0 0", fontSize:8, fontWeight:700, color:b.col, letterSpacing:0.6 }}>{b.label}</p>
+            <div key={b.label} style={{
+              flex: 1, textAlign: "center", padding: "8px 4px",
+              borderRadius: 9, background: `${b.col}11`, border: `1.5px solid ${b.col}30`
+            }}>
+              <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: b.col, lineHeight: 1 }}>{b.val}</p>
+              <p style={{ margin: "3px 0 0", fontSize: 8, fontWeight: 700, color: b.col, letterSpacing: 0.6 }}>{b.label}</p>
             </div>
           ))}
         </div>
 
-        <div style={{ display:"grid", gridTemplateColumns: "repeat(3, 1fr)", gap:6, marginTop:8 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 6, marginTop: 8 }}>
           {detailBadges.map(b => (
-            <div key={b.label} style={{ textAlign:"center", padding:"6px 2px",
-                                         borderRadius:8, background:`${b.col}11`, border:`1.2px solid ${b.col}25` }}>
-              <p style={{ margin:0, fontSize:15, fontWeight:700, color:b.col, lineHeight:1 }}>{b.val}</p>
-              <p style={{ margin:"2px 0 0", fontSize:7, fontWeight:700, color:b.col, letterSpacing:0.4 }}>{b.label}</p>
+            <div key={b.label} style={{
+              textAlign: "center", padding: "6px 2px",
+              borderRadius: 8, background: `${b.col}11`, border: `1.2px solid ${b.col}25`
+            }}>
+              <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: b.col, lineHeight: 1 }}>{b.val}</p>
+              <p style={{ margin: "2px 0 0", fontSize: 7, fontWeight: 700, color: b.col, letterSpacing: 0.4 }}>{b.label}</p>
             </div>
           ))}
         </div>
 
-        <div style={{ marginTop:10, textAlign:"center" }}>
+        <div style={{ marginTop: 10, textAlign: "center" }}>
           <span style={{
-            display:"inline-block", padding:"3px 12px", borderRadius:20, fontSize:10, fontWeight:700,
+            display: "inline-block", padding: "3px 12px", borderRadius: 20, fontSize: 10, fontWeight: 700,
             background: booster ? "#fff8e1" : "#e3f2fd",
             color: booster ? "#f57c00" : "#1565c0",
-            border:`1px solid ${booster ? "#f9a825" : "#90caf9"}`,
-            letterSpacing:0.5,
+            border: `1px solid ${booster ? "#f9a825" : "#90caf9"}`,
+            letterSpacing: 0.5,
           }}>
             {booster ? "⭐ BOOSTER MEMBER" : "✅ ACTIVE MEMBER"}
           </span>
@@ -480,21 +516,69 @@ function MemberPopup({
 }
 
 export default function NetworkTreePage() {
-  const { data: session }           = useSession();
-  const router                      = useRouter();
-  const [ddOpen,    setDdOpen]      = useState(false);
-  const [memberId,  setMemberId]    = useState("");
-  const [treeRoot,  setTreeRoot]    = useState<MNode | null>(null);
-  const [loading,   setLoading]     = useState(false);
-  const [error,     setError]       = useState("");
-  const [autoLoaded,setAutoLoaded]  = useState(false);
-  const [popup,     setPopup]       = useState<PopupState | null>(null);
-  const [flushMsg,  setFlushMsg]    = useState<string>("");
+  const { data: session } = useSession();
+  const router = useRouter();
+  const [ddOpen, setDdOpen] = useState(false);
+  const [memberId, setMemberId] = useState("");
+  const [treeRoot, setTreeRoot] = useState<MNode | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [autoLoaded, setAutoLoaded] = useState(false);
+  const [popup, setPopup] = useState<PopupState | null>(null);
+  const [flushMsg, setFlushMsg] = useState<string>("");
   const [currentSession, setCurrentSession] = useState<"morning" | "evening" | null>(null);
-  const [history,   setHistory]     = useState<string[]>([]);
-  const scrollRef                   = useRef<HTMLDivElement>(null);
-  const lastSessionRef              = useRef<"morning" | "evening" | null>(null);
-  const sessionCheckRef             = useRef<NodeJS.Timeout | null>(null);
+  const [history, setHistory] = useState<string[]>([]);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const lastSessionRef = useRef<"morning" | "evening" | null>(null);
+  const sessionCheckRef = useRef<NodeJS.Timeout | null>(null);
+
+  const [dimensions, setDimensions] = useState({
+    ar: 24, nw: 100, nh: 40, bs: 44, sw: 100, hg: 180, vs: 165, maxd: 2
+  });
+
+  // Dynamically adjust tree levels and sizes for mobile
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = window.innerWidth < 768;
+      if (isMobile) {
+        setDimensions({
+          ar: 36,   
+          nw: 140,  
+          nh: 64,
+          bs: 52,
+          sw: 130,  
+          hg: 100,   
+          vs: 160,  // Tighter vertical gap
+          maxd: 1   
+        });
+      } else {
+        setDimensions({
+          ar: 38,   
+          nw: 170,  
+          nh: 72,
+          bs: 56,
+          sw: 150,  
+          hg: 200,  
+          vs: 200,  // Tighter vertical gap
+          maxd: 2   
+        });
+      }
+    };
+
+    handleResize(); // Initial call
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Sync constants with state for the helper functions
+  AR = dimensions.ar;
+  NW = dimensions.nw;
+  NH = dimensions.nh;
+  BS = dimensions.bs;
+  SW = dimensions.sw;
+  HG = dimensions.hg;
+  VS = dimensions.vs;
+  MAXD = dimensions.maxd;
 
   const getCurrentSession = (): "morning" | "evening" => {
     const currentHour = new Date().getHours();
@@ -516,10 +600,10 @@ export default function NetworkTreePage() {
     try {
       const body: any = { userId: trimmed, selectedPosition };
       if (forceSessionType) body.forceSessionType = forceSessionType;
-      const res  = await fetch("/api/user/placement-tree", {
-        method:"POST",
-        headers:{ "Content-Type":"application/json" },
-        body:JSON.stringify(body),
+      const res = await fetch("/api/user/placement-tree", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
       const data = await res.json();
       if (data.success) {
@@ -529,7 +613,7 @@ export default function NetworkTreePage() {
         const sess = data.currentSessionType || getCurrentSession();
         setCurrentSession(sess);
         lastSessionRef.current = sess;
-        
+
         // Show flush message if any
         if (data.flushMessage) {
           setFlushMsg(data.flushMessage);
@@ -570,15 +654,15 @@ export default function NetworkTreePage() {
       setMemberId(session.user.username);
       fetchTree(session.user.username);
     }
-    
+
     // Initialize session tracking
     lastSessionRef.current = getCurrentSession();
-    
+
     // Set up session change monitoring - check every 30 seconds
     sessionCheckRef.current = setInterval(() => {
       checkSessionChangeAndRefresh();
     }, 30000); // 30 seconds
-    
+
     // Cleanup timer on unmount
     return () => {
       if (sessionCheckRef.current) {
@@ -587,7 +671,7 @@ export default function NetworkTreePage() {
       }
     };
   }, [session?.user?.username]);
-  
+
   // Refresh tree when page becomes visible (after registration)
   useEffect(() => {
     const handleVisibilityChange = () => {
@@ -598,11 +682,11 @@ export default function NetworkTreePage() {
         fetchTree(memberId);
       }
     };
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, [memberId, treeRoot]);
-  
+
   // Also refresh when window gains focus
   useEffect(() => {
     const handleFocus = () => {
@@ -613,7 +697,7 @@ export default function NetworkTreePage() {
         fetchTree(memberId);
       }
     };
-    
+
     window.addEventListener('focus', handleFocus);
     return () => window.removeEventListener('focus', handleFocus);
   }, [memberId, treeRoot]);
@@ -629,21 +713,21 @@ export default function NetworkTreePage() {
   };
 
   /* ── Hover refs for stable popup ── */
-  const isHoveringRef      = useRef(false);           // on node
-  const isOnPopupRef       = useRef(false);           // on popup card
-  const popupShowTimeRef   = useRef<number | null>(null);
-  const closeTimeoutRef    = useRef<NodeJS.Timeout | null>(null);
-  const fetchIdRef         = useRef<string | null>(null);  // Track current fetch
+  const isHoveringRef = useRef(false);           // on node
+  const isOnPopupRef = useRef(false);           // on popup card
+  const popupShowTimeRef = useRef<number | null>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fetchIdRef = useRef<string | null>(null);  // Track current fetch
 
   const handleNodeHover = (n: MNode, e: React.MouseEvent) => {
     if (isSlot(n)) return;
     e.stopPropagation();
-    
+
     // New hover - cancel old pending close and set new fetch ID
     const currentFetchId = `${n.userId}-${Date.now()}`;
     fetchIdRef.current = currentFetchId;
     console.log(`[HOVER] Node hovered: ${n.id} (${n.name}) - fetchId: ${currentFetchId}`);
-    
+
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
@@ -658,19 +742,19 @@ export default function NetworkTreePage() {
     if (!box) return;
 
     let lft = box.left + box.width / 2 - pw / 2;
-    let top  = box.bottom + 10;
+    let top = box.bottom + 10;
     if (lft + pw > vw - 10) lft = vw - pw - 10;
-    if (lft < 10)           lft = 10;
+    if (lft < 10) lft = 10;
     if (top + ph > vh - 10) top = box.top - ph - 10;
-    if (top < 10)           top = 10;
+    if (top < 10) top = 10;
 
     const fetchMemberCard = async () => {
       try {
         const fetchStart = performance.now();
-        const res  = await fetch("/api/user/member-card", {
-          method:"POST",
-          headers:{ "Content-Type":"application/json" },
-          body:JSON.stringify({ userId: n.userId }),
+        const res = await fetch("/api/user/member-card", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: n.userId }),
         });
         const data = await res.json();
         const fetchEnd = performance.now();
@@ -684,14 +768,14 @@ export default function NetworkTreePage() {
           setPopup({
             node: {
               ...n,
-              sponsorId  : card.sponsorId,
+              sponsorId: card.sponsorId,
               joiningDate: card.joiningDate,
-              package    : card.package,
-              leftId     : card.leftId,
-              rightId    : card.rightId,
-              leftCount  : card.leftCount,
-              rightCount : card.rightCount,
-              totalCount : card.totalCount,
+              package: card.package,
+              leftId: card.leftId,
+              rightId: card.rightId,
+              leftCount: card.leftCount,
+              rightCount: card.rightCount,
+              totalCount: card.totalCount,
               totalDirect: card.totalDirect || { left: 0, right: 0 },
               totalActiveDirect: card.totalActiveDirect,
               totalLeftBasicUser: card.totalLeftBasicUser,
@@ -718,7 +802,7 @@ export default function NetworkTreePage() {
 
   const handleNodeLeave = () => {
     console.log(`[LEAVE] Left node - debouncing close for 300ms`);
-    
+
     // Debounce close - wait 300ms to allow slow fetches (some take 200+ms) to complete
     closeTimeoutRef.current = setTimeout(() => {
       isHoveringRef.current = false;
@@ -760,12 +844,12 @@ export default function NetworkTreePage() {
   const handleNodeClick = (n: MNode, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isSlot(n)) { handleSlotClick(n, e); return; }
-    
+
     // Save current user to history before moving down
     if (memberId && memberId !== n.userId) {
       setHistory(prev => [...prev, memberId]);
     }
-    
+
     setMemberId(n.userId);
     fetchTree(n.userId);
     setPopup(null);
@@ -773,10 +857,10 @@ export default function NetworkTreePage() {
 
   const handleGoBack = () => {
     if (history.length === 0) return;
-    
+
     const newHistory = [...history];
     const prevId = newHistory.pop();
-    
+
     if (prevId) {
       setHistory(newHistory);
       setMemberId(prevId);
@@ -786,7 +870,7 @@ export default function NetworkTreePage() {
 
   const handleRootClick = () => {
     if (ddOpen) setDdOpen(false);
-    if (popup)  setPopup(null);
+    if (popup) setPopup(null);
   };
 
   return (
@@ -809,20 +893,20 @@ export default function NetworkTreePage() {
         .nt-bc a { color:#666; text-decoration:none; }
         .nt-bc a:hover { text-decoration:underline; }
 
-        .nt-body { padding:14px 10px 44px; }
-        @media(min-width:600px)  { .nt-body { padding:18px 16px 44px; } }
-        @media(min-width:1024px) { .nt-body { padding:20px 20px 44px; } }
+        .nt-body { padding:8px 8px 30px; }
+        @media(min-width:600px)  { .nt-body { padding:12px 14px 30px; } }
+        @media(min-width:1024px) { .nt-body { padding:14px 16px 30px; } }
 
         .nt-card { background:#fff; border-radius:12px; overflow:hidden; box-shadow:0 2px 16px rgba(0,0,0,0.08); }
 
-        .nt-hdr { background:linear-gradient(90deg,#26a69a,#1de9b6); padding:12px 16px;
+        .nt-hdr { background:linear-gradient(90deg,#26a69a,#1de9b6); padding:10px 14px;
                   display:flex; align-items:center; justify-content:space-between; }
-        .nt-hdr-title { font-size:13px; font-weight:700; color:#fff; letter-spacing:.8px; text-transform:uppercase; }
+        .nt-hdr-title { font-size:12px; font-weight:700; color:#fff; letter-spacing:.6px; text-transform:uppercase; }
 
-        .nt-legend { display:flex; align-items:center; justify-content:center; gap:18px;
-                     padding:12px 16px 10px; flex-wrap:wrap; border-bottom:1px solid #f0f0f0; }
-        .nt-leg-item { display:flex; flex-direction:column; align-items:center; gap:5px; }
-        .nt-leg-lbl  { font-size:11px; color:#555; font-weight:500; }
+        .nt-legend { display:flex; align-items:center; justify-content:center; gap:14px;
+                     padding:8px 14px 8px; flex-wrap:wrap; border-bottom:1px solid #f0f0f0; }
+        .nt-leg-item { display:flex; flex-direction:column; align-items:center; gap:4px; }
+        .nt-leg-lbl  { font-size:10px; color:#555; font-weight:500; }
 
         .nt-filter { padding:12px 14px 14px; }
         .nt-f-row  { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; }
@@ -865,23 +949,23 @@ export default function NetworkTreePage() {
 
         .nt-canvas {
           flex:1;
-          overflow:hidden;
-          background:linear-gradient(160deg,#1565c0 0%,#0d47a1 100%);
-          min-height:500px;
+          overflow: auto; /* Enable scrolling for the large tree */
+          background: radial-gradient(circle at 50% 50%, #1a237e 0%, #010409 100%);
+          height: 420px; /* Fixed height to keep section compact */
           position:relative;
+          -webkit-overflow-scrolling: touch; /* Smooth mobile scroll */
         }
-        @media(min-width:480px)  { .nt-canvas { min-height:520px; } }
-        @media(min-width:768px)  { .nt-canvas { min-height:520px; } }
-        @media(min-width:1024px) { .nt-canvas { min-height:600px; } }
+        @media(min-width:1024px) { .nt-canvas { height: 500px; } }
 
         .nt-canvas-inner {
-          padding:12px 12px 16px;
-          width:100%;
+          padding:8px 8px 10px;
+          width: fit-content; /* Allow inner container to grow with the tree */
+          min-width: 100%;
         }
           
-        @media(min-width:480px)  { .nt-canvas-inner { padding:16px 20px 24px; } }
-        @media(min-width:600px)  { .nt-canvas-inner { padding:26px 28px 36px; } }
-        @media(min-width:1024px) { .nt-canvas-inner { padding:32px 36px 44px; } }
+        @media(min-width:480px)  { .nt-canvas-inner { padding:10px 12px 14px; } }
+        @media(min-width:600px)  { .nt-canvas-inner { padding:14px 16px 20px; } }
+        @media(min-width:1024px) { .nt-canvas-inner { padding:18px 20px 24px; } }
 
         .nt-spin { display:inline-block; width:34px; height:34px;
                    border:4px solid rgba(255,255,255,.25); border-top-color:#fff;
@@ -891,17 +975,17 @@ export default function NetworkTreePage() {
       `}</style>
 
       <div className="nt-root" onClick={handleRootClick}>
-        <Navbar dropdownOpen={ddOpen} setDropdownOpen={setDdOpen} setActivePage={() => {}}/>
+        <Navbar dropdownOpen={ddOpen} setDropdownOpen={setDdOpen} setActivePage={() => { }} />
 
         <div className="nt-bc">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="#777">
-            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+            <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
           </svg>
           <a href="/dashboard">Home</a>
-          <span style={{ color:"#ccc" }}>/</span>
+          <span style={{ color: "#ccc" }}>/</span>
           <span>My Network</span>
-          <span style={{ color:"#ccc" }}>/</span>
-          <span style={{ color:"#26a69a", fontWeight:600 }}>Network Tree</span>
+          <span style={{ color: "#ccc" }}>/</span>
+          <span style={{ color: "#26a69a", fontWeight: 600 }}>Network Tree</span>
         </div>
 
         <div className="nt-body">
@@ -913,34 +997,28 @@ export default function NetworkTreePage() {
             <div className="nt-legend">
               <div className="nt-leg-item">
                 <svg width="42" height="42" viewBox="-4 -4 60 60" xmlns="http://www.w3.org/2000/svg">
-                  <AvatarActive x={26} y={26}/>
+                  <AvatarActive x={26} y={26} r={26} />
                 </svg>
                 <span className="nt-leg-lbl">Active ID</span>
               </div>
               <div className="nt-leg-item">
                 <svg width="42" height="42" viewBox="-4 -4 60 60" xmlns="http://www.w3.org/2000/svg">
-                  <AvatarBooster x={26} y={26}/>
+                  <AvatarBooster x={26} y={26} r={26} />
                 </svg>
                 <span className="nt-leg-lbl">Booster Id</span>
               </div>
               <div className="nt-leg-item">
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                  <div style={{ width:36, height:36, borderRadius:8, border:"3px solid #e53935", background:"#ffebee" }}/>
-                  <span style={{ fontSize:10.5, fontWeight:700, color:"#e53935" }}>Close</span>
-                </div>
+                <div style={{ width: 32, height: 32, borderRadius: 8, border: "2.5px solid #e53935", background: "#ffebee", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, color: "#e53935" }}>CLOSE</div>
                 <span className="nt-leg-lbl">Closed</span>
               </div>
               <div className="nt-leg-item">
-                <div style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:4 }}>
-                  <div style={{ width:36, height:36, borderRadius:8, border:"3px solid #27ae60", background:"#e8f5e9" }}/>
-                  <span style={{ fontSize:10.5, fontWeight:700, color:"#27ae60" }}>Open</span>
-                </div>
-                <span className="nt-leg-lbl">Open</span>
+                <div style={{ width: 32, height: 32, borderRadius: 8, border: "2.5px solid #27ae60", background: "#e8f5e9", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 8, fontWeight: 900, color: "#27ae60" }}>OPEN</div>
+                <span className="nt-leg-lbl">Open Slot</span>
               </div>
             </div>
 
             <div className="nt-filter">
-              {loading ? <FilterSkeleton/> : (
+              {loading ? <FilterSkeleton /> : (
                 <div className="nt-f-row">
                   <div className="nt-f-grp">
                     <label className="nt-f-lbl">Username :</label>
@@ -954,8 +1032,8 @@ export default function NetworkTreePage() {
                         onKeyDown={e => e.key === "Enter" && fetchTree(memberId)}
                       />
                       {history.length > 0 && (
-                        <button 
-                          className="nt-f-btn" 
+                        <button
+                          className="nt-f-btn"
                           onClick={handleGoBack}
                           title="Go back to previous user"
                           style={{ background: "#607d8b", padding: "0 15px" }}
@@ -989,11 +1067,11 @@ export default function NetworkTreePage() {
               )}
               {error && <div className="nt-err">{error}</div>}
               {flushMsg && (
-                <div style={{ 
-                  marginTop: "8px", 
-                  padding: "10px 14px", 
-                  background: "#fff3cd", 
-                  border: "1px solid #ffc107", 
+                <div style={{
+                  marginTop: "8px",
+                  padding: "10px 14px",
+                  background: "#fff3cd",
+                  border: "1px solid #ffc107",
                   borderRadius: "6px",
                   color: "#856404",
                   fontSize: "13px"
@@ -1007,49 +1085,37 @@ export default function NetworkTreePage() {
               <div className="nt-sidebar">
                 <div className="nt-sb-av">
                   {treeRoot ? (
-                    <div style={{ 
-                      width: "100%", 
-                      height: "100%", 
-                      display: "flex", 
-                      alignItems: "center", 
-                      justifyContent: "center",
-                      background: treeRoot.type === "booster" ? "#fff8e1" : "#e3f2fd",
-                      border: `3px solid ${treeRoot.type === "booster" ? "#f9a825" : "#90caf9"}`,
-                      borderRadius: "50%",
-                      color: treeRoot.type === "booster" ? "#f57c00" : "#1565c0",
-                      fontSize: "20px",
-                      fontWeight: "700"
-                    }}>
-                      {treeRoot.type === "booster" ? "👑" : "👤"}
-                    </div>
+                    <svg width="60" height="60" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+                      {treeRoot.type === "booster" ? <AvatarBooster x={40} y={40} r={36} /> : <AvatarActive x={40} y={40} r={36} />}
+                    </svg>
                   ) : (
                     <svg width="54" height="54" viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
-                      <circle cx="40" cy="40" r="40" fill="#e3f2fd"/>
-                      <ellipse cx="40" cy="28" rx="12" ry="13" fill="#f5cba7"/>
-                      <ellipse cx="40" cy="17" rx="14" ry="8" fill="#3d2b1f"/>
-                      <path d="M18 70 Q20 52 40 50 Q60 52 62 70 Z" fill="#c62828"/>
-                      <rect x="37" y="50" width="6" height="22" fill="#fff"/>
-                      <ellipse cx="40" cy="72" rx="22" ry="8" fill="#c62828"/>
+                      <circle cx="40" cy="40" r="40" fill="#e3f2fd" />
+                      <ellipse cx="40" cy="28" rx="12" ry="13" fill="#f5cba7" />
+                      <ellipse cx="40" cy="17" rx="14" ry="8" fill="#3d2b1f" />
+                      <path d="M18 70 Q20 52 40 50 Q60 52 62 70 Z" fill="#c62828" />
+                      <rect x="37" y="50" width="6" height="22" fill="#fff" />
+                      <ellipse cx="40" cy="72" rx="22" ry="8" fill="#c62828" />
                     </svg>
                   )}
                 </div>
                 <div>
-                  <p className="nt-sb-lbl">Tree Root<br/>User</p>
+                  <p className="nt-sb-lbl">Tree Root<br />User</p>
                   <div className="nt-sb-row">
-                    <div className="nt-sb-dot" style={{ 
-                      background: treeRoot?.type === "booster" ? "#f9a825" : "#ff5722" 
-                    }}/>
+                    <div className="nt-sb-dot" style={{
+                      background: treeRoot?.type === "booster" ? "#f9a825" : "#ff5722"
+                    }} />
                     <span className="nt-sb-id">
                       {treeRoot ? treeRoot.id : (memberId || "—")}
                     </span>
                   </div>
                   {treeRoot && (
                     <div style={{ marginTop: "12px", width: "100%" }}>
-                      <div style={{ 
-                        fontSize: "11px", 
-                        fontWeight: "700", 
-                        color: "#333", 
-                        borderBottom: "1px solid #eee", 
+                      <div style={{
+                        fontSize: "11px",
+                        fontWeight: "700",
+                        color: "#333",
+                        borderBottom: "1px solid #eee",
                         paddingBottom: "4px",
                         marginBottom: "8px",
                         textTransform: "uppercase",
@@ -1057,7 +1123,7 @@ export default function NetworkTreePage() {
                       }}>
                         Stats Summary
                       </div>
-                      
+
                       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
                         <div style={{ background: "#f5f5f5", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
                           <div style={{ fontSize: "9px", color: "#666", fontWeight: "600" }}>LEFT USER</div>
@@ -1077,17 +1143,17 @@ export default function NetworkTreePage() {
                         </div>
                       </div>
 
-                      <div style={{ 
-                        marginTop: "10px", 
-                        padding: "6px 8px", 
-                        background: treeRoot.type === "booster" ? "#fff9c4" : "#e1f5fe", 
+                      <div style={{
+                        marginTop: "10px",
+                        padding: "6px 8px",
+                        background: treeRoot.type === "booster" ? "#fff9c4" : "#e1f5fe",
                         borderRadius: "4px",
                         textAlign: "center",
                         fontSize: "10px",
                         fontWeight: "700",
                         color: treeRoot.type === "booster" ? "#f57f17" : "#0277bd"
                       }}>
-                         Status: {treeRoot.type === "booster" ? "BOOSTER" : "ACTIVE"}
+                        Status: {treeRoot.type === "booster" ? "BOOSTER" : "ACTIVE"}
                       </div>
                     </div>
                   )}
@@ -1097,13 +1163,13 @@ export default function NetworkTreePage() {
               <div className="nt-canvas" ref={scrollRef}>
                 <div className="nt-canvas-inner">
                   {loading
-                    ? <TreeSkeletonSVG/>
+                    ? <TreeSkeletonSVG />
                     : <TreeSVG
-                        root={treeRoot}
-                        onNodeClick={handleNodeClick}
-                        onNodeHover={handleNodeHover}
-                        onNodeLeave={handleNodeLeave}
-                      />
+                      root={treeRoot}
+                      onNodeClick={handleNodeClick}
+                      onNodeHover={handleNodeHover}
+                      onNodeLeave={handleNodeLeave}
+                    />
                   }
                 </div>
               </div>
@@ -1113,7 +1179,7 @@ export default function NetworkTreePage() {
 
         {popup && (
           <>
-            <div className="nt-overlay" onClick={() => setPopup(null)}/>
+            <div className="nt-overlay" onClick={() => setPopup(null)} />
             <MemberPopup
               state={popup}
               onClose={() => setPopup(null)}

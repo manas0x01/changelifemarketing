@@ -294,8 +294,8 @@ function TreeSVG({
             />
 
             <text
-              x={x} y={cardTop + 42}
-              textAnchor="middle" fontSize="26" fontWeight="800"
+              x={x} y={cardTop + NH * 0.35}
+              textAnchor="middle" fontSize="22" fontWeight="800"
               fill="#263238"
               fontFamily="Poppins,sans-serif"
             >
@@ -303,8 +303,8 @@ function TreeSVG({
             </text>
 
             <text
-              x={x} y={cardTop + 84}
-              textAnchor="middle" fontSize="19" fontWeight="600"
+              x={x} y={cardTop + NH * 0.72}
+              textAnchor="middle" fontSize="16" fontWeight="600"
               fill="#546e7a"
               fontFamily="Poppins,sans-serif"
             >
@@ -550,7 +550,7 @@ export default function NetworkTreePage() {
         setDimensions({
           ar: 78,   // Super massive avatars for mobile
           nw: 160,  // Super wide cards
-          nh: 70,
+          nh: 100,
           bs: 100,
           sw: 180,
           hg: 160,

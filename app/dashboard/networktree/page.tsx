@@ -463,7 +463,7 @@ function TreeLegend() {
           <div style={{ fontSize: "9px", color: "rgba(255,255,255,0.7)", fontWeight: "500" }}>Available Slot</div>
         </div>
       </div>
-
+  
 
       <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
         <svg width="24" height="24" viewBox="0 0 40 40">

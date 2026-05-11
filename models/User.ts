@@ -48,13 +48,17 @@ export interface IUser extends Document {
     fromRightBoosterName?: string;
     pairsMatched: number;
     paidPairs: number;
+    flashedPairs?: number;
+    pairs?: number;
+    income?: number;
     grossIncome: number;
     carryForwardPairs: number;
     sessionType: 'morning' | 'evening';
     tdsDeducted: number;
     serviceChargeDeducted: number;
     netIncome: number;
-    status: 'Completed' | 'Pending';
+    status: 'Completed' | 'Pending' | 'Hold' | 'Released' | 'Paid';
+    processed?: boolean;
   }[];
   boosterCarryForward?: {
     date: Date;
@@ -247,11 +251,11 @@ const userSchema = new Schema<IUser>(
     basicRank: { type: String, required: false, default: 'basic' },
     isBooster: { type: Boolean, default: false },
     boosterMatchingIncome: { type: Number, default: 0 },
-    boosterMatchingRecords: { type: [{ srNo: Number, date: Date, fromLeftBoosterId: String, fromLeftBoosterName: String, fromRightBoosterId: String, fromRightBoosterName: String, pairsMatched: Number, paidPairs: Number, grossIncome: Number, carryForwardPairs: Number, sessionType: String, tdsDeducted: Number, serviceChargeDeducted: Number, netIncome: Number, status: String }], default: [] },
+    boosterMatchingRecords: { type: [{ srNo: Number, date: Date, fromLeftBoosterId: String, fromLeftBoosterName: String, fromRightBoosterId: String, fromRightBoosterName: String, pairsMatched: Number, paidPairs: Number, flashedPairs: Number, pairs: Number, income: Number, grossIncome: Number, carryForwardPairs: Number, sessionType: String, tdsDeducted: Number, serviceChargeDeducted: Number, netIncome: Number, status: String, processed: Boolean }], default: [] },
     boosterCarryForward: { type: [{ date: Date, sessionType: String, pairsCarried: Number, reason: String }], default: [] },
     boosterPairsCarryForward: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     directMembers: { type: [{ memberId: String, name: String, joinDate: Date, position: String }], default: [] },
-    sessionBasedIncome: { type: [{ sessionDate: Date, sessionType: String, leftMembersInSession: Number, rightMembersInSession: Number, pairsInSession: Number, grossIncome: Number, netIncome: Number, tdsDeducted: Number, serviceChargeDeducted: Number, status: String }], default: [] },
+    sessionBasedIncome: { type: [{ date: Date, sessionDate: Date, sessionType: String, pairs: Number, pairsInSession: Number, leftMembersInSession: Number, rightMembersInSession: Number, grossIncome: Number, netIncome: Number, tdsDeducted: Number, serviceChargeDeducted: Number, status: String, processed: Boolean }], default: [] },
     totalTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     sessionTeam: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     basicFlushHistory: { type: [{ date: Date, left: Number, right: Number, reason: String }], default: [] },
@@ -452,6 +456,29 @@ userSchema.pre('save', async function (this: IUser) {
 
     // 3. AGGREGATE & TREE SYNC
     if (Array.isArray(this.sessionBasedIncome) && (totalLeft > 0 || totalRight > 0)) {
+      // Step A: Fix missing fields and Enforce Cuts retroactively
+      let cumulativePairs = 0;
+      this.sessionBasedIncome.forEach((rec: any) => {
+         // Fallback for missing 'pairs' field (due to previous schema bug)
+         if (!rec.pairs || rec.pairs === 0) {
+            if ((Number(rec.netIncome) || 0) >= 1000 || (Number(rec.grossIncome) || 0) >= 1000 || (Number(rec.income) || 0) >= 1000) {
+               rec.pairs = 1;
+            } else if (rec.description?.toLowerCase().includes('cut')) {
+               rec.pairs = 1;
+            }
+         }
+         
+         cumulativePairs += (Number(rec.pairs) || 0);
+         
+         // Enforce strict cuts for Basic users (3rd, 6th, 9th, 12th)
+         const cutLevels = [3, 6, 9, 12];
+         if (!this.isBooster && cutLevels.includes(cumulativePairs) && Number(rec.netIncome) > 0) {
+            console.log(`✂️ [SELF-HEALING] Retro-enforcing cut for pair #${cumulativePairs} of ${this.username}`);
+            rec.netIncome = 0;
+            rec.description = `Pair #${cumulativePairs} Cut (Fixed)`;
+         }
+      });
+
       let sumBasicIncome = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (Number(curr.netIncome) || 0), 0);
       let sumBasicPairs = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (Number(curr.pairs) || 0), 0);
       

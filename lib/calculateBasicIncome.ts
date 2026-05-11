@@ -33,6 +33,7 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     
     let paidPairs = 0;
     let newIncome = 0;
+    let grossIncomeVal = 0;
     let description = "";
 
     if (!user.isBooster) {
@@ -43,6 +44,7 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       const isCutPair = cutLevels.includes(pairSequenceNumber);
       
       paidPairs = 1; // Always max 1 pair for Basic phase
+      grossIncomeVal = 1000;
       newIncome = isCutPair ? 0 : 1000;
       description = isCutPair ? `3rd Pair Cut (${sessionType})` : `Basic Income (${sessionType})`;
       
@@ -51,8 +53,6 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       }
     } else {
       // BOOSTER PHASE (After 12th pair)
-      // Allow up to 10 pairs total per session.
-      // We calculate how many we can still match in this session.
       const today = new Date();
       const existingRecord = user.sessionBasedIncome?.find((s: any) => 
         new Date(s.date || s.sessionDate).toDateString() === today.toDateString() && 
@@ -63,14 +63,14 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       const remainingLimit = Math.max(0, 10 - pairsAlreadyMatchedInSession);
       
       paidPairs = Math.min(pairsInSession, remainingLimit);
-      newIncome = paidPairs * 1000;
+      grossIncomeVal = paidPairs * 1000;
+      newIncome = grossIncomeVal;
       description = `Booster Binary Income (${sessionType})`;
       
       console.log(`🚀 [BOOSTER BINARY] ${user.username}: matched ${paidPairs} NEW pairs (Total session: ${pairsAlreadyMatchedInSession + paidPairs}).`);
       
       if (paidPairs === 0 && pairsInSession > 0 && remainingLimit === 0) {
         console.log(`⏳ [BOOSTER CAP] ${user.username}: Session limit of 10 reached. ${pairsInSession} pairs flashed.`);
-        // Even if we don't pay, we must consume the session points (flush-out)
         if (user.sessionTeam) {
           user.sessionTeam.left = 0;
           user.sessionTeam.right = 0;
@@ -93,29 +93,25 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
          return { success: true, income: 0, pairs: 0, message: "Session already processed" };
       }
       
-      // Update existing record by ADDING the new pairs/income
       sessionRecord.pairs = (sessionRecord.pairs || 0) + paidPairs;
       sessionRecord.netIncome = (sessionRecord.netIncome || 0) + newIncome;
-      sessionRecord.grossIncome = (sessionRecord.grossIncome || 0) + newIncome;
+      sessionRecord.grossIncome = (sessionRecord.grossIncome || 0) + grossIncomeVal;
       sessionRecord.processed = true;
       
-      // Update user aggregates
       user.basicIncome = (user.basicIncome || 0) + newIncome;
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
       
-      // Consume points matched
       if (user.sessionTeam) {
         user.sessionTeam.left = Math.max(0, (user.sessionTeam.left || 0) - pairsInSession);
         user.sessionTeam.right = Math.max(0, (user.sessionTeam.right || 0) - pairsInSession);
       }
     } else {
-      // Create new session record
       user.sessionBasedIncome.push({
         date: today,
         sessionType: sessionType,
         pairs: paidPairs,
         netIncome: newIncome,
-        grossIncome: newIncome,
+        grossIncome: grossIncomeVal,
         processed: true,
         status: 'Completed'
       });

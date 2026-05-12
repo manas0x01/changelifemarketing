@@ -32,7 +32,7 @@ interface MNode {
   rightCount?: number;
   totalCount?: number;
   totalDirect?: { left: number; right: number };
-  totalActiveDirect?: number;
+  totalActiveDirect?: { left: number; right: number };
   totalLeftBasicUser?: number;
   totalRightBasicUser?: number;
   totalLeftBoosterUser?: number;
@@ -507,7 +507,7 @@ function MemberPopup({
   ];
 
   const detailBadges = [
-    { label: "ACT. DIR", val: n.totalActiveDirect ?? 0, col: "#d32f2f" },
+    { label: "ACT. DIR", val: (typeof n.totalActiveDirect === 'object' ? (n.totalActiveDirect.left + n.totalActiveDirect.right) : (n.totalActiveDirect ?? 0)), col: "#d32f2f" },
     { label: "L. BASIC", val: n.totalLeftBasicUser ?? 0, col: "#e67e22" },
     { label: "R. BASIC", val: n.totalRightBasicUser ?? 0, col: "#e67e22" },
     { label: "L. BOOST", val: n.totalLeftBoosterUser ?? 0, col: "#27ae60" },

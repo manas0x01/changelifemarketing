@@ -35,10 +35,13 @@ export async function calculateBoosterIncome(user: any, sessionType: 'morning' |
     // 5. Find or create the record for the CURRENT session to track progress
     if (!user.boosterMatchingRecords) user.boosterMatchingRecords = [];
     
-    // We look for a record from today with the same session type
-    let sessionRecord = user.boosterMatchingRecords.find((r: any) => 
-      new Date(r.date).toDateString() === today && r.sessionType === sessionType
-    );
+    const lastTransition = user.lastSessionDate ? new Date(user.lastSessionDate) : new Date(0);
+    let sessionRecord = user.boosterMatchingRecords.find((r: any) => {
+      const recDate = new Date(r.date);
+      return recDate.toDateString() === today && 
+             r.sessionType === sessionType &&
+             recDate >= lastTransition;
+    });
 
     const previouslyPaidPairs = sessionRecord ? (sessionRecord.paidPairs || 0) : 0;
 

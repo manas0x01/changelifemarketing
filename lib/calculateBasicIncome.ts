@@ -13,22 +13,22 @@ import { checkBoosterQualification } from "./checkBoosterQualification";
 export async function calculateBasicIncome(user: any, manualSessionType?: string) {
   try {
     const currentHour = new Date().getHours();
-    const sessionType = (manualSessionType === "morning" || manualSessionType === "evening") 
-      ? manualSessionType 
+    const sessionType = (manualSessionType === "morning" || manualSessionType === "evening")
+      ? manualSessionType
       : (currentHour < 12 ? "morning" : "evening");
-      
+
     // 1. Get joins from this session (stored in sessionTeam)
     const sessionLeft = user.sessionTeam?.left || 0;
     const sessionRight = user.sessionTeam?.right || 0;
 
     const pairsInSession = Math.min(sessionLeft, sessionRight);
-    
+
     if (pairsInSession === 0) {
       return { success: true, income: 0, pairs: 0 };
     }
 
     // ALWAYS max 1 pair paid per session for Basic Income
-    let paidPairs = 1; 
+    let paidPairs = 1;
     let newIncome = 0;
     let grossIncomeVal = 1000;
     let description = "";
@@ -39,10 +39,10 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       const pairSequenceNumber = currentLifetimePairs + 1;
       const cutLevels = [3, 6, 9, 12];
       const isCutPair = cutLevels.includes(pairSequenceNumber);
-      
+
       newIncome = isCutPair ? 0 : 1000;
       description = isCutPair ? `Basic Pair #${pairSequenceNumber} Cut (${sessionType})` : `Basic Income (${sessionType})`;
-      
+
       if (isCutPair) {
         console.log(`✂️ [BASIC CUT] ${user.username}: Pair #${pairSequenceNumber} cut.`);
       }
@@ -64,8 +64,8 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
 
     const today = new Date();
-    let sessionRecord = user.sessionBasedIncome.find((s: any) => 
-      new Date(s.date || s.sessionDate).toDateString() === today.toDateString() && 
+    let sessionRecord = user.sessionBasedIncome.find((s: any) =>
+      new Date(s.date || s.sessionDate).toDateString() === today.toDateString() &&
       s.sessionType === sessionType
     );
 
@@ -73,19 +73,19 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       // Even if already processed, we follow the 1-pair cap. 
       // If a match happens later in the same session, it will flash but not pay again.
       if (sessionRecord.processed) {
-         if (user.sessionTeam) {
-           user.sessionTeam.left = 0;
-           user.sessionTeam.right = 0;
-         }
-         return { success: true, income: 0, pairs: 0, message: "Session already paid/flashed" };
+        if (user.sessionTeam) {
+          user.sessionTeam.left = 0;
+          user.sessionTeam.right = 0;
+        }
+        return { success: true, income: 0, pairs: 0, message: "Session already paid/flashed" };
       }
-      
+
       sessionRecord.pairs = paidPairs;
       sessionRecord.netIncome = newIncome;
       sessionRecord.grossIncome = grossIncomeVal;
       sessionRecord.processed = true;
       sessionRecord.description = description;
-      
+
       user.basicIncome = (user.basicIncome || 0) + newIncome;
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
     } else {
@@ -99,7 +99,7 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
         status: 'Completed',
         description: description
       });
-      
+
       user.basicIncome = (user.basicIncome || 0) + newIncome;
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
     }

@@ -174,12 +174,7 @@ async function buildPlacementTree(
     userId: currentUser.userId || currentUser.username,
     type: isBooster ? "booster" : "active",
     sponsorId: currentUser.sponsorId,
-    joiningDate: currentUser.joiningDate || (currentUser.createdAt ? (() => {
-      const d = new Date(currentUser.createdAt);
-      const formatted = d.toLocaleString('en-IN', { hour12: false });
-      const session = d.getHours() < 12 ? "Morning" : "Evening";
-      return `${formatted} (${session})`;
-    })() : undefined),
+    joiningDate: currentUser.joiningDate || "",
     package: currentUser.registeredPackage || undefined,
     leftCount: actualLeftCount,
     rightCount: actualRightCount,

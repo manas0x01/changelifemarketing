@@ -143,6 +143,7 @@ interface TreeNode {
   totalLeftBoosterUser?: number;
   totalRightBoosterUser?: number;
   totalDirect?: { left: number; right: number };
+  totalActiveDirect?: { left: number; right: number };
   children?: TreeNode[];
 }
 

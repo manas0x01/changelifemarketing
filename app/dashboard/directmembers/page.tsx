@@ -65,8 +65,9 @@ export default function DirectMembersPage() {
     // Apply date filtering if dates are provided
     if (fromDate || toDate) {
       result = result.filter((member) => {
-        // Parse DD/MM/YYYY format from joiningDate string
-        const [day, month, year] = member.joiningDate.split('/').map(Number);
+        // Parse DD/MM/YYYY format from joiningDate string (handles both date-only and date-time formats)
+        const datePart = member.joiningDate.includes(',') ? member.joiningDate.split(',')[0] : member.joiningDate;
+        const [day, month, year] = datePart.split('/').map(Number);
         const memberDate = new Date(year, month - 1, day);
         
         const from = fromDate ? new Date(fromDate) : null;

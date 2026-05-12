@@ -14,20 +14,22 @@ export async function calculateBoosterMatching(user: any) {
   if (!user.boosterPairsCarryForward)
     user.boosterPairsCarryForward = { left: 0, right: 0 };
 
-  //////////////////////////////////////////////////////////////
-  // 🔥 SESSION DOUBLE EXECUTION GUARD
-  //////////////////////////////////////////////////////////////
-  const lastRecord =
-    user.boosterMatchingRecords[user.boosterMatchingRecords.length - 1];
+  // Session Cap: 10 booster pairs per session
+  const sessionRecords = user.boosterMatchingRecords.filter(
+    (r: any) => r.sessionType === sessionType && new Date(r.date).toDateString() === today
+  );
+  const sessionPairsUsed = sessionRecords.reduce((sum: number, r: any) => sum + (r.pairs || 0), 0);
+  const remainingSessionPairs = 10 - sessionPairsUsed;
 
+  const lastRecord = user.boosterMatchingRecords[user.boosterMatchingRecords.length - 1];
   if (
     lastRecord &&
     new Date(lastRecord.date).toDateString() === today &&
     lastRecord.sessionType === sessionType &&
     lastRecord.processed &&
-    !user.isBooster // Allow multiple matches in booster phase if needed, but standard is session based
+    sessionPairsUsed >= 10
   ) {
-    return { success: false, message: "Already processed in this session" };
+    return { success: false, message: "Already reached 10 pairs in this session" };
   }
 
   //////////////////////////////////////////////////////////////
@@ -41,13 +43,6 @@ export async function calculateBoosterMatching(user: any) {
   if (pairsAvailable <= 0) {
     return { success: false, message: "No matching booster pairs" };
   }
-
-  // Session Cap: 10 booster pairs per session
-  const sessionRecords = user.boosterMatchingRecords.filter(
-    (r: any) => r.sessionType === sessionType && new Date(r.date).toDateString() === today
-  );
-  const sessionPairsUsed = sessionRecords.reduce((sum: number, r: any) => sum + (r.pairs || 0), 0);
-  const remainingSessionPairs = 10 - sessionPairsUsed;
   
   let allowedPairs = Math.min(pairsAvailable, remainingSessionPairs);
   allowedPairs = Math.max(0, allowedPairs);

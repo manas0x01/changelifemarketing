@@ -169,7 +169,12 @@ export default function EditProfilePage() {
 
           const newPlacementData = {
             memberId: data.data.userId || data.data.username || "",
-            joiningDate: data.data.joiningDate ? new Date(data.data.joiningDate).toLocaleDateString('en-GB') : "",
+            joiningDate: data.data.joiningDate || (data.data.createdAt ? (() => {
+              const d = new Date(data.data.createdAt);
+              const formatted = d.toLocaleString('en-GB', { hour12: false });
+              const session = d.getHours() < 12 ? "Morning" : "Evening";
+              return `${formatted} (${session})`;
+            })() : ""),
             sponsorId: data.data.sponsorId || "",
             sponsorName: sponsorName,
             placementId: data.data.placementId || "",

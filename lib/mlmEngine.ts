@@ -55,13 +55,6 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
 
   // Session flushing and tracking is now handled entirely within teamUtils.ts (updateTeamCounts)
 
-  if (position === 'left' || position === 'right') {
-    if (!user.boosterPairsCarryForward) user.boosterPairsCarryForward = { left: 0, right: 0 };
-    if (user.isBooster) {
-      user.boosterPairsCarryForward[position] = (user.boosterPairsCarryForward[position] || 0) + 1;
-      console.log('[MLM] handleBinaryAndIncome: incremented boosterPairsCarryForward', { username: user.username, position, carryForward: user.boosterPairsCarryForward });
-    }
-  }
 
   // mark modified to ensure pre-save hook triggers derived fields
   if (typeof (user as any).markModified === 'function') {

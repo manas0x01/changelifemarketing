@@ -70,7 +70,12 @@ export async function POST(req: NextRequest) {
 
     const card = {
       sponsorId: user.sponsorId || "",
-      joiningDate: user.joiningDate ? new Date(user.joiningDate).toLocaleDateString() : "",
+      joiningDate: user.joiningDate || (user.createdAt ? (() => {
+        const d = new Date(user.createdAt);
+        const formatted = d.toLocaleString('en-IN', { hour12: false });
+        const session = d.getHours() < 12 ? "Morning" : "Evening";
+        return `${formatted} (${session})`;
+      })() : ""),
       package: user.registeredPackage || "",
       leftId: leftChild?.userId || leftChild?.username || "",
       rightId: rightChild?.userId || rightChild?.username || "",

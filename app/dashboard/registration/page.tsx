@@ -355,19 +355,8 @@ export default function NewRegisterPage() {
   };
 
   const handleRegistrationSubmit = async () => {
-    // Check if registration is frozen during transition period
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    
-    // Freeze period: 11:50 AM to 12:00 PM and 11:50 PM to 12:00 AM
-    const isFreezePeriod = (currentHour === 11 && currentMinute >= 50) || 
-                            (currentHour === 23 && currentMinute >= 50);
-    
-    if (isFreezePeriod) {
-      toast.error("Registration is frozen during system transition. Please try again after the session change.");
-      return;
-    }
+    // Sessions: Morning = 12:00 AM to 12:00 PM, Evening = 12:00 PM to 12:00 AM
+    // No freeze period - registration is always allowed
 
     if (!userIdValidated) {
       toast.error("Please validate User ID first");

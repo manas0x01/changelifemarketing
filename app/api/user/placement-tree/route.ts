@@ -4,6 +4,8 @@ import { authOptions } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 import { calculateBasicIncome } from "@/lib/calculateBasicIncome";
+import { calculateBoosterIncome } from "@/lib/calculateBoosterIncome";
+import { calculateBoosterMatching } from "@/lib/calculateBoosterMatching";
 
 
 
@@ -105,6 +107,11 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
     const flushedOut = false;
     const flushMessage = "";
     
+    // 108: CALCULATE INCOME: Match members from the session that just ended BEFORE resetting
+    const previousSessionType = lastSessionType as "morning" | "evening";
+    await calculateBasicIncome(user, previousSessionType);
+    await calculateBoosterIncome(user, previousSessionType);
+
     // 108: RESET SESSION COUNTS: We reset the session counts so that the new session starts fresh.
     user.sessionTeam = { left: 0, right: 0 };
     

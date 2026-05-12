@@ -64,10 +64,14 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
 
     const today = new Date();
-    let sessionRecord = user.sessionBasedIncome.find((s: any) =>
-      new Date(s.date || s.sessionDate).toDateString() === today.toDateString() &&
-      s.sessionType === sessionType
-    );
+    const lastTransition = user.lastSessionDate ? new Date(user.lastSessionDate) : new Date(0);
+    
+    let sessionRecord = user.sessionBasedIncome.find((s: any) => {
+      const recDate = new Date(s.date || s.sessionDate);
+      return recDate.toDateString() === today.toDateString() && 
+             s.sessionType === sessionType &&
+             recDate >= lastTransition;
+    });
 
     if (sessionRecord) {
       // Even if already processed, we follow the 1-pair cap. 

@@ -625,6 +625,27 @@ userSchema.pre('save', async function (this: IUser) {
        }
     }
 
+    // 5. DIRECT MEMBERS SYNC (Real-time sponsorship audit)
+    const directResult = await (this.constructor as any).find({ 
+      sponsorId: this.username || this.userId 
+    }, 'userId username fullName createdAt placementPosition joiningDate registeredPackage');
+
+    if (Array.isArray(directResult)) {
+      const currentDirects = directResult.map((d: any) => ({
+        memberId: d.username || d.userId,
+        name: d.fullName || d.username,
+        joinDate: d.createdAt,
+        position: d.placementPosition || 'left'
+      }));
+
+      // Update directMembers array if count differs or it's empty
+      if (!this.directMembers || this.directMembers.length !== currentDirects.length) {
+        console.log(`[SELF-HEALING] Syncing directMembers for ${this.username}: ${this.directMembers?.length || 0} -> ${currentDirects.length}`);
+        this.directMembers = currentDirects;
+      }
+      this.totalDirect = currentDirects.length;
+    }
+
     // Ensure totalIncome is the sum of all income sources
     const computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);
     this.totalIncome = computedTotal as any;

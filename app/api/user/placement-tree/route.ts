@@ -186,9 +186,25 @@ async function buildPlacementTree(
     totalLeftBoosterUser: currentUser.boosterCount?.left || 0,
     totalRightBoosterUser: currentUser.boosterCount?.right || 0,
     totalDirect: {
-      left: currentUser.directMembers?.filter((m: any) => m.position === "left").length || 0,
-      right: currentUser.directMembers?.filter((m: any) => m.position === "right").length || 0,
+      left: currentUser.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === "left").length || 0,
+      right: currentUser.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === "right").length || 0,
     },
+    totalActiveDirect: await (async () => {
+       if (Array.isArray(currentUser.directMembers) && currentUser.directMembers.length > 0) {
+         const directIds = currentUser.directMembers.map((m: any) => m.memberId);
+         const directDocs = await User.find({ $or: [{ userId: { $in: directIds } }, { username: { $in: directIds } }] });
+         let left = 0; let right = 0;
+         currentUser.directMembers.forEach((m: any) => {
+           const doc = directDocs.find(d => d.username === m.memberId || d.userId === m.memberId);
+           if (doc && (doc.registeredPackage || doc.joiningDate)) {
+             if ((m.position || '').toLowerCase() === 'left') left++;
+             else if ((m.position || '').toLowerCase() === 'right') right++;
+           }
+         });
+         return { left, right };
+       }
+       return { left: 0, right: 0 };
+    })(),
     children: [],
   };
 

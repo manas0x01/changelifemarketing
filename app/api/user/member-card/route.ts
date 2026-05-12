@@ -60,13 +60,29 @@ export async function POST(req: NextRequest) {
       ]
     }) : null;
 
-    // Direct members activity check
-    let totalActiveDirect = 0;
-    if (Array.isArray(user.directMembers) && user.directMembers.length > 0) {
-      const directIds = user.directMembers.map((m: any) => m.memberId);
-      const directDocs = await User.find({ $or: [{ userId: { $in: directIds } }, { username: { $in: directIds } }] });
-      totalActiveDirect = directDocs.filter(d => d.registeredPackage || d.joiningDate).length;
-    }
+    // Direct members activity check (Left/Right)
+    const totalActiveDirect = await (async () => {
+      if (Array.isArray(user.directMembers) && user.directMembers.length > 0) {
+        const directIds = user.directMembers.map((m: any) => m.memberId);
+        const directDocs = await User.find({ 
+          $or: [{ userId: { $in: directIds } }, { username: { $in: directIds } }] 
+        });
+        
+        let activeLeft = 0;
+        let activeRight = 0;
+        
+        user.directMembers.forEach((m: any) => {
+          const doc = directDocs.find(d => d.username === m.memberId || d.userId === m.memberId);
+          if (doc && (doc.registeredPackage || doc.joiningDate)) {
+            if ((m.position || '').toLowerCase() === 'left') activeLeft++;
+            else if ((m.position || '').toLowerCase() === 'right') activeRight++;
+          }
+        });
+        
+        return { left: activeLeft, right: activeRight };
+      }
+      return { left: 0, right: 0 };
+    })();
 
     const card = {
       sponsorId: user.sponsorId || "",

@@ -54,28 +54,37 @@ export async function GET(req: NextRequest) {
       left: (user.totalTeam && typeof user.totalTeam.left === 'number') ? user.totalTeam.left : 0,
       right: (user.totalTeam && typeof user.totalTeam.right === 'number') ? user.totalTeam.right : 0,
     };
-    // Prefer `directMembers` as the source of truth for direct counts.
-    const directStats = await (async () => {
+    // Calculate Total and Active Direct Stats (Left/Right)
+    const { totalDirect, totalActiveDirect } = await (async () => {
+      const stats = {
+        totalDirect: { left: 0, right: 0 },
+        totalActiveDirect: { left: 0, right: 0 }
+      };
+
       if (Array.isArray(user.directMembers) && user.directMembers.length > 0) {
-        const left = user.directMembers.filter((m: any) => (m.position || '').toString().toLowerCase() === 'left').length;
-        const right = user.directMembers.filter((m: any) => (m.position || '').toString().toLowerCase() === 'right').length;
-        
-        // Fetch full documents to check activity status
         const directIds = user.directMembers.map((m: any) => m.memberId);
-        const directDocs = await User.find({ $or: [{ userId: { $in: directIds } }, { username: { $in: directIds } }] });
+        const directDocs = await User.find({ 
+          $or: [{ userId: { $in: directIds } }, { username: { $in: directIds } }] 
+        });
         
-        // Activity check: A user is active if they have a registeredPackage or joiningDate
-        const activeCount = directDocs.filter(d => d.registeredPackage || d.joiningDate).length;
-        
-        return { left, right, active: activeCount };
+        user.directMembers.forEach((m: any) => {
+          const isLeft = (m.position || '').toLowerCase() === 'left';
+          const isRight = (m.position || '').toLowerCase() === 'right';
+          
+          if (isLeft) stats.totalDirect.left++;
+          else if (isRight) stats.totalDirect.right++;
+
+          const doc = directDocs.find(d => d.username === m.memberId || d.userId === m.memberId);
+          const isActive = doc && (doc.registeredPackage || doc.joiningDate);
+          
+          if (isActive) {
+            if (isLeft) stats.totalActiveDirect.left++;
+            else if (isRight) stats.totalActiveDirect.right++;
+          }
+        });
       }
-      return { left: 0, right: 0, active: 0 };
+      return stats;
     })();
-
-    const totalDirect = { left: directStats.left, right: directStats.right };
-    const totalActiveDirect = directStats.active;
-
-    console.log('[DASHBOARD] totalDirect (directMembers counts):', totalDirect);
     
     // Use the pre-calculated basicIncome from the User model
     // The pre-save hook in User.ts correctly calculates this from basicIncomeRecords

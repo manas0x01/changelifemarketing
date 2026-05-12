@@ -37,7 +37,7 @@ interface BoosterIncome {
 interface DashboardData {
   totalTeam: { left: number; right: number };
   totalDirect: { left: number; right: number };
-  totalActiveDirect: number;
+  totalActiveDirect: { left: number; right: number };
   totalLeftBasicUser: number;
   totalRightBasicUser: number;
   totalLeftBoosterUser: number;
@@ -137,7 +137,7 @@ export default function Dashboard() {
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     totalTeam: { left: 0, right: 0 },
     totalDirect: { left: 0, right: 0 },
-    totalActiveDirect: 0,
+    totalActiveDirect: { left: 0, right: 0 },
     totalLeftBasicUser: 0,
     totalRightBasicUser: 0,
     totalLeftBoosterUser: 0,
@@ -468,7 +468,7 @@ export default function Dashboard() {
                       ) : card.title === "Total Direct" && showTotalDirectInfo ? (
                         <span className="stat-card-link">Left : {totalDirect.left} | Right : {totalDirect.right}</span>
                       ) : card.title === "Active Direct" && showActiveDirectInfo ? (
-                        <span className="stat-card-link">Total : {totalActiveDirect}</span>
+                        <span className="stat-card-link">Left : {totalActiveDirect.left} | Right : {totalActiveDirect.right}</span>
                       ) : card.title === "Basic Users" && showBasicUsersInfo ? (
                         <span className="stat-card-link">Left : {totalLeftBasicUser} | Right : {totalRightBasicUser}</span>
                       ) : card.title === "Booster Users" && showBoosterUsersInfo ? (

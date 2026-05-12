@@ -267,14 +267,22 @@ export async function POST(req: NextRequest) {
     console.log('[DEBUG] register: newUser saved', { userId: newUser.userId, username: newUser.username });
 
     //////////////////////////////////////////////////////////////
-    // 🔹 UPDATE SPONSOR (LEFT / RIGHT CHILD + TOTAL TEAM)
+    // 🔹 UPDATE SPONSOR (CHILD + TOTAL DIRECTS)
     //////////////////////////////////////////////////////////////
 
-    // Use findByIdAndUpdate to avoid VersionError since updateTeamCounts already saved this document
+    // Push to directMembers array and update totalDirect count
     await User.findByIdAndUpdate(sponsor._id, {
       $set: {
-        [positionField]: newUser.username,
-        totalDirect: (sponsor.totalDirect || 0) + 1
+        [positionField]: newUser.username
+      },
+      $inc: { totalDirect: 1 },
+      $push: {
+        directMembers: {
+          memberId: newUser.userId || newUser.username,
+          name: newUser.fullName || newUser.username,
+          joinDate: new Date(),
+          position: placementPosition,
+        }
       }
     }, { session: dbSession });
     
@@ -287,7 +295,7 @@ export async function POST(req: NextRequest) {
     });
 
     //////////////////////////////////////////////////////////////
-    // 🔹 UPDATE LOGGED-IN USER
+    // 🔹 UPDATE LOGGED-IN USER (EPIN + PINS STATS)
     //////////////////////////////////////////////////////////////
 
     const upToDateLoggedInUser = await User.findOne({
@@ -313,40 +321,12 @@ export async function POST(req: NextRequest) {
       (upToDateLoggedInUser.activePins || 0) - 1
     );
 
-    // safe totalTeam
-    if (!upToDateLoggedInUser.totalTeam) {
-      upToDateLoggedInUser.totalTeam = { left: 0, right: 0 };
-    }
-
-    // Update team count for the placement position
     // Update team count for the placement position 
     // ONLY if not already updated by updateTeamCounts (which happens if sponsor == loggedInUser)
     if (sponsor.username !== session.user.username) {
-      upToDateLoggedInUser.totalTeam[placementPosition] = (upToDateLoggedInUser.totalTeam[placementPosition] || 0) + 1;
-      console.log('[REGISTER] Team count updated for logged-in user:', { left: upToDateLoggedInUser.totalTeam.left, right: upToDateLoggedInUser.totalTeam.right });
-    } else {
-      console.log('[REGISTER] Skipping redundant team count update (already updated via updateTeamCounts)');
-    }
-
-    //////////////////////////////////////////////////////////////
-    // 🔹 DIRECT MEMBERS SAFE ADD
-    //////////////////////////////////////////////////////////////
-
-    if (!Array.isArray(upToDateLoggedInUser.directMembers)) {
-      upToDateLoggedInUser.directMembers = [];
-    }
-
-    const exists = upToDateLoggedInUser.directMembers.some(
-      (m: any) => m.memberId === (newUser.userId || newUser.username)
-    );
-
-    if (!exists) {
-      upToDateLoggedInUser.directMembers.push({
-        memberId: newUser.userId || newUser.username,
-        name: newUser.fullName || newUser.username,
-        joinDate: new Date(),
-        position: placementPosition,
-      });
+       if (!upToDateLoggedInUser.totalTeam) upToDateLoggedInUser.totalTeam = { left: 0, right: 0 };
+       upToDateLoggedInUser.totalTeam[placementPosition] = (upToDateLoggedInUser.totalTeam[placementPosition] || 0) + 1;
+       console.log('[REGISTER] Team count updated for logged-in user:', { left: upToDateLoggedInUser.totalTeam.left, right: upToDateLoggedInUser.totalTeam.right });
     }
 
     // Use findByIdAndUpdate to avoid VersionError
@@ -354,6 +334,7 @@ export async function POST(req: NextRequest) {
       $set: {
         totalTeam: upToDateLoggedInUser.totalTeam,
         usedPins: upToDateLoggedInUser.usedPins,
+        activePins: upToDateLoggedInUser.activePins,
         ePins: upToDateLoggedInUser.ePins
       }
     }, { session: dbSession });

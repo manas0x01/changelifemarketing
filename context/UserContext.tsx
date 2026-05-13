@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
+import { useSession } from "next-auth/react";
 
 interface UserData {
   username: string;
@@ -16,50 +17,38 @@ interface UserContextType {
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export function UserProvider({ children }: { children: React.ReactNode }) {
+  const { data: session, status } = useSession();
   const [userData, setUserData] = useState<UserData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasFetched, setHasFetched] = useState(false);
+  const isLoading = status === "loading";
 
-  const fetchUserData = useCallback(async (force = false) => {
-    // If already fetched and not forcing refresh, skip
-    if (hasFetched && !force) {
-      return;
-    }
-
-    try {
-      setIsLoading(true);
-      const response = await fetch("/api/user/update-profile", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        if (data.data) {
-          setUserData({
-            username: data.data.username,
-            fullName: data.data.fullName,
-          });
-        }
-      }
-    } catch (error) {
-    } finally {
-      setIsLoading(false);
-      setHasFetched(true);
-    }
-  }, [hasFetched]);
-
-  // Fetch user data only once on mount
+  // Populate userData directly from the next-auth session JWT
+  // — no API call needed, the token already has fullName & username
   useEffect(() => {
-    if (!hasFetched) {
-      fetchUserData();
-    }
-  }, [hasFetched, fetchUserData]);
+    if (status === "authenticated" && session?.user) {
+      const username = session.user.username || session.user.name || "";
+      const fullName = session.user.fullName || session.user.name || "";
 
+      // Only update state if values actually changed
+      setUserData((prev) => {
+        if (prev?.username === username && prev?.fullName === fullName) {
+          return prev;
+        }
+        return { username, fullName };
+      });
+    } else if (status === "unauthenticated") {
+      setUserData(null);
+    }
+  }, [session, status]);
+
+  // refetchUser kept for API compatibility — re-reads session
   const refetchUser = useCallback(async () => {
-    await fetchUserData(true);
-  }, [fetchUserData]);
+    if (session?.user) {
+      setUserData({
+        username: session.user.username || session.user.name || "",
+        fullName: session.user.fullName || session.user.name || "",
+      });
+    }
+  }, [session]);
 
   const value: UserContextType = {
     userData,

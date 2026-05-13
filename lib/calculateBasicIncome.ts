@@ -93,7 +93,7 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
     } else {
       user.sessionBasedIncome.push({
-        date: today,
+        date: new Date(),
         sessionType: sessionType,
         pairs: paidPairs,
         netIncome: newIncome,

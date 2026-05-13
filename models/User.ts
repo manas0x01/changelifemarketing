@@ -533,11 +533,46 @@ userSchema.pre('save', async function (this: IUser) {
       }
     }
 
+    // 4. BOOSTER COUNT & CARRY-FORWARD SYNC (Real-time tree audit)
+    const boosterResult = await (this.constructor as any).aggregate([
+      { $match: { placementId: this.username } },
+      {
+        $graphLookup: {
+          from: "users",
+          startWith: "$username",
+          connectFromField: "username",
+          connectToField: "placementId",
+          as: "descendants"
+        }
+      },
+      {
+        $project: {
+          placementPosition: 1,
+          isBooster: 1,
+          boosterDescendants: {
+            $filter: {
+              input: "$descendants",
+              as: "d",
+              cond: { $eq: ["$$d.isBooster", true] }
+            }
+          }
+        }
+      }
+    ]);
+
+    let actualLeftBoosters = 0;
+    let actualRightBoosters = 0;
+    boosterResult.forEach((r: any) => {
+      const count = (r.isBooster ? 1 : 0) + (r.boosterDescendants?.length || 0);
+      if (r.placementPosition === 'left') actualLeftBoosters = count;
+      if (r.placementPosition === 'right') actualRightBoosters = count;
+    });
+
     if (Array.isArray(this.boosterMatchingRecords)) {
       // 1. CRITICAL FIX: If the user has NO boosters in downline, any booster matching income is a BUG.
       // Purge it to fix records for users like CLMAKS.
       if (actualLeftBoosters === 0 && actualRightBoosters === 0) {
-        if (this.boosterMatchingIncome > 0 || this.boosterMatchingRecords.length > 0) {
+        if ((this.boosterMatchingIncome || 0) > 0 || (this.boosterMatchingRecords?.length || 0) > 0) {
           console.log(`🧹 [SELF-HEALING] Purging incorrect booster income for ${this.username} (No booster descendants found).`);
           this.boosterMatchingIncome = 0;
           this.boosterMatchingRecords = [];
@@ -574,41 +609,6 @@ userSchema.pre('save', async function (this: IUser) {
       this.boosterMatchingRecords = [];
       this.boosterMatchingIncome = 0;
     }
-
-    // 4. BOOSTER COUNT & CARRY-FORWARD SYNC (Real-time tree audit)
-    const boosterResult = await (this.constructor as any).aggregate([
-      { $match: { placementId: this.username } },
-      {
-        $graphLookup: {
-          from: "users",
-          startWith: "$username",
-          connectFromField: "username",
-          connectToField: "placementId",
-          as: "descendants"
-        }
-      },
-      {
-        $project: {
-          placementPosition: 1,
-          isBooster: 1,
-          boosterDescendants: {
-            $filter: {
-              input: "$descendants",
-              as: "d",
-              cond: { $eq: ["$$d.isBooster", true] }
-            }
-          }
-        }
-      }
-    ]);
-
-    let actualLeftBoosters = 0;
-    let actualRightBoosters = 0;
-    boosterResult.forEach((r: any) => {
-      const count = (r.isBooster ? 1 : 0) + (r.boosterDescendants?.length || 0);
-      if (r.placementPosition === 'left') actualLeftBoosters = count;
-      if (r.placementPosition === 'right') actualRightBoosters = count;
-    });
 
     if (!this.boosterCount) this.boosterCount = { left: 0, right: 0 };
     this.boosterCount.left = actualLeftBoosters;

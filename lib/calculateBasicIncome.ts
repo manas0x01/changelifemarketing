@@ -63,14 +63,13 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     // 4. Update session history / records
     if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
 
-    const today = new Date();
-    const lastTransition = user.lastSessionDate ? new Date(user.lastSessionDate) : new Date(0);
-
+    const todayStr = new Date().toDateString();
+    // TESTING MODE: We allow manual triggers to create new sessions if they are not within the same 10 seconds
     let sessionRecord = user.sessionBasedIncome.find((s: any) => {
       const recDate = new Date(s.date || s.sessionDate);
-      return recDate.toDateString() === today.toDateString() &&
-        s.sessionType === sessionType &&
-        recDate >= lastTransition;
+      return recDate.toDateString() === todayStr && 
+             s.sessionType === sessionType &&
+             (Date.now() - recDate.getTime() < 10000); // 10 second safety window
     });
 
     if (sessionRecord) {

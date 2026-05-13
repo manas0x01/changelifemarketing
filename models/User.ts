@@ -452,10 +452,10 @@ userSchema.pre('save', async function (this: IUser) {
       }
     }
 
-    // --- Removed Retroactive Migration Logic (Caused income duplication) ---
-
     // 3. AGGREGATE & TREE SYNC
     if (Array.isArray(this.sessionBasedIncome) && (totalLeft > 0 || totalRight > 0)) {
+      console.log(`🔍 [SYNC] Checking Basic Income for ${this.username}. Tree: ${totalLeft}L | ${totalRight}R`);
+      
       // Step A: Fix missing fields and Enforce Cuts retroactively
       let cumulativePairs = 0;
       this.sessionBasedIncome.forEach((rec: any) => {
@@ -582,6 +582,15 @@ userSchema.pre('save', async function (this: IUser) {
       // 2. Release any existing 'Hold' records if user is now a Booster
       if (this.isBooster) {
         let releasedAny = false;
+        const todayStr = new Date().toDateString();
+        // In TESTING MODE (or if triggered very quickly), we allow finding the most recent record
+        // but we'll be less strict about the date to allow manual overrides.
+        let sessionRecord = (this.sessionBasedIncome || []).find((s: any) => {
+          const recDate = new Date(s.date || s.sessionDate);
+          return recDate.toDateString() === todayStr && 
+                 s.sessionType === this.lastSessionType && 
+                 (Date.now() - recDate.getTime() < 10000);
+        });
         this.boosterMatchingRecords.forEach((record: any) => {
           if (record.status === 'Hold') {
             record.status = 'Released';

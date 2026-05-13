@@ -468,6 +468,12 @@ userSchema.pre('save', async function (this: IUser) {
           }
         }
 
+         // CAPPING FIX: Ensure no single session record exceeds 1000
+         if (Number(rec.netIncome) > 1000) {
+            console.log(`⚠️ [SYNC] Capping inflated income for ${this.username}: ${rec.netIncome} -> 1000`);
+            rec.netIncome = 1000;
+         }
+
         cumulativePairs += (Number(rec.pairs) || 0);
 
         // Enforce strict cuts for Basic users (3rd, 6th, 9th, 12th)

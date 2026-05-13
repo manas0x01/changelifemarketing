@@ -73,37 +73,29 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     });
 
     if (sessionRecord) {
-      // Even if already processed, we follow the 1-pair cap. 
-      // If a match happens later in the same session, it will flash but not pay again.
-      if (sessionRecord.processed) {
-        if (user.sessionTeam) {
-          user.sessionTeam.left = 0;
-          user.sessionTeam.right = 0;
-        }
-        return { success: true, income: 0, pairs: 0, message: "Session already paid/flashed" };
+      if (sessionRecord.netIncome >= 1000) {
+        console.log(`🚫 [BASIC CAP] ${user.username} already received ₹${sessionRecord.netIncome} for ${sessionType}. Skipping.`);
+        return { success: true, income: 0, pairs: 0 };
       }
-
-      sessionRecord.pairs = paidPairs;
-      sessionRecord.netIncome = newIncome;
-      sessionRecord.grossIncome = grossIncomeVal;
+      
+      // Update existing record with the income (capped at 1000)
+      sessionRecord.netIncome = 1000;
+      sessionRecord.pairs = (sessionRecord.pairs || 0) + paidPairs;
       sessionRecord.processed = true;
-      sessionRecord.description = description;
-
-      user.basicIncome = (user.basicIncome || 0) + newIncome;
+      sessionRecord.date = new Date();
+      
+      user.basicIncome = (user.basicIncome || 0) + 1000;
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
     } else {
       user.sessionBasedIncome.push({
         date: new Date(),
         sessionType: sessionType,
         pairs: paidPairs,
-        netIncome: newIncome,
-        grossIncome: grossIncomeVal,
-        processed: true,
-        status: 'Completed',
-        description: description
+        netIncome: 1000,
+        description: description,
+        processed: true
       });
-
-      user.basicIncome = (user.basicIncome || 0) + newIncome;
+      user.basicIncome = (user.basicIncome || 0) + 1000;
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
     }
 

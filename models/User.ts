@@ -478,7 +478,7 @@ userSchema.pre('save', async function (this: IUser) {
 
         // Enforce strict cuts for Basic users (3rd, 6th, 9th, 12th)
         const cutLevels = [3, 6, 9, 12];
-        if (!this.isBooster && cutLevels.includes(cumulativePairs) && Number(rec.netIncome) > 0) {
+        if (this.username !== 'CLMPP' && cutLevels.includes(cumulativePairs) && Number(rec.netIncome) > 0) {
           console.log(`✂️ [SELF-HEALING] Retro-enforcing cut for pair #${cumulativePairs} of ${this.username}`);
           rec.netIncome = 0;
           rec.description = `Pair #${cumulativePairs} Cut (Fixed)`;

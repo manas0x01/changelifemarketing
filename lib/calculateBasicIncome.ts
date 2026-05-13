@@ -79,23 +79,24 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       }
       
       // Update existing record with the income (capped at 1000)
-      sessionRecord.netIncome = 1000;
+      const incomeToAdd = newIncome;
+      sessionRecord.netIncome = incomeToAdd;
       sessionRecord.pairs = (sessionRecord.pairs || 0) + paidPairs;
       sessionRecord.processed = true;
       sessionRecord.date = new Date();
       
-      user.basicIncome = (user.basicIncome || 0) + 1000;
+      user.basicIncome = (user.basicIncome || 0) + incomeToAdd;
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
     } else {
       user.sessionBasedIncome.push({
         date: new Date(),
         sessionType: sessionType,
         pairs: paidPairs,
-        netIncome: 1000,
+        netIncome: newIncome,
         description: description,
         processed: true
       });
-      user.basicIncome = (user.basicIncome || 0) + 1000;
+      user.basicIncome = (user.basicIncome || 0) + newIncome;
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
     }
 

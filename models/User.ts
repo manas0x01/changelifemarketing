@@ -37,7 +37,7 @@ export interface IUser extends Document {
   rightChild?: string;
   memberType?: 'gold' | 'active';
   role?: string;
-  basicRank?: string; 
+  basicRank?: string;
   boosterMatchingIncome?: number;
   boosterMatchingRecords?: {
     srNo: number;
@@ -164,7 +164,7 @@ export interface IUser extends Document {
     status: 'Active' | 'Used' | 'Transferred' | 'Expired';
     usedDate?: Date; usedByUsername?: string; usedByName?: string;
     transferredFrom?: string; transferredFromName?: string;
-    transferredTo?: string; transferredToName?: string; transferDate?: Date; 
+    transferredTo?: string; transferredToName?: string; transferDate?: Date;
     remark?: string;
   }[];
   transferHistory?: {
@@ -370,9 +370,9 @@ userSchema.pre('save', async function (this: IUser) {
   console.log('💾 [PRE-SAVE] Starting save hook for user:', this.username || this.userId);
   console.log('💾 [PRE-SAVE] Is new document:', this.isNew);
   console.log('💾 [PRE-SAVE] Modified fields:', this.modifiedPaths());
-  
+
   const salt = await bcrypt.genSalt(12);
-  
+
   if (this.isModified('password')) {
     if (!this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
       console.log('🔒 [PRE-SAVE] Password is modified and not hashed, hashing...');
@@ -381,7 +381,7 @@ userSchema.pre('save', async function (this: IUser) {
       console.log('🔒 [PRE-SAVE] Password is already hashed, skipping.');
     }
   }
-  
+
   // Check transaction password - only hash when modified or on new documents
   console.log('🔐 [PRE-SAVE] Checking transactionPassword modification state...');
   console.log('🔐 [PRE-SAVE] isModified("transactionPassword"):', this.isModified('transactionPassword'));
@@ -420,7 +420,7 @@ userSchema.pre('save', async function (this: IUser) {
       console.log('💡 [PRE-SAVE] userId missing — setting from username');
       this.userId = this.username;
       if (typeof (this as any).markModified === 'function') {
-        try { (this as any).markModified('userId'); } catch (e) {}
+        try { (this as any).markModified('userId'); } catch (e) { }
       }
     }
   } catch (err) {
@@ -437,13 +437,13 @@ userSchema.pre('save', async function (this: IUser) {
     const basicPairsCount = this.basicPairs || 0;
     const isPioneer = this.username === 'CLMPP';
     const shouldBeBooster = (basicPairsCount >= 12) || isPioneer;
-    
+
     if (shouldBeBooster && !this.isBooster) {
       console.log(`🚀 [SELF-HEALING] Upgrading ${this.username} to Booster status (Requirement met or Pioneer).`);
       this.isBooster = true;
       this.basicRank = "Booster";
       this.boosterAchievedAt = this.boosterAchievedAt || new Date();
-      
+
       // Release any existing 'Hold' records
       if (Array.isArray(this.boosterMatchingRecords)) {
         this.boosterMatchingRecords.forEach((record: any) => {
@@ -459,29 +459,29 @@ userSchema.pre('save', async function (this: IUser) {
       // Step A: Fix missing fields and Enforce Cuts retroactively
       let cumulativePairs = 0;
       this.sessionBasedIncome.forEach((rec: any) => {
-         // Fallback for missing 'pairs' field (due to previous schema bug)
-         if (!rec.pairs || rec.pairs === 0) {
-            if ((Number(rec.netIncome) || 0) >= 1000 || (Number(rec.grossIncome) || 0) >= 1000 || (Number(rec.income) || 0) >= 1000) {
-               rec.pairs = 1;
-            } else if (rec.description?.toLowerCase().includes('cut')) {
-               rec.pairs = 1;
-            }
-         }
-         
-         cumulativePairs += (Number(rec.pairs) || 0);
-         
-         // Enforce strict cuts for Basic users (3rd, 6th, 9th, 12th)
-         const cutLevels = [3, 6, 9, 12];
-         if (!this.isBooster && cutLevels.includes(cumulativePairs) && Number(rec.netIncome) > 0) {
-            console.log(`✂️ [SELF-HEALING] Retro-enforcing cut for pair #${cumulativePairs} of ${this.username}`);
-            rec.netIncome = 0;
-            rec.description = `Pair #${cumulativePairs} Cut (Fixed)`;
-         }
+        // Fallback for missing 'pairs' field (due to previous schema bug)
+        if (!rec.pairs || rec.pairs === 0) {
+          if ((Number(rec.netIncome) || 0) >= 1000 || (Number(rec.grossIncome) || 0) >= 1000 || (Number(rec.income) || 0) >= 1000) {
+            rec.pairs = 1;
+          } else if (rec.description?.toLowerCase().includes('cut')) {
+            rec.pairs = 1;
+          }
+        }
+
+        cumulativePairs += (Number(rec.pairs) || 0);
+
+        // Enforce strict cuts for Basic users (3rd, 6th, 9th, 12th)
+        const cutLevels = [3, 6, 9, 12];
+        if (!this.isBooster && cutLevels.includes(cumulativePairs) && Number(rec.netIncome) > 0) {
+          console.log(`✂️ [SELF-HEALING] Retro-enforcing cut for pair #${cumulativePairs} of ${this.username}`);
+          rec.netIncome = 0;
+          rec.description = `Pair #${cumulativePairs} Cut (Fixed)`;
+        }
       });
 
       let sumBasicIncome = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (Number(curr.netIncome) || 0), 0);
       let sumBasicPairs = this.sessionBasedIncome.reduce((acc: number, curr: any) => acc + (Number(curr.pairs) || 0), 0);
-      
+
       const actualTreePairs = Math.min(totalLeft, totalRight);
 
       // Snap to grid: Ensure wallet pairs don't exceed actual tree pairs
@@ -494,8 +494,8 @@ userSchema.pre('save', async function (this: IUser) {
           if (canReduce > 0) {
             rec.pairs = (Number(rec.pairs) || 0) - canReduce;
             if (rec.netIncome > 0) {
-                const incomeToReduce = canReduce * 1000;
-                rec.netIncome = Math.max(0, (Number(rec.netIncome) || 0) - incomeToReduce);
+              const incomeToReduce = canReduce * 1000;
+              rec.netIncome = Math.max(0, (Number(rec.netIncome) || 0) - incomeToReduce);
             }
             excess -= canReduce;
           }
@@ -534,7 +534,17 @@ userSchema.pre('save', async function (this: IUser) {
     }
 
     if (Array.isArray(this.boosterMatchingRecords)) {
-      // 1. Release any existing 'Hold' records if user is now a Booster
+      // 1. CRITICAL FIX: If the user has NO boosters in downline, any booster matching income is a BUG.
+      // Purge it to fix records for users like CLMAKS.
+      if (actualLeftBoosters === 0 && actualRightBoosters === 0) {
+        if (this.boosterMatchingIncome > 0 || this.boosterMatchingRecords.length > 0) {
+          console.log(`🧹 [SELF-HEALING] Purging incorrect booster income for ${this.username} (No booster descendants found).`);
+          this.boosterMatchingIncome = 0;
+          this.boosterMatchingRecords = [];
+        }
+      }
+
+      // 2. Release any existing 'Hold' records if user is now a Booster
       if (this.isBooster) {
         let releasedAny = false;
         this.boosterMatchingRecords.forEach((record: any) => {
@@ -548,16 +558,16 @@ userSchema.pre('save', async function (this: IUser) {
         }
       }
 
-      // 2. Sum up released/completed records for the wallet
+      // 3. Sum up released/completed records for the wallet
       const sumBooster = this.boosterMatchingRecords.reduce((acc: number, curr: any) => {
         if (curr.status === 'Released' || curr.status === 'Completed' || curr.status === 'Paid') {
-          return acc + (curr.netIncome || 0);
+          return acc + (Number(curr.netIncome) || 0);
         }
         return acc;
       }, 0);
 
       if (this.boosterMatchingIncome !== sumBooster) {
-        console.log(`[SELF-HEALING] Correcting boosterMatchingIncome for ${this.username}: ${this.boosterMatchingIncome} -> ${sumBooster}`);
+        console.log(`[SELF-HEALING] Syncing boosterMatchingIncome for ${this.username}: ${this.boosterMatchingIncome} -> ${sumBooster}`);
         this.boosterMatchingIncome = sumBooster;
       }
     } else {
@@ -610,24 +620,24 @@ userSchema.pre('save', async function (this: IUser) {
     const newRightCarry = Math.max(0, actualRightBoosters - matchedBoosterPairs);
 
     if (!this.boosterPairsCarryForward) this.boosterPairsCarryForward = { left: 0, right: 0 };
-    
+
     // Only update if changed significantly
     if (this.boosterPairsCarryForward.left !== newLeftCarry || this.boosterPairsCarryForward.right !== newRightCarry) {
-       console.log(`[SELF-HEALING] Syncing boosterPairsCarryForward for ${this.username}: L:${this.boosterPairsCarryForward.left}->${newLeftCarry}, R:${this.boosterPairsCarryForward.right}->${newRightCarry}`);
-       this.boosterPairsCarryForward.left = newLeftCarry;
-       this.boosterPairsCarryForward.right = newRightCarry;
-       
-       // If we have matchable pairs now, trigger the matching engine
-       // BUT ONLY if we haven't matched them in this current session already to avoid infinite loops
-       if (Math.min(newLeftCarry, newRightCarry) > 0) {
-         const { calculateBoosterMatching } = require('../lib/calculateBoosterMatching');
-         await calculateBoosterMatching(this);
-       }
+      console.log(`[SELF-HEALING] Syncing boosterPairsCarryForward for ${this.username}: L:${this.boosterPairsCarryForward.left}->${newLeftCarry}, R:${this.boosterPairsCarryForward.right}->${newRightCarry}`);
+      this.boosterPairsCarryForward.left = newLeftCarry;
+      this.boosterPairsCarryForward.right = newRightCarry;
+
+      // If we have matchable pairs now, trigger the matching engine
+      // BUT ONLY if we haven't matched them in this current session already to avoid infinite loops
+      if (Math.min(newLeftCarry, newRightCarry) > 0) {
+        const { calculateBoosterMatching } = require('../lib/calculateBoosterMatching');
+        await calculateBoosterMatching(this);
+      }
     }
 
     // 5. DIRECT MEMBERS SYNC (Real-time sponsorship audit)
-    const directResult = await (this.constructor as any).find({ 
-      sponsorId: this.username || this.userId 
+    const directResult = await (this.constructor as any).find({
+      sponsorId: this.username || this.userId
     }, 'userId username fullName createdAt placementPosition joiningDate registeredPackage');
 
     if (Array.isArray(directResult)) {
@@ -670,14 +680,14 @@ userSchema.methods.compareTransactionPassword = async function (password: string
     console.log('🔐 [DEBUG] No transaction password stored');
     return false;
   }
-  
+
   // Trim the input password before comparison
   const trimmedInput = password.toString().trim();
   if (trimmedInput.length === 0) {
     console.log('🔐 [DEBUG] Empty password provided for comparison');
     return false;
   }
-  
+
   try {
     const result = await bcrypt.compare(trimmedInput, this.transactionPassword);
     console.log('🔐 [DEBUG] Transaction password comparison result:', result);

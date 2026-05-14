@@ -726,13 +726,6 @@ export default function NetworkTreePage() {
     }
   };
 
-  const simulateSessionChange = () => {
-    if (!memberId) return;
-    // Flip to the opposite session for testing
-    const opposite = currentSession === "morning" ? "evening" : "morning";
-    setFlushMsg(`🔄 Simulating session change: ${currentSession || "?"} → ${opposite}`);
-    fetchTree(memberId, undefined, opposite);
-  };
 
   // Restore last viewed member and refresh on mount
   useEffect(() => {
@@ -1110,23 +1103,6 @@ export default function NetworkTreePage() {
                   <button className="nt-f-btn" onClick={() => { setHistory([]); fetchTree(memberId); }} disabled={loading}>
                     {loading ? "Loading…" : "Search"}
                   </button>
-                  {treeRoot && (
-                    <button
-                      onClick={simulateSessionChange}
-                      disabled={loading}
-                      title={`Simulate session: ${currentSession} → ${currentSession === 'morning' ? 'evening' : 'morning'}`}
-                      style={{
-                        background: currentSession === "morning" ? "#e65100" : "#1565c0",
-                        color: "#fff", border: "none", borderRadius: "6px",
-                        padding: "0 14px", height: "38px", fontSize: "12px", fontWeight: 600,
-                        fontFamily: "Poppins,sans-serif", cursor: "pointer", whiteSpace: "nowrap",
-                        display: "flex", alignItems: "center", gap: 6,
-                        opacity: loading ? 0.6 : 1,
-                      }}
-                    >
-                      🔄 {currentSession === "morning" ? "→ Evening" : "→ Morning"}
-                    </button>
-                  )}
                 </div>
               )}
               {error && <div className="nt-err">{error}</div>}

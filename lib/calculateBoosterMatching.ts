@@ -5,7 +5,7 @@ function getSessionType(date: Date): "morning" | "evening" {
 
 export async function calculateBoosterMatching(user: any) {
   console.log('[DEBUG] calculateBoosterMatching: entry', { userId: user?.userId, isBooster: user?.isBooster });
-
+  
   const now = new Date();
   const today = now.toDateString();
   const sessionType = getSessionType(now);
@@ -14,89 +14,88 @@ export async function calculateBoosterMatching(user: any) {
   if (!user.boosterPairsCarryForward)
     user.boosterPairsCarryForward = { left: 0, right: 0 };
 
-  // Session Cap: 10 booster pairs per session
-  const sessionRecords = user.boosterMatchingRecords.filter(
+  // 1. Identify current session unique ID
+  const currentSessionId = `${today}-${sessionType}`;
+
+  // 2. Calculate pairs currently available to match from carry forward
+  const leftStock = user.boosterPairsCarryForward.left || 0;
+  const rightStock = user.boosterPairsCarryForward.right || 0;
+  const pairsToProcess = Math.min(leftStock, rightStock);
+
+  if (pairsToProcess <= 0) {
+    return { success: false, message: "No matching booster pairs available" };
+  }
+
+  // 3. Check session cap (10 pairs per session)
+  // Find if we already have a record for this specific session
+  const existingIndex = user.boosterMatchingRecords.findIndex(
     (r: any) => r.sessionType === sessionType && new Date(r.date).toDateString() === today
   );
-  const sessionPairsUsed = sessionRecords.reduce((sum: number, r: any) => sum + (r.pairs || 0), 0);
-  const remainingSessionPairs = 10 - sessionPairsUsed;
 
-  const lastRecord = user.boosterMatchingRecords[user.boosterMatchingRecords.length - 1];
-  if (
-    lastRecord &&
-    new Date(lastRecord.date).toDateString() === today &&
-    lastRecord.sessionType === sessionType &&
-    lastRecord.processed &&
-    sessionPairsUsed >= 10
-  ) {
-    return { success: false, message: "Already reached 10 pairs in this session" };
+  let paidSoFar = 0;
+  if (existingIndex > -1) {
+    paidSoFar = user.boosterMatchingRecords[existingIndex].paidPairs || 0;
   }
 
-  //////////////////////////////////////////////////////////////
-  // 🔹 MATCHING LOGIC (1 Booster Pair = 1 Booster L + 1 Booster R)
-  //////////////////////////////////////////////////////////////
-  const leftStock = user.boosterPairsCarryForward.left;
-  const rightStock = user.boosterPairsCarryForward.right;
+  const remainingCap = Math.max(0, 10 - paidSoFar);
+  
+  // 4. Calculate how many of the available pairs can be paid and how many must be flashed
+  const pairsToPay = Math.min(pairsToProcess, remainingCap);
+  const pairsToFlash = pairsToProcess - pairsToPay;
+  const income = pairsToPay * 1000;
 
-  let pairsAvailable = Math.min(leftStock, rightStock);
-
-  if (pairsAvailable <= 0) {
-    return { success: false, message: "No matching booster pairs" };
-  }
-
-  let allowedPairs = Math.min(pairsAvailable, remainingSessionPairs);
-  allowedPairs = Math.max(0, allowedPairs);
-
-  const flushedPairs = pairsAvailable - allowedPairs;
-
-  if (allowedPairs <= 0 && flushedPairs <= 0) {
-    return { success: false, message: "Limits reached" };
-  }
-
-  //////////////////////////////////////////////////////////////
-  // 💰 INCOME (₹1000 per booster pair)
-  //////////////////////////////////////////////////////////////
-  const income = allowedPairs * 1000;
-
-  // NEW LOGIC: 
-  // - If user IS booster: status 'Released', credit boosterMatchingIncome
-  // - If user is NOT booster: status 'Hold', credit NOTHING (wait for release)
+  // 5. Update user income stats
   if (user.isBooster) {
     user.boosterMatchingIncome = (user.boosterMatchingIncome || 0) + income;
-    console.log(`[BOOSTER MATCHING] ${user.username}: Released ₹${income}`);
-  } else {
+    if (income > 0) {
+        console.log(`[BOOSTER MATCHING] ${user.username}: Released ₹${income} (Paid: ${pairsToPay}, Flashed: ${pairsToFlash})`);
+    }
+  } else if (income > 0) {
     console.log(`[BOOSTER MATCHING] ${user.username}: ₹${income} put on HOLD (Non-booster parent)`);
   }
 
   user.totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);
 
-  //////////////////////////////////////////////////////////////
-  // 🔥 UPDATE CARRY FORWARD
-  //////////////////////////////////////////////////////////////
-  user.boosterPairsCarryForward.left = Math.max(0, leftStock - pairsAvailable);
-  user.boosterPairsCarryForward.right = Math.max(0, rightStock - pairsAvailable);
+  // 6. Update Carry Forward (Subtract ALL processed pairs, both paid and flashed)
+  user.boosterPairsCarryForward.left = Math.max(0, leftStock - pairsToProcess);
+  user.boosterPairsCarryForward.right = Math.max(0, rightStock - pairsToProcess);
 
-  //////////////////////////////////////////////////////////////
-  // 📝 RECORD
-  //////////////////////////////////////////////////////////////
-  user.boosterMatchingRecords.push({
-    srNo: user.boosterMatchingRecords.length + 1,
-    date: now,
-    sessionType,
-    pairsMatched: pairsAvailable,
-    paidPairs: allowedPairs,
-    flashedPairs: flushedPairs,
-    pairs: allowedPairs,
-    income,
-    netIncome: income,
-    status: user.isBooster ? 'Released' : 'Hold',
-    processed: true,
-  });
+  // 7. Update or Create the Session Record
+  if (existingIndex > -1) {
+    // Update existing cumulative record
+    user.boosterMatchingRecords[existingIndex].pairsMatched = (user.boosterMatchingRecords[existingIndex].pairsMatched || 0) + pairsToProcess;
+    user.boosterMatchingRecords[existingIndex].paidPairs = (user.boosterMatchingRecords[existingIndex].paidPairs || 0) + pairsToPay;
+    user.boosterMatchingRecords[existingIndex].flashedPairs = (user.boosterMatchingRecords[existingIndex].flashedPairs || 0) + pairsToFlash;
+    user.boosterMatchingRecords[existingIndex].pairs = user.boosterMatchingRecords[existingIndex].paidPairs;
+    user.boosterMatchingRecords[existingIndex].income = (user.boosterMatchingRecords[existingIndex].income || 0) + income;
+    user.boosterMatchingRecords[existingIndex].netIncome = user.boosterMatchingRecords[existingIndex].income;
+    user.boosterMatchingRecords[existingIndex].status = user.isBooster ? 'Released' : 'Hold';
+  } else {
+    // Create new record for this session
+    user.boosterMatchingRecords.push({
+      srNo: user.boosterMatchingRecords.length + 1,
+      date: now,
+      sessionType,
+      pairsMatched: pairsToProcess,
+      paidPairs: pairsToPay,
+      flashedPairs: pairsToFlash,
+      pairs: pairsToPay,
+      income: income,
+      netIncome: income,
+      status: user.isBooster ? 'Released' : 'Hold',
+      processed: true,
+    });
+  }
+
+  // Set the session flag to indicate this user's stats are up to date for this moment
+  user.lastBoosterMatchingSession = currentSessionId;
 
   return {
     success: true,
-    pairs: allowedPairs,
+    pairsMatched: pairsToProcess,
+    paidPairs: pairsToPay,
+    flashedPairs: pairsToFlash,
     income,
-    message: user.isBooster ? "Booster matching released" : "Booster matching on hold",
+    message: user.isBooster ? "Booster matching updated" : "Booster matching on hold",
   };
 }

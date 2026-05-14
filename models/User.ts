@@ -539,6 +539,29 @@ userSchema.pre('save', async function (this: IUser) {
       }
     }
 
+    // 3. SESSION TRANSITION HEALING (Real-time clock based)
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentSessionType = (currentHour < 12 ? "morning" : "evening");
+    const nowDateStr = now.toDateString();
+    const lastDateStr = this.lastSessionDate ? new Date(this.lastSessionDate).toDateString() : "";
+
+    const sessionChanged = (lastDateStr !== nowDateStr) || (this.lastSessionType !== currentSessionType);
+
+    if (sessionChanged) {
+        console.log(`[SELF-HEALING] Session transition detected for ${this.username} (${this.lastSessionType} -> ${currentSessionType}). Flashing old session team.`);
+        
+        // Finalize old session before clearing
+        if (this.sessionTeam && (this.sessionTeam.left > 0 || this.sessionTeam.right > 0)) {
+           const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
+           await calculateBasicIncome(this, this.lastSessionType);
+        }
+
+        this.sessionTeam = { left: 0, right: 0 };
+        this.lastSessionType = currentSessionType as any;
+        this.lastSessionDate = now;
+    }
+
     // 4. BOOSTER COUNT & CARRY-FORWARD SYNC (Real-time tree audit)
     const boosterResult = await (this.constructor as any).aggregate([
       { $match: { placementId: this.username } },

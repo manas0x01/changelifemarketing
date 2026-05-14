@@ -68,8 +68,7 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     let sessionRecord = user.sessionBasedIncome.find((s: any) => {
       const recDate = new Date(s.date || s.sessionDate);
       return recDate.toDateString() === todayStr && 
-             s.sessionType === sessionType &&
-             (Date.now() - recDate.getTime() < 10000); // 10 second safety window
+             s.sessionType === sessionType;
     });
 
     if (sessionRecord) {

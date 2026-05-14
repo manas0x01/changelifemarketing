@@ -16,8 +16,7 @@ export async function updateTeamCounts(
   userId: string | undefined, 
   position: 'left' | 'right' | undefined, 
   increment: number,
-  session?: any,
-  manualSessionType?: string
+  session?: any
 ) {
   if (!userId || !position) return;
 
@@ -60,7 +59,7 @@ export async function updateTeamCounts(
     const currentHour = now.getHours();
     // IMPORTANT: Respect the user's manually set session type (from the 🔄 button).
     // Only fall back to clock-based detection if the user has never set a session type.
-    const currentSessionType = manualSessionType || user.lastSessionType || (currentHour < 12 ? "morning" : "evening");
+    const currentSessionType = (currentHour < 12 ? "morning" : "evening");
     const nowDateStr = now.toDateString();
     const lastDateStr = user.lastSessionDate ? new Date(user.lastSessionDate).toDateString() : "";
 

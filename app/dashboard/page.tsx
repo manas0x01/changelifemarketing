@@ -150,12 +150,12 @@ export default function Dashboard() {
     bankDetails: { accountHolderName: "", accountNumber: "", ifscCode: "", bankName: "" },
     cycleHistory: [] as CycleRow[],
   });
-  const { 
-    totalTeam, totalDirect, totalActiveDirect, 
-    totalLeftBasicUser, totalRightBasicUser, 
+  const {
+    totalTeam, totalDirect, totalActiveDirect,
+    totalLeftBasicUser, totalRightBasicUser,
     totalLeftBoosterUser, totalRightBoosterUser,
-    basicIncome, boosterIncome, totalPins, totalIncome, 
-    userProfile, bankDetails, cycleHistory 
+    basicIncome, boosterIncome, totalPins, totalIncome,
+    userProfile, bankDetails, cycleHistory
   } = dashboardData;
   const [loading, setLoading] = useState(true);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -559,7 +559,12 @@ export default function Dashboard() {
                     <p>User ID : {userProfile.userId}</p>
                     <p>Mobile No. : {userProfile.mobileNo}</p>
                     <p>Email ID : {userProfile.email}</p>
-                    <p>Activation Date : {userProfile.joiningDate}</p>
+                    <p>Activation Date : {(() => {
+                      if (!userProfile.joiningDate || userProfile.joiningDate === "N/A") return "N/A";
+                      const d = new Date(userProfile.joiningDate);
+                      if (isNaN(d.getTime())) return userProfile.joiningDate;
+                      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
+                    })()}</p>
                   </div>
                   <div className="profile-divider" />
                   <div className="profile-actions">

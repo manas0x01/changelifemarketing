@@ -29,6 +29,7 @@ interface NewUserData {
   mobileNo: string;
   password: string;
   transactionPassword: string;
+  regDate: Date;
 }
 
 export default function NewRegisterPage() {
@@ -41,6 +42,7 @@ export default function NewRegisterPage() {
   const [txnPasswordError, setTxnPasswordError] = useState("");
   const [txnValidating, setTxnValidating] = useState(false);
   const [txnValidated, setTxnValidated] = useState(false);
+  const [isRegistering, setIsRegistering] = useState(false);
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [newUserData, setNewUserData] = useState<NewUserData | null>(null);
   const [registrationFrozen, setRegistrationFrozen] = useState(false);
@@ -109,6 +111,26 @@ export default function NewRegisterPage() {
     };
 
     checkPinAvailability();
+  }, []);
+
+  useEffect(() => {
+    const checkFreeze = () => {
+      const now = new Date();
+      const hour = now.getHours();
+      const min = now.getMinutes();
+
+      // PM Freeze: 12:00 PM to 12:10 PM (hour 12)
+      const isPmFreeze = (hour === 12 && min >= 0 && min < 10);
+      
+      // AM Freeze: 12:00 AM to 12:10 AM (hour 0)
+      const isAmFreeze = (hour === 0 && min >= 0 && min < 10);
+
+      setRegistrationFrozen(isPmFreeze || isAmFreeze);
+    };
+
+    checkFreeze();
+    const timer = setInterval(checkFreeze, 10000);
+    return () => clearInterval(timer);
   }, []);
 
   const handleValidateTransactionPassword = async () => {
@@ -523,23 +545,32 @@ export default function NewRegisterPage() {
       });
       const data = await response.json();
       if (!response.ok) {
+        setIsSubmitting(false);
         toast.error(data.message || data.error || "Registration failed");
         return;
       }
       
+      // SHOW LOADING FOR 3 SECONDS
+      setIsRegistering(true);
+      await new Promise(r => setTimeout(r, 3000));
+      setIsRegistering(false);
+
       setNewUserData({
         userId: userId,
         fullName: fullName,
         mobileNo: mobileNo,
         password: password,
         transactionPassword: transactionPassword,
+        regDate: new Date(),
       });
       setShowCongratulations(true);
     } catch (error) {
       console.error("Registration error:", error);
       toast.error("Network error. Please check your connection and try again.");
-    } finally {
       setIsSubmitting(false);
+    } finally {
+      // setIsSubmitting should stay true until we are done showing the congrats or failing
+      if (!showCongratulations) setIsSubmitting(false);
     }
   };
 
@@ -596,6 +627,44 @@ export default function NewRegisterPage() {
           color: #fff;
           letter-spacing: 0.8px;
           text-transform: uppercase;
+        }
+
+        /* ── LOADING OVERLAY ── */
+        .loading-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(255, 255, 255, 0.9);
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          z-index: 9999;
+          backdrop-filter: blur(5px);
+        }
+
+        .loading-circle {
+          width: 60px;
+          height: 60px;
+          border: 4px solid #f3f3f3;
+          border-top: 4px solid #26a69a;
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+          margin-bottom: 20px;
+        }
+
+        .loading-text {
+          font-size: 18px;
+          font-weight: 600;
+          color: #26a69a;
+          letter-spacing: 1px;
+        }
+
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
         }
 
         /* ── VALIDATE STEP ── */
@@ -1540,8 +1609,8 @@ export default function NewRegisterPage() {
                     {registrationFrozen ? '⏸ REGISTRATION FROZEN' : 'REGISTER MEMBER'}
                   </button>
                   {registrationFrozen && (
-                    <div style={{ marginTop: '10px', textAlign: 'center', color: '#e53935', fontSize: '12px' }}>
-                      ⏸ System transition in progress (11:50 AM - 12:00 PM)
+                    <div style={{ marginTop: '10px', textAlign: 'center', color: '#e53935', fontSize: '12px', fontWeight: '600' }}>
+                      ⏸ System transition in progress (12:00 - 12:10)
                     </div>
                   )}
                 </div>
@@ -1594,6 +1663,13 @@ export default function NewRegisterPage() {
                   <span className="detail-label">Transaction Password</span>
                   <span className="detail-value">{newUserData.transactionPassword}</span>
                 </div>
+                
+                <div className="detail-row" style={{ borderTop: "1px solid #eee", marginTop: "8px", paddingTop: "8px" }}>
+                  <span className="detail-label" style={{ fontWeight: 700, color: "#26a69a" }}>Registration Time</span>
+                  <span className="detail-value" style={{ fontWeight: 700, color: "#26a69a" }}>
+                    {newUserData.regDate ? `${String(newUserData.regDate.getDate()).padStart(2, '0')}/${String(newUserData.regDate.getMonth() + 1).padStart(2, '0')}/${newUserData.regDate.getFullYear()} ${String(newUserData.regDate.getHours()).padStart(2, '0')}:${String(newUserData.regDate.getMinutes()).padStart(2, '0')}:${String(newUserData.regDate.getSeconds()).padStart(2, '0')}` : "—"}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -1622,6 +1698,15 @@ export default function NewRegisterPage() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ── REGISTERING LOADING OVERLAY ── */}
+      {isRegistering && (
+        <div className="loading-overlay">
+          <div className="loading-circle"></div>
+          <div className="loading-text">Registering User...</div>
+          <div style={{ marginTop: '10px', color: '#666', fontSize: '14px' }}>Please wait while we set up the account</div>
         </div>
       )}
     </>

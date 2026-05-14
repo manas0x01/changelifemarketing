@@ -23,6 +23,17 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 🔹 REGISTRATION FREEZE (12:00 - 12:10 AM/PM)
+    const now = new Date();
+    const hour = now.getHours();
+    const min = now.getMinutes();
+    if ((hour === 12 && min >= 0 && min < 10) || (hour === 0 && min >= 0 && min < 10)) {
+      return NextResponse.json(
+        { success: false, message: "Registration is frozen during session transition (12:00 - 12:10). Please try again after 12:10." },
+        { status: 403 }
+      );
+    }
+
     const body = await req.json();
 
     //////////////////////////////////////////////////////////////
@@ -158,7 +169,7 @@ export async function POST(req: NextRequest) {
     if (sponsor[positionField]) {
       const childUserId = sponsor[positionField];
       console.log('[DEBUG] register: checking if child exists', { positionField, childUserId });
-      
+
       // Verify the child user actually exists in database
       const childExists = await User.findOne({
         $or: [
@@ -166,7 +177,7 @@ export async function POST(req: NextRequest) {
           { username: { $regex: new RegExp(`^${childUserId}$`, 'i') } }
         ]
       });
-      
+
       if (childExists) {
         console.log('[DEBUG] register: sponsor position already filled', { positionField, filledBy: childUserId });
         return NextResponse.json(
@@ -276,12 +287,12 @@ export async function POST(req: NextRequest) {
         }
       }
     }, { session: dbSession });
-    
-    // Recursive update for all ancestors - MUST PASS THE SESSION AND THE SESSION TYPE
-    await updateTeamCounts(sponsor.userId || sponsor.username, placementPosition, 1, dbSession, loggedInUser.lastSessionType);
-    
-    console.log('[DEBUG] register: sponsor updated', { 
-      sponsorId: sponsor.userId || sponsor.username, 
+
+    // Recursive update for all ancestors
+    await updateTeamCounts(sponsor.userId || sponsor.username, placementPosition, 1, dbSession);
+
+    console.log('[DEBUG] register: sponsor updated', {
+      sponsorId: sponsor.userId || sponsor.username,
       positionField
     });
 
@@ -315,9 +326,9 @@ export async function POST(req: NextRequest) {
     // Update team count for the placement position 
     // ONLY if not already updated by updateTeamCounts (which happens if sponsor == loggedInUser)
     if (sponsor.username !== session.user.username) {
-       if (!upToDateLoggedInUser.totalTeam) upToDateLoggedInUser.totalTeam = { left: 0, right: 0 };
-       upToDateLoggedInUser.totalTeam[placementPosition] = (upToDateLoggedInUser.totalTeam[placementPosition] || 0) + 1;
-       console.log('[REGISTER] Team count updated for logged-in user:', { left: upToDateLoggedInUser.totalTeam.left, right: upToDateLoggedInUser.totalTeam.right });
+      if (!upToDateLoggedInUser.totalTeam) upToDateLoggedInUser.totalTeam = { left: 0, right: 0 };
+      upToDateLoggedInUser.totalTeam[placementPosition] = (upToDateLoggedInUser.totalTeam[placementPosition] || 0) + 1;
+      console.log('[REGISTER] Team count updated for logged-in user:', { left: upToDateLoggedInUser.totalTeam.left, right: upToDateLoggedInUser.totalTeam.right });
     }
 
     // Use findByIdAndUpdate to avoid VersionError
@@ -358,7 +369,7 @@ export async function POST(req: NextRequest) {
     try {
       await dbSession.abortTransaction();
       dbSession.endSession();
-    } catch {}
+    } catch { }
 
     return NextResponse.json(
       { success: false, message: "Registration failed" },

@@ -204,11 +204,12 @@ export default function NewRegisterPage() {
       // normalize name field (API may return { success, data: { name } })
       const sponsorDisplayName = nameData?.data?.name ?? nameData?.name ?? "";
 
-      // Check available positions for this sponsor
+      // Check available positions for the Upline (defaults to sponsor if upline not specified)
+      const targetUplineId = uplineId.trim() || sponsorId.trim();
       const positionsResponse = await fetch('/api/user/check-positions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sponsorId: sponsorId.trim() }),
+        body: JSON.stringify({ sponsorId: targetUplineId }),
         credentials: 'include',
       });
 
@@ -241,6 +242,10 @@ export default function NewRegisterPage() {
 
       setAvailablePositions(positionsToShow);
       setSponsorName(sponsorDisplayName);
+      if (!uplineId.trim()) {
+        setUplineId(sponsorId.trim());
+        setUplineName(sponsorDisplayName);
+      }
       setSponsorValidated(true);
 
       // Get available EPINs
@@ -273,6 +278,71 @@ export default function NewRegisterPage() {
     } catch (error) {
       setSponsorError("An error occurred. Please try again.");
       toast.error("Error validating sponsor");
+    }
+  };
+
+  const handleValidateUpline = async () => {
+    if (!uplineId.trim()) {
+      setUplineError("Please enter an Upline ID.");
+      return;
+    }
+    setUplineError("");
+    try {
+      // Get upline name
+      const nameResponse = await fetch('/api/user/getname', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: uplineId.trim() }),
+        credentials: 'include',
+      });
+      const nameData = await nameResponse.json();
+
+      if (!nameResponse.ok || !nameData) {
+        setUplineError("Upline ID not found");
+        return;
+      }
+
+      const uplineDisplayName = nameData?.data?.name ?? nameData?.name ?? "";
+      setUplineName(uplineDisplayName);
+
+      // Check available positions for this upline
+      const positionsResponse = await fetch('/api/user/check-positions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sponsorId: uplineId.trim() }),
+        credentials: 'include',
+      });
+
+      if (!positionsResponse.ok) {
+        setUplineError("Failed to check upline positions");
+        return;
+      }
+
+      const positionsData = await positionsResponse.json();
+
+      if (!positionsData.success) {
+        setUplineError(positionsData.message || "Failed to check upline positions");
+        return;
+      }
+
+      const { availablePositions } = positionsData;
+
+      if (availablePositions.length === 0) {
+        setUplineError("Both positions are already filled for this Upline.");
+        return;
+      }
+
+      let positionsToShow = ["-- Select --"];
+      availablePositions.forEach((pos: string) => {
+        positionsToShow.push(pos.charAt(0).toUpperCase() + pos.slice(1));
+      });
+      setPosition("-- Select --");
+      setAvailablePositions(positionsToShow);
+      
+      toast.success("✓ Upline validated!");
+    } catch (error) {
+      setUplineError("An error occurred. Please try again.");
+      toast.error("Error validating upline");
     }
   };
 
@@ -327,26 +397,11 @@ export default function NewRegisterPage() {
       return;
     }
     // Validate Upline ID matches Sponsor ID
-    if (!uplineId.trim()) {
-      setUplineError("Upline ID is required");
-      toast.error("Upline ID is required");
-      return;
-    }
-    if (uplineId.trim().toUpperCase() !== sponsorId.trim().toUpperCase()) {
-      setUplineError("Upline ID must match Sponsor ID");
-      toast.error("Upline ID must match Sponsor ID");
-      return;
-    }
     setUplineError("");
-    // Validate Upline Name matches Sponsor Name
+    // Validate Upline Name exists
     if (!uplineName.trim()) {
       setUplineError("Upline Name is required");
       toast.error("Upline Name is required");
-      return;
-    }
-    if (uplineName.trim().toUpperCase() !== sponsorName.trim().toUpperCase()) {
-      setUplineError("Upline Name must match Sponsor Name");
-      toast.error("Upline Name must match Sponsor Name");
       return;
     }
 
@@ -1064,13 +1119,22 @@ export default function NewRegisterPage() {
                             <input
                               className="form-input"
                               type="text"
-                              placeholder="ENTER UPLINE ID (MUST MATCH SPONSOR ID)"
+                              placeholder="ENTER UPLINE ID"
                               value={uplineId}
                               onChange={(e) => setUplineId(e.target.value)}
+                              onKeyDown={(e) => e.key === "Enter" && handleValidateUpline()}
                               suppressHydrationWarning
                             />
                             {uplineError && <div className="txn-error">{uplineError}</div>}
                           </div>
+                          <button 
+                            className="proceed-btn" 
+                            onClick={handleValidateUpline}
+                            style={{ marginTop: 0 }}
+                            suppressHydrationWarning={true}
+                          >
+                            VALIDATE
+                          </button>
                         </div>
                       </div>
                     </div>

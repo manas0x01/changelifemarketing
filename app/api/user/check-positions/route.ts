@@ -46,41 +46,26 @@ export async function POST(req: NextRequest) {
     const currentHour = now.getHours();
     const currentSessionType = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
 
-    // Check if sponsor needs session flushing
-    const lastSessionType = sponsor.lastSessionType;
-    let leftCount = sponsor.totalTeam?.left || 0;
-    let rightCount = sponsor.totalTeam?.right || 0;
-
-    if (lastSessionType && lastSessionType !== currentSessionType) {
-      // Session has changed, determine what would be flushed
-      if (leftCount !== rightCount) {
-        if (leftCount > rightCount) {
-          leftCount = rightCount; // Left would be flushed
-        } else {
-          rightCount = leftCount; // Right would be flushed
-        }
-      }
-    }
 
     // Check if sponsor has any children - verify they actually exist in DB
     // AND check if they are currently valid (not flushed out)
     let hasLeftChild = false;
     let hasRightChild = false;
 
-    if (sponsor.leftChild && sponsor.leftChild.trim() !== "" && leftCount > 0) {
+    if (sponsor.leftChild && sponsor.leftChild.trim() !== "") {
       const leftChildUser = await User.findOne({
         $or: [
-          { username: sponsor.leftChild },
-          { userId: sponsor.leftChild }
+          { username: sponsor.leftChild.trim() },
+          { userId: sponsor.leftChild.trim() }
         ]
       });
       hasLeftChild = !!leftChildUser;
     }
-    if (sponsor.rightChild && sponsor.rightChild.trim() !== "" && rightCount > 0) {
+    if (sponsor.rightChild && sponsor.rightChild.trim() !== "") {
       const rightChildUser = await User.findOne({
         $or: [
-          { username: sponsor.rightChild },
-          { userId: sponsor.rightChild }
+          { username: sponsor.rightChild.trim() },
+          { userId: sponsor.rightChild.trim() }
         ]
       });
       hasRightChild = !!rightChildUser;

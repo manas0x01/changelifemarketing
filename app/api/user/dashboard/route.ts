@@ -100,7 +100,9 @@ export async function GET(req: NextRequest) {
       amount: boosterMatchingIncome,
       carryForward: boosterCarryForward,
       isBooster: user.isBooster || false,
-      totalMatching: user.boosterMatchingRecords?.length || 0,
+      totalMatching: (user.boosterMatchingRecords || []).reduce((acc: number, curr: any) => acc + (Number(curr.paidPairs || curr.pairs) || 0), 0),
+      LG: user.boosterCount?.left || 0,
+      RG: user.boosterCount?.right || 0,
     };
 
     const totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);

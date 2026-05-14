@@ -570,8 +570,8 @@ userSchema.pre('save', async function (this: IUser) {
     let actualRightBoosters = 0;
     boosterResult.forEach((r: any) => {
       const count = (r.isBooster ? 1 : 0) + (r.boosterDescendants?.length || 0);
-      if (r.placementPosition === 'left') actualLeftBoosters = count;
-      if (r.placementPosition === 'right') actualRightBoosters = count;
+      if (r.placementPosition === 'left') actualLeftBoosters += count;
+      if (r.placementPosition === 'right') actualRightBoosters += count;
     });
 
     if (Array.isArray(this.boosterMatchingRecords)) {
@@ -620,14 +620,32 @@ userSchema.pre('save', async function (this: IUser) {
         console.log(`[SELF-HEALING] Syncing boosterMatchingIncome for ${this.username}: ${this.boosterMatchingIncome} -> ${sumBooster}`);
         this.boosterMatchingIncome = sumBooster;
       }
+
+      // Sync the nested boosterIncome object for UI compatibility
+      const sumBoosterPairs = this.boosterMatchingRecords.reduce((acc: number, curr: any) => {
+        if (curr.status === 'Released' || curr.status === 'Completed' || curr.status === 'Paid') {
+          return acc + (Number(curr.paidPairs || curr.pairs) || 0);
+        }
+        return acc;
+      }, 0);
+
+      if (!this.boosterIncome) this.boosterIncome = { amount: 0, LG: 0, RG: 0, totalMatching: 0 };
+      this.boosterIncome.amount = sumBooster;
+      this.boosterIncome.totalMatching = sumBoosterPairs;
     } else {
       this.boosterMatchingRecords = [];
       this.boosterMatchingIncome = 0;
+      this.boosterIncome = { amount: 0, LG: 0, RG: 0, totalMatching: 0 };
     }
 
     if (!this.boosterCount) this.boosterCount = { left: 0, right: 0 };
     this.boosterCount.left = actualLeftBoosters;
     this.boosterCount.right = actualRightBoosters;
+
+    // Sync LG/RG to boosterIncome for UI
+    if (!this.boosterIncome) this.boosterIncome = { amount: 0, LG: 0, RG: 0, totalMatching: 0 };
+    this.boosterIncome.LG = actualLeftBoosters;
+    this.boosterIncome.RG = actualRightBoosters;
 
     // Total boosters matched in history
     const matchedBoosterPairs = (this.boosterMatchingRecords || []).reduce((acc: number, curr: any) => acc + (Number(curr.pairsMatched) || 0), 0);
@@ -678,6 +696,7 @@ userSchema.pre('save', async function (this: IUser) {
     if (typeof (this as any).markModified === 'function') {
       this.markModified('basicIncome');
       this.markModified('boosterMatchingIncome');
+      this.markModified('boosterIncome');
       this.markModified('totalIncome');
     }
   } catch (err) {

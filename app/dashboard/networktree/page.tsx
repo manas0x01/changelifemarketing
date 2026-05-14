@@ -492,9 +492,25 @@ function MemberPopup({
   const { node: n, left, top } = state;
   const booster = n.type === "booster";
 
+  // Helper to format date with seconds
+  const formatDate = (dateVal: any) => {
+    if (!dateVal) return "—";
+    const date = new Date(dateVal);
+    if (isNaN(date.getTime())) return dateVal;
+    
+    const d = String(date.getDate()).padStart(2, '0');
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const y = date.getFullYear();
+    const h = String(date.getHours()).padStart(2, '0');
+    const min = String(date.getMinutes()).padStart(2, '0');
+    const s = String(date.getSeconds()).padStart(2, '0');
+    
+    return `${d}/${m}/${y} ${h}:${min}:${s}`;
+  };
+
   const infoRows = [
     { label: "Sponsor ID", val: n.sponsorId || "—" },
-    { label: "Joining Date", val: n.joiningDate || "—" },
+    { label: "Joining Date", val: formatDate(n.joiningDate) },
     { label: "Package", val: n.package || "—" },
     { label: "Left ID", val: n.leftId || "—" },
     { label: "Right ID", val: n.rightId || "—" },

@@ -85,9 +85,9 @@ export async function POST(req: NextRequest) {
     })();
 
     const card = {
-      sponsorId: user.sponsorId || "",
-      joiningDate: user.joiningDate || "",
-      package: user.registeredPackage || "",
+      sponsorId: user.sponsorId || "—",
+      joiningDate: user.joiningDate || user.createdAt || "",
+      package: user.registeredPackage || "Standard",
       leftId: leftChild?.userId || leftChild?.username || "",
       rightId: rightChild?.userId || rightChild?.username || "",
       leftCount: detailedStats.leftTotal,

@@ -64,10 +64,10 @@ export default function NewRegisterPage() {
   const [availableEPins, setAvailableEPins] = useState<string[]>([]);
   const [selectedEPin, setSelectedEPin] = useState("");
   const [availablePositions, setAvailablePositions] = useState<string[]>(["-- Select --", "Left", "Right"]);
+  const [nomineeRelError,  setNomineeRelError]  = useState("");
+  const [accountTypeError, setAccountTypeError] = useState("");
+
   const [fullName,     setFullName]     = useState("");
-  const [userId,       setUserId]       = useState("CLM");
-  const [userIdError,  setUserIdError]  = useState("");
-  const [userIdValidated, setUserIdValidated] = useState(false);
   const [mobileNo,     setMobileNo]     = useState("");
   const [email,        setEmail]        = useState("");
   const [panNo,        setPanNo]        = useState("");
@@ -82,16 +82,6 @@ export default function NewRegisterPage() {
   const [accountNo,    setAccountNo]    = useState("");
   const [ifscCode,     setIfscCode]     = useState("");
   const [accountType,  setAccountType]  = useState("-- Select --");
-  const [password,     setPassword]     = useState("");
-  const [confirmPwd,   setConfirmPwd]   = useState("");
-  const [transactionPassword, setTransactionPassword] = useState("");
-  const [confirmTxnPwd, setConfirmTxnPwd] = useState("");
-  const [passwordError,    setPasswordError]    = useState("");
-  const [confirmPwdError,  setConfirmPwdError]  = useState("");
-  const [transactionPasswordError, setTransactionPasswordError] = useState("");
-  const [confirmTxnPwdError, setConfirmTxnPwdError] = useState("");
-  const [nomineeRelError,  setNomineeRelError]  = useState("");
-  const [accountTypeError, setAccountTypeError] = useState("");
 
   useEffect(() => {
     const checkPinAvailability = async () => {
@@ -368,35 +358,6 @@ export default function NewRegisterPage() {
     }
   };
 
-  const handleValidateUserId = async () => {
-    if (!userId.trim() || userId === "CLM") {
-      setUserIdError("Please enter a User ID");
-      return;
-    }
-    setUserIdError("");
-    try {
-      const response = await fetch('/api/auth/checkuserid', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: userId.trim() }),
-        credentials: 'include',
-      });
-      const data = await response.json();
-      if (!response.ok) {
-        setUserIdError(data.error || "This User ID is already taken");
-        setUserIdValidated(false);
-        toast.error("User ID already exists!");
-        return;
-      }
-      setUserIdValidated(true);
-      setUserIdError("");
-      toast.success("✓ User ID is available!");
-    } catch (error) {
-      setUserIdError("Error checking User ID availability");
-      toast.error("Error validating User ID");
-    }
-  };
-
   const handleSponsorSubmit = async () => {
     if (!sponsorValidated) {
       alert("Please validate sponsor ID first");
@@ -428,84 +389,36 @@ export default function NewRegisterPage() {
     }
 
     // Move to registration step
-    setStep("register");
+      setStep("register");
   };
 
   const handleRegistrationSubmit = async () => {
     // Sessions: Morning = 12:00 AM to 12:00 PM, Evening = 12:00 PM to 12:00 AM
     // No freeze period - registration is always allowed
 
-    if (!userIdValidated) {
-      toast.error("Please validate User ID first");
-      return;
-    }
-    if (!selectedEPin) {
-      toast.error("Please select an E-Pin to proceed");
-      return;
-    }
     if (!fullName.trim()) {
       toast.error("Full name is required");
-      return;
-    }
-    if (!gender) {
-      toast.error("Please select gender");
       return;
     }
     if (!mobileNo.trim()) {
       toast.error("Mobile number is required");
       return;
     }
-    if (!email.trim()) {
-      toast.error("Email ID is required");
-      return;
+    if (email.trim()) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        toast.error("Please enter a valid email address");
+        return;
+      }
     }
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email.trim())) {
-      toast.error("Please enter a valid email address");
-      return;
-    }
-    if (!password.trim()) {
-      setPasswordError("New Password is required");
-      return;
-    }
-    if (!confirmPwd.trim()) {
-      setConfirmPwdError("Confirm New Password is required");
-      toast.error("Please confirm new password");
-      return;
-    }
-    if (password !== confirmPwd) {
-      setPasswordError("New Passwords don't match");
-      setConfirmPwdError("New Passwords don't match");
-      toast.error("New Passwords do not match");
-      return;
-    }
-    setConfirmPwdError("");
-    if (!transactionPassword.trim()) {
-      setTransactionPasswordError("Transaction password is required");
-      toast.error("Transaction password is required");
-      return;
-    }
-    if (!confirmTxnPwd.trim()) {
-      setConfirmTxnPwdError("Confirm transaction password is required");
-      toast.error("Please confirm transaction password");
-      return;
-    }
-    if (transactionPassword !== confirmTxnPwd) {
-      setTransactionPasswordError("Transaction passwords don't match");
-      setConfirmTxnPwdError("Transaction passwords do not match");
-      toast.error("Transaction passwords do not match");
-      return;
-    }
-    setTransactionPasswordError("");
-    setConfirmTxnPwdError("");
 
+    setIsRegistering(true);
     setIsSubmitting(true);
 
     try {
+      const startTime = Date.now();
       const registrationData: any = {
-        username: userId,
         placementPosition: position ? position.toLowerCase() : position,
-        userId,
         sponsorId,
         uplineId,
         uplineName,
@@ -528,8 +441,7 @@ export default function NewRegisterPage() {
         branchName,
         accountNo,
         ifsc: ifscCode,
-        password,
-        transactionPassword,
+        autoGenerate: true, // Tell backend to generate credentials
       };
       if (nomineeRel && nomineeRel !== "-- Select --") {
         registrationData.nomineeRelation = nomineeRel;
@@ -544,29 +456,36 @@ export default function NewRegisterPage() {
         credentials: 'include',
       });
       const data = await response.json();
+      
+      // Ensure at least 3 seconds have passed
+      const elapsedTime = Date.now() - startTime;
+      const remainingTime = Math.max(0, 3000 - elapsedTime);
+      if (remainingTime > 0) {
+        await new Promise(r => setTimeout(r, remainingTime));
+      }
+      
       if (!response.ok) {
+        setIsRegistering(false);
         setIsSubmitting(false);
         toast.error(data.message || data.error || "Registration failed");
         return;
       }
       
-      // SHOW LOADING FOR 3 SECONDS
-      setIsRegistering(true);
-      await new Promise(r => setTimeout(r, 3000));
       setIsRegistering(false);
 
       setNewUserData({
-        userId: userId,
+        userId: data.user.username,
         fullName: fullName,
         mobileNo: mobileNo,
-        password: password,
-        transactionPassword: transactionPassword,
+        password: data.user.password,
+        transactionPassword: data.user.transactionPassword,
         regDate: new Date(),
       });
       setShowCongratulations(true);
     } catch (error) {
       console.error("Registration error:", error);
       toast.error("Network error. Please check your connection and try again.");
+      setIsRegistering(false);
       setIsSubmitting(false);
     } finally {
       // setIsSubmitting should stay true until we are done showing the congrats or failing
@@ -1010,24 +929,9 @@ export default function NewRegisterPage() {
           background: linear-gradient(90deg, #26a69a, #1de9b6);
           color: #fff;
           border: none;
-          border-radius: 6px;
-          padding: 11px 36px;
-          font-size: 13px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: opacity 0.3s ease;
-        }
-
-        .done-btn:hover {
-          opacity: 0.9;
-        }
-
-        @media (max-width: 480px) {
-          .done-btn {
-            padding: 10px 32px;
-            font-size: 12px;
-          }
-        }
+          border-radius: 8px;
+          padding: 12px 24px;
+          font-size: 14px;
           font-weight: 700;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
@@ -1038,6 +942,7 @@ export default function NewRegisterPage() {
         }
 
         .done-btn:hover {
+          opacity: 0.9;
           transform: translateY(-2px);
           box-shadow: 0 6px 16px rgba(38, 166, 154, 0.4);
         }
@@ -1333,52 +1238,19 @@ export default function NewRegisterPage() {
                   </div>
                 </div>
 
-                <div className="sub-header">Personal Information</div>
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>User ID :</label>
-                    <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                      <div style={{ flex: 1 }}>
-                        <input
-                          className="form-input"
-                          type="text"
-                          placeholder="CLM + your ID"
-                          value={userId}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            if (val.startsWith("CLM")) {
-                              setUserId(val);
-                              setUserIdValidated(false);
-                              setUserIdError("");
-                            } else {
-                              setUserId("CLM" + val.replace("CLM", ""));
-                            }
-                          }}
-                          onKeyDown={(e) => e.key === "Enter" && handleValidateUserId()}
-                          disabled={userIdValidated}
-                          suppressHydrationWarning
-                        />
-                        {userIdError && <div className="txn-error">{userIdError}</div>}
-                      </div>
-                      {!userIdValidated ? (
-                        <button 
-                          className="proceed-btn" 
-                          onClick={handleValidateUserId}
-                          style={{ marginTop: 0 }}
-                          suppressHydrationWarning={true}
-                        >
-                          VALIDATE
-                        </button>
-                      ) : (
-                        <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                          Verified
-                        </span>
-                      )}
-                    </div>
+                {/* CREDENTIALS WILL BE AUTO-GENERATED */}
+                <div className="form-row" style={{ background: "#f8f9fa", padding: "15px", borderRadius: "8px", border: "1px dashed #ced4da", marginBottom: "20px" }}>
+                  <div style={{ textAlign: "center", width: "100%" }}>
+                    <p style={{ margin: 0, fontWeight: 600, color: "#495057", fontSize: "14px" }}>
+                      ✨ Credentials (User ID, Passwords) will be automatically generated for security.
+                    </p>
+                    <p style={{ margin: "4px 0 0", color: "#6c757d", fontSize: "12px" }}>
+                      You will see them in the success message after registration.
+                    </p>
                   </div>
                 </div>
 
+                <div className="sub-header">Personal Information</div>
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Full Name :</label>
@@ -1526,75 +1398,7 @@ export default function NewRegisterPage() {
                   </div>
                 </div>
 
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>New Password :</label>
-                    <input 
-                      className="form-input" 
-                      type="password" 
-                      placeholder="Create New Password" 
-                      value={password} 
-                      onChange={(e) => {
-                        setPassword(e.target.value);
-                        setPasswordError("");
-                      }}
-                      style={{ borderColor: passwordError ? "#e53935" : "" }}
-                      suppressHydrationWarning 
-                    />
-                    {passwordError && <div className="txn-error">{passwordError}</div>}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Confirm New Password :</label>
-                    <input 
-                      className="form-input" 
-                      type="password" 
-                      placeholder="Confirm New Password" 
-                      value={confirmPwd} 
-                      onChange={(e) => {
-                        setConfirmPwd(e.target.value);
-                        setConfirmPwdError("");
-                      }}
-                      style={{ borderColor: confirmPwdError ? "#e53935" : "" }}
-                      suppressHydrationWarning 
-                    />
-                    {confirmPwdError && <div className="txn-error">{confirmPwdError}</div>}
-                  </div>
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Transaction Password :</label>
-                    <input 
-                      className="form-input" 
-                      type="password" 
-                      placeholder="Create Transaction Password (e.g., 1020)" 
-                      value={transactionPassword} 
-                      onChange={(e) => {
-                        setTransactionPassword(e.target.value);
-                        setTransactionPasswordError("");
-                      }}
-                      style={{ borderColor: transactionPasswordError ? "#e53935" : "" }}
-                      suppressHydrationWarning 
-                    />
-                    {transactionPasswordError && <div className="txn-error">{transactionPasswordError}</div>}
-                  </div>
-                  <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>Confirm Transaction Password :</label>
-                    <input 
-                      className="form-input" 
-                      type="password" 
-                      placeholder="Confirm Transaction Password" 
-                      value={confirmTxnPwd} 
-                      onChange={(e) => {
-                        setConfirmTxnPwd(e.target.value);
-                        setConfirmTxnPwdError("");
-                      }}
-                      style={{ borderColor: confirmTxnPwdError ? "#e53935" : "" }}
-                      suppressHydrationWarning 
-                    />
-                    {confirmTxnPwdError && <div className="txn-error">{confirmTxnPwdError}</div>}
-                  </div>
-                </div>
+                {/* Password fields removed as they are now auto-generated */}
 
 
 
@@ -1614,12 +1418,10 @@ export default function NewRegisterPage() {
                     </div>
                   )}
                 </div>
-
               </div>
             </div>
           )}
         </div>
-
       </div>
 
       {/* ── CONGRATULATIONS MODAL ── */}
@@ -1667,7 +1469,7 @@ export default function NewRegisterPage() {
                 <div className="detail-row" style={{ borderTop: "1px solid #eee", marginTop: "8px", paddingTop: "8px" }}>
                   <span className="detail-label" style={{ fontWeight: 700, color: "#26a69a" }}>Registration Time</span>
                   <span className="detail-value" style={{ fontWeight: 700, color: "#26a69a" }}>
-                    {newUserData.regDate ? `${String(newUserData.regDate.getDate()).padStart(2, '0')}/${String(newUserData.regDate.getMonth() + 1).padStart(2, '0')}/${newUserData.regDate.getFullYear()} ${String(newUserData.regDate.getHours()).padStart(2, '0')}:${String(newUserData.regDate.getMinutes()).padStart(2, '0')}:${String(newUserData.regDate.getSeconds()).padStart(2, '0')}` : "—"}
+                    {newUserData.regDate ? `${String(newUserData.regDate.getDate()).padStart(2, '0')}/${String(newUserData.regDate.getMonth() + 1).padStart(2, '0')}/${newUserData.regDate.getFullYear()} ${String(newUserData.regDate.getHours()).padStart(2, '0')}:${String(newUserData.regDate.getMinutes()).padStart(2, '0')}:${String(newUserData.regDate.getSeconds()).padStart(2, '0')}` : "-"}
                   </span>
                 </div>
               </div>

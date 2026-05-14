@@ -32,17 +32,38 @@ export async function POST(req: NextRequest) {
         { success: false, message: "Registration is frozen during session transition (12:00 - 12:10). Please try again after 12:10." },
         { status: 403 }
       );
+    }    const body = await req.json();
+
+    //////////////////////////////////////////////////////////////
+    // 🔹 GENERATE UNIQUE CREDENTIALS
+    //////////////////////////////////////////////////////////////
+
+    await connectDB();
+
+    let username = "";
+    let isUnique = false;
+    let attempts = 0;
+
+    while (!isUnique && attempts < 10) {
+      const randomDigits = Math.floor(100000 + Math.random() * 900000);
+      username = `CLM${randomDigits}`;
+      const existing = await User.findOne({ username });
+      if (!existing) isUnique = true;
+      attempts++;
     }
 
-    const body = await req.json();
+    if (!isUnique) {
+      return NextResponse.json({ success: false, message: "Could not generate a unique User ID. Please try again." }, { status: 500 });
+    }
+
+    const rawPassword = Math.floor(10000 + Math.random() * 90000).toString();
+    const rawTransactionPassword = Math.floor(100000 + Math.random() * 900000).toString();
 
     //////////////////////////////////////////////////////////////
     // 🔹 TYPE SAFE INPUTS
     //////////////////////////////////////////////////////////////
 
-    const username = (body.username || "").trim().toUpperCase();
     const fullName = body.fullName;
-    const password = body.password;
     const mobileNo = body.mobileNo;
     const sponsorId = (body.sponsorId || "").trim().toUpperCase();
     const epin = body.epin;
@@ -65,7 +86,6 @@ export async function POST(req: NextRequest) {
     if (
       !username ||
       !fullName ||
-      !password ||
       !mobileNo ||
       !sponsorId ||
       !placementPosition ||
@@ -74,30 +94,6 @@ export async function POST(req: NextRequest) {
       console.log('[DEBUG] register: validation failed - missing fields', { username, fullName, mobileNo, sponsorId, placementPosition, epin });
       return NextResponse.json(
         { success: false, message: "All fields are required" },
-        { status: 400 }
-      );
-    }
-
-    if (!/^[A-Z0-9]+$/.test(username)) {
-      console.log('[DEBUG] register: validation failed - invalid username format', { username });
-      return NextResponse.json(
-        { success: false, message: "Invalid username format" },
-        { status: 400 }
-      );
-    }
-
-    await connectDB();
-    console.log('[DEBUG] register: connected to DB');
-
-    //////////////////////////////////////////////////////////////
-    // 🔹 CHECK EXISTING USER
-    //////////////////////////////////////////////////////////////
-
-    const existingUser = await User.findOne({ username });
-    if (existingUser) {
-      console.log('[DEBUG] register: username exists', { username });
-      return NextResponse.json(
-        { success: false, message: "Username already exists" },
         { status: 400 }
       );
     }
@@ -199,18 +195,10 @@ export async function POST(req: NextRequest) {
     console.log('[DEBUG] register: starting DB transaction');
     dbSession.startTransaction();
 
-    const transactionPassword = body.transactionPassword;
-
-    // Hash the password and transaction password explicitly before saving to prevent plain text saving or hooks skipping
+    // Hash the password and transaction password explicitly before saving
     const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(password, salt);
-    let hashedTransactionPassword = undefined;
-    if (transactionPassword) {
-      const trimmedTxn = String(transactionPassword).trim();
-      if (trimmedTxn.length > 0) {
-        hashedTransactionPassword = await bcrypt.hash(trimmedTxn, salt);
-      }
-    }
+    const hashedPassword = await bcrypt.hash(rawPassword, salt);
+    const hashedTransactionPassword = await bcrypt.hash(rawTransactionPassword, salt);
 
     const newUser = new User({
       userId: username,
@@ -324,7 +312,6 @@ export async function POST(req: NextRequest) {
     );
 
     // Update team count for the placement position 
-    // ONLY if not already updated by updateTeamCounts (which happens if sponsor == loggedInUser)
     if (sponsor.username !== session.user.username) {
       if (!upToDateLoggedInUser.totalTeam) upToDateLoggedInUser.totalTeam = { left: 0, right: 0 };
       upToDateLoggedInUser.totalTeam[placementPosition] = (upToDateLoggedInUser.totalTeam[placementPosition] || 0) + 1;
@@ -360,6 +347,8 @@ export async function POST(req: NextRequest) {
       user: {
         username: newUser.username,
         fullName: newUser.fullName,
+        password: rawPassword,
+        transactionPassword: rawTransactionPassword,
       },
     });
 

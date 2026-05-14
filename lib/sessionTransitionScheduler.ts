@@ -36,6 +36,6 @@ export function isTransitionPeriod(): boolean {
   const currentHour = now.getHours();
   const currentMinute = now.getMinutes();
   
-  return (currentHour === 11 && currentMinute >= 50) || 
-         (currentHour === 23 && currentMinute >= 50);
+  return (currentHour === 12 && currentMinute >= 0 && currentMinute < 10) || 
+         (currentHour === 0 && currentMinute >= 0 && currentMinute < 10);
 }

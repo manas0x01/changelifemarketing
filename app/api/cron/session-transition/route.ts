@@ -4,7 +4,7 @@ import { triggerSessionTransition } from "@/lib/sessionTransitionScheduler";
 /**
  * Cron Job Endpoint for Session Transition
  * This endpoint can be called by external schedulers (Vercel Cron, AWS Lambda, etc.)
- * at 11:50 AM and 11:50 PM daily
+ * at 12:00 AM and 12:00 PM daily
  */
 export async function GET(req: NextRequest) {
   try {

@@ -17,30 +17,32 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if current time is during transition period (11:50 - 12:00)
+    // Check if current time is during transition period (12:00 - 12:10)
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
     
-    const isTransitionPeriod = (currentHour === 11 && currentMinute >= 50) || 
-                                (currentHour === 23 && currentMinute >= 50);
+    const isTransitionPeriod = (currentHour === 12 && currentMinute >= 0 && currentMinute < 10) || 
+                                (currentHour === 0 && currentMinute >= 0 && currentMinute < 10);
     
     const force = req.nextUrl.searchParams.get("force") === "true";
 
     if (!isTransitionPeriod && !force) {
       return NextResponse.json(
-        { success: false, error: "Session transition can only be processed during 11:50-12:00 period. Use ?force=true to override." },
+        { success: false, error: "Session transition can only be processed during 12:00-12:10 period. Use ?force=true to override." },
         { status: 400 }
       );
     }
 
     await connectDB();
 
-    // Determine current session type based on 12 AM / 12 PM boundaries
-    const currentSessionType: "morning" | "evening" = currentHour < 12 ? "morning" : "evening";
-    const nextSessionType: "morning" | "evening" = currentSessionType === "morning" ? "evening" : "morning";
+    // Determine session type to process: 
+    // If it's 12 PM (hour 12), we process the session that just finished: "morning"
+    // If it's 12 AM (hour 0), we process the session that just finished: "evening"
+    const sessionToProcess: "morning" | "evening" = currentHour === 12 ? "morning" : "evening";
+    const nextSessionType: "morning" | "evening" = sessionToProcess === "morning" ? "evening" : "morning";
 
-    console.log(`[SESSION TRANSITION] Processing transition from ${currentSessionType} to ${nextSessionType} (Time: ${currentHour}:${currentMinute})`);
+    console.log(`[SESSION TRANSITION] Processing ${sessionToProcess} session (Time: ${currentHour}:${currentMinute})`);
 
     // Get all users
     const users = await User.find({});
@@ -54,15 +56,14 @@ export async function POST(req: NextRequest) {
       
       if (user.isBooster) {
         // BOOSTER LOGIC: Per-pair matching with Carry-Forward
-        // Note: calculateBoosterIncome handles income, wallet update, and carry-forward calculation
-        const boosterResult = await calculateBoosterIncome(user, currentSessionType);
+        const boosterResult = await calculateBoosterIncome(user, sessionToProcess);
         if (boosterResult.success) {
           totalIncomeAdded += boosterResult.income || 0;
           console.log(`[SESSION TRANSITION] Booster ${user.username} earned ₹${boosterResult.income}`);
         }
       } else {
         // BASIC LOGIC: 1 pair per session with Flush-Out
-        await calculateBasicIncome(user, currentSessionType);
+        await calculateBasicIncome(user, sessionToProcess);
         
         // Note: TotalTeam is a lifetime count and should NOT be flushed.
         // SessionTeam is the one that resets (flashes out) at the end of the session.

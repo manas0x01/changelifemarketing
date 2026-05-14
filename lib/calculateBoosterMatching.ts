@@ -5,7 +5,7 @@ function getSessionType(date: Date): "morning" | "evening" {
 
 export async function calculateBoosterMatching(user: any) {
   console.log('[DEBUG] calculateBoosterMatching: entry', { userId: user?.userId, isBooster: user?.isBooster });
-  
+
   const now = new Date();
   const today = now.toDateString();
   const sessionType = getSessionType(now);
@@ -37,18 +37,18 @@ export async function calculateBoosterMatching(user: any) {
   //////////////////////////////////////////////////////////////
   const leftStock = user.boosterPairsCarryForward.left;
   const rightStock = user.boosterPairsCarryForward.right;
-  
+
   let pairsAvailable = Math.min(leftStock, rightStock);
 
   if (pairsAvailable <= 0) {
     return { success: false, message: "No matching booster pairs" };
   }
-  
+
   let allowedPairs = Math.min(pairsAvailable, remainingSessionPairs);
   allowedPairs = Math.max(0, allowedPairs);
 
   const flushedPairs = pairsAvailable - allowedPairs;
-  
+
   if (allowedPairs <= 0 && flushedPairs <= 0) {
     return { success: false, message: "Limits reached" };
   }
@@ -75,7 +75,7 @@ export async function calculateBoosterMatching(user: any) {
   //////////////////////////////////////////////////////////////
   user.boosterPairsCarryForward.left = Math.max(0, leftStock - pairsAvailable);
   user.boosterPairsCarryForward.right = Math.max(0, rightStock - pairsAvailable);
-  
+
   //////////////////////////////////////////////////////////////
   // 📝 RECORD
   //////////////////////////////////////////////////////////////

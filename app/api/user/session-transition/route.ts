@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         
         // Note: TotalTeam is a lifetime count and should NOT be flushed.
         // SessionTeam is the one that resets (flashes out) at the end of the session.
-        console.log(`[SESSION TRANSITION] Basic ${user.username}: Income processed for ${currentSessionType}`);
+        console.log(`[SESSION TRANSITION] Basic ${user.username}: Income processed for ${sessionToProcess}`);
       }
 
       // Reset session team counts for everyone
@@ -88,7 +88,7 @@ export async function POST(req: NextRequest) {
         usersProcessed: totalUsersProcessed,
         totalIncomeAdded: totalIncomeAdded,
         totalPairsFlushed: totalPairsFlushed,
-        fromSession: currentSessionType,
+        fromSession: sessionToProcess,
         toSession: nextSessionType,
       },
     });

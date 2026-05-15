@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const user = await User.findOne({
       username: session.user.username,
     }).select(
-      "fullName username userId email mobileNo role createdAt joiningDate"
+      "fullName username userId email mobileNo role createdAt joiningDate registeredPackage address city state pincode panNo"
     );
     if (!user) {
       return NextResponse.json(
@@ -43,6 +43,12 @@ export async function GET(req: NextRequest) {
         role: user.role || "user",
         joiningDate: user.joiningDate || user.createdAt,
         createdAt: user.createdAt,
+        registeredPackage: user.registeredPackage || "",
+        address: user.address || "",
+        city: user.city || "",
+        state: user.state || "",
+        pincode: user.pincode || "",
+        panNo: user.panNo || "",
       },
     });
 

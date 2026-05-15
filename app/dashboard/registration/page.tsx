@@ -7,25 +7,25 @@ import Navbar from "@/components/Navbar";
 type Step = "validateTxn" | "sponsor" | "register";
 
 const indianStates = [
-  "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa","Gujarat",
-  "Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala","Madhya Pradesh",
-  "Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland","Odisha","Punjab",
-  "Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura","Uttar Pradesh",
-  "Uttarakhand","West Bengal","Delhi","Jammu & Kashmir","Ladakh",
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
+  "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh",
+  "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab",
+  "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh",
+  "Uttarakhand", "West Bengal", "Delhi", "Jammu & Kashmir", "Ladakh",
 ];
 
-const days   = Array.from({ length: 31 }, (_, i) => String(i + 1));
-const months = ["01","02","03","04","05","06","07","08","09","10","11","12"];
-const years  = Array.from({ length: 60 }, (_, i) => String(2005 - i));
+const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
+const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
+const years = Array.from({ length: 60 }, (_, i) => String(2005 - i));
 
-const packages       = ["-- Select Package --","Basic Package","Healthcare Package","Sanitary Napkine"];
-const positions      = ["-- Select --","Left","Right"];
-const nomineeRels    = ["-- Select --","Son","Daughter","Wife","Husband","Father","Mother","Brother","Sister","Other"];
-const accountTypes   = ["-- Select --","Saving","Current","Salary","NRI","Joint"];
+const packages = ["-- Select Package --", "Healthcare PACK-A", "Healthcare PACK-B"];
+const positions = ["-- Select --", "Left", "Right"];
+const nomineeRels = ["-- Select --", "Son", "Daughter", "Wife", "Husband", "Father", "Mother", "Brother", "Sister", "Other"];
+const accountTypes = ["-- Select --", "Saving", "Current", "Salary", "NRI", "Joint"];
 
 interface NewUserData {
   userId: string;
-  fullName: string; 
+  fullName: string;
   mobileNo: string;
   password: string;
   transactionPassword: string;
@@ -33,12 +33,12 @@ interface NewUserData {
 }
 
 export default function NewRegisterPage() {
-  const [step,         setStep]         = useState<Step>("validateTxn");
-  const [hasPins,      setHasPins]      = useState<boolean | null>(null);
-  const [pinError,     setPinError]     = useState("");
+  const [step, setStep] = useState<Step>("validateTxn");
+  const [hasPins, setHasPins] = useState<boolean | null>(null);
+  const [pinError, setPinError] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [activePage,   setActivePage]   = useState<"dashboard" | "profile">("dashboard");
-  const [txnPassword,  setTxnPassword]  = useState("");
+  const [activePage, setActivePage] = useState<"dashboard" | "profile">("dashboard");
+  const [txnPassword, setTxnPassword] = useState("");
   const [txnPasswordError, setTxnPasswordError] = useState("");
   const [txnValidating, setTxnValidating] = useState(false);
   const [txnValidated, setTxnValidated] = useState(false);
@@ -46,42 +46,42 @@ export default function NewRegisterPage() {
   const [showCongratulations, setShowCongratulations] = useState(false);
   const [newUserData, setNewUserData] = useState<NewUserData | null>(null);
   const [registrationFrozen, setRegistrationFrozen] = useState(false);
-  const [gender,       setGender]       = useState<"Male"|"Female">("Male");
-  const [dobDay,       setDobDay]       = useState("1");
-  const [dobMonth,     setDobMonth]     = useState("01");
-  const [dobYear,      setDobYear]      = useState("1995");
-  const [state,        setState]        = useState("Bihar");
+  const [gender, setGender] = useState<"Male" | "Female">("Male");
+  const [dobDay, setDobDay] = useState("1");
+  const [dobMonth, setDobMonth] = useState("01");
+  const [dobYear, setDobYear] = useState("1995");
+  const [state, setState] = useState("Bihar");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sponsorId,    setSponsorId]    = useState("");
-  const [sponsorName,  setSponsorName]  = useState("");
+  const [sponsorId, setSponsorId] = useState("");
+  const [sponsorName, setSponsorName] = useState("");
   const [sponsorValidated, setSponsorValidated] = useState(false);
   const [sponsorError, setSponsorError] = useState("");
-  const [uplineId,     setUplineId]     = useState("");
-  const [uplineName,   setUplineName]   = useState("");
-  const [uplineError,  setUplineError]  = useState("");
-  const [position,     setPosition]     = useState("-- Select --");
-  const [pkg,          setPkg]          = useState("-- Select Package --");
+  const [uplineId, setUplineId] = useState("");
+  const [uplineName, setUplineName] = useState("");
+  const [uplineError, setUplineError] = useState("");
+  const [position, setPosition] = useState("-- Select --");
+  const [pkg, setPkg] = useState("-- Select Package --");
   const [availableEPins, setAvailableEPins] = useState<string[]>([]);
   const [selectedEPin, setSelectedEPin] = useState("");
   const [availablePositions, setAvailablePositions] = useState<string[]>(["-- Select --", "Left", "Right"]);
-  const [nomineeRelError,  setNomineeRelError]  = useState("");
+  const [nomineeRelError, setNomineeRelError] = useState("");
   const [accountTypeError, setAccountTypeError] = useState("");
 
-  const [fullName,     setFullName]     = useState("");
-  const [mobileNo,     setMobileNo]     = useState("");
-  const [email,        setEmail]        = useState("");
-  const [panNo,        setPanNo]        = useState("");
-  const [district,     setDistrict]     = useState("");
-  const [city,         setCity]         = useState("");
-  const [address,      setAddress]      = useState("");
-  const [pincode,      setPincode]      = useState("");
-  const [nomineeName,  setNomineeName]  = useState("");
-  const [nomineeRel,   setNomineeRel]   = useState("-- Select --");
-  const [bankName,     setBankName]     = useState("");
-  const [branchName,   setBranchName]   = useState("");
-  const [accountNo,    setAccountNo]    = useState("");
-  const [ifscCode,     setIfscCode]     = useState("");
-  const [accountType,  setAccountType]  = useState("-- Select --");
+  const [fullName, setFullName] = useState("");
+  const [mobileNo, setMobileNo] = useState("");
+  const [email, setEmail] = useState("");
+  const [panNo, setPanNo] = useState("");
+  const [district, setDistrict] = useState("");
+  const [city, setCity] = useState("");
+  const [address, setAddress] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [nomineeName, setNomineeName] = useState("");
+  const [nomineeRel, setNomineeRel] = useState("-- Select --");
+  const [bankName, setBankName] = useState("");
+  const [branchName, setBranchName] = useState("");
+  const [accountNo, setAccountNo] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
+  const [accountType, setAccountType] = useState("-- Select --");
 
   useEffect(() => {
     const checkPinAvailability = async () => {
@@ -111,7 +111,7 @@ export default function NewRegisterPage() {
 
       // PM Freeze: 12:00 PM to 12:10 PM (hour 12)
       const isPmFreeze = (hour === 12 && min >= 0 && min < 10);
-      
+
       // AM Freeze: 12:00 AM to 12:10 AM (hour 0)
       const isAmFreeze = (hour === 0 && min >= 0 && min < 10);
 
@@ -160,7 +160,7 @@ export default function NewRegisterPage() {
         return;
       }
       if (!response.ok && response.status === 401) {
-        const errorMsg = data.error === 'No transaction password set' 
+        const errorMsg = data.error === 'No transaction password set'
           ? "No transaction password set. Please set it in your profile first"
           : "Transaction password is incorrect";
         setTxnPasswordError(errorMsg);
@@ -268,7 +268,7 @@ export default function NewRegisterPage() {
           body: JSON.stringify({}),
           credentials: 'include',
         });
-        
+
         if (pinsResponse.ok) {
           const pinsData = await pinsResponse.json();
           const pinStrings = pinsData.availableEPins?.map((ePin: any) => {
@@ -350,7 +350,7 @@ export default function NewRegisterPage() {
       });
       setPosition("-- Select --");
       setAvailablePositions(positionsToShow);
-      
+
       toast.success("✓ Upline validated!");
     } catch (error) {
       setUplineError("An error occurred. Please try again.");
@@ -389,7 +389,7 @@ export default function NewRegisterPage() {
     }
 
     // Move to registration step
-      setStep("register");
+    setStep("register");
   };
 
   const handleRegistrationSubmit = async () => {
@@ -456,21 +456,21 @@ export default function NewRegisterPage() {
         credentials: 'include',
       });
       const data = await response.json();
-      
+
       // Ensure at least 3 seconds have passed
       const elapsedTime = Date.now() - startTime;
       const remainingTime = Math.max(0, 3000 - elapsedTime);
       if (remainingTime > 0) {
         await new Promise(r => setTimeout(r, remainingTime));
       }
-      
+
       if (!response.ok) {
         setIsRegistering(false);
         setIsSubmitting(false);
         toast.error(data.message || data.error || "Registration failed");
         return;
       }
-      
+
       setIsRegistering(false);
 
       setNewUserData({
@@ -494,8 +494,8 @@ export default function NewRegisterPage() {
   };
 
   return (
-            <>
-              <style>{`
+    <>
+      <style>{`
                 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
                 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1010,20 +1010,20 @@ export default function NewRegisterPage() {
 
           {/* ══ PIN AVAILABILITY CHECK ══ */}
           {hasPins === false && txnValidated && (
-          <div className="section-card" style={{ background: '#fff3cd', borderLeft: '4px solid #ff9800' }}>
-            <div className="section-header" style={{ background: '#ff9800' }}>Pin Availability Required</div>
-            <div className="validate-body" style={{ padding: '28px 20px' }}>
-              <div style={{ textAlign: 'center', width: '100%' }}>
-                <div style={{ fontSize: '16px', fontWeight: 600, color: '#d32f2f', marginBottom: '12px' }}>❌ No Available Pins</div>
-                <div style={{ fontSize: '14px', color: '#333', marginBottom: '20px' }}>{pinError}</div>
-                <a href="/dashboard/buypins" style={{ textDecoration: 'none' }}>
-                  <button className="proceed-btn" style={{ background: '#ff9800' }} suppressHydrationWarning={true}>
-                    BUY PIN NOW
-                  </button>
-                </a>
+            <div className="section-card" style={{ background: '#fff3cd', borderLeft: '4px solid #ff9800' }}>
+              <div className="section-header" style={{ background: '#ff9800' }}>Pin Availability Required</div>
+              <div className="validate-body" style={{ padding: '28px 20px' }}>
+                <div style={{ textAlign: 'center', width: '100%' }}>
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: '#d32f2f', marginBottom: '12px' }}>❌ No Available Pins</div>
+                  <div style={{ fontSize: '14px', color: '#333', marginBottom: '20px' }}>{pinError}</div>
+                  <a href="/dashboard/buypins" style={{ textDecoration: 'none' }}>
+                    <button className="proceed-btn" style={{ background: '#ff9800' }} suppressHydrationWarning={true}>
+                      BUY PIN NOW
+                    </button>
+                  </a>
+                </div>
               </div>
             </div>
-          </div>
           )}
 
           {/* STEP 2: SPONSOR & PACKAGE */}
@@ -1050,8 +1050,8 @@ export default function NewRegisterPage() {
                         {sponsorError && <div className="txn-error">{sponsorError}</div>}
                       </div>
                       {!sponsorValidated ? (
-                        <button 
-                          className="proceed-btn" 
+                        <button
+                          className="proceed-btn"
                           onClick={handleValidateSponsor}
                           style={{ marginTop: 0 }}
                           suppressHydrationWarning={true}
@@ -1060,7 +1060,7 @@ export default function NewRegisterPage() {
                         </button>
                       ) : (
                         <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
                           Verified
                         </span>
                       )}
@@ -1101,8 +1101,8 @@ export default function NewRegisterPage() {
                             />
                             {uplineError && <div className="txn-error">{uplineError}</div>}
                           </div>
-                          <button 
-                            className="proceed-btn" 
+                          <button
+                            className="proceed-btn"
                             onClick={handleValidateUpline}
                             style={{ marginTop: 0 }}
                             suppressHydrationWarning={true}
@@ -1342,9 +1342,9 @@ export default function NewRegisterPage() {
                   </div>
                   <div className="form-group">
                     <label className="form-label">Nominee Relation :</label>
-                    <select 
-                      className="form-select" 
-                      value={nomineeRel} 
+                    <select
+                      className="form-select"
+                      value={nomineeRel}
                       onChange={(e) => {
                         setNomineeRel(e.target.value);
                         setNomineeRelError("");
@@ -1382,9 +1382,9 @@ export default function NewRegisterPage() {
                 <div className="form-row">
                   <div className="form-group">
                     <label className="form-label">Account Type :</label>
-                    <select 
-                      className="form-select" 
-                      value={accountType} 
+                    <select
+                      className="form-select"
+                      value={accountType}
                       onChange={(e) => {
                         setAccountType(e.target.value);
                         setAccountTypeError("");
@@ -1404,10 +1404,10 @@ export default function NewRegisterPage() {
 
                 {/* Submit */}
                 <div className="submit-wrap">
-                  <button 
+                  <button
                     className={`proceed-btn ${registrationFrozen ? 'frozen' : ''}`}
-                    onClick={handleRegistrationSubmit} 
-                    disabled={isSubmitting || registrationFrozen} 
+                    onClick={handleRegistrationSubmit}
+                    disabled={isSubmitting || registrationFrozen}
                     suppressHydrationWarning={true}
                   >
                     {registrationFrozen ? '⏸ REGISTRATION FROZEN' : 'REGISTER MEMBER'}
@@ -1465,7 +1465,7 @@ export default function NewRegisterPage() {
                   <span className="detail-label">Transaction Password</span>
                   <span className="detail-value">{newUserData.transactionPassword}</span>
                 </div>
-                
+
                 <div className="detail-row" style={{ borderTop: "1px solid #eee", marginTop: "8px", paddingTop: "8px" }}>
                   <span className="detail-label" style={{ fontWeight: 700, color: "#26a69a" }}>Registration Time</span>
                   <span className="detail-value" style={{ fontWeight: 700, color: "#26a69a" }}>

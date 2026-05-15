@@ -29,7 +29,7 @@ export default function ProfilePage() {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const response = await fetch("/api/user/profile", {
+        const response = await fetch("/api/user/getprofile", {
           method: "GET",
           headers: {
             "Content-Type": "application/json",
@@ -54,7 +54,7 @@ export default function ProfilePage() {
         }
         
         const apiResponse = await response.json();
-        const user = apiResponse.data;
+        const user = apiResponse.user;
         
         // Format joining date to DD/MM/YYYY HH:MM:SS
         const formatDate = (dateString: string) => {

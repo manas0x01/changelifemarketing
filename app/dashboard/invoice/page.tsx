@@ -3,49 +3,48 @@
 import { useState, useEffect, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import html2pdf from "html2pdf.js";
+import { useSidebar } from "@/context/SidebarContext";
 
 export default function TaxInvoicePage() {
   const searchParams = useSearchParams();
   const userIdParam = searchParams.get("userId");
-  
+  const { toggleSidebar } = useSidebar();
+
   const [userData, setUserData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
-    const handleDownload = () => {
-      if (!invoiceRef.current) return;
-      
-      const element = invoiceRef.current;
-      const opt = {
-        margin:       [0.2, 0, 0.2, 0] as [number, number, number, number], // top, left, bottom, right
-        filename:     `Invoice_${userData?.username || 'CLM'}.pdf`,
-        image:        { type: 'jpeg' as const, quality: 0.98 },
-        html2canvas:  { 
-          scale: 2, 
-          useCORS: true, 
-          logging: false,
-          width: 794,
-          windowWidth: 794
-        },
-        jsPDF:        { unit: 'in', format: 'a4' as const, orientation: 'portrait' as const },
-        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
-      };
-      
-      html2pdf().set(opt).from(element).save();
+  const handleDownload = () => {
+    if (!invoiceRef.current) return;
+
+    const element = invoiceRef.current;
+    const opt = {
+      margin: [0.2, 0, 0.2, 0] as [number, number, number, number], // top, left, bottom, right
+      filename: `Invoice_${userData?.username || 'CLM'}.pdf`,
+      image: { type: 'jpeg' as const, quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        width: 794,
+        windowWidth: 794
+      },
+      jsPDF: { unit: 'in', format: 'a4' as const, orientation: 'portrait' as const },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
     };
+
+    html2pdf().set(opt).from(element).save();
+  };
 
   useEffect(() => {
     const fetchUserData = async () => {
       try {
         setLoading(true);
-        // If userIdParam is provided, we might need a different API if looking at other users
-        // For now, let's assume we use getprofile (which returns logged-in user)
-        // unless we have an admin-level search API.
-        const url = userIdParam 
-          ? `/api/user/getprofile?userId=${userIdParam}` 
+        const url = userIdParam
+          ? `/api/user/getprofile?userId=${userIdParam}`
           : "/api/user/getprofile";
-          
+
         const response = await fetch(url);
         if (!response.ok) throw new Error("Failed to fetch user data");
         const result = await response.json();
@@ -84,35 +83,79 @@ export default function TaxInvoicePage() {
           justify-content: flex-start;
           align-items: center;
           min-height: 100vh;
-          background: #e8e8e8;
-          padding: 30px 20px;
+          background: #f4f6f8;
+          padding: 0 0 40px 0;
           font-family: 'Lato', sans-serif;
           gap: 20px;
+          width: 100%;
+          overflow-x: hidden;
+        }
+
+        /* ── TOP NAV BAR ── */
+        .top-menubar {
+          width: 100%;
+          height: 60px;
+          background: #1a4a2e;
+          display: flex;
+          align-items: center;
+          padding: 0 20px;
+          color: white;
+          position: sticky;
+          top: 0;
+          z-index: 1000;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .menu-toggle-btn {
+          background: transparent;
+          border: none;
+          color: white;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 8px;
+          margin-right: 15px;
+          border-radius: 4px;
+          transition: background 0.2s;
+        }
+
+        .menu-toggle-btn:hover {
+          background: rgba(255,255,255,0.1);
+        }
+
+        .page-title {
+          font-size: 18px;
+          font-weight: 700;
+          letter-spacing: 0.5px;
         }
 
         .download-btn {
           background: #1a4a2e;
           color: white;
-          border: none;
+          border: 1px solid rgba(255,255,255,0.2);
           padding: 10px 24px;
           border-radius: 6px;
           font-weight: 700;
           cursor: pointer;
           display: flex;
           align-items: center;
+          justify-content: center;
           gap: 8px;
           transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(26, 74, 46, 0.2);
+          box-shadow: 0 4px 12px rgba(26, 74, 46, 0.15);
           font-family: 'Lato', sans-serif;
           text-transform: uppercase;
           letter-spacing: 1px;
-          font-size: 14px;
+          font-size: 13px;
+          margin: 10px 0;
         }
 
         .download-btn:hover {
           background: #c8943a;
+          border-color: #c8943a;
           transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(200, 148, 58, 0.3);
+          box-shadow: 0 6px 16px rgba(200, 148, 58, 0.25);
         }
 
         .download-btn svg {
@@ -121,14 +164,135 @@ export default function TaxInvoicePage() {
         }
 
         .invoice-container {
-          width: 794px;
-          min-height: 1123px; /* A4 height at 96 DPI */
+          width: 100%;
+          max-width: 794px;
+          min-height: 1123px;
           background: #ffffff;
           position: relative;
           overflow: hidden;
           border: 1px solid #ddd;
-          box-shadow: 0 4px 30px rgba(0,0,0,0.15);
+          box-shadow: 0 4px 30px rgba(0,0,0,0.1);
           page-break-inside: avoid;
+          margin: 0 auto;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+          .invoice-wrapper {
+            padding: 0 0 20px 0;
+            gap: 10px;
+          }
+
+          .invoice-container {
+            width: calc(100% - 10px); /* Tighter margins for mobile */
+            max-width: 100%;
+            min-height: auto;
+            border-radius: 4px;
+            margin: 0 5px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+          }
+
+          .tax-invoice-title {
+            font-size: 24px !important;
+            letter-spacing: 1px !important;
+          }
+
+          .company-details-body {
+            flex-direction: column;
+            padding: 12px !important;
+            gap: 15px !important;
+          }
+
+          .company-info {
+            border-right: none !important;
+            border-bottom: 1px solid #eee;
+            padding-right: 0 !important;
+            padding-bottom: 12px;
+          }
+
+          .invoice-meta {
+            flex: none !important;
+            padding-left: 0 !important;
+            width: 100% !important;
+            gap: 8px !important;
+          }
+
+          .meta-row .meta-value {
+            font-size: 14px !important;
+          }
+
+          .items-table {
+            margin: 0 8px 12px !important;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+          }
+
+          .items-table table {
+            min-width: 550px;
+          }
+
+          .totals-section {
+            margin: 0 8px 12px !important;
+          }
+
+          .totals-section table td {
+            font-size: 12px !important;
+          }
+
+          .bottom-section {
+            margin: 0 8px 15px !important;
+            flex-direction: column;
+            gap: 12px !important;
+          }
+
+          .right-column {
+            flex: none !important;
+            width: 100% !important;
+          }
+
+          .payout-row .p-label {
+            width: 90px !important;
+            font-size: 11px;
+          }
+
+          .payout-row .p-value {
+            font-size: 11.5px !important;
+            word-break: break-word;
+          }
+
+          .package-banner {
+            margin: 8px 8px 12px !important;
+            padding: 6px 12px !important;
+          }
+
+          .package-banner span {
+            font-size: 11px !important;
+            letter-spacing: 1.5px !important;
+          }
+
+          .header {
+            padding: 15px 15px 8px !important;
+          }
+
+          .logo-img {
+            width: 100px !important;
+          }
+
+          .invoice-title-section {
+            padding: 8px 15px !important;
+          }
+
+          .invoice-footer {
+            padding: 12px 15px 15px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .tax-invoice-title {
+            font-size: 20px !important;
+          }
+          .dot { width: 4px !important; height: 4px !important; }
+          .dots { gap: 6px !important; }
         }
 
         /* Gold corner decorations */
@@ -651,7 +815,39 @@ export default function TaxInvoicePage() {
         .corner-svg path {
           fill: #c8943a;
         }
+
+        @media print {
+          body {
+            background: white !important;
+          }
+          .invoice-wrapper {
+            padding: 0 !important;
+            background: white !important;
+          }
+          .download-btn {
+            display: none !important;
+          }
+          .invoice-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-shadow: none !important;
+            border: none !important;
+            margin: 0 !important;
+          }
+        }
       `}</style>
+
+      {/* TOP MENUBAR */}
+      <div className="top-menubar">
+        <button className="menu-toggle-btn" onClick={toggleSidebar} aria-label="Toggle Menu">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="3" y1="12" x2="21" y2="12"></line>
+            <line x1="3" y1="6" x2="21" y2="6"></line>
+            <line x1="3" y1="18" x2="21" y2="18"></line>
+          </svg>
+        </button>
+        <span className="page-title">Tax Invoice</span>
+      </div>
 
       {/* DOWNLOAD BUTTON */}
       <button className="download-btn" onClick={handleDownload}>
@@ -683,9 +879,9 @@ export default function TaxInvoicePage() {
 
         {/* HEADER */}
         <div className="header">
-          <img 
-            src="/images/clm logo.jpeg" 
-            alt="Change Life Marketing Logo" 
+          <img
+            src="/images/clm logo.jpeg"
+            alt="Change Life Marketing Logo"
             className="logo-img"
           />
         </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import {
   Users,
@@ -20,77 +20,46 @@ import {
   XCircle,
   IndianRupee,
   ChevronUp,
+  Loader2,
 } from "lucide-react";
 
-const kpiCards = [
-  {
-    label: "Total Users",
-    value: "12,480",
-    change: "+8.2%",
-    trend: "up",
-    icon: Users,
-    color: "text-[#0A6E5A]",
-    bg: "bg-[#0A6E5A]/8",
-    border: "border-[#0A6E5A]/20",
-  },
-  {
-    label: "Total Orders",
-    value: "3,241",
-    change: "+14.5%",
-    trend: "up",
-    icon: ShoppingBag,
-    color: "text-[#C9A84C]",
-    bg: "bg-[#C9A84C]/8",
-    border: "border-[#C9A84C]/20",
-  },
-  {
-    label: "Withdraw Pending",
-    value: "₹2,34,000",
-    change: "-3.1%",
-    trend: "down",
-    icon: Wallet,
-    color: "text-rose-500",
-    bg: "bg-rose-50",
-    border: "border-rose-100",
-  },
-  {
-    label: "Active Achievers",
-    value: "187",
-    change: "+22%",
-    trend: "up",
-    icon: Trophy,
-    color: "text-purple-500",
-    bg: "bg-purple-50",
-    border: "border-purple-100",
-  },
-];
 
-const recentOrders = [
-  { id: "#ORD-0091", user: "Ravi Kumar", product: "Health Booster Pack", amount: "₹1,499", status: "Completed" },
-  { id: "#ORD-0090", user: "Priya Singh", product: "Natural Wellness Kit", amount: "₹2,199", status: "Pending" },
-  { id: "#ORD-0089", user: "Amit Sharma", product: "Immunity Bundle", amount: "₹899", status: "Completed" },
-  { id: "#ORD-0088", user: "Sunita Devi", product: "Health Booster Pack", amount: "₹1,499", status: "Cancelled" },
-  { id: "#ORD-0087", user: "Mohan Lal", product: "Premium Wellness Set", amount: "₹3,499", status: "Pending" },
-];
-
-const recentWithdrawals = [
-  { user: "Ravi Kumar", amount: "₹5,000", bank: "SBI •••• 4211", date: "15 Apr 2026", status: "Pending" },
-  { user: "Priya Singh", amount: "₹12,000", bank: "PNB •••• 7891", date: "14 Apr 2026", status: "Approved" },
-  { user: "Amit Sharma", amount: "₹8,500", bank: "HDFC •••• 3301", date: "13 Apr 2026", status: "Approved" },
-  { user: "Kavita Rai", amount: "₹3,200", bank: "BOI •••• 0049", date: "12 Apr 2026", status: "Rejected" },
-];
-
-const recentPinRequests = [
-  { user: "Mohan Lal", pins: 5, date: "16 Apr 2026", status: "Pending" },
-  { user: "Sunita Devi", pins: 2, date: "15 Apr 2026", status: "Approved" },
-  { user: "Deepak Yadav", pins: 10, date: "14 Apr 2026", status: "Pending" },
-];
-
-const topAchievers = [
-  { rank: 1, name: "Priya Singh", level: "Diamond", earnings: "₹82,000" },
-  { rank: 2, name: "Ravi Kumar", level: "Gold", earnings: "₹61,500" },
-  { rank: 3, name: "Sunita Devi", level: "Silver", earnings: "₹44,200" },
-];
+// Types for dynamic data
+interface DashboardData {
+  stats: {
+    totalUsers: string;
+    totalOrders: string;
+    withdrawPending: string;
+    activeAchievers: string;
+    pinRequests: string;
+    pendingOrders: string;
+    newUsersToday: string;
+    revenueToday: string;
+    pendingWithdrawals: string;
+    totalAchievers: string;
+    monthlyRevenue: string;
+  };
+  recentOrders: Array<{
+    id: string;
+    user: string;
+    product: string;
+    amount: string;
+    status: string;
+  }>;
+  recentWithdrawals: Array<{
+    user: string;
+    amount: string;
+    bank: string;
+    date: string;
+    status: string;
+  }>;
+  topAchievers: Array<{
+    rank: number;
+    name: string;
+    level: string;
+    earnings: string;
+  }>;
+}
 
 /* ─────────────────────────────────────────────
    STATUS BADGE
@@ -144,6 +113,77 @@ const CardHeader = ({
 ───────────────────────────────────────────── */
 export default function AdminDashboard() {
   const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [data, setData] = useState<DashboardData | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardStats = async () => {
+      try {
+        const response = await fetch("/api/admin/dashboard-stats");
+        const json = await response.json();
+        if (json.success) {
+          setData(json);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard stats:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardStats();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F5F7F6] flex items-center justify-center">
+        <Loader2 className="w-8 h-8 text-[#0A6E5A] animate-spin" />
+      </div>
+    );
+  }
+
+  const kpiCards = [
+    {
+      label: "Total Users",
+      value: data?.stats.totalUsers || "0",
+      change: "+0%",
+      trend: "up",
+      icon: Users,
+      color: "text-[#0A6E5A]",
+      bg: "bg-[#0A6E5A]/8",
+      border: "border-[#0A6E5A]/20",
+    },
+    {
+      label: "Total Orders",
+      value: data?.stats.totalOrders || "0",
+      change: "+0%",
+      trend: "up",
+      icon: ShoppingBag,
+      color: "text-[#C9A84C]",
+      bg: "bg-[#C9A84C]/8",
+      border: "border-[#C9A84C]/20",
+    },
+    {
+      label: "Withdraw Pending",
+      value: data?.stats.withdrawPending || "₹0",
+      change: "-0%",
+      trend: "down",
+      icon: Wallet,
+      color: "text-rose-500",
+      bg: "bg-rose-50",
+      border: "border-rose-100",
+    },
+    {
+      label: "Active Achievers",
+      value: data?.stats.activeAchievers || "0",
+      change: "+0%",
+      trend: "up",
+      icon: Trophy,
+      color: "text-purple-500",
+      bg: "bg-purple-50",
+      border: "border-purple-100",
+    },
+  ];
 
   const stagger: any = {
     container: {
@@ -270,12 +310,12 @@ export default function AdminDashboard() {
           >
             <Card className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 divide-x divide-y md:divide-y-0 divide-[#0A6E5A]/8">
               {[
-                { label: "PIN Requests", value: "34", icon: KeyRound },
-                { label: "Pending Orders", value: "128", icon: ShoppingBag },
-                { label: "New Users Today", value: "19", icon: Users },
-                { label: "Revenue Today", value: "₹48,200", icon: IndianRupee },
-                { label: "Pending Withdrawals", value: "21", icon: Wallet },
-                { label: "Total Achievers", value: "187", icon: Trophy },
+                { label: "PIN Requests", value: data?.stats.pinRequests || "0", icon: KeyRound },
+                { label: "Pending Orders", value: data?.stats.pendingOrders || "0", icon: ShoppingBag },
+                { label: "New Users Today", value: data?.stats.newUsersToday || "0", icon: Users },
+                { label: "Revenue Today", value: data?.stats.revenueToday || "₹0", icon: IndianRupee },
+                { label: "Pending Withdrawals", value: data?.stats.pendingWithdrawals || "0", icon: Wallet },
+                { label: "Total Achievers", value: data?.stats.totalAchievers || "0", icon: Trophy },
               ].map(({ label, value, icon: Icon }) => (
                 <div
                   key={label}
@@ -324,7 +364,7 @@ export default function AdminDashboard() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#0A6E5A]/5">
-                      {recentOrders.map((order) => (
+                      {(data?.recentOrders || []).map((order) => (
                         <tr key={order.id} className="hover:bg-[#0A6E5A]/2 transition-colors">
                           <td className="px-5 py-3.5 font-['Fraunces'] text-[#0A6E5A] text-[0.85rem]">{order.id}</td>
                           <td className="px-5 py-3.5 text-[#333333]/80 whitespace-nowrap">{order.user}</td>
@@ -357,7 +397,7 @@ export default function AdminDashboard() {
                   }
                 />
                 <div className="divide-y divide-[#0A6E5A]/5">
-                  {recentWithdrawals.map((w, i) => (
+                  {(data?.recentWithdrawals || []).map((w, i) => (
                     <div key={i} className="px-5 py-4 hover:bg-[#0A6E5A]/2 transition-colors">
                       <div className="flex items-start justify-between gap-2 mb-1.5">
                         <div>
@@ -398,7 +438,7 @@ export default function AdminDashboard() {
                   }
                 />
                 <div className="divide-y divide-[#0A6E5A]/5">
-                  {recentPinRequests.map((p, i) => (
+                  {(data?.recentOrders?.filter(o => o.status === "Pending") || []).map((p, i) => (
                     <div key={i} className="px-5 py-4 hover:bg-[#0A6E5A]/2 transition-colors">
                       <div className="flex items-center justify-between mb-1">
                         <p className="font-semibold text-[#0A6E5A] text-[0.85rem]">{p.user}</p>
@@ -407,12 +447,17 @@ export default function AdminDashboard() {
                       <div className="flex items-center justify-between">
                         <span className="text-[0.75rem] text-[#333333]/55">
                           <KeyRound className="inline w-3 h-3 mr-1 text-[#C9A84C]" />
-                          {p.pins} PINs requested
+                          {p.product}
                         </span>
-                        <span className="text-[0.7rem] text-[#333333]/40">{p.date}</span>
+                        <span className="text-[0.7rem] text-[#333333]/40">{p.amount}</span>
                       </div>
                     </div>
                   ))}
+                  {(!data?.recentOrders?.filter(o => o.status === "Pending").length) && (
+                    <div className="px-5 py-10 text-center text-[#333333]/40 text-[0.8rem]">
+                      No pending requests
+                    </div>
+                  )}
                 </div>
 
                 {/* Quick Create PIN CTA */}
@@ -446,7 +491,7 @@ export default function AdminDashboard() {
                   }
                 />
                 <div className="p-5 space-y-3">
-                  {topAchievers.map((a) => {
+                  {(data?.topAchievers || []).map((a) => {
                     const rankColor =
                       a.rank === 1 ? "text-[#C9A84C]" :
                       a.rank === 2 ? "text-slate-400" :
@@ -487,10 +532,10 @@ export default function AdminDashboard() {
                 <div className="mx-5 mb-5 rounded-sm bg-[#0A6E5A] p-4 flex items-center gap-4">
                   <div className="flex-1">
                     <p className="text-[#C9A84C] text-[0.7rem] uppercase tracking-widest font-semibold mb-0.5">Monthly Revenue</p>
-                    <p className="font-['Fraunces'] text-[1.5rem] text-[#FFFFFF]">₹4,82,300</p>
+                    <p className="font-['Fraunces'] text-[1.5rem] text-[#FFFFFF]">{data?.stats.monthlyRevenue || "₹0"}</p>
                     <p className="text-[0.72rem] text-[#FFFFFF]/50 mt-0.5 flex items-center gap-1">
                       <TrendingUp className="w-3 h-3 text-emerald-400" />
-                      <span className="text-emerald-400 font-semibold">+18.4%</span> vs last month
+                      <span className="text-emerald-400 font-semibold">+0%</span> vs last month
                     </p>
                   </div>
                   <div className="flex items-end gap-1 h-12">

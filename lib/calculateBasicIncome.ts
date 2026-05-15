@@ -10,7 +10,7 @@ import { checkBoosterQualification } from "./checkBoosterQualification";
  * - Max 1 pair paid per session (1000 Rs).
  * - All unpaired BV and extra pairs are "flashed out" (removed) at session end.
  */
-export async function calculateBasicIncome(user: any, manualSessionType?: string) {
+export async function calculateBasicIncome(user: any, manualSessionType?: string, manualDate?: Date) {
   try {
     const currentHour = new Date().getHours();
     const sessionType = (manualSessionType === "morning" || manualSessionType === "evening")
@@ -63,7 +63,8 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     // 4. Update session history / records
     if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
 
-    const todayStr = new Date().toDateString();
+    const targetDate = manualDate || new Date();
+    const todayStr = targetDate.toDateString();
     // TESTING MODE: We allow manual triggers to create new sessions if they are not within the same 10 seconds
     let sessionRecord = user.sessionBasedIncome.find((s: any) => {
       const recDate = new Date(s.date || s.sessionDate);
@@ -82,13 +83,13 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       sessionRecord.netIncome = incomeToAdd;
       sessionRecord.pairs = (sessionRecord.pairs || 0) + paidPairs;
       sessionRecord.processed = true;
-      sessionRecord.date = new Date();
+      sessionRecord.date = targetDate;
       
       user.basicIncome = (user.basicIncome || 0) + incomeToAdd;
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
     } else {
       user.sessionBasedIncome.push({
-        date: new Date(),
+        date: targetDate,
         sessionType: sessionType,
         pairs: paidPairs,
         netIncome: newIncome,

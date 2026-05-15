@@ -539,6 +539,19 @@ userSchema.pre('save', async function (this: IUser) {
       }
     }
 
+    // 2.5 RETROACTIVE SYNC FOR BROKEN ACCOUNTS (Jumpstart)
+    // If user has NO income records but has a tree, attempt to match the first pair.
+    if ((this.basicIncome === 0 || !this.sessionBasedIncome || this.sessionBasedIncome.length === 0) && Math.min(totalLeft, totalRight) > 0) {
+        console.log(`[SELF-HEALING] User ${this.username} has potential pairs but no income. Attempting retroactive match.`);
+        const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
+        // Force sessionTeam to have at least 1,1 to trigger the match if it's currently empty
+        if (!this.sessionTeam) this.sessionTeam = { left: 0, right: 0 };
+        if (this.sessionTeam.left === 0) this.sessionTeam.left = 1;
+        if (this.sessionTeam.right === 0) this.sessionTeam.right = 1;
+        
+        await calculateBasicIncome(this, this.lastSessionType || (new Date().getHours() < 12 ? "morning" : "evening"), this.lastSessionDate || new Date());
+    }
+
     // 3. SESSION TRANSITION HEALING (Real-time clock based)
     const now = new Date();
     const currentHour = now.getHours();
@@ -554,7 +567,7 @@ userSchema.pre('save', async function (this: IUser) {
         // Finalize old session before clearing
         if (this.sessionTeam && (this.sessionTeam.left > 0 || this.sessionTeam.right > 0)) {
            const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
-           await calculateBasicIncome(this, this.lastSessionType);
+           await calculateBasicIncome(this, this.lastSessionType, this.lastSessionDate || new Date());
         }
 
         this.sessionTeam = { left: 0, right: 0 };

@@ -73,7 +73,7 @@ export async function updateTeamCounts(
 
       // Match for the session that just ended
       // This now handles both 1-pair (basic) and 10-pair (booster) binary logic
-      await calculateBasicIncome(user, previousSessionType); 
+      await calculateBasicIncome(user, previousSessionType, user.lastSessionDate || new Date()); 
 
       // FLASH OUT: Resetting sessionTeam effectively flashes out any unpaired BV for Basic users.
       // For Booster users, unpaired BV is already in boosterPairsCarryForward.

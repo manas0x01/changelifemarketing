@@ -51,23 +51,28 @@ export async function POST(req: NextRequest) {
     let totalIncomeAdded = 0;
     let totalPairsFlushed = 0;
 
+    const sessionDate = new Date();
+    if (currentHour === 0) {
+      sessionDate.setDate(sessionDate.getDate() - 1);
+    }
+
     for (const user of users) {
       console.log(`[SESSION TRANSITION] Processing user: ${user.username} (${user.isBooster ? 'Booster' : 'Basic'})`);
       
       if (user.isBooster) {
         // BOOSTER LOGIC: Per-pair matching with Carry-Forward
-        const boosterResult = await calculateBoosterIncome(user, sessionToProcess);
+        const boosterResult = await calculateBoosterIncome(user, sessionToProcess, sessionDate);
         if (boosterResult.success) {
           totalIncomeAdded += boosterResult.income || 0;
           console.log(`[SESSION TRANSITION] Booster ${user.username} earned ₹${boosterResult.income}`);
         }
       } else {
         // BASIC LOGIC: 1 pair per session with Flush-Out
-        await calculateBasicIncome(user, sessionToProcess);
+        await calculateBasicIncome(user, sessionToProcess, sessionDate);
         
         // Note: TotalTeam is a lifetime count and should NOT be flushed.
         // SessionTeam is the one that resets (flashes out) at the end of the session.
-        console.log(`[SESSION TRANSITION] Basic ${user.username}: Income processed for ${sessionToProcess}`);
+        console.log(`[SESSION TRANSITION] Basic ${user.username}: Income processed for ${sessionToProcess} on ${sessionDate.toDateString()}`);
       }
 
       // Reset session team counts for everyone

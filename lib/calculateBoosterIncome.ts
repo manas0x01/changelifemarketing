@@ -4,14 +4,13 @@ import User from "../models/User";
  * Calculates Booster Level income for a specific session.
  * This is event-driven and should be called when a session transitions.
  */
-export async function calculateBoosterIncome(user: any, sessionType: 'morning' | 'evening') {
+export async function calculateBoosterIncome(user: any, sessionType: 'morning' | 'evening', manualDate?: Date) {
   try {
     if (!user.isBooster) return { success: false, message: "User is not a booster" };
 
-    // 1. Booster income now exclusively uses boosterPairsCarryForward
-    // which is updated in real-time by handleBoosterUpgrade in teamUtils.ts
-    // We no longer pull from user.sessionTeam because that is for Basic Income only.
-    
+    const targetDate = manualDate || new Date();
+    const today = targetDate.toDateString();
+
     if (!user.boosterPairsCarryForward) {
       user.boosterPairsCarryForward = { left: 0, right: 0 };
     }
@@ -25,8 +24,6 @@ export async function calculateBoosterIncome(user: any, sessionType: 'morning' |
       return { success: true, income: 0, message: "No booster matching available" };
     }
 
-    // 2. Find or create the record for the CURRENT session to track progress
-    const today = new Date().toDateString();
     if (!user.boosterMatchingRecords) user.boosterMatchingRecords = [];
     
     const lastTransition = user.lastSessionDate ? new Date(user.lastSessionDate) : new Date(0);
@@ -53,11 +50,11 @@ export async function calculateBoosterIncome(user: any, sessionType: 'morning' |
         sessionRecord.paidPairs = currentPaidPairs;
         sessionRecord.grossIncome = (sessionRecord.grossIncome || 0) + newIncome;
         sessionRecord.netIncome = (sessionRecord.netIncome || 0) + newIncome;
-        sessionRecord.date = new Date();
+        sessionRecord.date = targetDate;
       } else {
         user.boosterMatchingRecords.push({
           srNo: user.boosterMatchingRecords.length + 1,
-          date: new Date(),
+          date: targetDate,
           sessionType: sessionType,
           pairsMatched: totalPairsMatched,
           paidPairs: currentPaidPairs,

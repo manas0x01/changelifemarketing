@@ -3,12 +3,12 @@ function getSessionType(date: Date): "morning" | "evening" {
   return hour < 12 ? "morning" : "evening";
 }
 
-export async function calculateBoosterMatching(user: any) {
+export async function calculateBoosterMatching(user: any, manualDate?: Date) {
   console.log('[DEBUG] calculateBoosterMatching: entry', { userId: user?.userId, isBooster: user?.isBooster });
   
-  const now = new Date();
-  const today = now.toDateString();
-  const sessionType = getSessionType(now);
+  const targetDate = manualDate || new Date();
+  const today = targetDate.toDateString();
+  const sessionType = getSessionType(targetDate);
 
   if (!user.boosterMatchingRecords) user.boosterMatchingRecords = [];
   if (!user.boosterPairsCarryForward)
@@ -74,7 +74,7 @@ export async function calculateBoosterMatching(user: any) {
     // Create new record for this session
     user.boosterMatchingRecords.push({
       srNo: user.boosterMatchingRecords.length + 1,
-      date: now,
+      date: targetDate,
       sessionType,
       pairsMatched: pairsToProcess,
       paidPairs: pairsToPay,

@@ -53,6 +53,7 @@ interface PopupState {
   node: MNode;
   left: number;
   top: number;
+  isPersistent?: boolean;
 }
 
 const isSlot = (n: MNode) => n.type === "open" || n.type === "close";
@@ -188,14 +189,10 @@ function AvatarBooster({ x, y, r }: { x: number; y: number; r: number }) {
 function TreeSVG({
   root,
   onNodeClick,
-  onNodeHover,
-  onNodeLeave,
   maxd,
 }: {
   root: MNode | null;
   onNodeClick: (node: MNode, e: React.MouseEvent) => void;
-  onNodeHover: (node: MNode, e: React.MouseEvent) => void;
-  onNodeLeave: () => void;
   maxd: number;
 }) {
   if (!root) {
@@ -304,8 +301,6 @@ function TreeSVG({
           <g
             key={`n-${i}`}
             onClick={e => { e.stopPropagation(); onNodeClick(n, e); }}
-            onMouseEnter={e => { e.stopPropagation(); onNodeHover(n, e); }}
-            onMouseLeave={e => { e.stopPropagation(); onNodeLeave(); }}
             style={{ cursor: "pointer" }}
           >
             {/* Outer Aura */}
@@ -483,11 +478,13 @@ function MemberPopup({
   onClose,
   onMouseEnter,
   onMouseLeave,
+  onExplore,
 }: {
   state: PopupState;
   onClose: () => void;
   onMouseEnter?: () => void;
   onMouseLeave?: () => void;
+  onExplore?: (userId: string) => void;
 }) {
   const { node: n, left, top } = state;
   const booster = n.type === "booster";
@@ -609,16 +606,32 @@ function MemberPopup({
           ))}
         </div>
 
-        <div style={{ marginTop: 10, textAlign: "center" }}>
-          <span style={{
-            display: "inline-block", padding: "3px 12px", borderRadius: 20, fontSize: 10, fontWeight: 700,
-            background: booster ? "#fff8e1" : "#e3f2fd",
-            color: booster ? "#f57c00" : "#1565c0",
-            border: `1px solid ${booster ? "#f9a825" : "#90caf9"}`,
-            letterSpacing: 0.5,
-          }}>
-            {booster ? "⭐ BOOSTER MEMBER" : "✅ ACTIVE MEMBER"}
-          </span>
+        <div style={{ marginTop: 15, display: "flex", gap: 8 }}>
+          <button
+            onClick={(e) => { e.stopPropagation(); if (onExplore) onExplore(n.userId); }}
+            style={{
+              flex: 1,
+              background: booster ? "#f57c00" : "#1565c0",
+              color: "#fff",
+              border: "none",
+              borderRadius: 8,
+              padding: "10px",
+              fontSize: "11px",
+              fontWeight: 700,
+              cursor: "pointer",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: 6
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="11" cy="11" r="8"></circle>
+              <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            EXPLORE DOWNLINE
+          </button>
         </div>
       </div>
     </div>
@@ -815,29 +828,15 @@ export default function NetworkTreePage() {
     }
   };
 
-  /* ── Hover refs for stable popup ── */
-  const isHoveringRef = useRef(false);           // on node
-  const isOnPopupRef = useRef(false);           // on popup card
-  const popupShowTimeRef = useRef<number | null>(null);
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  /* ── Card opening logic (triggered by click) ── */
   const fetchIdRef = useRef<string | null>(null);  // Track current fetch
 
-  const handleNodeHover = (n: MNode, e: React.MouseEvent) => {
+  const handleOpenCard = (n: MNode, e: React.MouseEvent) => {
     if (isSlot(n)) return;
     e.stopPropagation();
 
-    // New hover - cancel old pending close and set new fetch ID
     const currentFetchId = `${n.userId}-${Date.now()}`;
     fetchIdRef.current = currentFetchId;
-    console.log(`[HOVER] Node hovered: ${n.id} (${n.name}) - fetchId: ${currentFetchId}`);
-
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-      console.log(`[CANCEL] Cancelled pending close`);
-    }
-
-    isHoveringRef.current = true;
 
     const vw = window.innerWidth, vh = window.innerHeight;
     const pw = 308, ph = 330;
@@ -853,21 +852,16 @@ export default function NetworkTreePage() {
 
     const fetchMemberCard = async () => {
       try {
-        const fetchStart = performance.now();
         const res = await fetch("/api/user/member-card", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ userId: n.userId }),
         });
         const data = await res.json();
-        const fetchEnd = performance.now();
-        console.log(`[FETCH] Fetch completed in ${(fetchEnd - fetchStart).toFixed(1)}ms for ${n.id} - fetchId: ${currentFetchId}`);
 
-        // Only show if this is still the current fetch AND hovering
-        if (fetchIdRef.current === currentFetchId && isHoveringRef.current && data.success && data.card) {
+        // Only show if this is still the current fetch
+        if (fetchIdRef.current === currentFetchId && data.success && data.card) {
           const card = data.card;
-          popupShowTimeRef.current = Date.now();
-          console.log(`[SHOW] Card showing for ${n.id} at ${new Date().toLocaleTimeString()}`);
           setPopup({
             node: {
               ...n,
@@ -888,13 +882,8 @@ export default function NetworkTreePage() {
             },
             left: lft,
             top,
+            isPersistent: true
           });
-        } else {
-          if (fetchIdRef.current !== currentFetchId) {
-            console.log(`[SKIP] Card NOT shown - newer fetch already in progress`);
-          } else {
-            console.log(`[SKIP] Card NOT shown - hovering=${isHoveringRef.current}, success=${data.success}`);
-          }
         }
       } catch (err) {
         console.error("Failed to fetch member card:", err);
@@ -903,58 +892,21 @@ export default function NetworkTreePage() {
     fetchMemberCard();
   };
 
-  const handleNodeLeave = () => {
-    console.log(`[LEAVE] Left node - debouncing close for 300ms`);
-
-    // Debounce close - wait 300ms to allow slow fetches (some take 200+ms) to complete
-    closeTimeoutRef.current = setTimeout(() => {
-      isHoveringRef.current = false;
-      console.log(`[DEBOUNCE-TIMEOUT] 300ms passed, marking not hovering, closing if on popup: ${!isOnPopupRef.current}`);
-      if (!isOnPopupRef.current) {
-        if (popup && popupShowTimeRef.current) {
-          const duration = Date.now() - popupShowTimeRef.current;
-          console.log(`[CLOSE] Card closed after ${duration}ms`);
-        }
-        setPopup(null);
-      }
-      closeTimeoutRef.current = null;
-    }, 300);
-  };
-
-  const handlePopupEnter = () => {
-    isOnPopupRef.current = true;
-    console.log(`[POPUP-ENTER] Cursor on popup`);
-    // Cancel any pending close
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-  };
-
-  const handlePopupLeave = () => {
-    isOnPopupRef.current = false;
-    console.log(`[POPUP-LEAVE] Left popup`);
-    // Close immediately only if not hovering node
-    if (!isHoveringRef.current) {
-      if (popup && popupShowTimeRef.current) {
-        const duration = Date.now() - popupShowTimeRef.current;
-        console.log(`[CLOSE] Card closed after ${duration}ms`);
-      }
-      setPopup(null);
-    }
-  };
-
   const handleNodeClick = (n: MNode, e: React.MouseEvent) => {
     e.stopPropagation();
     if (isSlot(n)) { handleSlotClick(n, e); return; }
 
+    // On click, we show the popup in persistent mode
+    handleOpenCard(n, e);
+  };
+
+  const handleExploreDownline = (userId: string) => {
     // Save current user to history before moving down
-    if (memberId && memberId !== n.userId) {
+    if (memberId && memberId !== userId) {
       setHistory(prev => [...prev, memberId]);
     }
-
-    setMemberId(n.userId);
-    fetchTree(n.userId);
+    setMemberId(userId);
+    fetchTree(userId);
     setPopup(null);
   };
 
@@ -1247,12 +1199,10 @@ export default function NetworkTreePage() {
                   {loading
                     ? <TreeSkeletonSVG />
                     : <TreeSVG
-                      root={treeRoot}
-                      onNodeClick={handleNodeClick}
-                      onNodeHover={handleNodeHover}
-                      onNodeLeave={handleNodeLeave}
-                      maxd={dimensions.maxd}
-                    />
+                        root={treeRoot}
+                        onNodeClick={handleNodeClick}
+                        maxd={dimensions.maxd}
+                      />
                   }
                   <TreeLegend />
                 </div>
@@ -1263,12 +1213,15 @@ export default function NetworkTreePage() {
 
         {popup && (
           <>
-            <div className="nt-overlay" onClick={() => setPopup(null)} />
+            <div 
+              className="nt-overlay" 
+              onClick={() => setPopup(null)} 
+              style={{ position: 'fixed', inset: 0, zIndex: 2150, background: 'rgba(0,0,0,0.05)' }}
+            />
             <MemberPopup
               state={popup}
               onClose={() => setPopup(null)}
-              onMouseEnter={handlePopupEnter}
-              onMouseLeave={handlePopupLeave}
+              onExplore={handleExploreDownline}
             />
           </>
         )}

@@ -13,20 +13,27 @@ export default function TaxInvoicePage() {
   const [error, setError] = useState<string | null>(null);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
-  const handleDownload = () => {
-    if (!invoiceRef.current) return;
-    
-    const element = invoiceRef.current;
-    const opt = {
-      margin:       0.2,
-      filename:     `Invoice_${userData?.username || 'CLM'}.pdf`,
-      image:        { type: 'jpeg' as const, quality: 0.98 },
-      html2canvas:  { scale: 2, useCORS: true, logging: true },
-      jsPDF:        { unit: 'in', format: 'a4' as const, orientation: 'portrait' as const }
+    const handleDownload = () => {
+      if (!invoiceRef.current) return;
+      
+      const element = invoiceRef.current;
+      const opt = {
+        margin:       [0.2, 0, 0.2, 0] as [number, number, number, number], // top, left, bottom, right
+        filename:     `Invoice_${userData?.username || 'CLM'}.pdf`,
+        image:        { type: 'jpeg' as const, quality: 0.98 },
+        html2canvas:  { 
+          scale: 2, 
+          useCORS: true, 
+          logging: false,
+          width: 794,
+          windowWidth: 794
+        },
+        jsPDF:        { unit: 'in', format: 'a4' as const, orientation: 'portrait' as const },
+        pagebreak:    { mode: ['avoid-all', 'css', 'legacy'] }
+      };
+      
+      html2pdf().set(opt).from(element).save();
     };
-    
-    html2pdf().set(opt).from(element).save();
-  };
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -115,11 +122,13 @@ export default function TaxInvoicePage() {
 
         .invoice-container {
           width: 794px;
+          min-height: 1123px; /* A4 height at 96 DPI */
           background: #ffffff;
           position: relative;
           overflow: hidden;
           border: 1px solid #ddd;
           box-shadow: 0 4px 30px rgba(0,0,0,0.15);
+          page-break-inside: avoid;
         }
 
         /* Gold corner decorations */

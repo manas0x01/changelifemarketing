@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
 
 const payoutCycles = [
@@ -14,15 +15,17 @@ interface PayoutRow {
   srNo: number;
   fromDate: string;
   toDate: string;
-  silverBinary: number;
-  goldBinary: number;
+  basicIncome: number;
+  boosterIncome: number;
   total: number;
-  reimbursement: number;
+  adminProcessing: number;
   tds: number;
   netpay: number;
+  userId: string;
 }
 
 export default function SuccessPaymentsPage() {
+  const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [cycle,        setCycle]        = useState("--All--");
   const [data,         setData]         = useState<PayoutRow[]>([]);
@@ -84,9 +87,9 @@ export default function SuccessPaymentsPage() {
   const totalNetPay = Array.isArray(data) ? data.reduce((s, r) => s + r.netpay, 0) : 0;
 
   const handleExportCSV = () => {
-    const header = "Sr.No.,From Date,To Date,Silver Binary,Gold Binary,Total,Reimbursement of Expenditure,TDS,Netpay";
+    const header = "Sr.No.,From Date,To Date,Basic,Booster,Total,Admin & Processing,TDS,Netpay";
     const rows   = data.map(r =>
-      `${r.srNo},"${r.fromDate}","${r.toDate}",${r.silverBinary},${r.goldBinary},${r.total},${r.reimbursement},${r.tds},${r.netpay}`
+      `${r.srNo},"${r.fromDate}","${r.toDate}",${r.basicIncome},${r.boosterIncome},${r.total},${r.adminProcessing},${r.tds},${r.netpay}`
     ).join("\n");
     const blob = new Blob([header + "\n" + rows], { type: "text/csv" });
     const url  = URL.createObjectURL(blob);
@@ -114,7 +117,8 @@ export default function SuccessPaymentsPage() {
         .breadcrumb .sep { color:#999; }
 
         /* PAGE BODY */
-        .page-body { padding:0 20px 40px; }
+        .page-body { padding:0 10px 40px; }
+        @media(min-width:768px) { .page-body { padding:0 20px 40px; } }
 
         /* MAIN CARD */
         .main-card { background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.07); }
@@ -122,10 +126,12 @@ export default function SuccessPaymentsPage() {
         /* HEADER */
         .section-header {
           background:linear-gradient(90deg,#26a69a,#1de9b6);
-          padding:12px 16px;
+          padding:10px 14px;
           display:flex; align-items:center; justify-content:space-between;
         }
-        .section-title { font-size:13px; font-weight:700; color:#fff; letter-spacing:0.8px; text-transform:uppercase; }
+        @media(min-width:768px) { .section-header { padding:12px 16px; } }
+        .section-title { font-size:12px; font-weight:700; color:#fff; letter-spacing:0.8px; text-transform:uppercase; }
+        @media(min-width:768px) { .section-title { font-size:13px; } }
         .header-actions { display:flex; align-items:center; gap:8px; }
         .icon-btn {
           background:rgba(255,255,255,0.2); border:none; border-radius:5px;
@@ -146,20 +152,23 @@ export default function SuccessPaymentsPage() {
           border:1px solid #d0d0d0; border-radius:5px;
           padding:9px 12px; font-size:13px;
           font-family:'Poppins',sans-serif; color:#333;
-          background:#fff; outline:none; height:40px; min-width:220px;
+          background:#fff; outline:none; height:40px; flex: 1; min-width:180px;
           cursor:pointer; transition:border-color .18s;
           appearance:none; -webkit-appearance:none;
           background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
           background-repeat:no-repeat; background-position:right 10px center; padding-right:30px;
         }
+        @media(min-width:768px) { .cycle-select { flex: none; min-width:220px; } }
         .cycle-select:focus { border-color:#26a69a; box-shadow:0 0 0 2px rgba(38,166,154,0.1); }
 
         .filter-btn {
           background:#1976d2; color:#fff; border:none; border-radius:6px;
-          padding:0 28px; height:40px; font-size:14px; font-weight:600;
+          padding:0 20px; height:40px; font-size:14px; font-weight:600;
           font-family:'Poppins',sans-serif; cursor:pointer;
           transition:background .18s, transform .15s;
+          flex: 1;
         }
+        @media(min-width:768px) { .filter-btn { padding:0 28px; flex: none; } }
         .filter-btn:hover { background:#1565c0; transform:translateY(-1px); }
         .filter-btn:active { transform:scale(0.98); }
 
@@ -171,20 +180,23 @@ export default function SuccessPaymentsPage() {
         .total-netpay span { color:#26a69a; }
 
         /* TABLE */
-        .table-wrap { overflow-x:auto; }
-        .data-table { width:100%; border-collapse:collapse; font-size:13px; min-width:1000px; }
+        .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; border-top:1px solid #f0f0f0; }
+        .data-table { width:100%; border-collapse:collapse; font-size:12px; min-width:950px; }
+        @media(min-width:768px) { .data-table { font-size:13px; } }
         .data-table thead tr { background:#3d6b9e; }
         .data-table thead th {
-          padding:13px 14px; text-align:left;
-          color:#fff; font-weight:600; font-size:13px; white-space:nowrap;
+          padding:10px 12px; text-align:left;
+          color:#fff; font-weight:600; font-size:12px; white-space:nowrap;
         }
+        @media(min-width:768px) { .data-table thead th { padding:13px 14px; font-size:13px; } }
         .data-table tbody tr { border-bottom:1px solid #e8e8e8; }
         .data-table tbody tr:hover { background:#f0fdf4; transition:background .15s; }
         .data-table tbody td {
-          padding:13px 14px; color:#333;
-          font-size:13px;
+          padding:10px 12px; color:#333;
+          font-size:12px;
           vertical-align:middle;
         }
+        @media(min-width:768px) { .data-table tbody td { padding:13px 14px; font-size:13px; } }
 
         /* Invoice button */
         .invoice-btn {
@@ -313,10 +325,10 @@ export default function SuccessPaymentsPage() {
                     <th>Sr.No.</th>
                     <th>From Date</th>
                     <th>To Date</th>
-                    <th>Silver Binary</th>
-                    <th>Gold Binary</th>
+                    <th>Basic</th>
+                    <th>Booster</th>
                     <th>Total</th>
-                    <th>Reimbursement of Expenditure</th>
+                    <th>Admin and Processing</th>
                     <th>TDS</th>
                     <th>Netpay</th>
                   </tr>
@@ -349,17 +361,20 @@ export default function SuccessPaymentsPage() {
                     data.map((row) => (
                       <tr key={row.srNo}>
                         <td>
-                          <button className="invoice-btn" onClick={() => alert(`Invoice #${row.srNo}`)}>
+                          <button 
+                            className="invoice-btn" 
+                            onClick={() => router.push(`/dashboard/invoice?userId=${row.userId}`)}
+                          >
                             Invoice
                           </button>
                         </td>
                         <td>{row.srNo}</td>
                         <td style={{ whiteSpace: "pre-line", minWidth: 160 }}>{row.fromDate}</td>
                         <td style={{ whiteSpace: "pre-line", minWidth: 160 }}>{row.toDate}</td>
-                        <td><span className="num-silver">{row.silverBinary}</span></td>
-                        <td><span className="num-gold">{row.goldBinary}</span></td>
+                        <td><span className="num-silver">{row.basicIncome}</span></td>
+                        <td><span className="num-gold">{row.boosterIncome}</span></td>
                         <td><span className="num-total">{row.total}</span></td>
-                        <td><span className="num-reimb">{row.reimbursement}</span></td>
+                        <td><span className="num-reimb">{row.adminProcessing}</span></td>
                         <td><span className="num-tds">{row.tds}</span></td>
                         <td><span className="num-net">{row.netpay}</span></td>
                       </tr>

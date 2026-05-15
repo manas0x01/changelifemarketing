@@ -113,7 +113,7 @@ const menuItems: MenuItem[] = [
         <line x1="2" y1="10" x2="22" y2="10"/>
       </svg>
     ),
-    children: [{ label: "Success Payments" }],
+    children: [{ label: "Success Payments" }, { label: "Admin & Processing" }, { label: "TDS" }],
   },
   {
     id: "chat-support",
@@ -200,6 +200,9 @@ export default function Sidebar() {
       { pattern: "/dashboard/boosterincome", activeId: "reports", submenuId: "reports-Booster Income", menuToOpen: "reports" },
       { pattern: "/dashboard/changepassword", activeId: "settings", submenuId: "settings-Change Password", menuToOpen: "settings" },
       { pattern: "/dashboard/changetransactionpassword", activeId: "settings", submenuId: "settings-Change Transaction Password", menuToOpen: "settings" },
+      { pattern: "/dashboard/successpayments", activeId: "daily-payout", submenuId: "daily-payout-Success Payments", menuToOpen: "daily-payout" },
+      { pattern: "/dashboard/adminprocessing", activeId: "daily-payout", submenuId: "daily-payout-Admin & Processing", menuToOpen: "daily-payout" },
+      { pattern: "/dashboard/tds", activeId: "daily-payout", submenuId: "daily-payout-TDS", menuToOpen: "daily-payout" },
 
       { pattern: "/dashboard/registration", activeId: "registration", submenuId: null },
       { pattern: "/dashboard/invoice", activeId: "invoice", submenuId: null },
@@ -234,7 +237,7 @@ export default function Sidebar() {
     "my-network": "/dashboard/network",
     "reports": "/dashboard/reports",
 
-    "daily-payout": "/dashboard/payout",
+    "daily-payout": "/dashboard/successpayments",
     "chat-support": "/dashboard/chatsupport",
     "settings": "/dashboard/settings",
   };
@@ -531,6 +534,10 @@ export default function Sidebar() {
                               router.push("/dashboard/changetransactionpassword");
                             } else if (item.id === "daily-payout" && child.label === "Success Payments") {
                               router.push("/dashboard/successpayments");
+                            } else if (item.id === "daily-payout" && child.label === "Admin & Processing") {
+                              router.push("/dashboard/adminprocessing");
+                            } else if (item.id === "daily-payout" && child.label === "TDS") {
+                              router.push("/dashboard/tds");
                             }
                           }}
                         >

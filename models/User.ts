@@ -130,12 +130,14 @@ export interface IUser extends Document {
     date: Date; description: string; status: string;
   }[];
   currentAwardRank?: number; // Current rank achievement (1-13)
+  boosterCountUsedForRank?: { left: number; right: number };
   awardRankStatus?: {
     rank: number;
-    leftBoostersForRank: number; // Boosters used for CURRENT rank targeting
-    rightBoostersForRank: number; // Boosters used for CURRENT rank targeting
+    rankName?: string;
+    leftBoostersForRank?: number;
+    rightBoostersForRank?: number;
     achievementDate?: Date;
-    awardReceivedName?: string; // Name of award received at this rank
+    awardReceivedName?: string;
   };
   awardRankRecords?: {
     srNo: number;
@@ -278,9 +280,11 @@ const userSchema = new Schema<IUser>(
     awardIncome: { type: Number, default: 0 },
     awardIncomeRecords: { type: [{ srNo: Number, amount: Number, awardName: String, date: Date, description: String, status: String }], default: [] },
     currentAwardRank: { type: Number, required: false, default: 0 },
+    boosterCountUsedForRank: { type: { left: { type: Number, default: 0 }, right: { type: Number, default: 0 } }, default: { left: 0, right: 0 } },
     awardRankStatus: {
       type: {
         rank: { type: Number, default: 0 },
+        rankName: { type: String, default: 'Member' },
         leftBoostersForRank: { type: Number, default: 0 },
         rightBoostersForRank: { type: Number, default: 0 },
         achievementDate: { type: Date, required: false },
@@ -723,6 +727,16 @@ userSchema.pre('save', async function (this: IUser) {
         this.directMembers = currentDirects;
       }
       this.totalDirect = currentDirects.length;
+    }
+
+    // 6. AWARD RANK AUDIT (Third Level Rewards)
+    if (this.isBooster) {
+       try {
+         const { checkAwardRank } = require('../lib/checkAwardRank');
+         await checkAwardRank(this);
+       } catch (err) {
+         console.error('❌ [PRE-SAVE] Error in checkAwardRank:', err);
+       }
     }
 
     // Ensure totalIncome is the sum of all income sources

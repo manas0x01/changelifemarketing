@@ -1,118 +1,101 @@
 export async function checkAwardRank(user: any) {
   console.log('[DEBUG] checkAwardRank: entry', { userId: user?.userId, isBooster: user?.isBooster });
+  
   if (!user.isBooster) {
     console.log('[DEBUG] checkAwardRank: abort - not a booster', { userId: user?.userId });
-    return {
-      success: false,
-      message: "User is not a booster",
-    };
+    return { success: false, message: "User is not a booster" };
   }
 
   if (!user.boosterCount) {
     user.boosterCount = { left: 0, right: 0 };
   }
 
+  // Track how many boosters have been "consumed" for previous ranks
   if (!user.boosterCountUsedForRank) {
     user.boosterCountUsedForRank = { left: 0, right: 0 };
   }
 
   if (!user.awardRankStatus) {
-    user.awardRankStatus = { currentRank: null };
+    user.awardRankStatus = { currentRank: 0, rankName: "Member" };
   }
 
   if (!Array.isArray(user.awardRankRecords)) {
     user.awardRankRecords = [];
   }
 
-  console.log('[DEBUG] checkAwardRank: initial state', {
-    boosterCount: user.boosterCount,
-    boosterCountUsedForRank: user.boosterCountUsedForRank,
-    awardRankStatus: user.awardRankStatus,
-  });
-
   //////////////////////////////////////////////////////////////
-  // 🔥 RANK CONFIG (INCREMENTAL)
+  // 🔥 BOOSTER REWARD RANKS (THIRD LEVEL)
   //////////////////////////////////////////////////////////////
   const RANKS = [
-    { rank: "R1", left: 5, right: 5 },
-    { rank: "R2", left: 10, right: 10 },
-    { rank: "R3", left: 20, right: 20 },
-    { rank: "R4", left: 40, right: 40 },
-    { rank: "R5", left: 80, right: 80 },
-    { rank: "R6", left: 160, right: 160 },
-    { rank: "R7", left: 320, right: 320 },
-    { rank: "R8", left: 640, right: 640 },
-    { rank: "R9", left: 1280, right: 1280 },
-    { rank: "R10", left: 2560, right: 2560 },
-    { rank: "R11", left: 5120, right: 5120 },
-    { rank: "R12", left: 10240, right: 10240 },
-    { rank: "R13", left: 20480, right: 20480 },
+    { rank: 1, name: "GOLD", left: 5, right: 5, award: "BAG + BUSINESS KIT", image: "/awards/gold.png" },
+    { rank: 2, name: "SUPER GOLD", left: 10, right: 10, award: "SMART WATCH", image: "/awards/super_gold.png" },
+    { rank: 3, name: "GOLD STAR", left: 25, right: 25, award: "SUIT LENGTH", image: "/awards/gold_star.png" },
+    { rank: 4, name: "PEARL EX", left: 50, right: 50, award: "MIXI - GRINDER", image: "/awards/pearl_ex.png" },
+    { rank: 5, name: "EMERALD", left: 100, right: 100, award: "FRIDGE REFRIGERATOR", image: "/awards/emerald_ruby.png" },
+    { rank: 6, name: "RUBY", left: 200, right: 200, award: "MOBILE", image: "/awards/emerald_ruby.png" },
+    { rank: 7, name: "PLATINUM", left: 500, right: 500, award: "LAPTOP", image: "/awards/platinum_diamond.png" },
+    { rank: 8, name: "DIAMOND", left: 1000, right: 1000, award: "BIKE", image: "/awards/platinum_diamond.png" },
+    { rank: 9, name: "DOUBLE DIAMOND", left: 2000, right: 2000, award: "1.5 LAKH RUPEES GIFT", image: "/awards/ultimate.png" },
+    { rank: 10, name: "BLACK DIAMOND", left: 4000, right: 4000, award: "2.5 LAKH RUPEES GIFT", image: "/awards/ultimate.png" },
+    { rank: 11, name: "BLUE DIAMOND", left: 8000, right: 8000, award: "5 LAKH RUPEES GIFT", image: "/awards/ultimate.png" },
+    { rank: 12, name: "ROYAL DIAMOND", left: 16000, right: 16000, award: "7.5 LAKH RUPEES GIFT", image: "/awards/ultimate.png" },
+    { rank: 13, name: "CROWN DIAMOND", left: 32000, right: 32000, award: "10 LAKH RUPEES GIFT", image: "/awards/ultimate.png" },
   ];
 
-  //////////////////////////////////////////////////////////////
-  // 🔹 CURRENT TOTAL BOOSTERS
-  //////////////////////////////////////////////////////////////
-  const totalLeft = user.boosterCount.left || 0;
-  const totalRight = user.boosterCount.right || 0;
+  let totalAchieved = 0;
+  let lastRankAchieved = null;
 
-  //////////////////////////////////////////////////////////////
-  // 🔹 USED BOOSTERS (ALREADY COUNTED FOR RANK)
-  //////////////////////////////////////////////////////////////
-  const usedLeft = user.boosterCountUsedForRank.left || 0;
-  const usedRight = user.boosterCountUsedForRank.right || 0;
+  // Loop to catch multiple ranks if they jump significantly
+  while (true) {
+    const totalLeft = user.boosterCount.left || 0;
+    const totalRight = user.boosterCount.right || 0;
+    const usedLeft = user.boosterCountUsedForRank.left || 0;
+    const usedRight = user.boosterCountUsedForRank.right || 0;
 
-  //////////////////////////////////////////////////////////////
-  // 🔹 AVAILABLE NEW BOOSTERS
-  //////////////////////////////////////////////////////////////
-  const availableLeft = totalLeft - usedLeft;
-  const availableRight = totalRight - usedRight;
+    const availableLeft = totalLeft - usedLeft;
+    const availableRight = totalRight - usedRight;
 
-  console.log('[DEBUG] checkAwardRank: totals', { totalLeft, totalRight, usedLeft, usedRight, availableLeft, availableRight });
+    // The next rank to achieve is the one after the current rank
+    const nextRankIndex = (user.awardRankStatus.currentRank || 0);
+    if (nextRankIndex >= RANKS.length) break;
 
-  let achievedRank = null;
+    const targetRank = RANKS[nextRankIndex];
 
-  for (const r of RANKS) {
-    if (availableLeft >= r.left && availableRight >= r.right) {
-      achievedRank = r;
+    if (availableLeft >= targetRank.left && availableRight >= targetRank.right) {
+      // ACHIEVED!
+      user.boosterCountUsedForRank.left += targetRank.left;
+      user.boosterCountUsedForRank.right += targetRank.right;
+      user.awardRankStatus.currentRank = targetRank.rank;
+      user.awardRankStatus.rankName = targetRank.name;
+      user.awardRankStatus.achievementDate = new Date();
+
+      user.awardRankRecords.push({
+        srNo: user.awardRankRecords.length + 1,
+        rank: targetRank.rank,
+        rankName: targetRank.name,
+        achievedDate: new Date(),
+        leftBoostersUsed: targetRank.left,
+        rightBoostersUsed: targetRank.right,
+        awardName: targetRank.award,
+        status: 'Awarded'
+      });
+
+      totalAchieved++;
+      lastRankAchieved = targetRank;
+      console.log(`[AWARD] ${user.username} achieved rank ${targetRank.name}!`);
+    } else {
+      // Cannot achieve next rank
       break;
     }
   }
 
-  if (!achievedRank) {
-    console.log('[DEBUG] checkAwardRank: no rank achieved', { userId: user.userId });
+  if (totalAchieved > 0) {
     return {
-      success: false,
-      message: "No new rank achieved",
+      success: true,
+      message: `Achieved ${totalAchieved} new rank(s)! Latest: ${lastRankAchieved?.name}`,
+      rank: lastRankAchieved?.rank
     };
   }
 
-  //////////////////////////////////////////////////////////////
-  // 🔥 UPDATE USED BOOSTERS
-  //////////////////////////////////////////////////////////////
-  user.boosterCountUsedForRank.left += achievedRank.left;
-  user.boosterCountUsedForRank.right += achievedRank.right;
-  console.log('[DEBUG] checkAwardRank: updated boosterCountUsedForRank', { boosterCountUsedForRank: user.boosterCountUsedForRank });
-
-  //////////////////////////////////////////////////////////////
-  // 🔹 UPDATE RANK
-  //////////////////////////////////////////////////////////////
-  user.awardRankStatus.currentRank = achievedRank.rank;
-  console.log('[DEBUG] checkAwardRank: updated awardRankStatus', { currentRank: user.awardRankStatus.currentRank });
-
-  //////////////////////////////////////////////////////////////
-  // 📝 RECORD
-  //////////////////////////////////////////////////////////////
-  user.awardRankRecords.push({
-    rank: achievedRank.rank,
-    achievedAt: new Date(),
-    usedLeft: achievedRank.left,
-    usedRight: achievedRank.right,
-  });
-  console.log('[DEBUG] checkAwardRank: pushed awardRankRecord', { latestRecord: user.awardRankRecords[user.awardRankRecords.length - 1] });
-
-  return {
-    success: true,
-    rank: achievedRank.rank,
-    message: `🎉 New Rank Achieved: ${achievedRank.rank}`,
-  };
-}
+  return { success: false, message: "No new ranks achieved" };
+}

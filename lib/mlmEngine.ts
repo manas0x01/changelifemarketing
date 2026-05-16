@@ -2,7 +2,6 @@ import User, { IUser } from "@/models/User";
 import { calculateBasicIncome } from "./calculateBasicIncome";
 import { calculateBoosterMatching } from "./calculateBoosterMatching";
 import { checkBoosterQualification } from "./checkBoosterQualification";
-import { checkAwardRank } from "./checkAwardRank";
 function getSessionType(date: Date) {
   const hour = date.getHours();
   return hour < 12 ? "morning" : "evening";
@@ -86,10 +85,6 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
   } else {
     console.log('[MLM] handleBinaryAndIncome: skipping calculateBoosterMatching (not a booster)', { userId: user._id });
   }
-
-  console.log('[MLM] handleBinaryAndIncome: calling checkAwardRank', { userId: user._id });
-  await checkAwardRank(user);
-  console.log('[MLM] handleBinaryAndIncome: after checkAwardRank', { awardRankStatus: user.awardRankStatus });
 
   user.totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0);
 

@@ -91,7 +91,7 @@ const menuItems: MenuItem[] = [
         <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
       </svg>
     ),
-    children: [{ label: "Direct Teams" }, { label: "Team Network" }, { label: "Network Tree" },{label: "Booster"}],
+    children: [{ label: "Direct Teams" }, { label: "Team Network" }, { label: "Network Tree" },{label: "Booster"}, {label: "Booster Rewards"}],
   },
   {
     id: "reports",
@@ -195,6 +195,7 @@ export default function Sidebar() {
       { pattern: "/dashboard/teamnetwork", activeId: "my-network", submenuId: "my-network-Team Network", menuToOpen: "my-network" },
       { pattern: "/dashboard/networktree", activeId: "my-network", submenuId: "my-network-Network Tree", menuToOpen: "my-network" },
       { pattern: "/dashboard/booster", activeId: "my-network", submenuId: "my-network-Booster", menuToOpen: "my-network" },
+      { pattern: "/dashboard/booster-rewards", activeId: "my-network", submenuId: "my-network-Booster Rewards", menuToOpen: "my-network" },
       { pattern: "/dashboard/basicincome", activeId: "reports", submenuId: "reports-Basic Income", menuToOpen: "reports" },
       { pattern: "/dashboard/boostercounting", activeId: "reports", submenuId: "reports-Booster Counting", menuToOpen: "reports" },
       { pattern: "/dashboard/boosterincome", activeId: "reports", submenuId: "reports-Booster Income", menuToOpen: "reports" },
@@ -522,6 +523,8 @@ export default function Sidebar() {
                               router.push("/dashboard/networktree");
                             } else if (item.id === "my-network" && child.label === "Booster") {
                               router.push("/dashboard/booster");
+                            } else if (item.id === "my-network" && child.label === "Booster Rewards") {
+                              router.push("/dashboard/booster-rewards");
                             } else if (item.id === "reports" && child.label === "Basic Income") {
                               router.push("/dashboard/basicincome");
                             } else if (item.id === "reports" && child.label === "Booster Counting") {

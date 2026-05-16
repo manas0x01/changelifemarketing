@@ -122,7 +122,7 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C] mb-2">Phone</h3>
                     <p className="font-['Roboto'] text-[#FFFFFF]">
-                      +91 85441672221<br />
+                      +91 8544167221<br />
                       Mon - Sat: 9:00 AM - 6:00 PM
                     </p>
                   </div>

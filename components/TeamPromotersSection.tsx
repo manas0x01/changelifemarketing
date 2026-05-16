@@ -24,7 +24,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     description:
       'Experienced network marketer and business coach helping members unlock financial freedom through proven strategies. With over a decade of experience in network marketing, Prem Kumar has successfully guided hundreds of individuals towards their financial goals. His expertise in business development and mentoring makes him the perfect guide for your journey.',
     image: '/images/premkumar.png',
-    whatsapp: '9185441672221',
+    whatsapp: '918544167221',
     badges: ['Business Coach', 'Top Promoter'],
   },
 ];
@@ -57,7 +57,7 @@ export default function TeamPromotersSection() {
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
         {/* Two Column Layout */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          
+
           {/* LEFT: Image */}
           <motion.div
             initial={{ opacity: 0, x: -40 }}
@@ -78,7 +78,7 @@ export default function TeamPromotersSection() {
                 className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
                 sizes="(max-width: 768px) 100vw, 50vw"
               />
-              
+
               {/* Overlay on hover */}
               <div className="absolute inset-0 bg-[#0A6E5A]/0 group-hover:bg-[#0A6E5A]/5 transition-colors duration-500" />
             </div>

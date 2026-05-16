@@ -973,8 +973,7 @@ export default function TaxInvoicePage() {
                 <th>Description</th>
                 <th style={{ width: "80px" }}>HSN/SAC</th>
                 <th style={{ width: "50px" }}>Qty</th>
-                <th style={{ width: "80px" }}>BV</th>
-                <th style={{ width: "100px" }}>Amount (₹)</th>
+                <th style={{ width: "120px" }}>BV</th>
               </tr>
             </thead>
             <tbody>
@@ -987,7 +986,6 @@ export default function TaxInvoicePage() {
                 <td>3004</td>
                 <td>1</td>
                 <td><span className="bv-value">700 BV</span></td>
-                <td className="text-right">800.00</td>
               </tr>
               <tr>
                 <td>2</td>
@@ -998,7 +996,6 @@ export default function TaxInvoicePage() {
                 <td>3004</td>
                 <td>1</td>
                 <td><span className="bv-value">300 BV</span></td>
-                <td className="text-right">499.00</td>
               </tr>
             </tbody>
           </table>
@@ -1009,26 +1006,8 @@ export default function TaxInvoicePage() {
           <table>
             <tbody>
               <tr className="subtotal-row">
-                <td><strong>Subtotal</strong></td>
+                <td><strong>Total BV</strong></td>
                 <td className="bv-center">1000 BV</td>
-                <td style={{ width: "140px" }} />
-                <td className="text-right" style={{ width: "120px", paddingRight: "12px" }}><strong>₹1,237.00</strong></td>
-              </tr>
-              <tr className="total-row">
-                <td>CGST @ 2.5%</td>
-                <td />
-                <td />
-                <td className="text-right" style={{ paddingRight: "12px" }}>₹31.00</td>
-              </tr>
-              <tr className="total-row">
-                <td>SGST @ 2.5%</td>
-                <td />
-                <td />
-                <td className="text-right" style={{ paddingRight: "12px" }}>₹31.00</td>
-              </tr>
-              <tr className="grand-total-row">
-                <td colSpan={3}><strong>Total Invoice Amount (Incl. GST)</strong></td>
-                <td className="amount">₹1,299.00</td>
               </tr>
             </tbody>
           </table>

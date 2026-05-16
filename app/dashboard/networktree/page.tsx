@@ -123,7 +123,7 @@ function flatEdges(
   ln: LayoutNode,
   out: { x1: number; y1: number; x2: number; y2: number }[] = [],
 ) {
-  const py = ln.slot ? ln.y + BS / 2 : ln.y + AR + NH + 4;
+  const py = ln.slot ? ln.y + BS / 2 : ln.y + AR + 105;
   ln.ch.forEach(c => {
     const cy = c.slot ? c.y - BS / 2 : c.y - AR;
     // Adjust line endpoints to not cut through slot boxes
@@ -188,11 +188,15 @@ function AvatarBooster({ x, y, r }: { x: number; y: number; r: number }) {
 
 function TreeSVG({
   root,
-  onNodeClick,
+  onExplore,
+  onOpenCard,
+  onSlotClick,
   maxd,
 }: {
   root: MNode | null;
-  onNodeClick: (node: MNode, e: React.MouseEvent) => void;
+  onExplore: (userId: string) => void;
+  onOpenCard: (node: MNode, e: React.MouseEvent) => void;
+  onSlotClick: (node: MNode, e: React.MouseEvent) => void;
   maxd: number;
 }) {
   if (!root) {
@@ -264,7 +268,7 @@ function TreeSVG({
               key={`n-${i}`}
               style={{ cursor: isOpen ? "pointer" : "default" }}
               onClick={e => {
-                if (isOpen) { e.stopPropagation(); onNodeClick(n, e); }
+                if (isOpen) { e.stopPropagation(); onSlotClick(n, e); }
               }}
             >
               {/* Dotted Slot Box */}
@@ -296,63 +300,78 @@ function TreeSVG({
 
         const booster = n.type === "booster";
         const cardTop = y + AR + 16;
+        
+        // Dynamic name plate width based on name/id length
+        const displayName = n.name || "—";
+        const displayId = n.id || "—";
+        const textLength = Math.max(displayName.length, displayId.length);
+        const estimatedCardWidth = Math.max(160, textLength * 10 + 40);
+        const cardH = 80;
 
         return (
-          <g
-            key={`n-${i}`}
-            onClick={e => { e.stopPropagation(); onNodeClick(n, e); }}
-            style={{ cursor: "pointer" }}
-          >
-            {/* Outer Aura */}
-            <circle cx={x} cy={y} r={AR + 18} fill={booster ? "rgba(255, 215, 0, 0.1)" : "rgba(0, 255, 255, 0.05)"} />
-
-            {booster ? <AvatarBooster x={x} y={y} r={AR} /> : <AvatarActive x={x} y={y} r={AR} />}
-
-            {/* Card with Separator */}
-            <rect
-              x={x - NW / 2} y={cardTop}
-              width={NW} height={NH} rx="14"
-              fill="#fff"
-              stroke={booster ? "#FFD700" : "#00BCD4"}
-              strokeWidth="2.5"
-              filter="url(#nodeShadow)"
-            />
-
-            <line
-              x1={x - NW / 2 + 20} y1={cardTop + NH * 0.55}
-              x2={x + NW / 2 - 20} y2={cardTop + NH * 0.55}
-              stroke="#f0f0f0" strokeWidth="1.5"
-            />
-
-            <text
-              x={x} y={cardTop + NH * 0.35}
-              textAnchor="middle" fontSize="22" fontWeight="900"
-              fill="#1a237e"
-              fontFamily="Poppins,sans-serif"
+          <g key={`n-${i}`}>
+            {/* Person Icon - Explore Downline */}
+            <g
+              onClick={e => { e.stopPropagation(); onExplore(n.userId); }}
+              style={{ cursor: "pointer" }}
             >
-              {n.id}
-            </text>
+              {/* Outer Aura */}
+              <circle cx={x} cy={y} r={AR + 18} fill={booster ? "rgba(255, 215, 0, 0.1)" : "rgba(0, 255, 255, 0.05)"} />
+              {booster ? <AvatarBooster x={x} y={y} r={AR} /> : <AvatarActive x={x} y={y} r={AR} />}
+            </g>
 
-            <text
-              x={x} y={cardTop + NH * 0.82}
-              textAnchor="middle" fontSize="14" fontWeight="600"
-              fill="#78909c"
-              fontFamily="Poppins,sans-serif"
+            {/* Name Plate (Card) - Open Info Card */}
+            <g
+              onClick={e => { e.stopPropagation(); onOpenCard(n, e); }}
+              style={{ cursor: "pointer" }}
             >
-              {n.name.length > 20 ? n.name.slice(0, 20) + "…" : n.name}
-            </text>
+              <rect
+                x={x - estimatedCardWidth / 2} y={cardTop}
+                width={estimatedCardWidth} height={cardH} rx="12"
+                fill="#fff"
+                stroke={booster ? "#FFD700" : "#00BCD4"}
+                strokeWidth="2.5"
+                filter="url(#nodeShadow)"
+              />
+              
+              {/* Username (ID) - Black and Bold */}
+              <text
+                x={x} y={cardTop + 30}
+                textAnchor="middle" fontSize="20" fontWeight="900"
+                fill="#000"
+                fontFamily="Poppins,sans-serif"
+              >
+                {displayId}
+              </text>
+
+              <line
+                x1={x - estimatedCardWidth / 2 + 20} y1={cardTop + cardH * 0.55}
+                x2={x + estimatedCardWidth / 2 - 20} y2={cardTop + cardH * 0.55}
+                stroke="#f0f0f0" strokeWidth="1.5"
+              />
+
+              {/* Name */}
+              <text
+                x={x} y={cardTop + 65}
+                textAnchor="middle" fontSize="14" fontWeight="600"
+                fill="#78909c"
+                fontFamily="Poppins,sans-serif"
+              >
+                {displayName.length > 25 ? displayName.slice(0, 25) + "…" : displayName}
+              </text>
+            </g>
 
             {/* Floating Status Badge */}
             <g transform={`translate(${x - 55}, ${cardTop - 18})`}>
-              <rect width="110" height="30" rx="15" fill={booster ? "#FFD700" : "#00BCD4"} />
-              <text x="55" y="20" textAnchor="middle" fontSize="11" fill="white" fontWeight="900" letterSpacing="1">
+              <rect width="110" height="26" rx="13" fill={booster ? "#FFD700" : "#00BCD4"} />
+              <text x="55" y="17" textAnchor="middle" fontSize="10" fill="white" fontWeight="900" letterSpacing="1">
                 {booster ? "BOOSTER" : "ACTIVE"}
               </text>
             </g>
 
             {/* More Downline Indicator */}
             {depth === maxd && n.children && n.children.length > 0 && (
-              <g transform={`translate(${x}, ${cardTop + NH + 30})`}>
+              <g transform={`translate(${x}, ${cardTop + cardH + 40})`}>
                 <rect x="-80" y="-15" width="160" height="30" rx="15" fill="rgba(21, 101, 192, 0.15)" stroke="#1565c0" strokeWidth="1.5" />
                 <text textAnchor="middle" y="6" fontSize="12" fill="#1565c0" fontWeight="900" fontFamily="Poppins,sans-serif" letterSpacing="0.8">
                   MORE LEVELS BELOW
@@ -1200,7 +1219,9 @@ export default function NetworkTreePage() {
                     ? <TreeSkeletonSVG />
                     : <TreeSVG
                         root={treeRoot}
-                        onNodeClick={handleNodeClick}
+                        onExplore={handleExploreDownline}
+                        onOpenCard={handleOpenCard}
+                        onSlotClick={handleSlotClick}
                         maxd={dimensions.maxd}
                       />
                   }

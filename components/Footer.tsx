@@ -67,7 +67,7 @@ export default function Footer() {
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-5 h-5 text-[#C9A84C]" />
-                <span className="font-['Roboto'] text-[0.875rem]">+91 6204720770</span>
+                <span className="font-['Roboto'] text-[0.875rem]">+91 85441672221</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="w-5 h-5 text-[#C9A84C]" />
@@ -95,7 +95,7 @@ export default function Footer() {
                 <Instagram className="w-5 h-5 text-[#FFFFFF]" />
               </a>
               <a
-                href="https://wa.me/918544167221"
+                href="https://wa.me/9185441672221"
                 className="w-10 h-10 bg-[#C9A84C] rounded-full flex items-center justify-center hover:bg-[#F5A623] transition-colors"
                 aria-label="WhatsApp"
                 target="_blank"

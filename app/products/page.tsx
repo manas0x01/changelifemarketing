@@ -15,10 +15,10 @@ const MOCK_PRODUCTS: Products[] = [
     _id: '1',
     itemName: 'Sea Buckthorn Capsule',
     productNameHindi: 'सी बकथॉर्न कैप्सूल',
-    itemPrice: 1299,
+    itemPrice: 0,
     itemImage: '/images/seabuckthorncapsule.png',
-    bvValue: 60,
-    pvValue: 60,
+    bvValue: 700,
+    pvValue: 700,
     keyBenefits:
       'Highly beneficial for skin\nImproves digestion\nStrengthens immune system\nBeneficial for heart health\nGood for eye health\nRich in antioxidants and anti-inflammatory properties',
     usageInstructions: 'Take 1 capsule daily in the morning after meals with warm water',
@@ -27,10 +27,10 @@ const MOCK_PRODUCTS: Products[] = [
     _id: '2',
     itemName: 'Acidity Drops',
     productNameHindi: 'एसिडिटी ड्रॉप्स',
-    itemPrice: 2500,
+    itemPrice: 0,
     itemImage: '/images/aciditydrops.png',
-    bvValue: 60,
-    pvValue: 60,
+    bvValue: 300,
+    pvValue: 300,
     keyBenefits:
       'Provides relief from sour belching and chest burning\nHelps reduce gas and bloating\nEffective in indigestion and acidity\nSupports Acid Reflux (GERD) relief\nRelieves nausea and vomiting tendencies\nReduces burning sensation after meals',
     usageInstructions: 'Take 5 drops on an empty stomach, three times a day with a glass of warm water',
@@ -39,10 +39,10 @@ const MOCK_PRODUCTS: Products[] = [
     _id: '3',
     itemName: 'Multi Vitamin Capsule',
     productNameHindi: 'मल्टी विटामिन कैप्सूल',
-    itemPrice: 2500,
+    itemPrice: 0,
     itemImage: '/images/multivitamincapsule.png',
-    bvValue: 60,
-    pvValue: 60,
+    bvValue: 700,
+    pvValue: 700,
     keyBenefits:
       'Helps reduce weakness and fatigue\nStrengthens the immune system\nBeneficial for hair health\nSupports healthy skin\nHelps in strengthening bones\nGood for heart health and memory',
     usageInstructions: 'Take 1 capsule daily in the morning after meals with warm water',
@@ -51,10 +51,10 @@ const MOCK_PRODUCTS: Products[] = [
     _id: '4',
     itemName: 'Giloy Drops',
     productNameHindi: 'गिलोय ड्रॉप्स',
-    itemPrice: 2500,
+    itemPrice: 0,
     itemImage: '/images/giloydrops.png',
-    bvValue: 60,
-    pvValue: 60,
+    bvValue: 300,
+    pvValue: 300,
     keyBenefits:
       'Acts as a blood purifier\nImproves digestion and helps relieve gas and constipation\nBeneficial in fever management\nSupports blood sugar control\nHelps reduce inflammation and body pain\nDetoxifies the body',
     usageInstructions: 'Take 5 drops on an empty stomach in the morning and evening with a glass of warm water',
@@ -210,8 +210,8 @@ export default function ProductsPage() {
                         height={200}
                       />
 
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="font-['Fraunces'] text-[1.5rem] text-[#C9A84C]">₹{product.itemPrice}</span>
+                      <div className="flex justify-end items-center mb-4">
+                        {/* Pricing removed as per request */}
                         <div className="flex gap-2">
                           <span className="bg-[#0A6E5A] text-[#FFFFFF] px-3 py-1 rounded text-[0.875rem] font-['Roboto'] font-semibold">
                             {product.bvValue} BV
@@ -289,7 +289,7 @@ export default function ProductsPage() {
                     <div className="bg-[#C9A84C] p-6 text-center">
                       <Package className="w-12 h-12 text-[#FFFFFF] mx-auto mb-3" />
                       <h3 className="font-['Fraunces'] text-[1.875rem] text-[#FFFFFF] mb-2">{pack.itemName}</h3>
-                      <p className="font-['Fraunces'] text-[2.25rem] text-[#FFFFFF]">₹{pack.itemPrice}</p>
+                      {/* Pricing removed as per request */}
                     </div>
 
                     <div className="p-8">

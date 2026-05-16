@@ -24,7 +24,7 @@ const TEAM_MEMBERS: TeamMember[] = [
     description:
       'Experienced network marketer and business coach helping members unlock financial freedom through proven strategies. With over a decade of experience in network marketing, Prem Kumar has successfully guided hundreds of individuals towards their financial goals. His expertise in business development and mentoring makes him the perfect guide for your journey.',
     image: '/images/premkumar.png',
-    whatsapp: '918299471579',
+    whatsapp: '9185441672221',
     badges: ['Business Coach', 'Top Promoter'],
   },
 ];

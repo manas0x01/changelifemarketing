@@ -66,25 +66,25 @@ const MOCK_STARTER_PACKS: StarterPacks[] = [
     _id: '1',
     itemName: 'Starter Product Pack No.01',
     itemPrice: 1299,
-    itemImage: '/images/starterpack1.png',
+    itemImage: '/images/pack 1.jpeg',
     itemDescription:
       'Starter pack for beginners\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
-    totalBV: 100,
-    totalPV: 100,
+    totalBV: 1000,
+    totalPV: 1000,
     binaryIncomeInfo:
-      '1 Pair = ₹1000 (Gross)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
+      '1 Pair (700 BV + 300 BV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
   },
   {
     _id: '2',
     itemName: 'Starter Product Pack No.02',
     itemPrice: 1299,
-    itemImage: '/images/starterpack2.png',
+    itemImage: '/images/pack 2.jpeg',
     itemDescription:
       'Advanced starter pack for better earning\nNo joining fee required\nIncome based on product sales only\nSimple and scalable earning model',
-    totalBV: 160,
-    totalPV: 160,
+    totalBV: 1000,
+    totalPV: 1000,
     binaryIncomeInfo:
-      '1 Pair (80 PV + 80 PV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
+      '1 Pair (700 BV + 300 BV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
   },
 ];
 

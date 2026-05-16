@@ -39,7 +39,9 @@ export async function POST(req: NextRequest) {
     // Determine session type to process: 
     // If it's 12 PM (hour 12), we process the session that just finished: "morning"
     // If it's 12 AM (hour 0), we process the session that just finished: "evening"
-    const sessionToProcess: "morning" | "evening" = currentHour === 12 ? "morning" : "evening";
+    // For anything between 1 AM and 11 AM, we assume it's a delayed "evening" transition for YESTERDAY
+    // For anything between 1 PM and 11 PM, we assume it's a delayed "morning" transition for TODAY
+    const sessionToProcess: "morning" | "evening" = (currentHour >= 0 && currentHour < 12) ? "evening" : "morning";
     const nextSessionType: "morning" | "evening" = sessionToProcess === "morning" ? "evening" : "morning";
 
     console.log(`[SESSION TRANSITION] Processing ${sessionToProcess} session (Time: ${currentHour}:${currentMinute})`);
@@ -52,7 +54,8 @@ export async function POST(req: NextRequest) {
     let totalPairsFlushed = 0;
 
     const sessionDate = new Date();
-    if (currentHour === 0) {
+    // If we are processing "evening" session during early morning hours (0-11 AM), it belongs to YESTERDAY
+    if (sessionToProcess === "evening" && currentHour < 12) {
       sessionDate.setDate(sessionDate.getDate() - 1);
     }
 

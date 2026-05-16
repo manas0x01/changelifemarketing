@@ -12,11 +12,17 @@ import { checkBoosterQualification } from "./checkBoosterQualification";
  */
 export async function calculateBasicIncome(user: any, manualSessionType?: string, manualDate?: Date) {
   try {
-    const currentHour = new Date().getHours();
-    const sessionType = (manualSessionType === "morning" || manualSessionType === "evening")
-      ? manualSessionType
-      : (currentHour < 12 ? "morning" : "evening");
+    const now = new Date();
+    const currentHour = now.getHours();
+    
+    // Determine the session type for the operation:
+    // If manualSessionType is provided, use it.
+    // Otherwise, use the current hour: 0-11 = morning, 12-23 = evening.
+    const sessionType: "morning" | "evening" = manualSessionType ? (manualSessionType as any) : (currentHour < 12 ? "morning" : "evening");
 
+    // Define the date for the session record
+    const sessionDate = manualDate || new Date();
+    
     // 1. Get joins from this session (stored in sessionTeam)
     const sessionLeft = user.sessionTeam?.left || 0;
     const sessionRight = user.sessionTeam?.right || 0;
@@ -30,7 +36,6 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     // ALWAYS max 1 pair paid per session for Basic Income
     let paidPairs = 1;
     let newIncome = 0;
-    let grossIncomeVal = 1000;
     let description = "";
 
     if (!user.isBooster) {
@@ -63,13 +68,11 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     // 4. Update session history / records
     if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
 
-    const targetDate = manualDate || new Date();
-    const todayStr = targetDate.toDateString();
-    // TESTING MODE: We allow manual triggers to create new sessions if they are not within the same 10 seconds
+    const todayStr = sessionDate.toDateString();
+    
     let sessionRecord = user.sessionBasedIncome.find((s: any) => {
       const recDate = new Date(s.date || s.sessionDate);
-      return recDate.toDateString() === todayStr && 
-             s.sessionType === sessionType;
+      return recDate.toDateString() === todayStr && s.sessionType === sessionType;
     });
 
     if (sessionRecord) {
@@ -79,17 +82,16 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       }
       
       // Update existing record with the income (capped at 1000)
-      const incomeToAdd = newIncome;
-      sessionRecord.netIncome = incomeToAdd;
+      sessionRecord.netIncome = newIncome;
       sessionRecord.pairs = (sessionRecord.pairs || 0) + paidPairs;
       sessionRecord.processed = true;
-      sessionRecord.date = targetDate;
+      sessionRecord.date = sessionDate;
       
-      user.basicIncome = (user.basicIncome || 0) + incomeToAdd;
+      user.basicIncome = (user.basicIncome || 0) + newIncome;
       user.basicPairs = (user.basicPairs || 0) + paidPairs;
     } else {
       user.sessionBasedIncome.push({
-        date: targetDate,
+        date: sessionDate,
         sessionType: sessionType,
         pairs: paidPairs,
         netIncome: newIncome,
@@ -111,6 +113,12 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     }));
 
     user.totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);
+
+    if (typeof (user as any).markModified === 'function') {
+      user.markModified('sessionBasedIncome');
+      user.markModified('basicIncomeRecords');
+      user.markModified('sessionTeam');
+    }
 
     // 6. Check for Booster Upgrade
     if (!user.isBooster) {

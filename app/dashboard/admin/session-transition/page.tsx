@@ -11,42 +11,9 @@ export default function SessionTransitionPage() {
   const [result, setResult] = useState<any>(null);
 
   const handleManualTrigger = async () => {
-    // Check if current time is during transition period
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    
-    const isTransitionPeriod = (currentHour === 11 && currentMinute >= 50) || 
-                                (currentHour === 23 && currentMinute >= 50);
-    
-    if (!isTransitionPeriod) {
-      toast.error("Session transition can only be triggered during 11:50-12:00 period");
-      return;
-    }
-
-    setLoading(true);
-    setResult(null);
-
-    try {
-      const response = await fetch('/api/user/session-transition', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setResult(data.summary);
-        toast.success("Session transition completed successfully");
-      } else {
-        toast.error(data.error || "Session transition failed");
-      }
-    } catch (error) {
-      console.error("Error triggering session transition:", error);
-      toast.error("Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    // Manual trigger is disabled as requested by user
+    toast.info("Session transition is now fully automated and triggers at 12 AM / 12 PM.");
+    return;
   };
 
   const getCurrentTime = () => {
@@ -284,16 +251,14 @@ export default function SessionTransitionPage() {
               <button
                 className="trigger-btn"
                 onClick={handleManualTrigger}
-                disabled={loading || !isTransitionPeriod()}
+                disabled={true}
               >
-                {loading ? 'Processing...' : 'Trigger Session Transition'}
+                Transition is now Automated
               </button>
 
-              {!isTransitionPeriod() && (
-                <div className="note-text">
-                  ⚠️ Session transition can only be triggered during 11:50-12:00 (AM and PM). Please wait until the transition period.
-                </div>
-              )}
+              <div className="note-text">
+                ℹ️ Session transition is now automatically handled by the system at 12:00 AM (Morning start) and 12:00 PM (Evening start). Manual triggers are no longer required.
+              </div>
 
               {result && (
                 <div className="result-box">

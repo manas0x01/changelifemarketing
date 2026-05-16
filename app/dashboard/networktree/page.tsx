@@ -353,8 +353,8 @@ function TreeSVG({
               {/* Name */}
               <text
                 x={x} y={cardTop + 65}
-                textAnchor="middle" fontSize="14" fontWeight="600"
-                fill="#78909c"
+                textAnchor="middle" fontSize="14" fontWeight="900"
+                fill="#000"
                 fontFamily="Poppins,sans-serif"
               >
                 {displayName.length > 25 ? displayName.slice(0, 25) + "…" : displayName}

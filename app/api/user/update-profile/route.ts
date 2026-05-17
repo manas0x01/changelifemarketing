@@ -24,6 +24,11 @@ const ALLOWED_UPDATE_FIELDS = [
   "placementId",
   "placementName",
   "placementPosition",
+  "bankName",
+  "branchName",
+  "accountNo",
+  "ifsc",
+  "accountType",
 ];
 
 export async function GET(req: NextRequest) {

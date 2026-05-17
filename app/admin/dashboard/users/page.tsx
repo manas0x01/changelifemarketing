@@ -42,6 +42,12 @@ interface UserRecord {
   isBlocked?: boolean;
   plainPassword?: string;
   plainTransactionPassword?: string;
+  panNo?: string;
+  bankName?: string;
+  branchName?: string;
+  accountNo?: string;
+  ifsc?: string;
+  accountType?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -504,6 +510,14 @@ const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }
           </div>
           {[
             { title: 'Credentials', rows: [{ label: 'Login Password', value: user.plainPassword || 'Hashed (Cannot decrypt)' }, { label: 'Transaction Password', value: user.plainTransactionPassword || 'Hashed (Cannot decrypt)' }] },
+            { title: 'Bank Details & PAN (KYC)', rows: [
+              { label: 'PAN Number', value: user.panNo },
+              { label: 'Bank Name', value: user.bankName },
+              { label: 'Branch Name', value: user.branchName },
+              { label: 'Account Number', value: user.accountNo },
+              { label: 'IFSC Code', value: user.ifsc },
+              { label: 'Account Type', value: user.accountType }
+            ] },
             { title: 'Personal Info', rows: [{ label: 'Username', value: user.username }, { label: 'User ID', value: user.userId }, { label: 'Full Name', value: user.fullName }, { label: 'Email', value: user.email }, { label: 'Phone', value: user.phone ?? user.mobileNo }] },
             { title: 'Network Info', rows: [{ label: 'Sponsor ID', value: user.sponsorId }, { label: 'Sponsor Name', value: user.sponsorName }, { label: 'Package', value: user.registeredPackage }, { label: 'Joined', value: user.joiningDate }] },
             { title: 'Location', rows: [{ label: 'City', value: user.city }, { label: 'State', value: user.state }] },

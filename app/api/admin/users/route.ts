@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
           'joiningDate sponsorId sponsorName placementId placementName ' +
           'placementPosition registeredPackage state district city ' +
           'basicIncome boosterIncome.amount boosterIncomeAmount totalTeam ' +
-          'isBlocked plainPassword plainTransactionPassword createdAt updatedAt'
+          'isBlocked plainPassword plainTransactionPassword panNo bankName branchName accountNo ifsc accountType createdAt updatedAt'
         )
         .sort({ [sortKey]: sortOrder })
         .skip(skip)

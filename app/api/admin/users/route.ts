@@ -130,7 +130,7 @@ export async function GET(req: NextRequest) {
           'joiningDate sponsorId sponsorName placementId placementName ' +
           'placementPosition registeredPackage state district city ' +
           'basicIncome boosterIncome.amount boosterIncomeAmount totalTeam ' +
-          'createdAt updatedAt'
+          'isBlocked plainPassword plainTransactionPassword createdAt updatedAt'
         )
         .sort({ [sortKey]: sortOrder })
         .skip(skip)
@@ -192,35 +192,55 @@ export async function PATCH(req: NextRequest) {
     }
     await connectDB();
     const body = await req.json();
-    const { id, role, memberType } = body;
+    const { id, role, memberType, isBlocked, password, transactionPassword } = body;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, message: 'Invalid or missing user ID.' },
         { status: 400 }
       );
     }
-    const allowedRoles       = ['user', 'admin', 'moderator'];
-    const allowedMemberTypes = ['gold', 'active'];
-    const update: Record<string, string> = {};
-    if (role       && allowedRoles.includes(role))             update.role       = role;
-    if (memberType && allowedMemberTypes.includes(memberType)) update.memberType = memberType;
-    if (Object.keys(update).length === 0) {
-      return NextResponse.json(
-        { success: false, message: 'No valid fields to update.' },
-        { status: 400 }
-      );
-    }
-    const updated = await User.findByIdAndUpdate(
-      id,
-      { $set: update },
-      { new: true, runValidators: true }
-    ).select('username userId fullName role memberType');
-    if (!updated) {
+    const user = await User.findById(id);
+    if (!user) {
       return NextResponse.json(
         { success: false, message: 'User not found.' },
         { status: 404 }
       );
     }
+    const allowedRoles       = ['user', 'admin', 'moderator'];
+    const allowedMemberTypes = ['gold', 'active'];
+    
+    if (role && allowedRoles.includes(role)) {
+      user.role = role;
+    }
+    if (memberType && allowedMemberTypes.includes(memberType)) {
+      user.memberType = memberType;
+    }
+    if (typeof isBlocked === 'boolean') {
+      user.isBlocked = isBlocked;
+    }
+    if (password && password.trim()) {
+      if (password.trim().length < 8) {
+        return NextResponse.json(
+          { success: false, message: 'Password must be at least 8 characters long.' },
+          { status: 400 }
+        );
+      }
+      user.password = password.trim();
+    }
+    if (transactionPassword && transactionPassword.trim()) {
+      if (transactionPassword.trim().length < 4) {
+        return NextResponse.json(
+          { success: false, message: 'Transaction Password must be at least 4 characters long.' },
+          { status: 400 }
+        );
+      }
+      user.transactionPassword = transactionPassword.trim();
+    }
+
+    await user.save();
+
+    const updated = await User.findById(id).select('username userId fullName role memberType isBlocked plainPassword plainTransactionPassword');
+    
     return NextResponse.json(
       { success: true, message: 'User updated successfully.', data: updated },
       { status: 200 }

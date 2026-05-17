@@ -208,6 +208,9 @@ export interface IUser extends Document {
     paymentMode?: string;
   }[];
   transactionPassword?: string;
+  isBlocked?: boolean;
+  plainPassword?: string;
+  plainTransactionPassword?: string;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -250,6 +253,9 @@ const userSchema = new Schema<IUser>(
     rightChild: { type: String, required: false, trim: true },
     memberType: { type: String, required: false, enum: ['gold', 'active'], default: 'active' },
     role: { type: String, required: false, default: 'user', enum: ['user', 'admin', 'moderator'] },
+    isBlocked: { type: Boolean, default: false },
+    plainPassword: { type: String, required: false },
+    plainTransactionPassword: { type: String, required: false },
     basicRank: { type: String, required: false, default: 'basic' },
     isBooster: { type: Boolean, default: false },
     boosterMatchingIncome: { type: Number, default: 0 },
@@ -380,6 +386,7 @@ userSchema.pre('save', async function (this: IUser) {
   if (this.isModified('password')) {
     if (!this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
       console.log('🔒 [PRE-SAVE] Password is modified and not hashed, hashing...');
+      this.plainPassword = this.password;
       this.password = await bcrypt.hash(this.password, salt);
     } else {
       console.log('🔒 [PRE-SAVE] Password is already hashed, skipping.');
@@ -401,6 +408,7 @@ userSchema.pre('save', async function (this: IUser) {
       if (trimmedTxnPassword.length > 0) {
         if (!trimmedTxnPassword.startsWith('$2a$') && !trimmedTxnPassword.startsWith('$2b$')) {
           console.log('🔐 [PRE-SAVE] Hashing transaction password with salt', salt);
+          this.plainTransactionPassword = trimmedTxnPassword;
           this.transactionPassword = await bcrypt.hash(trimmedTxnPassword, salt);
           console.log('✅ [PRE-SAVE] Transaction password hashed successfully');
         } else {

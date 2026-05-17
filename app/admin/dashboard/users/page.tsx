@@ -39,6 +39,9 @@ interface UserRecord {
   totalTeam?: { left: number; right: number };
   totalDirect?: { left: number; right: number };
   totalDirectAmount?: number;
+  isBlocked?: boolean;
+  plainPassword?: string;
+  plainTransactionPassword?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -313,22 +316,36 @@ const StatCard = ({ icon: Icon, label, value, sub, color = 'green' }: {
   );
 };
 
-const Badge = ({ type, value }: { type: 'role' | 'member'; value: string }) => {
+const Badge = ({ type, value, isBlocked }: { type: 'role' | 'member' | 'status'; value?: string; isBlocked?: boolean }) => {
+  if (type === 'status') {
+    if (isBlocked) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[0.65rem] font-['Roboto'] font-semibold uppercase tracking-wider bg-red-50 text-red-600 border border-red-200">
+          <UserX className="w-2.5 h-2.5" />Blocked
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[0.65rem] font-['Roboto'] font-semibold uppercase tracking-wider bg-[#0A6E5A]/10 text-[#0A6E5A] border border-[#0A6E5A]/20">
+        <UserCheck className="w-2.5 h-2.5" />Active
+      </span>
+    );
+  }
   if (type === 'role') {
     const map: Record<string, string> = { admin: 'bg-[#0A6E5A]/10 text-[#0A6E5A] border border-[#0A6E5A]/20', moderator: 'bg-[#C9A84C]/10 text-[#C9A84C] border border-[#C9A84C]/20', user: 'bg-[#333333]/8 text-[#333333]/60 border border-[#333333]/10' };
     const icons: Record<string, React.ElementType> = { admin: Shield, moderator: Star, user: User };
-    const Ic = icons[value] ?? User;
+    const Ic = icons[value ?? 'user'] ?? User;
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[0.65rem] font-['Roboto'] font-semibold uppercase tracking-wider ${map[value] ?? map.user}`}>
+      <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[0.65rem] font-['Roboto'] font-semibold uppercase tracking-wider ${map[value ?? 'user'] ?? map.user}`}>
         <Ic className="w-2.5 h-2.5" />{value}
       </span>
     );
   }
   const memberMap: Record<string, string> = { gold: 'bg-[#C9A84C]/15 text-[#C9A84C] border border-[#C9A84C]/30', active: 'bg-[#0A6E5A]/10 text-[#0A6E5A] border border-[#0A6E5A]/20' };
   const memberIcons: Record<string, React.ElementType> = { gold: Crown, active: UserCheck };
-  const MIc = memberIcons[value] ?? UserCheck;
+  const MIc = memberIcons[value ?? 'active'] ?? UserCheck;
   return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[0.65rem] font-['Roboto'] font-semibold uppercase tracking-wider ${memberMap[value] ?? memberMap.active}`}>
+    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[0.65rem] font-['Roboto'] font-semibold uppercase tracking-wider ${memberMap[value ?? 'active'] ?? memberMap.active}`}>
       <MIc className="w-2.5 h-2.5" />{value}
     </span>
   );
@@ -339,14 +356,17 @@ const SortIcon = ({ field, current, order }: { field: string; current: string; o
   return order === 'asc' ? <ArrowUp className="w-3 h-3 text-[#C9A84C]" /> : <ArrowDown className="w-3 h-3 text-[#C9A84C]" />;
 };
 
-const EditModal = ({ user, onClose, onSave }: { user: UserRecord; onClose: () => void; onSave: (id: string, role: string, memberType: string) => Promise<void> }) => {
+const EditModal = ({ user, onClose, onSave }: { user: UserRecord; onClose: () => void; onSave: (id: string, role: string, memberType: string, isBlocked: boolean, password?: string, transactionPassword?: string) => Promise<void> }) => {
   const [role, setRole] = useState(user.role ?? 'user');
   const [memberType, setMemberType] = useState(user.memberType ?? 'active');
+  const [isBlocked, setIsBlocked] = useState(user.isBlocked ?? false);
+  const [password, setPassword] = useState('');
+  const [transactionPassword, setTransactionPassword] = useState('');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave(user._id, role, memberType);
+    await onSave(user._id, role, memberType, isBlocked, password, transactionPassword);
     setSaving(false);
   };
 
@@ -362,12 +382,12 @@ const EditModal = ({ user, onClose, onSave }: { user: UserRecord; onClose: () =>
             <X className="w-4 h-4 text-[#FFFFFF]" />
           </button>
         </div>
-        <div className="px-6 py-6 space-y-6">
+        <div className="px-6 py-6 space-y-5 max-h-[60vh] overflow-y-auto">
           <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-2">Role</label>
             <div className="grid grid-cols-3 gap-2">
               {['user', 'moderator', 'admin'].map((r) => (
-                <button key={r} onClick={() => setRole(r)} suppressHydrationWarning={true} className={`py-2.5 text-[0.8rem] font-['Roboto'] font-medium uppercase tracking-wider transition-all ${role === r ? 'bg-[#0A6E5A] text-[#FFFFFF]' : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}>
+                <button key={r} onClick={() => setRole(r)} suppressHydrationWarning={true} className={`py-2 text-[0.8rem] font-['Roboto'] font-medium uppercase tracking-wider transition-all ${role === r ? 'bg-[#0A6E5A] text-[#FFFFFF]' : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}>
                   {r}
                 </button>
               ))}
@@ -377,14 +397,33 @@ const EditModal = ({ user, onClose, onSave }: { user: UserRecord; onClose: () =>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-2">Member Type</label>
             <div className="grid grid-cols-2 gap-2">
               {['active', 'gold'].map((m) => (
-                <button key={m} onClick={() => setMemberType(m)} suppressHydrationWarning={true} className={`py-2.5 text-[0.8rem] font-['Roboto'] font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${memberType === m ? (m === 'gold' ? 'bg-[#C9A84C] text-[#FFFFFF]' : 'bg-[#0A6E5A] text-[#FFFFFF]') : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}>
+                <button key={m} onClick={() => setMemberType(m)} suppressHydrationWarning={true} className={`py-2 text-[0.8rem] font-['Roboto'] font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${memberType === m ? (m === 'gold' ? 'bg-[#C9A84C] text-[#FFFFFF]' : 'bg-[#0A6E5A] text-[#FFFFFF]') : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}>
                   {m === 'gold' ? <Crown className="w-3.5 h-3.5" /> : <UserCheck className="w-3.5 h-3.5" />}{m}
                 </button>
               ))}
             </div>
           </div>
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-2">Block Status</label>
+            <div className="grid grid-cols-2 gap-2">
+              <button onClick={() => setIsBlocked(false)} suppressHydrationWarning={true} className={`py-2.5 text-[0.8rem] font-['Roboto'] font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${!isBlocked ? 'bg-[#0A6E5A] text-[#FFFFFF]' : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}>
+                <UserCheck className="w-3.5 h-3.5" /> Active
+              </button>
+              <button onClick={() => setIsBlocked(true)} suppressHydrationWarning={true} className={`py-2.5 text-[0.8rem] font-['Roboto'] font-medium uppercase tracking-wider transition-all flex items-center justify-center gap-2 ${isBlocked ? 'bg-red-500 text-[#FFFFFF]' : 'border border-red-200 text-red-500 hover:bg-red-50'}`}>
+                <UserX className="w-3.5 h-3.5" /> Blocked
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Change Login Password</label>
+            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+          </div>
+          <div>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Change Transaction Password</label>
+            <input type="password" value={transactionPassword} onChange={(e) => setTransactionPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+          </div>
         </div>
-        <div className="px-6 pb-6 flex gap-3">
+        <div className="px-6 pb-6 flex gap-3 pt-4 border-t border-[#0A6E5A]/10">
           <button onClick={onClose} className="flex-1 py-3 border border-[#0A6E5A]/20 font-['Roboto'] text-[0.875rem] text-[#0A6E5A] hover:bg-[#0A6E5A]/5 transition-colors">
             Cancel
           </button>
@@ -447,6 +486,7 @@ const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }
           <div className="flex gap-2">
             <Badge type="role" value={user.role ?? 'user'} />
             <Badge type="member" value={user.memberType ?? 'active'} />
+            <Badge type="status" isBlocked={user.isBlocked} />
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
@@ -463,6 +503,7 @@ const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }
             ))}
           </div>
           {[
+            { title: 'Credentials', rows: [{ label: 'Login Password', value: user.plainPassword || 'Hashed (Cannot decrypt)' }, { label: 'Transaction Password', value: user.plainTransactionPassword || 'Hashed (Cannot decrypt)' }] },
             { title: 'Personal Info', rows: [{ label: 'Username', value: user.username }, { label: 'User ID', value: user.userId }, { label: 'Full Name', value: user.fullName }, { label: 'Email', value: user.email }, { label: 'Phone', value: user.phone ?? user.mobileNo }] },
             { title: 'Network Info', rows: [{ label: 'Sponsor ID', value: user.sponsorId }, { label: 'Sponsor Name', value: user.sponsorName }, { label: 'Package', value: user.registeredPackage }, { label: 'Joined', value: user.joiningDate }] },
             { title: 'Location', rows: [{ label: 'City', value: user.city }, { label: 'State', value: user.state }] },
@@ -549,12 +590,23 @@ export default function AdminDashboardUsersPage() {
     setSortOrder(newOrder);
   };
 
-  const handleSaveEdit = async (id: string, role: string, memberType: string) => {
+  const handleSaveEdit = async (id: string, role: string, memberType: string, isBlocked: boolean, password?: string, transactionPassword?: string) => {
     try {
-      const res = await fetch('/api/admin/users', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, role, memberType }) });
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, role, memberType, isBlocked, password, transactionPassword })
+      });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message);
-      setUsers(prev => prev.map(u => u._id === id ? { ...u, role, memberType } : u));
+      setUsers(prev => prev.map(u => u._id === id ? {
+        ...u,
+        role,
+        memberType,
+        isBlocked,
+        plainPassword: json.data?.plainPassword ?? u.plainPassword,
+        plainTransactionPassword: json.data?.plainTransactionPassword ?? u.plainTransactionPassword
+      } : u));
       setEditUser(null);
       toast.success('User updated successfully.');
     } catch (e: any) { toast.error(e.message ?? 'Update failed.'); }
@@ -742,7 +794,12 @@ export default function AdminDashboardUsersPage() {
                               {user.city && <p className="font-['Roboto'] text-[0.72rem] text-[#333333]/40 flex items-center gap-1"><MapPin className="w-3 h-3" /> {user.city}{user.state ? `, ${user.state}` : ''}</p>}
                             </div>
                           </td>
-                          <td className="px-4 py-3.5"><Badge type="role" value={user.role ?? 'user'} /></td>
+                          <td className="px-4 py-3.5">
+                            <div className="flex flex-col gap-1">
+                              <Badge type="role" value={user.role ?? 'user'} />
+                              <Badge type="status" isBlocked={user.isBlocked} />
+                            </div>
+                          </td>
                           <td className="px-4 py-3.5"><Badge type="member" value={user.memberType ?? 'active'} /></td>
                           <td className="px-4 py-3.5"><span className="font-['Roboto'] text-[0.75rem] text-[#333333]/60">{user.registeredPackage ?? '—'}</span></td>
                           <td className="px-4 py-3.5">{user.sponsorId ? (<div><p className="font-['Roboto'] text-[0.72rem] text-[#0A6E5A] font-medium">{user.sponsorId}</p>{user.sponsorName && <p className="font-['Roboto'] text-[0.68rem] text-[#333333]/40">{user.sponsorName}</p>}</div>) : <span className="text-[#333333]/20">—</span>}</td>
@@ -814,6 +871,7 @@ export default function AdminDashboardUsersPage() {
                       <div className="flex flex-wrap gap-1.5 mb-3">
                         <Badge type="role" value={user.role ?? 'user'} />
                         <Badge type="member" value={user.memberType ?? 'active'} />
+                        <Badge type="status" isBlocked={user.isBlocked} />
                         {user.registeredPackage && (<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[0.65rem] font-['Roboto'] font-semibold uppercase tracking-wider bg-[#333333]/6 text-[#333333]/50 border border-[#333333]/10">
                           <Package className="w-2.5 h-2.5" />{user.registeredPackage}
                         </span>)}

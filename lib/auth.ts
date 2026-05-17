@@ -78,6 +78,9 @@ export const authOptions: NextAuthOptions = {
           if (!user || !(await user.comparePassword(credentials.password))) {
             throw new Error("Invalid username or password");
           }
+          if (user.isBlocked) {
+            throw new Error("Your account has been blocked by the Administrator.");
+          }
           return {
             id: user._id.toString(),
             email: user.email ?? undefined,

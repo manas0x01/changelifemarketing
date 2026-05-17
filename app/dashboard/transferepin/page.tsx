@@ -184,20 +184,27 @@ export default function TransferEPinPage() {
 
         .ep-root {
           font-family: 'Poppins', sans-serif;
-          background: #f0f2f5;
+          background: #1a0533;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
           min-height: 100vh;
         }
 
         /* BREADCRUMB */
         .breadcrumb {
           padding: 12px 20px;
-          font-size: 13px; color: #555;
-          display: flex; align-items: center; gap: 6px;
+          font-size: 13px;
+          color: #FFD700;
+          display: flex;
+          align-items: center;
+          gap: 6px;
         }
-        .breadcrumb a { color: #555; text-decoration: none; }
-        .breadcrumb a:hover { text-decoration: underline; }
-        .breadcrumb .sep { color: #999; }
-        .breadcrumb .current { color: #555; }
+        .breadcrumb a { color: #FFD700; text-decoration: none; opacity: 0.85; }
+        .breadcrumb a:hover { text-decoration: underline; opacity: 1; }
+        .breadcrumb .sep { color: rgba(255,215,0,0.4); }
+        .breadcrumb .current { color: #FFD700; font-weight: 600; }
+        .breadcrumb svg { fill: #FFD700 !important; }
 
         /* PAGE BODY */
         .page-body {
@@ -208,24 +215,27 @@ export default function TransferEPinPage() {
         }
 
         /* ── CENTERED CARD ── */
-        .center-card {
-          background: #fff;
-          border-radius: 10px;
+        .center-card, .history-card {
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
           width: 100%;
           max-width: 740px;
           margin-bottom: 20px;
         }
 
-        .section-header {
-          background: linear-gradient(90deg, #26a69a, #1de9b6);
+        .section-header, .history-header {
+          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,215,0,0.25);
           padding: 13px 20px;
           font-size: 13px;
           font-weight: 700;
-          color: #fff;
+          color: #FFD700;
           letter-spacing: 0.8px;
           text-transform: uppercase;
+          text-shadow: 0 0 8px rgba(255,215,0,0.45);
         }
 
         /* ── VALIDATE BODY ── */
@@ -234,12 +244,12 @@ export default function TransferEPinPage() {
         }
         .txn-label {
           font-size: 13.5px;
-          font-weight: 500;
-          color: #333;
+          font-weight: 600;
+          color: #FFD700;
           margin-bottom: 10px;
           display: block;
         }
-        .txn-label .req { color: #e53935; margin-right: 1px; }
+        .txn-label .req { color: #FFD700; margin-right: 1px; }
 
         .txn-row {
           display: flex;
@@ -250,18 +260,23 @@ export default function TransferEPinPage() {
         .txn-input {
           flex: 1;
           min-width: 220px;
-          border: 1px solid #d0d0d0;
-          border-radius: 5px;
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 6px;
           padding: 10px 14px;
           font-size: 13.5px;
           font-family: 'Poppins', sans-serif;
-          color: #333;
-          background: #fff;
+          color: #FFD700;
+          background: rgba(0,0,0,0.25);
           outline: none;
-          transition: border-color .18s;
+          transition: border-color .18s, box-shadow .18s;
+          height: 40px;
         }
-        .txn-input::placeholder { color: #aaa; }
-        .txn-input:focus { border-color: #26a69a; }
+        .txn-input::placeholder { color: rgba(255,215,0,0.4); }
+        .txn-input:focus {
+          border-color: #FFD700;
+          background: rgba(0,0,0,0.35);
+          box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+        }
 
         .txn-error {
           color: #e53935;
@@ -271,25 +286,27 @@ export default function TransferEPinPage() {
 
         /* PROCEED BTN */
         .proceed-btn {
-          background: #1976d2;
-          color: #fff;
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color: #120228;
           border: none;
           border-radius: 6px;
           padding: 10px 26px;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 800;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
-          transition: background .18s, transform .15s;
+          transition: background .18s, transform .15s, box-shadow 0.18s;
           white-space: nowrap;
           flex-shrink: 0;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          box-shadow: 0 4px 15px rgba(255,215,0,0.25);
         }
-        .proceed-btn:hover:not(:disabled) { background: #1565c0; transform: translateY(-1px); }
+        .proceed-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,215,0,0.35); }
         .proceed-btn:active:not(:disabled) { transform: scale(0.98); }
         .proceed-btn:disabled {
-          background: #90caf9;
+          opacity: 0.5;
           cursor: not-allowed;
-          opacity: 0.8;
         }
 
         /* ── TRANSFER FORM ── */
@@ -308,41 +325,49 @@ export default function TransferEPinPage() {
 
         .form-label {
           font-size: 13px;
-          font-weight: 500;
-          color: #333;
+          font-weight: 600;
+          color: #FFD700;
         }
-        .form-label .req { color: #e53935; margin-right: 1px; }
+        .form-label .req { color: #FFD700; margin-right: 1px; }
 
         .form-input, .form-select {
           width: 100%;
-          border: 1px solid #d0d0d0;
-          border-radius: 5px;
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 6px;
           padding: 10px 13px;
           font-size: 13.5px;
           font-family: 'Poppins', sans-serif;
-          color: #333;
-          background: #fff;
+          color: #FFD700;
+          background: rgba(0,0,0,0.25);
           outline: none;
           transition: border-color .18s, box-shadow .18s;
+          height: 40px;
         }
+        .form-input::placeholder { color: rgba(255,215,0,0.4); }
         .form-input:focus, .form-select:focus {
-          border-color: #26a69a;
-          box-shadow: 0 0 0 2px rgba(38,166,154,0.12);
+          border-color: #FFD700;
+          background: rgba(0,0,0,0.35);
+          box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
         }
         .form-select {
           appearance: none;
           -webkit-appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23FFD700'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
           background-repeat: no-repeat;
           background-position: right 12px center;
           padding-right: 32px;
           cursor: pointer;
         }
+        .form-select option {
+          background-color: #1a0533;
+          color: #FFD700;
+        }
 
         .form-input[readonly] {
-          background: #f5f5f5;
-          color: #777;
+          background: rgba(0,0,0,0.5);
+          color: rgba(255,215,0,0.5);
           cursor: not-allowed;
+          border-color: rgba(255,215,0,0.1);
         }
 
         /* verified badge */
@@ -350,20 +375,21 @@ export default function TransferEPinPage() {
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          color: #26a69a;
+          color: #FFD700;
           font-size: 13px;
           font-weight: 600;
           flex-shrink: 0;
         }
+        .verified-badge svg { fill: #FFD700 !important; }
 
         /* info note */
         .info-note {
-          background: #e3f2fd;
-          border-left: 4px solid #1976d2;
+          background: rgba(255,215,0,0.06);
+          border-left: 4px solid #FFD700;
           border-radius: 4px;
           padding: 10px 14px;
           font-size: 12.5px;
-          color: #1565c0;
+          color: #FFD700;
           margin-bottom: 20px;
         }
 
@@ -381,23 +407,7 @@ export default function TransferEPinPage() {
         }
 
         .history-card {
-          background: #fff;
-          border-radius: 10px;
-          overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.07);
-          width: 100%;
-          max-width: 740px;
           margin: 0 auto;
-        }
-
-        .history-header {
-          background: linear-gradient(90deg, #1976d2, #1565c0);
-          padding: 13px 20px;
-          font-size: 13px;
-          font-weight: 700;
-          color: #fff;
-          letter-spacing: 0.8px;
-          text-transform: uppercase;
         }
 
         .history-body {
@@ -411,26 +421,27 @@ export default function TransferEPinPage() {
         }
 
         .history-table thead tr {
-          background: #3d6b9e;
+          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,215,0,0.2);
         }
 
         .history-table thead th {
           padding: 12px 14px;
           text-align: left;
-          color: #fff;
-          font-weight: 600;
+          color: #FFD700;
+          font-weight: 700;
           font-size: 12px;
           white-space: nowrap;
         }
 
-        .history-table tbody tr:nth-child(odd)  { background: #f9f9f9; }
-        .history-table tbody tr:nth-child(even) { background: #fff; }
-        .history-table tbody tr:hover { background: #f0f8ff; }
+        .history-table tbody tr:nth-child(odd)  { background: rgba(255, 255, 255, 0.02); }
+        .history-table tbody tr:nth-child(even) { background: rgba(0, 0, 0, 0.15); }
+        .history-table tbody tr:hover { background: rgba(255, 215, 0, 0.08); }
 
         .history-table tbody td {
           padding: 11px 14px;
-          color: #333;
-          border-bottom: 1px solid #eee;
+          color: #FFD700;
+          border-bottom: 1px solid rgba(255, 215, 0, 0.12);
           font-size: 12px;
         }
 
@@ -467,25 +478,26 @@ export default function TransferEPinPage() {
         .history-empty {
           text-align: center;
           padding: 30px 20px;
-          color: #aaa;
+          color: rgba(255,215,0,0.4);
           font-size: 13px;
         }
 
         .history-loading {
           text-align: center;
           padding: 30px 20px;
-          color: #666;
+          color: #FFD700;
           font-size: 13px;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
         }
+        .history-loading svg { stroke: #FFD700 !important; }
 
         /* Skeleton Styles */
         .skeleton-row { animation: pulse 1.5s ease-in-out infinite; }
         .skeleton-cell { 
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, #2d0a5c 25%, #3d1475 50%, #2d0a5c 75%);
           background-size: 200% 100%;
           animation: loading 1.5s infinite;
           height: 16px;

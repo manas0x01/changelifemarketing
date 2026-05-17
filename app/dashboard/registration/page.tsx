@@ -496,26 +496,30 @@ export default function NewRegisterPage() {
   return (
     <>
       <style>{`
-                @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
-                * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         .nr-root {
           font-family: 'Poppins', sans-serif;
-          background: #f0f2f5;
+          background: #1a0533;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
           min-height: 100vh;
         }
 
-
-
-        /* ── GREEN BAR ── */
-        .green-bar { height: 8px; background: linear-gradient(90deg, #00c853, #1de9b6); }
+        /* ── GOLD BAR ── */
+        .green-bar {
+          height: 3px;
+          background: linear-gradient(90deg, transparent, #FFD700, #FFD700, #FFD700, transparent);
+        }
 
         /* ── BREADCRUMB ── */
         .breadcrumb {
           padding: 12px 20px;
           font-size: 13px;
-          color: #333;
+          color: #FFD700;
           font-weight: 500;
           display: flex;
           align-items: center;
@@ -523,29 +527,33 @@ export default function NewRegisterPage() {
           text-transform: uppercase;
           letter-spacing: 0.3px;
         }
-        .breadcrumb a { color: #333; text-decoration: none; font-weight: 500; }
-        .breadcrumb .sep { color: #999; font-weight: 400; }
-        .breadcrumb .current { color: #333; }
+        .breadcrumb a { color: #FFD700; text-decoration: none; font-weight: 500; opacity: 0.85; }
+        .breadcrumb a:hover { text-decoration: underline; opacity: 1; }
+        .breadcrumb .sep { color: rgba(255, 215, 0, 0.4); font-weight: 400; }
+        .breadcrumb .current { color: #FFD700; }
 
         /* ── PAGE BODY ── */
         .page-body { padding: 0 20px 30px; }
 
         /* ── SECTION CARD ── */
         .section-card {
-          background: #fff;
-          border-radius: 10px;
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
           margin-bottom: 20px;
         }
         .section-header {
-          background: linear-gradient(90deg, #26a69a, #1de9b6);
+          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,215,0,0.25);
           padding: 13px 20px;
           font-size: 13px;
           font-weight: 700;
-          color: #fff;
+          color: #FFD700;
           letter-spacing: 0.8px;
           text-transform: uppercase;
+          text-shadow: 0 0 8px rgba(255,215,0,0.45);
         }
 
         /* ── LOADING OVERLAY ── */
@@ -555,30 +563,32 @@ export default function NewRegisterPage() {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(255, 255, 255, 0.9);
+          background: rgba(26, 5, 51, 0.85);
           display: flex;
           flex-direction: column;
           align-items: center;
           justify-content: center;
           z-index: 9999;
-          backdrop-filter: blur(5px);
+          backdrop-filter: blur(8px);
         }
 
         .loading-circle {
           width: 60px;
           height: 60px;
-          border: 4px solid #f3f3f3;
-          border-top: 4px solid #26a69a;
+          border: 4px solid rgba(255,215,0,0.15);
+          border-top: 4px solid #FFD700;
           border-radius: 50%;
           animation: spin 1s linear infinite;
           margin-bottom: 20px;
+          box-shadow: 0 0 15px rgba(255,215,0,0.2);
         }
 
         .loading-text {
           font-size: 18px;
-          font-weight: 600;
-          color: #26a69a;
+          font-weight: 700;
+          color: #FFD700;
           letter-spacing: 1px;
+          text-shadow: 0 0 8px rgba(255,215,0,0.4);
         }
 
         @keyframes spin {
@@ -596,15 +606,15 @@ export default function NewRegisterPage() {
         }
         .txn-label {
           font-size: 13.5px;
-          font-weight: 500;
-          color: #333;
+          font-weight: 600;
+          color: #FFD700;
           white-space: nowrap;
           flex-shrink: 0;
           display: flex;
           align-items: center;
           height: 42px;
         }
-        .txn-label .req { color: #e53935; margin-right: 1px; }
+        .txn-label .req { color: #FFD700; margin-right: 1px; }
 
         .txn-input-group {
           flex: 1;
@@ -615,30 +625,30 @@ export default function NewRegisterPage() {
         }
 
         .txn-input {
-          border: 1px solid #d0d0d0;
+          border: 1.5px solid rgba(255,215,0,0.22);
           border-radius: 5px;
           padding: 10px 14px;
           font-size: 13.5px;
           font-family: 'Poppins', sans-serif;
-          color: #333;
-          background: #fff;
+          color: #FFD700;
+          background: rgba(0,0,0,0.25);
           outline: none;
-          transition: border-color 0.18s;
+          transition: border-color 0.18s, box-shadow 0.18s;
         }
-        .txn-input::placeholder { color: #aaa; text-transform: uppercase; font-size: 12.5px; }
-        .txn-input:focus { border-color: #26a69a; }
+        .txn-input::placeholder { color: rgba(255,215,0,0.3); text-transform: uppercase; font-size: 12.5px; }
+        .txn-input:focus { border-color: #FFD700; box-shadow: 0 0 0 3px rgba(255,215,0,0.18); }
 
         .txn-error { color: #e53935; font-size: 12px; margin-top: 2px; padding-left: 0; }
 
         /* ── PROCEED / SUBMIT BUTTONS ── */
         .proceed-btn {
-          background: #1976d2;
-          color: #fff;
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color: #120228;
           border: none;
           border-radius: 6px;
           padding: 10px 28px;
           font-size: 14px;
-          font-weight: 700;
+          font-weight: 800;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
           letter-spacing: 0.5px;
@@ -646,10 +656,11 @@ export default function NewRegisterPage() {
           transition: background 0.18s, transform 0.15s;
           white-space: nowrap;
           flex-shrink: 0;
+          box-shadow: 0 4px 15px rgba(255,215,0,0.3);
         }
-        .proceed-btn:hover { background: #1565c0; transform: translateY(-1px); }
+        .proceed-btn:hover { opacity:0.92; transform: translateY(-1px); }
         .proceed-btn:active { transform: scale(0.98); }
-        .proceed-btn:disabled { background: #999; cursor: not-allowed; opacity: 0.7; transform: none; }
+        .proceed-btn:disabled { background: #555 !important; color:#888 !important; cursor: not-allowed; opacity: 0.7; transform: none; box-shadow:none; }
 
         /* ── REGISTRATION FORM ── */
         .form-body { padding: 24px 20px 20px; }
@@ -667,52 +678,58 @@ export default function NewRegisterPage() {
 
         .form-label {
           font-size: 13px;
-          font-weight: 500;
-          color: #333;
+          font-weight: 600;
+          color: #FFD700;
         }
-        .form-label .req { color: #e53935; margin-right: 1px; }
+        .form-label .req { color: #FFD700; margin-right: 1px; }
 
         .form-input, .form-select {
           width: 100%;
-          border: 1px solid #d0d0d0;
+          background: rgba(0,0,0,0.25);
+          border: 1.5px solid rgba(255,215,0,0.22);
           border-radius: 5px;
           padding: 10px 13px;
           font-size: 13.5px;
           font-family: 'Poppins', sans-serif;
-          color: #333;
-          background: #fff;
+          color: #FFD700;
           outline: none;
           transition: border-color 0.18s, box-shadow 0.18s;
         }
         .form-input:focus, .form-select:focus {
-          border-color: #26a69a;
-          box-shadow: 0 0 0 2px rgba(38,166,154,0.12);
+          border-color: #FFD700;
+          box-shadow: 0 0 0 3px rgba(255,215,0,0.18);
         }
+        .form-input::placeholder { color: rgba(255,215,0,0.3); }
+        .form-input:disabled { background: rgba(255,215,0,0.04); opacity: 0.85; cursor: not-allowed; }
         .form-input[style*="borderColor: #e53935"] {
           border-color: #e53935 !important;
-          box-shadow: 0 0 0 2px rgba(229,57,53,0.12) !important;
+          box-shadow: 0 0 0 3px rgba(229,57,53,0.2) !important;
         }
         .form-select {
           appearance: none;
           -webkit-appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23FFD700'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
           background-repeat: no-repeat;
           background-position: right 12px center;
           padding-right: 32px;
           cursor: pointer;
+        }
+        .form-select option {
+          background-color: #1a0533;
+          color: #FFD700;
         }
 
         /* gender radio */
         .gender-group {
           display: flex; align-items: center; gap: 20px;
           padding: 10px 13px;
-          border: 1px solid #d0d0d0;
+          background: rgba(0,0,0,0.25);
+          border: 1.5px solid rgba(255,215,0,0.22);
           border-radius: 5px;
-          background: #fff;
           min-height: 42px;
         }
-        .radio-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333; cursor: pointer; }
-        .radio-label input[type="radio"] { accent-color: #1976d2; width: 15px; height: 15px; cursor: pointer; }
+        .radio-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #FFD700; cursor: pointer; }
+        .radio-label input[type="radio"] { accent-color: #FFD700; width: 15px; height: 15px; cursor: pointer; }
 
         /* mobile split */
         .mobile-split { display: flex; gap: 8px; }
@@ -725,16 +742,16 @@ export default function NewRegisterPage() {
 
         /* section sub-header */
         .sub-header {
-          background: #eceff1;
+          background: linear-gradient(90deg, rgba(255,215,0,0.05), rgba(168,85,247,0.05));
           padding: 9px 16px;
           font-size: 12.5px;
           font-weight: 700;
-          color: #546e7a;
+          color: #FFD700;
           letter-spacing: 0.6px;
           text-transform: uppercase;
           margin: 20px -20px 18px;
-          border-top: 1px solid #e0e0e0;
-          border-bottom: 1px solid #e0e0e0;
+          border-top: 1.5px solid rgba(255,215,0,0.20);
+          border-bottom: 1.5px solid rgba(255,215,0,0.20);
         }
 
         /* submit wrap */
@@ -747,19 +764,21 @@ export default function NewRegisterPage() {
           left: 0;
           right: 0;
           bottom: 0;
-          background: rgba(0, 0, 0, 0.5);
+          background: rgba(26, 5, 51, 0.85);
           display: flex;
           align-items: center;
           justify-content: center;
           z-index: 9999;
           padding: 16px;
           overflow-y: auto;
+          backdrop-filter: blur(8px);
         }
 
         .congratulations-card {
-          background: #fff;
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
           border-radius: 12px;
-          box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
           max-width: 500px;
           width: 100%;
           max-height: 90vh;
@@ -786,10 +805,11 @@ export default function NewRegisterPage() {
         }
 
         .congratulations-header {
-          background: linear-gradient(135deg, #00c853 0%, #1de9b6 100%);
+          background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,215,0,0.25);
           padding: 32px 20px;
           text-align: center;
-          color: #fff;
+          color: #FFD700;
         }
 
         .congratulations-header h2 {
@@ -797,6 +817,7 @@ export default function NewRegisterPage() {
           font-weight: 700;
           margin: 0 0 8px;
           letter-spacing: -0.5px;
+          text-shadow: 0 0 8px rgba(255,215,0,0.45);
         }
 
         .congratulations-header p {
@@ -847,16 +868,19 @@ export default function NewRegisterPage() {
           justify-content: space-between;
           align-items: center;
           padding: 11px 12px;
-          background: #f8f9fa;
+          background: rgba(0,0,0,0.25);
           border-radius: 6px;
-          border-left: 3px solid #26a69a;
+          border-left: 3.5px solid #FFD700;
+          border-top: 1px solid rgba(255,215,0,0.1);
+          border-right: 1px solid rgba(255,215,0,0.1);
+          border-bottom: 1px solid rgba(255,215,0,0.1);
           gap: 12px;
         }
 
         .detail-label {
           font-size: 12px;
           font-weight: 600;
-          color: #666;
+          color: rgba(255,215,0,0.7);
           text-transform: uppercase;
           letter-spacing: 0.5px;
           flex-shrink: 0;
@@ -866,7 +890,7 @@ export default function NewRegisterPage() {
         .detail-value {
           font-size: 14px;
           font-weight: 600;
-          color: #1976d2;
+          color: #FFD700;
           word-break: break-all;
           text-align: right;
           flex-grow: 1;
@@ -904,12 +928,12 @@ export default function NewRegisterPage() {
         .congratulations-footer {
           padding: 16px 20px;
           text-align: center;
-          border-top: 1px solid #e0e0e0;
+          border-top: 1.5px solid rgba(255,215,0,0.15);
         }
 
         .congratulations-footer p {
           font-size: 12px;
-          color: #999;
+          color: rgba(255,215,0,0.6);
           margin: 0 0 14px;
           line-height: 1.4;
           padding: 0 8px;
@@ -926,25 +950,25 @@ export default function NewRegisterPage() {
         }
 
         .done-btn {
-          background: linear-gradient(90deg, #26a69a, #1de9b6);
-          color: #fff;
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color: #120228;
           border: none;
           border-radius: 8px;
           padding: 12px 24px;
           font-size: 14px;
-          font-weight: 700;
+          font-weight: 800;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
           letter-spacing: 0.5px;
           text-transform: uppercase;
           transition: all 0.25s;
-          box-shadow: 0 4px 12px rgba(38, 166, 154, 0.3);
+          box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
         }
 
         .done-btn:hover {
-          opacity: 0.9;
+          opacity: 0.95;
           transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(38, 166, 154, 0.4);
+          box-shadow: 0 6px 16px rgba(255, 215, 0, 0.4);
         }
 
         .done-btn:active {

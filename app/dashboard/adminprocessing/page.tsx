@@ -67,59 +67,156 @@ export default function AdminProcessingPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
         * { margin:0; padding:0; box-sizing:border-box; }
-        .pp-root { font-family:'Poppins',sans-serif; background:#f0f2f5; min-height:100vh; }
-        .green-bar { height:8px; background:linear-gradient(90deg,#00c853,#1de9b6); }
-        .breadcrumb { padding:12px 20px; font-size:13px; color:#555; display:flex; align-items:center; gap:6px; }
-        .breadcrumb a { color:#555; text-decoration:none; }
-        .breadcrumb .sep { color:#999; }
+
+        .pp-root {
+          font-family: 'Poppins', sans-serif;
+          background: #1a0533;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+          min-height: 100vh;
+          color: #fff;
+        }
+
+        /* GOLD BAR */
+        .gold-bar { height:4px; background:linear-gradient(90deg, #FFD700, #f0a500); }
+
+        /* BREADCRUMB */
+        .breadcrumb { padding:12px 20px; font-size:13px; color:rgba(255,215,0,0.7); display:flex; align-items:center; gap:6px; }
+        .breadcrumb a { color:rgba(255,215,0,0.7); text-decoration:none; }
+        .breadcrumb a:hover { color:#FFD700; text-decoration:underline; }
+        .breadcrumb .sep { color:rgba(255,215,0,0.4); }
+        .breadcrumb .current { color:#FFD700; font-weight:700; }
+
+        /* PAGE BODY */
         .page-body { padding:0 10px 40px; }
         @media(min-width:768px) { .page-body { padding:0 20px 40px; } }
-        .main-card { background:#fff; border-radius:10px; overflow:hidden; box-shadow:0 2px 10px rgba(0,0,0,0.07); }
-        .section-header { background:linear-gradient(90deg,#26a69a,#1de9b6); padding:10px 14px; display:flex; align-items:center; justify-content:space-between; }
-        @media(min-width:768px) { .section-header { padding:12px 16px; } }
-        .section-title { font-size:12px; font-weight:700; color:#fff; letter-spacing:0.8px; text-transform:uppercase; }
-        @media(min-width:768px) { .section-title { font-size:13px; } }
+
+        /* MAIN CARD */
+        .main-card {
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
+        }
+
+        /* HEADER */
+        .section-header {
+          background: linear-gradient(90deg, #1d033a, #110122);
+          border-bottom: 1.5px solid rgba(255,215,0,0.22);
+          padding:16px 20px;
+          display:flex; align-items:center; justify-content:space-between;
+        }
+        .section-title { font-size:14px; font-weight:800; color:#FFD700; letter-spacing:0.8px; text-transform:uppercase; text-shadow: 0 0 8px rgba(255,215,0,0.3); }
         .header-actions { display:flex; align-items:center; gap:8px; }
-        .icon-btn { background:rgba(255,255,255,0.2); border:none; border-radius:5px; padding:5px 8px; cursor:pointer; color:#fff; display:flex; align-items:center; transition:background .18s; }
-        .icon-btn:hover { background:rgba(255,255,255,0.35); }
-        .icon-btn-excel { background:rgba(0,160,60,0.55); }
-        .icon-btn-excel:hover { background:rgba(0,160,60,0.75); }
-        .filter-area { padding:16px 16px 10px; }
-        .filter-label { font-size:13px; font-weight:500; color:#333; margin-bottom:6px; display:block; }
+        
+        .icon-btn {
+          background: rgba(255,215,0,0.1); border: 1.5px solid rgba(255,215,0,0.25); border-radius:6px;
+          padding:6px 10px; cursor:pointer; color:#FFD700;
+          display:flex; align-items:center; transition: all 0.2s;
+        }
+        .icon-btn:hover { background: rgba(255,215,0,0.25); border-color:#FFD700; transform: translateY(-1px); }
+        .icon-btn-excel { background: rgba(0,200,80,0.15); border-color: rgba(0,200,80,0.35); color: #00ff88; }
+        .icon-btn-excel:hover { background: rgba(0,200,80,0.35); border-color: #00ff88; }
+
+        /* FILTER AREA */
+        .filter-area { padding:20px 20px 10px; }
+        .filter-label { font-size:12.5px; font-weight:600; color:rgba(255,215,0,0.7); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:6px; display:block; }
+
         .filter-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
-        .cycle-select { border:1px solid #d0d0d0; border-radius:5px; padding:9px 12px; font-size:13px; font-family:'Poppins',sans-serif; color:#333; background:#fff; outline:none; height:40px; flex: 1; min-width:180px; appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:30px; }
+
+        .cycle-select {
+          border: 1.5px solid rgba(255,215,0,0.25); border-radius:6px;
+          padding:9px 12px; font-size:13px;
+          font-family:'Poppins',sans-serif; color:#FFD700;
+          background: rgba(0,0,0,0.25); outline:none; height:40px; flex: 1; min-width:180px;
+          cursor:pointer; transition: all 0.2s;
+          appearance:none; -webkit-appearance:none;
+          background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23FFD700'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+          background-repeat:no-repeat; background-position:right 10px center; padding-right:30px;
+        }
         @media(min-width:768px) { .cycle-select { flex: none; min-width:220px; } }
-        .filter-btn { background:#1976d2; color:#fff; border:none; border-radius:6px; padding:0 20px; height:40px; font-size:14px; font-weight:600; cursor:pointer; flex: 1; }
+        .cycle-select:focus { border-color:#FFD700; box-shadow:0 0 10px rgba(255,215,0,0.2); }
+
+        .filter-btn {
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color:#120228; border:none; border-radius:6px;
+          padding:0 20px; height:40px; font-size:14px; font-weight:800;
+          font-family:'Poppins',sans-serif; cursor:pointer;
+          transition: all 0.2s, transform .15s;
+          flex: 1;
+          box-shadow: 0 4px 12px rgba(255,215,0,0.2);
+        }
         @media(min-width:768px) { .filter-btn { padding:0 28px; flex: none; } }
-        .total-summary { font-size:14px; font-weight:700; color:#1a1a2e; padding:2px 16px 14px; }
-        .total-summary span { color:#26a69a; }
-        .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; border-top:1px solid #f0f0f0; }
+        .filter-btn:hover { background: linear-gradient(135deg, #FFE042 0%, #f0b500 100%); transform:translateY(-1px); }
+        .filter-btn:active { transform:scale(0.98); }
+
+        /* TOTAL SUMMARY */
+        .total-summary {
+          font-size:15px; font-weight:700; color:rgba(255,215,0,0.85);
+          padding:2px 20px 16px;
+        }
+        .total-summary span { color:#FFD700; text-shadow: 0 0 8px rgba(255,215,0,0.3); font-size: 17px; }
+
+        /* TABLE */
+        .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; }
         .data-table { width:100%; border-collapse:collapse; font-size:12px; min-width:800px; }
         @media(min-width:768px) { .data-table { font-size:13px; } }
-        .data-table thead tr { background:#3d6b9e; }
-        .data-table thead th { padding:10px 12px; text-align:left; color:#fff; font-weight:600; font-size:12px; white-space:nowrap; }
-        @media(min-width:768px) { .data-table thead th { padding:13px 14px; font-size:13px; } }
-        .data-table tbody td { padding:10px 12px; color:#333; font-size:12px; vertical-align:middle; border-bottom:1px solid #e8e8e8; }
-        @media(min-width:768px) { .data-table tbody td { padding:13px 14px; font-size:13px; } }
-        .num-bold { font-weight:700; color:#333; }
-        .num-admin { color:#f57c00; font-weight:600; }
-        .table-footer { padding:10px 16px; font-size:12.5px; color:#666; border-top:1px solid #f0f0f0; display:flex; justify-content:space-between; align-items:center; }
-        .footer-total { font-weight:700; color:#26a69a; font-size:13px; }
+        .data-table thead tr { background: rgba(0, 0, 0, 0.35); border-bottom: 2px solid rgba(255,215,0,0.22); }
+        .data-table thead th {
+          padding:14px 16px; text-align:left;
+          color:#FFD700; font-weight:700; font-size:13px;
+          white-space:nowrap; text-transform:uppercase; letter-spacing:0.8px;
+        }
+        .data-table tbody tr:nth-child(odd)  { background: rgba(29, 3, 58, 0.35); }
+        .data-table tbody tr:nth-child(even) { background: rgba(17, 1, 34, 0.35); }
+        .data-table tbody tr:hover { background: rgba(255,215,0,0.06); transition:background .15s; }
+        .data-table tbody td {
+          padding:13px 16px; color:#ffffff;
+          border-bottom:1px solid rgba(255,215,0,0.12); font-size:13px; white-space:nowrap;
+          vertical-align:middle;
+        }
+
+        .num-bold { font-weight:700; color:#fff; }
+        .num-admin { color:#f472b6; font-weight:700; }
+
+        /* Footer */
+        .table-footer {
+          padding:14px 20px; font-size:12.5px; color:rgba(255,215,0,0.6);
+          border-top:1.5px solid rgba(255,215,0,0.22);
+          display:flex; justify-content:space-between; align-items:center;
+          background: rgba(0,0,0,0.15);
+        }
+        .footer-total { font-weight:800; color:#FFD700; font-size:13.5px; }
+
+        /* Skeleton Loader */
+        @keyframes skeletonShimmer {
+          0% { background-position: -1000px 0; }
+          100% { background-position: 1000px 0; }
+        }
+        .skeleton-row {
+          background: linear-gradient(90deg, rgba(29,3,58,0.5) 25%, rgba(168,85,247,0.2) 50%, rgba(29,3,58,0.5) 75%);
+          background-size: 1000px 100%;
+          animation: skeletonShimmer 2s infinite;
+        }
+        .skeleton-row td { padding: 13px 16px; }
+        .skeleton-cell { height: 20px; background: rgba(255,215,0,0.1); border-radius: 4px; }
       `}</style>
 
       <div className="pp-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
         <Navbar dropdownOpen={dropdownOpen} setDropdownOpen={setDropdownOpen} setActivePage={() => {}} />
-        <div className="green-bar" />
+        <div className="gold-bar" />
 
         <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
           <a href="/dashboard">Home</a>
           <span className="sep">/</span>
           <span>Daily Payout</span>
           <span className="sep">/</span>
-          <span>Admin & Processing</span>
+          <span className="current">Admin & Processing</span>
         </div>
 
         <div className="page-body">
@@ -128,10 +225,10 @@ export default function AdminProcessingPage() {
               <span className="section-title">Admin & Processing Report</span>
               <div className="header-actions">
                 <button className="icon-btn" title="Print" onClick={() => window.print()}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFD700"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
                 </button>
                 <button className="icon-btn icon-btn-excel" title="Export CSV" onClick={handleExportCSV}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="white"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 18l-1.5-2.5L5.5 18H4l2-3.5L4 11h1.5l1.5 2.5L8.5 11H10l-2 3.5 2 3.5H8.5zm5.5 0h-1v-5h-1.5v-1H15v1h-1v5zm3.5 0h-3v-6h1v5h2v1z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#00ff88"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 18l-1.5-2.5L5.5 18H4l2-3.5L4 11h1.5l1.5 2.5L8.5 11H10l-2 3.5 2 3.5H8.5zm5.5 0h-1v-5h-1.5v-1H15v1h-1v5zm3.5 0h-3v-6h1v5h2v1z"/></svg>
                 </button>
               </div>
             </div>
@@ -162,9 +259,18 @@ export default function AdminProcessingPage() {
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan={4} style={{ textAlign: "center", padding: "40px" }}>Loading...</td></tr>
+                    <>
+                      {[...Array(5)].map((_, i) => (
+                        <tr key={`skeleton-${i}`} className="skeleton-row">
+                          <td><div className="skeleton-cell" /></td>
+                          <td><div className="skeleton-cell" /></td>
+                          <td><div className="skeleton-cell" /></td>
+                          <td><div className="skeleton-cell" /></td>
+                        </tr>
+                      ))}
+                    </>
                   ) : data.length === 0 ? (
-                    <tr><td colSpan={4} style={{ textAlign: "center", padding: "40px", color: "#999" }}>No records found</td></tr>
+                    <tr><td colSpan={4} style={{ textAlign: "center", padding: "45px", color: "rgba(255,215,0,0.5)" }}>No records found</td></tr>
                   ) : (
                     data.map((row) => (
                       <tr key={row.srNo}>

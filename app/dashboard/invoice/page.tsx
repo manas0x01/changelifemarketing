@@ -83,7 +83,10 @@ export default function TaxInvoicePage() {
           justify-content: flex-start;
           align-items: center;
           min-height: 100vh;
-          background: #f4f6f8;
+          background: #1a0533;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
           padding: 0 0 40px 0;
           font-family: 'Lato', sans-serif;
           gap: 20px;
@@ -95,21 +98,22 @@ export default function TaxInvoicePage() {
         .top-menubar {
           width: 100%;
           height: 60px;
-          background: #1a4a2e;
+          background: #2d0a5c;
           display: flex;
           align-items: center;
           padding: 0 20px;
-          color: white;
+          color: #FFD700;
           position: sticky;
           top: 0;
           z-index: 1000;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+          border-bottom: 1.5px solid rgba(255,215,0,0.25);
         }
 
         .menu-toggle-btn {
           background: transparent;
           border: none;
-          color: white;
+          color: #FFD700;
           cursor: pointer;
           display: flex;
           align-items: center;
@@ -121,29 +125,31 @@ export default function TaxInvoicePage() {
         }
 
         .menu-toggle-btn:hover {
-          background: rgba(255,255,255,0.1);
+          background: rgba(255,215,0,0.15);
         }
 
         .page-title {
           font-size: 18px;
           font-weight: 700;
           letter-spacing: 0.5px;
+          color: #FFD700;
+          text-shadow: 0 0 8px rgba(255,215,0,0.3);
         }
 
         .download-btn {
-          background: #1a4a2e;
-          color: white;
-          border: 1px solid rgba(255,255,255,0.2);
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color: #120228;
+          border: none;
           padding: 10px 24px;
           border-radius: 6px;
-          font-weight: 700;
+          font-weight: 800;
           cursor: pointer;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 8px;
           transition: all 0.3s ease;
-          box-shadow: 0 4px 12px rgba(26, 74, 46, 0.15);
+          box-shadow: 0 4px 12px rgba(255, 215, 0, 0.25);
           font-family: 'Lato', sans-serif;
           text-transform: uppercase;
           letter-spacing: 1px;
@@ -152,15 +158,15 @@ export default function TaxInvoicePage() {
         }
 
         .download-btn:hover {
-          background: #c8943a;
-          border-color: #c8943a;
+          opacity: 0.95;
           transform: translateY(-2px);
-          box-shadow: 0 6px 16px rgba(200, 148, 58, 0.25);
+          box-shadow: 0 6px 16px rgba(255, 215, 0, 0.35);
         }
 
         .download-btn svg {
           width: 18px;
           height: 18px;
+          stroke: #120228 !important;
         }
 
         .invoice-container {

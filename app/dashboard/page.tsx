@@ -51,75 +51,51 @@ interface DashboardData {
   cycleHistory: CycleRow[];
 }
 
+/* ── Premium SVG Icons ── */
 const TeamIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.9">
-    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" />
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="#F5C518" />
   </svg>
 );
 const MoneyIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.9">
-    <path d="M20 4H4c-1.11 0-2 .89-2 2v12c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+    <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16C9.39 5.55 7.73 6.7 7.73 8.77c0 2.45 2.02 3.67 4.97 4.33 2.5.59 3 1.45 3 2.38 0 .68-.48 1.77-2.7 1.77-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.8V21h3v-2.15c1.95-.37 3.49-1.47 3.5-3.48-.01-2.84-2.42-3.81-4.72-4.37z" fill="#F5C518" />
   </svg>
 );
 const WalletIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.9">
-    <path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" />
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+    <path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" fill="#F5C518" />
   </svg>
 );
 const PinIcon = () => (
-  <svg width="40" height="40" viewBox="0 0 24 24" fill="white" opacity="0.9">
-    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z" />
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#F5C518" />
   </svg>
 );
-const MoonIcon = () => <span style={{ fontSize: 14 }}>🌙</span>;
-const GearIcon = () => <span style={{ fontSize: 14 }}>⚙️</span>;
+const UserIcon = () => (
+  <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" fill="#F5C518" />
+  </svg>
+);
+const TrendUpIcon = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" fill="#FFD700" />
+  </svg>
+);
+const MoonIcon = () => <span style={{ fontSize: 13 }}>🌙</span>;
+const GearIcon = () => <span style={{ fontSize: 13 }}>⚙️</span>;
 
+/* ── Card config ── */
 const statCards = [
-  {
-    title: "Total Team",
-    gradient: "linear-gradient(135deg, #9CAF00 0%, #7A8C00 100%)",
-    icon: <TeamIcon />,
-  },
-  {
-    title: "Basic Income",
-    gradient: "linear-gradient(135deg, #FF9800 0%, #F57C00 100%)",
-    icon: <MoneyIcon />,
-  },
-  {
-    title: "Booster Income",
-    gradient: "linear-gradient(135deg, #4CAF50 0%, #2E7D32 100%)",
-    icon: <MoneyIcon />,
-  },
-  {
-    title: "Total Direct",
-    gradient: "linear-gradient(135deg, #00BCD4 0%, #0097A7 100%)",
-    icon: <TeamIcon />,
-  },
-  {
-    title: "Active Direct",
-    gradient: "linear-gradient(135deg, #8E44AD 0%, #732D91 100%)",
-    icon: <TeamIcon />,
-  },
-  {
-    title: "Basic Users",
-    gradient: "linear-gradient(135deg, #E67E22 0%, #D35400 100%)",
-    icon: <TeamIcon />,
-  },
-  {
-    title: "Booster Users",
-    gradient: "linear-gradient(135deg, #27AE60 0%, #1E8449 100%)",
-    icon: <TeamIcon />,
-  },
-  {
-    title: "Total Pins",
-    gradient: "linear-gradient(135deg, #FF6B6B 0%, #FF4757 100%)",
-    icon: <PinIcon />,
-  },
-  {
-    title: "Total Income",
-    gradient: "linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)",
-    icon: <WalletIcon />,
-  },
+  { title: "Total Team", icon: <TeamIcon />, accent: "#a855f7", trend: "14.2%" },
+  { title: "Basic Income", icon: <MoneyIcon />, accent: "#f59e0b", trend: "8.5%" },
+  { title: "Booster Income", icon: <MoneyIcon />, accent: "#10b981", trend: "11.1%" },
+  { title: "Total Direct", icon: <TeamIcon />, accent: "#06b6d4", trend: "9.3%" },
+  { title: "Active Direct", icon: <TeamIcon />, accent: "#8b5cf6", trend: "12.0%" },
+  { title: "Basic Users", icon: <TeamIcon />, accent: "#f97316", trend: "7.8%" },
+  { title: "Booster Users", icon: <TeamIcon />, accent: "#22c55e", trend: "15.4%" },
+  { title: "Total Pins", icon: <PinIcon />, accent: "#ec4899", trend: "6.2%" },
+  { title: "Total Income", icon: <WalletIcon />, accent: "#F5C518", trend: "12.5%" },
 ];
 
 export default function Dashboard() {
@@ -163,22 +139,13 @@ export default function Dashboard() {
   const [withdrawError, setWithdrawError] = useState("");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawSuccess, setWithdrawSuccess] = useState("");
+
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
-
-      const res = await fetch("/api/user/dashboard", {
-        method: "GET",
-        credentials: "include",
-      });
-
-      if (res.status === 401) {
-        window.location.href = "/auth/login";
-        return;
-      }
-
+      const res = await fetch("/api/user/dashboard", { method: "GET", credentials: "include" });
+      if (res.status === 401) { window.location.href = "/auth/login"; return; }
       const result = await res.json();
-
       if (result.success) {
         const d = result.data;
         const incoming = d.boosterIncome || {};
@@ -210,48 +177,28 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const shouldReload = sessionStorage.getItem('reloadDashboard');
-      if (shouldReload === 'true') {
-        sessionStorage.removeItem('reloadDashboard');
-        fetchDashboardData();
-      }
+    if (typeof window !== "undefined") {
+      const shouldReload = sessionStorage.getItem("reloadDashboard");
+      if (shouldReload === "true") { sessionStorage.removeItem("reloadDashboard"); fetchDashboardData(); }
     }
   }, []);
 
-  useEffect(() => {
-    // Use the hoisted fetch function to populate dashboard data on mount
-    fetchDashboardData();
-  }, []);
+  useEffect(() => { fetchDashboardData(); }, []);
+
   const handleWithdraw = async () => {
-    setWithdrawError("");
-    setWithdrawSuccess("");
+    setWithdrawError(""); setWithdrawSuccess("");
     const amt = Number(withdrawAmount);
-    if (!withdrawAmount || isNaN(amt)) {
-      setWithdrawError("Please enter a valid amount.");
-      return;
-    }
-    if (amt < 1000) {
-      setWithdrawError("Minimum withdrawal amount is ₹1000.");
-      return;
-    }
-
-    if (amt > totalIncome) {
-      setWithdrawError("Amount exceeds your total income balance.");
-      return;
-    }
+    if (!withdrawAmount || isNaN(amt)) { setWithdrawError("Please enter a valid amount."); return; }
+    if (amt < 1000) { setWithdrawError("Minimum withdrawal amount is ₹1000."); return; }
+    if (amt > totalIncome) { setWithdrawError("Amount exceeds your total income balance."); return; }
     try {
       setWithdrawLoading(true);
-      const res = await fetch('/api/user/withdraw', {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
+      const res = await fetch("/api/user/withdraw", {
+        method: "POST", credentials: "include",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ amount: amt }),
       });
-      if (res.status === 401) {
-        window.location.href = '/auth/login';
-        return;
-      }
+      if (res.status === 401) { window.location.href = "/auth/login"; return; }
       const data = await res.json();
       if (!res.ok) {
         setWithdrawError(data.error || data.message || "Withdrawal failed.");
@@ -260,269 +207,633 @@ export default function Dashboard() {
         setDashboardData((prev: DashboardData) => ({ ...prev, totalIncome: data.remainingBalance ?? (prev.totalIncome - amt) }));
         setWithdrawAmount("");
       }
-    } catch (error: any) {
-      setWithdrawError("Network error. Please try again.");
-    } finally {
-      setWithdrawLoading(false);
-    }
+    } catch { setWithdrawError("Network error. Please try again."); }
+    finally { setWithdrawLoading(false); }
   };
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        .dash-root { font-family: 'Poppins', sans-serif; background: #f0f2f5; min-height: 100vh; }
-        .green-bar { height: 8px; background: linear-gradient(90deg, #00c853, #1de9b6); }
-        .page-content { padding: 20px; max-width: 1400px; margin: 0 auto; }
+        @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
 
-        /* 6 cards in a row */
+        :root {
+          --royal: #1a0533;
+          --royal-mid: #2d0a5c;
+          --royal-card: #250845;
+          --royal-border: rgba(255,215,0,0.25);
+          --gold: #FFD700;
+          --gold-light: #FFD700;
+          --gold-dim: #FFD700;
+          --purple-glow: rgba(168,85,247,0.35);
+          --text-primary: #FFD700;
+          --text-secondary: #FFD700;
+          --text-gold: #FFD700;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+
+        .dash-root {
+          font-family: 'Nunito', sans-serif;
+          background: var(--royal);
+          min-height: 100vh;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.25) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(245,197,24,0.12) 0%, transparent 65%),
+            radial-gradient(circle at 50% 50%, rgba(168,85,247,0.05) 0%, transparent 50%);
+        }
+
+        /* ── Gold shimmer top bar ── */
+        .gold-bar {
+          height: 3px;
+          background: linear-gradient(90deg, transparent, #FFD700, #FFD700, #FFD700, transparent);
+          background-size: 200% 100%;
+          animation: shimmer 3s infinite linear;
+        }
+        @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+        .page-content {
+          padding: 20px 18px 40px;
+          max-width: 1400px;
+          margin: 0 auto;
+        }
+
+        /* ── Section label ── */
+        .section-label {
+          font-family: 'Cinzel', serif;
+          font-size: 12px;
+          letter-spacing: 2.8px;
+          text-transform: uppercase;
+          color: #FFD700;
+          text-shadow: 0 0 8px rgba(245,197,24,0.45);
+          margin-bottom: 16px;
+          padding-left: 2px;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-weight: 700;
+        }
+        .section-label::after {
+          content: '';
+          flex: 1;
+          height: 1px;
+          background: linear-gradient(90deg, rgba(245,197,24,0.6), transparent);
+        }
+
+        /* ── STAT CARDS GRID ── */
         .stat-cards {
           display: grid;
-          grid-template-columns: repeat(6, 1fr);
-          gap: 16px;
-          margin-bottom: 22px;
+          grid-template-columns: repeat(3, 1fr);
+          gap: 14px;
+          margin-bottom: 28px;
         }
-        @media (max-width: 1300px) { .stat-cards { grid-template-columns: repeat(4, 1fr); } }
-        @media (max-width: 1100px) { .stat-cards { grid-template-columns: repeat(3, 1fr); } }
-        @media (max-width: 700px) { .stat-cards { grid-template-columns: repeat(2, 1fr); } }
-        @media (max-width: 400px) { .stat-cards { grid-template-columns: 1fr; } }
+        @media (min-width: 900px)  { .stat-cards { grid-template-columns: repeat(5, 1fr); } }
+        @media (min-width: 1200px) { .stat-cards { grid-template-columns: repeat(6, 1fr); } }
+        @media (max-width: 480px)  { .stat-cards { grid-template-columns: repeat(2, 1fr); } }
 
+        /* ── Individual stat card ── */
         .stat-card {
-          border-radius: 10px; padding: 22px 18px;
-          display: flex; align-items: center; gap: 14px;
-          position: relative; overflow: hidden; cursor: pointer;
-          transition: transform 0.18s, box-shadow 0.18s;
-        }
-        .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); }
-        .stat-card-icon {
-          background: rgba(255,255,255,0.18); border-radius: 50%;
-          width: 58px; height: 58px;
-          display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .stat-card-info { flex: 1; }
-        .stat-card-title { font-size: 15px; font-weight: 600; color: #fff; margin-bottom: 6px; }
-        .stat-card-link { font-size: 12px; color: rgba(255,255,255,0.85); cursor: pointer; }
-        .stat-card::after {
-          content: ''; position: absolute; right: -20px; bottom: -20px;
-          width: 90px; height: 90px; border-radius: 50%; background: rgba(255,255,255,0.1);
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(168,85,247,0.25);
+          border-radius: 16px;
+          padding: 18px 14px 14px;
+          cursor: pointer;
+          position: relative;
+          overflow: hidden;
+          transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.02);
         }
         .stat-card::before {
-          content: ''; position: absolute; right: 20px; bottom: -30px;
-          width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.07);
+          content: '';
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(135deg, rgba(245,197,24,0.12) 0%, transparent 60%);
+          pointer-events: none;
+          transition: opacity 0.22s;
+        }
+        .stat-card:hover {
+          transform: translateY(-4px);
+          border-color: rgba(245,197,24,0.55);
+          box-shadow: 
+            0 12px 32px rgba(0,0,0,0.55), 
+            0 0 20px rgba(168,85,247,0.25),
+            inset 0 0 12px rgba(245,197,24,0.1);
         }
 
-        /* Withdraw button inside card */
-        .withdraw-btn {
-          display: inline-flex; align-items: center; gap: 5px;
-          background: rgba(255,255,255,0.22);
-          border: 1.5px solid rgba(255,255,255,0.7);
-          color: #fff; border-radius: 20px;
-          padding: 4px 14px; font-size: 11.5px; font-weight: 600;
-          font-family: 'Poppins', sans-serif;
-          cursor: pointer; margin-top: 6px;
-          transition: background 0.18s, transform 0.15s;
+        /* Glow dot accent */
+        .stat-card-glow {
+          position: absolute;
+          top: -18px; right: -18px;
+          width: 70px; height: 70px;
+          border-radius: 50%;
+          opacity: 0.18;
+          filter: blur(18px);
+        }
+
+        .stat-icon-wrap {
+          width: 44px; height: 44px;
+          border-radius: 12px;
+          background: rgba(245,197,24,0.15);
+          border: 1.5px solid rgba(245,197,24,0.35);
+          display: flex; align-items: center; justify-content: center;
+          margin-bottom: 14px;
+          box-shadow: 0 0 10px rgba(245,197,24,0.25);
+        }
+
+        .stat-card-title {
+          font-size: 11.5px;
+          font-weight: 800;
+          color: #FFD700;
+          text-shadow: 0 0 8px rgba(255,215,0,0.5);
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          margin-bottom: 8px;
+        }
+
+        .stat-card-value {
+          font-size: 22px;
+          font-weight: 900;
+          color: #FFD700;
+          text-shadow: 0 0 10px rgba(255,215,0,0.45);
+          line-height: 1.2;
+          animation: fadeIn 0.3s ease;
+        }
+        .stat-card-value-split {
+          font-size: 17px;
+          font-weight: 900;
+          color: #FFD700;
+          text-shadow: 0 0 10px rgba(255,215,0,0.4);
+        }
+        @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
+
+        .stat-view-hint {
+          font-size: 10.5px;
+          color: #FFD700;
+          font-weight: 700;
+          letter-spacing: 0.3px;
+          display: inline-flex;
+          text-shadow: 0 0 4px rgba(255,215,0,0.35);
+          align-items: center;
+          gap: 4px;
+        }
+        .stat-view-hint::after { content: '›'; font-size: 14px; }
+
+        /* Withdraw pill */
+        .withdraw-pill {
+          display: inline-flex;
+          align-items: center;
+          gap: 5px;
+          background: linear-gradient(135deg, #FFD700 0%, #FFD700 100%);
+          color: #1a0533;
+          border: none;
+          border-radius: 20px;
+          padding: 6px 15px;
+          font-size: 11px;
+          font-weight: 800;
+          font-family: 'Nunito', sans-serif;
+          cursor: pointer;
+          margin-top: 8px;
+          transition: transform 0.15s, box-shadow 0.15s;
+          box-shadow: 0 4px 15px rgba(255,215,0,0.4);
           letter-spacing: 0.3px;
         }
-        .withdraw-btn:hover { background: rgba(255,255,255,0.35); transform: scale(1.04); }
+        .withdraw-pill:hover {
+          transform: scale(1.06);
+          box-shadow: 0 6px 20px rgba(255,215,0,0.6), 0 0 10px rgba(255,215,0,0.25);
+        }
 
-        .bottom-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 22px; }
+        /* ── BOTTOM GRID ── */
+        .bottom-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 16px;
+          margin-bottom: 20px;
+        }
         @media (max-width: 800px) { .bottom-grid { grid-template-columns: 1fr; } }
 
-        .section-card { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.06); }
+        /* ── Section cards ── */
+        .section-card {
+          background: linear-gradient(145deg, var(--royal-card) 0%, rgba(37, 8, 69, 0.9) 100%);
+          border: 1.5px solid rgba(255,215,0,0.25);
+          border-radius: 18px;
+          overflow: hidden;
+          box-shadow: 0 10px 40px rgba(0,0,0,0.55), 0 0 25px rgba(168,85,247,0.1);
+        }
+
         .section-header {
-          background: linear-gradient(90deg, #26a69a, #1de9b6);
-          padding: 10px 16px; font-size: 12.5px; font-weight: 600;
-          color: #fff; letter-spacing: 0.5px; text-transform: uppercase;
+          background: linear-gradient(90deg, rgba(255,215,0,0.22), rgba(168,85,247,0.18));
+          border-bottom: 1.5px solid rgba(255,215,0,0.35);
+          padding: 14px 20px;
+          font-family: 'Cinzel', serif;
+          font-size: 11.5px;
+          font-weight: 700;
+          color: #FFD700;
+          text-shadow: 0 0 6px rgba(245,197,24,0.35);
+          letter-spacing: 1.8px;
+          text-transform: uppercase;
+          display: flex;
+          align-items: center;
+          gap: 8px;
         }
-        .section-body { padding: 14px; }
+        .section-header::before {
+          content: '';
+          width: 4px; height: 14px;
+          background: linear-gradient(180deg, #F5C518, #a855f7);
+          border-radius: 2px;
+          flex-shrink: 0;
+          box-shadow: 0 0 8px rgba(245,197,24,0.5);
+        }
 
-        .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .data-table thead tr { background: #546e7a; }
-        .data-table thead th { padding: 10px 12px; text-align: left; color: #fff; font-weight: 600; font-size: 13px; }
-        .data-table tbody tr:nth-child(odd) { background: #e8eaf6; }
-        .data-table tbody tr:nth-child(even) { background: #f3e5f5; }
-        .data-table tbody td { padding: 8px 12px; color: #333; vertical-align: middle; border-bottom: 1px solid rgba(0,0,0,0.04); font-size: 13px; }
-        .cycle-cell { display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+        /* ── Cycle Table ── */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .data-table thead tr {
+          background: rgba(245,197,24,0.08);
+        }
+        .data-table thead th {
+          padding: 10px 14px;
+          text-align: left;
+          color: var(--gold);
+          font-weight: 700;
+          font-size: 11px;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          border-bottom: 1px solid var(--royal-border);
+        }
+        .data-table tbody tr {
+          border-bottom: 1px solid rgba(245,197,24,0.05);
+          transition: background 0.15s;
+        }
+        .data-table tbody tr:hover { background: rgba(245,197,24,0.05); }
+        .data-table tbody td {
+          padding: 9px 14px;
+          color: var(--text-secondary);
+          vertical-align: middle;
+          font-size: 12.5px;
+        }
+        .cycle-cell { display:flex; align-items:center; gap:5px; }
+        .cycle-label {
+          background: rgba(168,85,247,0.15);
+          border: 1px solid rgba(168,85,247,0.3);
+          color: #c084fc;
+          border-radius: 6px;
+          padding: 2px 8px;
+          font-size: 11px;
+          font-weight: 700;
+        }
 
-        .epin-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        .epin-table thead tr { background: #546e7a; }
-        .epin-table thead th { padding: 10px 14px; color: #fff; font-weight: 600; text-align: left; font-size: 13px; }
-        .epin-table tbody tr:nth-child(odd) { background: #e0f7fa; }
-        .epin-table tbody tr:nth-child(even) { background: #f0fdf4; }
-        .epin-table tbody td { padding: 10px 14px; color: #333; font-size: 13px; border-bottom: 1px solid rgba(0,0,0,0.04); }
-        .epin-view-link { color: #1565c0; text-decoration: underline; cursor: pointer; font-size: 13px; }
-
+        /* ── Profile card ── */
         .profile-banner {
-          width: 100%; height: 220px;
-          background: linear-gradient(135deg, #4dd0e1 0%, #00bfa5 60%, #69f0ae 100%);
-          position: relative; border-radius: 0; overflow: hidden;
+          width: 100%;
+          height: 160px;
+          background: linear-gradient(135deg, #3b0764 0%, #1e0a4a 40%, #2d0a5c 100%);
+          position: relative;
+          overflow: hidden;
         }
-        .profile-banner-overlay {
-          position: absolute; inset: 0; background: rgba(0,0,0,0.12);
-          display: flex; align-items: center; justify-content: center;
+        .profile-banner-pattern {
+          position: absolute;
+          inset: 0;
+          background-image:
+            repeating-linear-gradient(45deg, rgba(245,197,24,0.04) 0px, rgba(245,197,24,0.04) 1px, transparent 1px, transparent 30px),
+            repeating-linear-gradient(-45deg, rgba(245,197,24,0.04) 0px, rgba(245,197,24,0.04) 1px, transparent 1px, transparent 30px);
         }
-        .laptop-css { width: 180px; height: 110px; background: #263238; border-radius: 8px 8px 0 0; position: relative; margin-bottom: 14px; }
-        .laptop-screen { position: absolute; inset: 6px; background: linear-gradient(135deg, #37474f, #546e7a); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
-        .laptop-base { width: 210px; height: 12px; background: #37474f; border-radius: 0 0 6px 6px; margin-top: 0; }
-        .laptop-wrapper { display: flex; flex-direction: column; align-items: center; opacity: 0.6; }
+        .profile-banner-glow {
+          position: absolute;
+          top: -30px; left: 50%;
+          transform: translateX(-50%);
+          width: 200px; height: 120px;
+          background: radial-gradient(ellipse, rgba(168,85,247,0.35), transparent 70%);
+        }
+        .profile-banner-title {
+          position: absolute;
+          bottom: 16px; left: 20px;
+          font-family: 'Cinzel', serif;
+          font-size: 13px;
+          color: var(--gold);
+          letter-spacing: 2px;
+          text-shadow: 0 2px 12px rgba(245,197,24,0.4);
+        }
+        .profile-avatar-wrap {
+          position: relative;
+          margin: -44px auto 12px;
+          width: fit-content;
+        }
+        .profile-avatar {
+          width: 80px; height: 80px;
+          border-radius: 50%;
+          border: 3px solid var(--gold);
+          box-shadow: 0 0 0 4px rgba(245,197,24,0.15), 0 4px 20px rgba(0,0,0,0.4);
+          object-fit: cover;
+          background: linear-gradient(135deg, #a855f7, #3b0764);
+        }
+        .avatar-ring {
+          position: absolute;
+          inset: -6px;
+          border-radius: 50%;
+          border: 1.5px solid rgba(245,197,24,0.3);
+          animation: rotate 8s linear infinite;
+        }
+        @keyframes rotate { to { transform: rotate(360deg); } }
 
-        .profile-avatar-wrap { position: relative; margin: -44px auto 14px; width: fit-content; }
-        .profile-avatar { width: 80px; height: 80px; border-radius: 50%; background: linear-gradient(135deg, #ff9800 50%, #5c6bc0 50%); border: 3px solid #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.15); }
-        .profile-info { text-align: center; padding: 0 20px 16px; }
-        .profile-info p { font-size: 13.5px; color: #444; margin-bottom: 5px; }
-        .profile-divider { height: 1px; background: #e0e0e0; margin: 14px 20px; }
-        .profile-actions { display: flex; align-items: center; justify-content: space-around; padding: 0 20px 20px; }
-        .profile-actions-divider { width: 1px; height: 36px; background: #e0e0e0; }
+        .profile-info { text-align: center; padding: 0 20px 12px; }
+        .profile-info-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 7px 0;
+          border-bottom: 1px solid rgba(245,197,24,0.05);
+          font-size: 12.5px;
+        }
+        .profile-info-row:last-child { border-bottom: none; }
+        .profile-info-label {
+          color: var(--text-secondary);
+          font-weight: 600;
+          font-size: 11.5px;
+        }
+        .profile-info-value {
+          color: var(--text-primary);
+          font-weight: 700;
+          font-size: 12px;
+          text-align: right;
+        }
+
+        .profile-divider {
+          height: 1px;
+          background: linear-gradient(90deg, transparent, var(--royal-border), transparent);
+          margin: 10px 20px;
+        }
+        .profile-actions {
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          padding: 6px 20px 18px;
+          gap: 12px;
+        }
         .action-btn {
-          display: flex; align-items: center; gap: 6px;
-          background: linear-gradient(90deg, #26c6da, #1de9b6);
-          color: #fff; border: none; border-radius: 6px;
-          padding: 9px 18px; font-size: 13px; font-weight: 500;
-          font-family: 'Poppins', sans-serif; cursor: pointer;
-          transition: opacity 0.18s, transform 0.18s; text-decoration: none;
+          display: flex; align-items: center; gap: 7px;
+          background: linear-gradient(135deg, #FFD700 0%, #FFD700 50%, #d49a00 100%);
+          color: #1a0533;
+          border: none; border-radius: 10px;
+          padding: 10px 20px;
+          font-size: 12.5px; font-weight: 800;
+          font-family: 'Nunito', sans-serif;
+          cursor: pointer;
+          transition: transform 0.18s, box-shadow 0.18s;
+          text-decoration: none;
+          box-shadow: 0 4px 18px rgba(245,197,24,0.45);
+          flex: 1; justify-content: center;
         }
-        .action-btn:hover { opacity: 0.88; transform: translateY(-1px); }
-        .message-section { margin-top: 16px; }
-        .message-body { padding: 16px; text-align: center; }
-        .message-body p { font-size: 13.5px; color: #555; margin-bottom: 14px; }
-        .social-row { display: flex; gap: 12px; justify-content: center; }
-        .social-btn { width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: transform 0.18s; text-decoration: none; }
-        .social-btn:hover { transform: scale(1.1); }
-        .insight-section { background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.06); margin-top: 0; }
+        .action-btn:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 8px 28px rgba(245,197,24,0.65), 0 0 15px rgba(245,197,24,0.3);
+        }
+        .action-btn-secondary {
+          background: rgba(245,197,24,0.1);
+          color: var(--gold);
+          border: 1px solid rgba(245,197,24,0.45);
+          box-shadow: none;
+        }
+        .action-btn-secondary:hover {
+          background: rgba(245,197,24,0.18);
+          border-color: rgba(245,197,24,0.7);
+          box-shadow: 0 4px 20px rgba(245,197,24,0.25);
+        }
 
-        /* Dialog overrides */
-        .dialog-field { margin-bottom: 14px; }
-        .dialog-field label { font-size: 11.5px; font-weight: 700; color: #555; display: block; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
-        .dialog-field .val { font-size: 14px; color: #1a1a2e; font-weight: 600; background: #f5f5f7; padding: 10px 12px; border-radius: 6px; border-left: 3px solid #7C3AED; }
-        .dialog-divider { height: 1px; background: linear-gradient(90deg, transparent, #e0e0e0, transparent); margin: 16px 0; }
-        .income-badge {
-          display: inline-block; background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
-          color: #fff; border-radius: 12px; padding: 12px 24px;
-          font-size: 18px; font-weight: 800; letter-spacing: 0.5px; margin-bottom: 6px;
-          box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        /* ── Message card ── */
+        .message-body { padding: 20px; text-align: center; }
+        .message-body p {
+          font-size: 13px;
+          color: var(--text-secondary);
+          margin-bottom: 18px;
+          line-height: 1.6;
         }
-        .error-msg { color: #e53935; font-size: 12.5px; margin-top: 8px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
-        .success-msg { color: #2e7d32; font-size: 12.5px; margin-top: 8px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+        .social-row { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .social-btn {
+          width: 46px; height: 46px;
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          cursor: pointer;
+          transition: transform 0.18s, box-shadow 0.18s;
+          text-decoration: none;
+          border: 1.5px solid rgba(245,197,24,0.15);
+        }
+        .social-btn:hover { transform: scale(1.12); box-shadow: 0 4px 16px rgba(0,0,0,0.4); }
+
+        /* ── Empty state ── */
+        .empty-state {
+          padding: 32px 20px;
+          text-align: center;
+          color: var(--text-secondary);
+          font-size: 13px;
+        }
+        .empty-state-icon { font-size: 32px; margin-bottom: 10px; opacity: 0.5; }
+
+        /* ── Loading shimmer ── */
+        .loading-bar {
+          height: 2px;
+          background: linear-gradient(90deg, transparent, #F5C518, transparent);
+          background-size: 200%;
+          animation: shimmer 1.5s infinite;
+          border-radius: 2px;
+          margin: 3px 0;
+        }
+
+        /* ── Dialog overrides ── */
+        .dialog-field { margin-bottom: 14px; }
+        .dialog-field label {
+          font-size: 10.5px; font-weight: 800; color: var(--gold-dim);
+          display: block; margin-bottom: 6px;
+          text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .dialog-field .val {
+          font-size: 13.5px; color: var(--gold); font-weight: 700;
+          background: rgba(245,197,24,0.06);
+          padding: 10px 14px; border-radius: 10px;
+          border-left: 3px solid var(--gold);
+        }
+        .dialog-divider {
+          height: 1px;
+          background: linear-gradient(90deg, transparent, rgba(245,197,24,0.2), transparent);
+          margin: 16px 0;
+        }
+        .income-badge {
+          display: inline-block;
+          background: linear-gradient(135deg, rgba(245,197,24,0.15), rgba(168,85,247,0.15));
+          border: 1.5px solid rgba(245,197,24,0.4);
+          color: var(--gold);
+          border-radius: 14px;
+          padding: 14px 28px;
+          font-size: 22px; font-weight: 900;
+          letter-spacing: 0.5px;
+          box-shadow: 0 4px 20px rgba(245,197,24,0.2);
+        }
+        .error-msg {
+          color: #f87171; font-size: 12px; margin-top: 8px;
+          font-weight: 700; display: flex; align-items: center; gap: 6px;
+        }
+        .success-msg {
+          color: #FFD700; font-size: 12px; margin-top: 8px;
+          font-weight: 700; display: flex; align-items: center; gap: 6px;
+        }
       `}</style>
 
       <div className="dash-root">
         <Navbar dropdownOpen={dropdownOpen} setDropdownOpen={setDropdownOpen} setActivePage={setActivePage} />
-        <div className="green-bar" />
+        <div className="gold-bar" />
 
         <div className="page-content" onClick={() => dropdownOpen && setDropdownOpen(false)}>
           {activePage === "dashboard" ? (
             <>
+              {/* ── Section label ── */}
+              <div className="section-label">Overview</div>
+
               {/* ── STAT CARDS ── */}
               <div className="stat-cards">
-                {statCards.map((card) => (
-                  <div
-                    key={card.title}
-                    className="stat-card"
-                    style={{ background: card.gradient }}
-                    onClick={() => {
-                      if (card.title === "Total Team") {
+                {statCards.map((card) => {
+                  const isActive =
+                    (card.title === "Total Team" && showTotalTeamInfo) ||
+                    (card.title === "Basic Income" && showBasicIncomeInfo) ||
+                    (card.title === "Booster Income" && showBoosterIncomeInfo) ||
+                    (card.title === "Total Direct" && showTotalDirectInfo) ||
+                    (card.title === "Active Direct" && showActiveDirectInfo) ||
+                    (card.title === "Basic Users" && showBasicUsersInfo) ||
+                    (card.title === "Booster Users" && showBoosterUsersInfo) ||
+                    (card.title === "Total Pins" && showTotalPinsInfo) ||
+                    (card.title === "Total Income" && showTotalIncomeInfo);
 
-                        setShowTotalTeamInfo(!showTotalTeamInfo);
-                      }
-                      else if (card.title === "Basic Income") {
+                  return (
+                    <div
+                      key={card.title}
+                      className="stat-card"
+                      style={{ 
+                        borderColor: isActive ? "#F5C518" : "rgba(168,85,247,0.22)",
+                        boxShadow: isActive ? `0 12px 36px rgba(0,0,0,0.65), 0 0 25px rgba(245,197,24,0.45), inset 0 0 12px rgba(245,197,24,0.2)` : undefined
+                      }}
+                      onClick={() => {
+                        if (card.title === "Total Team") setShowTotalTeamInfo(!showTotalTeamInfo);
+                        else if (card.title === "Basic Income") setShowBasicIncomeInfo(!showBasicIncomeInfo);
+                        else if (card.title === "Booster Income") setShowBoosterIncomeInfo(!showBoosterIncomeInfo);
+                        else if (card.title === "Total Direct") setShowTotalDirectInfo(!showTotalDirectInfo);
+                        else if (card.title === "Active Direct") setShowActiveDirectInfo(!showActiveDirectInfo);
+                        else if (card.title === "Basic Users") setShowBasicUsersInfo(!showBasicUsersInfo);
+                        else if (card.title === "Booster Users") setShowBoosterUsersInfo(!showBoosterUsersInfo);
+                        else if (card.title === "Total Pins") setShowTotalPinsInfo(!showTotalPinsInfo);
+                        else if (card.title === "Total Income") setShowTotalIncomeInfo(!showTotalIncomeInfo);
+                      }}
+                    >
+                      {/* Glow blob */}
+                      <div className="stat-card-glow" style={{ background: card.accent }} />
 
-                        setShowBasicIncomeInfo(!showBasicIncomeInfo);
-                      }
-                      else if (card.title === "Booster Income") {
+                      <div className="stat-icon-wrap" style={{ background: `${card.accent}15`, borderColor: `${card.accent}35`, boxShadow: `0 0 10px ${card.accent}20` }}>
+                        {card.icon}
+                      </div>
 
-                        setShowBoosterIncomeInfo(!showBoosterIncomeInfo);
-                      }
-                      else if (card.title === "Total Direct") {
-                        setShowTotalDirectInfo(!showTotalDirectInfo);
-                      }
-                      else if (card.title === "Active Direct") {
-                        setShowActiveDirectInfo(!showActiveDirectInfo);
-                      }
-                      else if (card.title === "Basic Users") {
-                        setShowBasicUsersInfo(!showBasicUsersInfo);
-                      }
-                      else if (card.title === "Booster Users") {
-                        setShowBoosterUsersInfo(!showBoosterUsersInfo);
-                      }
-                      else if (card.title === "Total Pins") {
-
-                        setShowTotalPinsInfo(!showTotalPinsInfo);
-                      }
-                      else if (card.title === "Total Income") {
-
-                        setShowTotalIncomeInfo(!showTotalIncomeInfo);
-                      }
-                    }}
-                  >
-                    <div className="stat-card-icon">{card.icon}</div>
-                    <div className="stat-card-info">
                       <div className="stat-card-title">{card.title}</div>
 
-                      {card.title === "Total Team" && showTotalTeamInfo ? (
-                        <span className="stat-card-link">Left : {totalTeam.left} | Right : {totalTeam.right}</span>
-                      ) : card.title === "Basic Income" && showBasicIncomeInfo ? (
-                        <span className="stat-card-link">₹ {basicIncome}</span>
-                      ) : card.title === "Booster Income" && showBoosterIncomeInfo ? (
-                        <span className="stat-card-link">₹ {boosterIncome.amount} | LG : {boosterIncome.LG} | RG : {boosterIncome.RG} | Matching : {boosterIncome.totalMatching}</span>
-                      ) : card.title === "Total Direct" && showTotalDirectInfo ? (
-                        <span className="stat-card-link">Left : {totalDirect.left} | Right : {totalDirect.right}</span>
-                      ) : card.title === "Active Direct" && showActiveDirectInfo ? (
-                        <span className="stat-card-link">Left : {totalActiveDirect.left} | Right : {totalActiveDirect.right}</span>
-                      ) : card.title === "Basic Users" && showBasicUsersInfo ? (
-                        <span className="stat-card-link">Left : {totalLeftBasicUser} | Right : {totalRightBasicUser}</span>
-                      ) : card.title === "Booster Users" && showBoosterUsersInfo ? (
-                        <span className="stat-card-link">Left : {totalLeftBoosterUser} | Right : {totalRightBoosterUser}</span>
-                      ) : card.title === "Total Pins" && showTotalPinsInfo ? (
-                        <span className="stat-card-link">Active : {totalPins.active} | Used : {totalPins.used} | Total : {totalPins.total}</span>
-                      ) : card.title === "Total Income" ? (
-                        showTotalIncomeInfo ? (
+                      <div className="stat-card-value">
+                        {card.title === "Total Team" && isActive ? (
+                          <span className="stat-card-value-split">L: {totalTeam.left} <span style={{ color: 'rgba(245,197,24,0.3)' }}>|</span> R: {totalTeam.right}</span>
+                        ) : card.title === "Basic Income" && isActive ? (
+                          <>₹ {basicIncome.toLocaleString("en-IN")}</>
+                        ) : card.title === "Booster Income" && isActive ? (
                           <div>
-                            <span className="stat-card-link">₹ {totalIncome}</span>
+                            ₹ {boosterIncome.amount.toLocaleString("en-IN")}
+                            <div style={{ fontSize: 10, color: 'rgba(245,197,24,0.7)', marginTop: 4, fontWeight: 700, letterSpacing: '0.2px' }}>
+                              LG:{boosterIncome.LG} | RG:{boosterIncome.RG} | M:{boosterIncome.totalMatching}
+                            </div>
+                          </div>
+                        ) : card.title === "Total Direct" && isActive ? (
+                          <span className="stat-card-value-split">L: {totalDirect.left} <span style={{ color: 'rgba(245,197,24,0.3)' }}>|</span> R: {totalDirect.right}</span>
+                        ) : card.title === "Active Direct" && isActive ? (
+                          <span className="stat-card-value-split">L: {totalActiveDirect.left} <span style={{ color: 'rgba(245,197,24,0.3)' }}>|</span> R: {totalActiveDirect.right}</span>
+                        ) : card.title === "Basic Users" && isActive ? (
+                          <span className="stat-card-value-split">L: {totalLeftBasicUser} <span style={{ color: 'rgba(245,197,24,0.3)' }}>|</span> R: {totalRightBasicUser}</span>
+                        ) : card.title === "Booster Users" && isActive ? (
+                          <span className="stat-card-value-split">L: {totalLeftBoosterUser} <span style={{ color: 'rgba(245,197,24,0.3)' }}>|</span> R: {totalRightBoosterUser}</span>
+                        ) : card.title === "Total Pins" && isActive ? (
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#FFD700' }}>
+                            A:{totalPins.active} | U:{totalPins.used} | T:{totalPins.total}
+                          </div>
+                        ) : card.title === "Total Income" && isActive ? (
+                          <div>
+                            ₹ {totalIncome.toLocaleString("en-IN")}
                             <br />
                             <button
-                              className="withdraw-btn"
+                              className="withdraw-pill"
                               onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
                                 e.stopPropagation();
                                 setWithdrawOpen(true);
-                                setWithdrawError("");
-                                setWithdrawSuccess("");
-                                setWithdrawAmount("");
+                                setWithdrawError(""); setWithdrawSuccess(""); setWithdrawAmount("");
                               }}
                             >
                               💸 Withdraw
                             </button>
                           </div>
                         ) : (
-                          <span className="stat-card-link" style={{ cursor: 'pointer' }}>View</span>
-                        )
-                      ) : (
-                        <span className="stat-card-link" style={{ cursor: 'pointer' }}>View</span>
+                          <span className="stat-view-hint">Tap to view</span>
+                        )}
+                      </div>
+
+                      {/* Trend / Growth Indicator from reference image */}
+                      <div style={{
+                        display: 'flex', alignItems: 'center', gap: 4,
+                        marginTop: 8, fontSize: 10, fontWeight: 700,
+                        color: '#FFD700', textShadow: '0 0 6px rgba(255,215,0,0.35)'
+                      }}>
+                        <TrendUpIcon />
+                        <span>{card.trend} growth</span>
+                      </div>
+
+                      {/* Active indicator line */}
+                      {isActive && (
+                        <div style={{
+                          position: 'absolute', bottom: 0, left: 0, right: 0,
+                          height: 2.5,
+                          background: `linear-gradient(90deg, transparent, #F5C518, transparent)`,
+                          boxShadow: `0 0 10px #F5C518`
+                        }} />
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
-              {/* BOTTOM GRID */}
-              <div className="bottom-grid">
-                {/* Cycle History */}
+              {/* ── Cycle History ── */}
+              <div className="section-label">Cycle History</div>
+              <div style={{ marginBottom: 20 }}>
                 <div className="section-card">
-                  <div className="section-header">Last Cycle History (Silver)</div>
-                  <div className="section-body" style={{ padding: 0 }}>
+                  <div className="section-header">Last Cycle History — Silver</div>
+                  <div style={{ padding: 0 }}>
                     {cycleHistory.length === 0 ? (
-                      <div style={{ padding: '20px', textAlign: 'center', color: '#999', fontSize: '13px' }}>No cycle history available</div>
+                      <div className="empty-state">
+                        <div className="empty-state-icon">🔄</div>
+                        No cycle history available
+                      </div>
                     ) : (
                       <table className="data-table">
-                        <thead><tr><th>Date</th><th>Cycle</th><th>Match</th><th>Capping</th></tr></thead>
+                        <thead>
+                          <tr>
+                            <th>Date</th>
+                            <th>Cycle</th>
+                            <th>Match</th>
+                            <th>Capping</th>
+                          </tr>
+                        </thead>
                         <tbody>
                           {cycleHistory.map((row, ri) =>
                             row.cycles.map((cycle, ci) => (
                               <tr key={`${ri}-${ci}`}>
-                                {ci === 0 && <td rowSpan={2} style={{ fontWeight: 500 }}>{row.date}</td>}
-                                <td><div className="cycle-cell">{cycle.label}{cycle.moon ? <MoonIcon /> : <GearIcon />}</div></td>
-                                <td>{row.matches[ci]}</td>
-                                <td>{row.cappings[ci]}</td>
+                                {ci === 0 && (
+                                  <td rowSpan={2} style={{ color: '#F5C518', fontWeight: 700, fontSize: 12 }}>
+                                    {row.date}
+                                  </td>
+                                )}
+                                <td>
+                                  <div className="cycle-cell">
+                                    <span className="cycle-label">{cycle.label}</span>
+                                    {cycle.moon ? <MoonIcon /> : <GearIcon />}
+                                  </div>
+                                </td>
+                                <td style={{ color: '#c084fc', fontWeight: 700 }}>{row.matches[ci]}</td>
+                                <td style={{ color: '#FFD700', fontWeight: 700 }}>{row.cappings[ci]}</td>
                               </tr>
                             ))
                           )}
@@ -533,82 +844,113 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              {/* PROFILE + INSIGHT */}
+              {/* ── Profile + Insight ── */}
+              <div className="section-label">Profile</div>
               <div className="bottom-grid">
                 <div className="section-card">
+                  {/* Banner */}
                   <div className="profile-banner">
-                    <div className="profile-banner-overlay">
-                      <div className="laptop-wrapper">
-                        <div className="laptop-css">
-                          <div className="laptop-screen">
-                            <svg width="60" height="40" viewBox="0 0 60 40" fill="none">
-                              <rect x="4" y="4" width="52" height="32" rx="2" fill="rgba(255,255,255,0.1)" />
-                              <rect x="8" y="8" width="44" height="20" rx="1" fill="rgba(255,255,255,0.08)" />
-                            </svg>
-                          </div>
-                        </div>
-                        <div className="laptop-base" />
-                      </div>
-                    </div>
+                    <div className="profile-banner-pattern" />
+                    <div className="profile-banner-glow" />
+                    <div className="profile-banner-title">MEMBER PROFILE</div>
                   </div>
+
+                  {/* Avatar */}
                   <div className="profile-avatar-wrap">
-                    <img src="/images/user.png" alt="User Profile" className="profile-avatar" style={{ objectFit: 'cover' }} />
+                    <div className="avatar-ring" />
+                    <img src="/images/user.png" alt="User Profile" className="profile-avatar" />
                   </div>
+
+                  {/* Info rows */}
                   <div className="profile-info">
-                    <p>Name : {userProfile.fullName}</p>
-                    <p>User ID : {userProfile.userId}</p>
-                    <p>Mobile No. : {userProfile.mobileNo}</p>
-                    <p>Email ID : {userProfile.email}</p>
-                    <p>Activation Date : {(() => {
-                      if (!userProfile.joiningDate || userProfile.joiningDate === "N/A") return "N/A";
-                      const d = new Date(userProfile.joiningDate);
-                      if (isNaN(d.getTime())) return userProfile.joiningDate;
-                      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}:${String(d.getSeconds()).padStart(2, '0')}`;
-                    })()}</p>
+                    {[
+                      { label: "Name", value: userProfile.fullName },
+                      { label: "User ID", value: userProfile.userId },
+                      { label: "Mobile", value: userProfile.mobileNo },
+                      { label: "Email", value: userProfile.email },
+                      {
+                        label: "Activation",
+                        value: (() => {
+                          if (!userProfile.joiningDate || userProfile.joiningDate === "N/A") return "N/A";
+                          const d = new Date(userProfile.joiningDate);
+                          if (isNaN(d.getTime())) return userProfile.joiningDate;
+                          return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+                        })()
+                      },
+                    ].map(item => (
+                      <div className="profile-info-row" key={item.label}>
+                        <span className="profile-info-label">{item.label}</span>
+                        <span className="profile-info-value">{item.value}</span>
+                      </div>
+                    ))}
                   </div>
+
                   <div className="profile-divider" />
+
                   <div className="profile-actions">
                     <Link href="/dashboard/profile" className="action-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" /></svg>
+                      <UserIcon />
                       My Profile
                     </Link>
-                    <div className="profile-actions-divider" />
-                    <Link href="https://www.changelifemarketing.in/" className="action-btn">
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="white"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" /></svg>
-                      Visit Website
+                    <Link href="https://www.changelifemarketing.in/" className="action-btn action-btn-secondary">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z" />
+                      </svg>
+                      Website
                     </Link>
                   </div>
                 </div>
-                <div className="insight-section">
-                  <div className="section-header"></div>
+
+                {/* Insight panel */}
+                <div className="section-card">
+                  <div className="section-header">Insights</div>
                   <div style={{ padding: 20, minHeight: 200 }} />
                 </div>
               </div>
 
-              {/* MESSAGE */}
-              <div className="bottom-grid" style={{ marginTop: 22 }}>
+              {/* ── Message / Social ── */}
+              <div className="section-label">Connect</div>
+              <div style={{ maxWidth: 500 }}>
                 <div className="section-card">
                   <div className="section-header">Message</div>
                   <div className="message-body">
-                    <p>Follow The Links for Daily Updates.</p>
+                    <p>Follow the links below for daily updates and community news.</p>
                     <div className="social-row">
+                      {/* Instagram */}
                       <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="social-btn">
-                        <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-                          <defs><radialGradient id="ig1" cx="30%" cy="107%" r="150%"><stop offset="0%" stopColor="#fdf497" /><stop offset="45%" stopColor="#fd5949" /><stop offset="60%" stopColor="#d6249f" /><stop offset="90%" stopColor="#285aeb" /></radialGradient></defs>
-                          <rect width="44" height="44" rx="12" fill="url(#ig1)" />
-                          <rect x="12" y="12" width="20" height="20" rx="5.5" stroke="white" strokeWidth="2.2" fill="none" />
-                          <circle cx="22" cy="22" r="5.5" stroke="white" strokeWidth="2.2" fill="none" />
-                          <circle cx="29" cy="15" r="1.4" fill="white" />
+                        <svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
+                          <defs><radialGradient id="ig2" cx="30%" cy="107%" r="150%">
+                            <stop offset="0%" stopColor="#fdf497" />
+                            <stop offset="45%" stopColor="#fd5949" />
+                            <stop offset="60%" stopColor="#d6249f" />
+                            <stop offset="90%" stopColor="#285aeb" />
+                          </radialGradient></defs>
+                          <rect width="46" height="46" rx="13" fill="url(#ig2)" />
+                          <rect x="13" y="13" width="20" height="20" rx="5.5" stroke="white" strokeWidth="2.2" fill="none" />
+                          <circle cx="23" cy="23" r="5.5" stroke="white" strokeWidth="2.2" fill="none" />
+                          <circle cx="30" cy="16" r="1.4" fill="white" />
                         </svg>
                       </a>
+                      {/* Facebook */}
                       <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="social-btn">
-                        <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><rect width="44" height="44" rx="12" fill="#1877F2" /><path d="M26 14h-3a2 2 0 0 0-2 2v3h-3v4h3v9h4v-9h3l.5-4H24v-2.5A.5.5 0 0 1 24.5 16H27v-2z" fill="white" /></svg>
+                        <svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="46" height="46" rx="13" fill="#1877F2" />
+                          <path d="M27 15h-3a2 2 0 0 0-2 2v3h-3v4h3v9h4v-9h3l.5-4H25v-2.5A.5.5 0 0 1 25.5 17H28v-2z" fill="white" />
+                        </svg>
                       </a>
+                      {/* WhatsApp */}
                       <a href="https://wa.me/1234567890" target="_blank" rel="noopener noreferrer" className="social-btn">
-                        <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><rect width="44" height="44" rx="12" fill="#25D366" /><path d="M22 10C15.37 10 10 15.37 10 22c0 2.13.56 4.13 1.54 5.86L10 34l6.29-1.52A12 12 0 1 0 22 10zm5.97 16.44c-.27.75-1.56 1.44-2.15 1.49-.54.05-1.05.24-3.49-.73-2.93-1.17-4.82-4.14-4.96-4.33-.14-.19-1.2-1.59-1.2-3.03s.76-2.15 1.05-2.44c.27-.29.59-.37.79-.37h.58c.19 0 .46-.07.71.54.27.63.91 2.2.99 2.36.07.17.12.36.02.58-.1.22-.15.36-.29.56-.14.19-.3.43-.44.58-.14.17-.29.34-.12.66.17.32.76 1.25 1.64 2.01 1.12.99 2.06 1.32 2.35 1.46.29.14.46.12.63-.07.17-.22.73-.85.93-1.14.19-.29.39-.24.66-.14.27.1 1.71.81 2 .95.29.14.49.22.56.34.07.12.07.7-.2 1.46z" fill="white" /></svg>
+                        <svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="46" height="46" rx="13" fill="#25D366" />
+                          <path d="M23 11C16.37 11 11 16.37 11 23c0 2.13.56 4.13 1.54 5.86L10 35l6.29-1.52A12 12 0 1 0 23 11zm5.97 16.44c-.27.75-1.56 1.44-2.15 1.49-.54.05-1.05.24-3.49-.73-2.93-1.17-4.82-4.14-4.96-4.33-.14-.19-1.2-1.59-1.2-3.03s.76-2.15 1.05-2.44c.27-.29.59-.37.79-.37h.58c.19 0 .46-.07.71.54.27.63.91 2.2.99 2.36.07.17.12.36.02.58-.1.22-.15.36-.29.56-.14.19-.3.43-.44.58-.14.17-.29.34-.12.66.17.32.76 1.25 1.64 2.01 1.12.99 2.06 1.32 2.35 1.46.29.14.46.12.63-.07.17-.22.73-.85.93-1.14.19-.29.39-.24.66-.14.27.1 1.71.81 2 .95.29.14.49.22.56.34.07.12.07.7-.2 1.46z" fill="white" />
+                        </svg>
                       </a>
+                      {/* YouTube */}
                       <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="social-btn">
-                        <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg"><rect width="44" height="44" rx="12" fill="#FF0000" /><polygon points="18,27 18,18 28,22.5" fill="white" /></svg>
+                        <svg width="46" height="46" viewBox="0 0 46 46" xmlns="http://www.w3.org/2000/svg">
+                          <rect width="46" height="46" rx="13" fill="#FF0000" />
+                          <polygon points="19,28 19,18 30,23" fill="white" />
+                        </svg>
                       </a>
                     </div>
                   </div>
@@ -616,108 +958,107 @@ export default function Dashboard() {
               </div>
             </>
           ) : (
-            /* Profile page — same as before */
             <div className="bottom-grid">
-              {/* ... keep your existing profile page JSX here unchanged ... */}
+              {/* Profile page — unchanged */}
             </div>
           )}
         </div>
       </div>
 
       {/* ── WITHDRAW DIALOG ── */}
-      <Dialog open={withdrawOpen} onOpenChange={(open: boolean) => { setWithdrawOpen(open); setWithdrawError(""); setWithdrawSuccess(""); }}>
+      <Dialog open={withdrawOpen} onOpenChange={(open: boolean) => {
+        setWithdrawOpen(open);
+        setWithdrawError(""); setWithdrawSuccess("");
+      }}>
         <DialogContent style={{
-          fontFamily: "'Poppins', sans-serif",
+          fontFamily: "'Nunito', sans-serif",
           maxWidth: "min(95vw, 480px)",
           width: "100%",
-          background: "linear-gradient(135deg, #ffffff 0%, #f8f9fb 100%)",
-          border: "1px solid #e0e0e0",
-          borderRadius: 16,
-          padding: "clamp(20px, 5vw, 32px)",
-          boxShadow: "0 10px 40px rgba(0, 0, 0, 0.12)",
+          background: "linear-gradient(145deg, #1e0642 0%, #250845 100%)",
+          border: "1px solid rgba(245,197,24,0.25)",
+          borderRadius: 20,
+          padding: "clamp(20px,5vw,32px)",
+          boxShadow: "0 24px 60px rgba(0,0,0,0.6), 0 0 40px rgba(168,85,247,0.2)",
           zIndex: 9999,
           maxHeight: "90vh",
           overflowY: "auto",
         }}>
           <DialogHeader>
             <DialogTitle style={{
-              fontSize: "clamp(18px, 5vw, 22px)",
-              fontWeight: 800,
-              color: "#1a1a2e",
-              marginBottom: 8,
-              background: "linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)",
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              fontSize: "clamp(18px,5vw,22px)",
+              fontWeight: 900,
+              color: "#F5C518",
+              marginBottom: 6,
+              fontFamily: "'Cinzel', serif",
+              letterSpacing: "1px",
             }}>
-              💸 Withdraw Request
+              💸 Withdraw
             </DialogTitle>
-            <DialogDescription style={{
-              fontSize: "clamp(12px, 3vw, 13px)",
-              color: "#666",
-              fontWeight: 500
-            }}>
-              Submit your withdrawal request. Minimum ₹1000
+            <DialogDescription style={{ fontSize: 13, color: "rgba(245,197,24,0.5)", fontWeight: 600 }}>
+              Minimum withdrawal amount is ₹1,000
             </DialogDescription>
           </DialogHeader>
 
-          <div style={{ marginTop: 8 }}>
+          <div style={{ marginTop: 10 }}>
             <div className="dialog-field">
-              <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Username</label>
-              <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{userProfile.username}</div>
+              <label>Username</label>
+              <div className="val">{userProfile.username}</div>
             </div>
 
             <div className="dialog-divider" />
 
-            {/* Bank Details */}
-            <div style={{ marginBottom: 14, fontSize: "clamp(10px, 2.5vw, 11.5px)", fontWeight: 700, color: "#7C3AED", textTransform: "uppercase", letterSpacing: "0.5px", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>🏦</span>
-              Bank Account Details
+            <div style={{
+              marginBottom: 14,
+              fontSize: 11,
+              fontWeight: 800,
+              color: "#F5C518",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+            }}>
+              🏦 Bank Details
             </div>
+
             {bankDetails.accountHolderName || bankDetails.accountNumber ? (
               <>
-                <div className="dialog-field">
-                  <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Account Holder Name</label>
-                  <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{bankDetails.accountHolderName || "—"}</div>
-                </div>
-                <div className="dialog-field">
-                  <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Account Number</label>
-                  <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{bankDetails.accountNumber || "—"}</div>
-                </div>
-                <div className="dialog-field">
-                  <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>IFSC Code</label>
-                  <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{bankDetails.ifscCode || "—"}</div>
-                </div>
-                <div className="dialog-field">
-                  <label style={{ fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Bank Name</label>
-                  <div className="val" style={{ fontSize: "clamp(12px, 3vw, 14px)" }}>{bankDetails.bankName || "—"}</div>
-                </div>
+                {[
+                  { label: "Account Holder", value: bankDetails.accountHolderName || "—" },
+                  { label: "Account Number", value: bankDetails.accountNumber || "—" },
+                  { label: "IFSC Code", value: bankDetails.ifscCode || "—" },
+                  { label: "Bank Name", value: bankDetails.bankName || "—" },
+                ].map(f => (
+                  <div className="dialog-field" key={f.label}>
+                    <label>{f.label}</label>
+                    <div className="val">{f.value}</div>
+                  </div>
+                ))}
               </>
             ) : (
-              <div style={{ fontSize: "clamp(11px, 2.5vw, 13px)", color: "#e53935", marginBottom: 10 }}>
+              <div style={{ fontSize: 13, color: "#f87171", marginBottom: 10, fontWeight: 700 }}>
                 ⚠️ Bank details not added. Please update your profile first.
               </div>
             )}
 
             <div className="dialog-divider" />
-            {/* Total Income */}
+
             <div className="dialog-field" style={{ textAlign: "center" }}>
-              <label style={{ textAlign: "center", display: "block", fontSize: "clamp(10px, 2.5vw, 11.5px)" }}>Total Earned Income</label>
-              <div className="income-badge" style={{ fontSize: "clamp(14px, 4vw, 18px)", padding: "clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)" }}>₹ {totalIncome.toLocaleString("en-IN")}</div>
+              <label style={{ textAlign: "center", display: "block" }}>Total Earned Income</label>
+              <div className="income-badge">₹ {totalIncome.toLocaleString("en-IN")}</div>
             </div>
 
             <div className="dialog-divider" />
 
-            {/* Amount Input */}
             <div className="dialog-field">
               <Label htmlFor="withdrawAmount" style={{
-                fontSize: "clamp(10px, 2.5vw, 11.5px)",
-                fontWeight: 700,
-                color: "#555",
-                textTransform: "uppercase",
-                letterSpacing: "0.3px"
+                fontSize: 11, fontWeight: 800, color: "rgba(245,197,24,0.6)",
+                textTransform: "uppercase", letterSpacing: "0.8px",
               }}>
-                Enter Withdrawal Amount <span style={{ color: "#999", fontWeight: 400, textTransform: "none", fontSize: "clamp(9px, 2vw, 11px)" }}>(Min ₹1000)</span>
+                Amount{" "}
+                <span style={{ color: "rgba(245,197,24,0.35)", fontWeight: 400, textTransform: "none" }}>
+                  (Min ₹1,000)
+                </span>
               </Label>
               <Input
                 id="withdrawAmount"
@@ -726,41 +1067,46 @@ export default function Dashboard() {
                 max={totalIncome}
                 placeholder="e.g. 1000"
                 value={withdrawAmount}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setWithdrawAmount(e.target.value); setWithdrawError(""); setWithdrawSuccess(""); }}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                  setWithdrawAmount(e.target.value);
+                  setWithdrawError(""); setWithdrawSuccess("");
+                }}
                 style={{
                   marginTop: 8,
-                  fontFamily: "'Poppins', sans-serif",
-                  fontSize: "clamp(13px, 3.5vw, 15px)",
-                  fontWeight: 600,
-                  padding: "clamp(8px, 2.5vw, 12px) clamp(10px, 2.5vw, 14px)",
-                  border: "2px solid #e0e0e0",
-                  borderRadius: 8,
-                  color: "#1a1a2e",
-                  transition: "all 0.3s",
+                  fontFamily: "'Nunito', sans-serif",
+                  fontSize: 16, fontWeight: 800,
+                  padding: "12px 14px",
+                  background: "rgba(245,197,24,0.06)",
+                  border: "1.5px solid rgba(245,197,24,0.25)",
+                  borderRadius: 10,
+                  color: "var(--gold)",
                   width: "100%",
-                  boxSizing: "border-box"
+                  outline: "none",
                 }}
               />
-              {withdrawError && <div className="error-msg" style={{ fontSize: "clamp(11px, 2.5vw, 12.5px)" }}>⚠️ {withdrawError}</div>}
-              {withdrawSuccess && <div className="success-msg" style={{ fontSize: "clamp(11px, 2.5vw, 12.5px)" }}>✅ {withdrawSuccess}</div>}
+              {withdrawError && <div className="error-msg">⚠️ {withdrawError}</div>}
+              {withdrawSuccess && <div className="success-msg">✅ {withdrawSuccess}</div>}
             </div>
           </div>
 
-          <DialogFooter style={{ gap: "clamp(8px, 2vw, 12px)", marginTop: 20, paddingTop: 20, borderTop: "1px solid #e0e0e0", flexDirection: "column-reverse" }}>
+          <DialogFooter style={{
+            gap: 10, marginTop: 20, paddingTop: 20,
+            borderTop: "1px solid rgba(245,197,24,0.15)",
+            flexDirection: "column-reverse",
+          }}>
             <Button
               variant="outline"
               onClick={() => setWithdrawOpen(false)}
               style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontSize: "clamp(12px, 3vw, 14px)",
-                fontWeight: 600,
-                color: "#7C3AED",
-                border: "2px solid #7C3AED",
-                borderRadius: 8,
-                padding: "clamp(8px, 2vw, 10px) clamp(16px, 4vw, 24px)",
+                fontFamily: "'Nunito', sans-serif",
+                fontSize: 14, fontWeight: 800,
+                color: "rgba(245,197,24,0.8)",
+                background: "transparent",
+                border: "1.5px solid rgba(245,197,24,0.3)",
+                borderRadius: 10,
+                padding: "10px 24px",
                 cursor: "pointer",
-                transition: "all 0.3s",
-                width: "100%"
+                width: "100%",
               }}
             >
               Cancel
@@ -769,19 +1115,17 @@ export default function Dashboard() {
               onClick={handleWithdraw}
               disabled={withdrawLoading}
               style={{
-                fontFamily: "'Poppins', sans-serif",
-                fontSize: "clamp(12px, 3vw, 14px)",
-                fontWeight: 700,
-                background: "linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%)",
-                color: "#fff",
+                fontFamily: "'Nunito', sans-serif",
+                fontSize: 14, fontWeight: 900,
+                background: "linear-gradient(135deg, #F5C518 0%, #f0a500 100%)",
+                color: "#1a0533",
                 border: "none",
-                borderRadius: 8,
-                padding: "clamp(8px, 2vw, 10px) clamp(16px, 4vw, 32px)",
+                borderRadius: 10,
+                padding: "11px 24px",
                 cursor: withdrawLoading ? "not-allowed" : "pointer",
                 opacity: withdrawLoading ? 0.7 : 1,
-                boxShadow: "0 4px 12px rgba(124, 58, 237, 0.3)",
-                transition: "all 0.3s",
-                width: "100%"
+                boxShadow: "0 4px 16px rgba(245,197,24,0.35)",
+                width: "100%",
               }}
             >
               {withdrawLoading ? "Processing..." : "Submit Request"}

@@ -65,21 +65,28 @@ export default function ChatSupportPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
         * { margin:0; padding:0; box-sizing:border-box; }
 
-        .cs-root { font-family:'Poppins',sans-serif; background:#f0f2f5; min-height:100vh; }
+        .cs-root {
+          font-family: 'Poppins', sans-serif;
+          background: #1a0533;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+          min-height: 100vh;
+          color: #fff;
+        }
 
-        /* Removed topnav styles - now using Navbar component */
-
-        /* GREEN BAR */
-        .green-bar { height:8px; background:linear-gradient(90deg,#00c853,#1de9b6); }
+        /* GOLD BAR */
+        .gold-bar { height:4px; background:linear-gradient(90deg, #FFD700, #f0a500); }
 
         /* BREADCRUMB */
-        .breadcrumb { padding:12px 20px; font-size:13px; color:#555; display:flex; align-items:center; gap:6px; }
-        .breadcrumb a { color:#555; text-decoration:none; }
-        .breadcrumb a:hover { text-decoration:underline; }
-        .breadcrumb .sep { color:#999; }
+        .breadcrumb { padding:12px 20px; font-size:13px; color:rgba(255,215,0,0.7); display:flex; align-items:center; gap:6px; }
+        .breadcrumb a { color:rgba(255,215,0,0.7); text-decoration:none; }
+        .breadcrumb a:hover { color:#FFD700; text-decoration:underline; }
+        .breadcrumb .sep { color:rgba(255,215,0,0.4); }
+        .breadcrumb .current { color:#FFD700; font-weight:700; }
 
         /* PAGE BODY */
         .page-body {
@@ -90,18 +97,21 @@ export default function ChatSupportPage() {
         /* CHAT CARD */
         .chat-card {
           width:100%; max-width:680px;
-          border-radius:12px;
-          overflow:hidden;
-          box-shadow:0 4px 20px rgba(0,0,0,0.1);
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
         }
 
-        /* CHAT HEADER — teal gradient exactly as screenshot */
+        /* CHAT HEADER */
         .chat-header {
-          background:linear-gradient(135deg,#26a69a 0%,#00c853 50%,#1de9b6 100%);
-          padding:22px 22px 24px;
-          display:flex;
-          align-items:center;
-          gap:14px;
+          background: linear-gradient(90deg, #1d033a, #110122);
+          border-bottom: 1.5px solid rgba(255,215,0,0.22);
+          padding: 20px 22px;
+          display: flex;
+          align-items: center;
+          gap: 14px;
         }
 
         /* Admin avatar circle */
@@ -111,78 +121,84 @@ export default function ChatSupportPage() {
         }
         .admin-avatar {
           width:58px; height:58px; border-radius:50%;
-          background:linear-gradient(135deg,#1b5e20,#2e7d32);
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
           display:flex; align-items:center; justify-content:center;
-          border:2px solid rgba(255,255,255,0.3);
+          border: 2px solid rgba(255,255,255,0.2);
           overflow:hidden;
         }
         /* Online dot */
         .online-dot {
           position:absolute; bottom:2px; right:2px;
           width:14px; height:14px; border-radius:50%;
-          background:#69f0ae;
-          border:2px solid #fff;
+          background:#00ff88;
+          border:2px solid #1a0533;
+          box-shadow: 0 0 8px #00ff88;
         }
 
         .admin-info { flex:1; }
-        .admin-name { font-size:17px; font-weight:700; color:#fff; margin-bottom:2px; }
-        .admin-status { font-size:13px; color:rgba(255,255,255,0.88); font-weight:400; }
+        .admin-name { font-size:17px; font-weight:800; color:#FFD700; margin-bottom:2px; text-shadow: 0 0 6px rgba(255,215,0,0.25); }
+        .admin-status { font-size:13px; color:rgba(0,255,136,0.9); font-weight:600; display:flex; align-items:center; gap:5px; }
 
         /* MESSAGES AREA */
         .messages-area {
-          background:#fff;
-          padding:16px 18px;
-          min-height:260px;
-          max-height:340px;
+          background: rgba(0,0,0,0.15);
+          padding: 20px;
+          min-height: 300px;
+          max-height: 380px;
           overflow-y:auto;
           display:flex;
           flex-direction:column;
-          gap:10px;
+          gap:14px;
           scrollbar-width:thin;
-          scrollbar-color:#e0e0e0 #fff;
+          scrollbar-color: rgba(255,215,0,0.2) transparent;
         }
-        .messages-area::-webkit-scrollbar { width:5px; }
-        .messages-area::-webkit-scrollbar-thumb { background:#e0e0e0; border-radius:4px; }
+        .messages-area::-webkit-scrollbar { width:6px; }
+        .messages-area::-webkit-scrollbar-thumb { background: rgba(255,215,0,0.25); border-radius:4px; }
+        .messages-area::-webkit-scrollbar-thumb:hover { background: #FFD700; }
 
         /* Message bubbles */
-        .msg-row { display:flex; align-items:flex-end; gap:8px; }
+        .msg-row { display:flex; align-items:flex-end; gap:10px; }
         .msg-row.user { flex-direction:row-reverse; }
 
         .msg-avatar-sm {
-          width:30px; height:30px; border-radius:50%;
+          width:32px; height:32px; border-radius:50%;
           flex-shrink:0; overflow:hidden;
           display:flex; align-items:center; justify-content:center;
+          border: 1px solid rgba(255,215,0,0.2);
         }
         .msg-avatar-sm.admin-sm {
-          background:linear-gradient(135deg,#1b5e20,#2e7d32);
+          background: linear-gradient(135deg, #1d033a, #110122);
         }
         .msg-avatar-sm.user-sm {
-          background:linear-gradient(135deg,#ff9800 50%,#5c6bc0 50%);
+          background: linear-gradient(135deg, #a855f7, #7c3aed);
         }
 
         .msg-bubble {
           max-width:72%;
-          padding:10px 14px;
+          padding:11px 16px;
           border-radius:18px;
           font-size:13.5px;
           line-height:1.5;
           word-break:break-word;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
         .msg-bubble.admin {
-          background:#f0f4f8;
-          color:#222;
+          background: rgba(255, 255, 255, 0.08);
+          color:#ffffff;
+          border: 1px solid rgba(255,215,0,0.2);
           border-bottom-left-radius:4px;
         }
         .msg-bubble.user {
-          background:linear-gradient(135deg,#26a69a,#1de9b6);
-          color:#fff;
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color:#120228;
+          font-weight: 600;
           border-bottom-right-radius:4px;
         }
 
         .msg-time {
-          font-size:10.5px;
-          color:#aaa;
-          margin-top:3px;
+          font-size:10px;
+          color: rgba(255,215,0,0.55);
+          margin-top:4px;
           white-space:nowrap;
         }
         .msg-col { display:flex; flex-direction:column; }
@@ -191,15 +207,16 @@ export default function ChatSupportPage() {
         /* Typing indicator */
         .typing-row { display:flex; align-items:center; gap:8px; }
         .typing-bubble {
-          background:#f0f4f8;
-          border-radius:18px;
-          border-bottom-left-radius:4px;
-          padding:10px 16px;
-          display:flex; align-items:center; gap:4px;
+          background: rgba(255, 255, 255, 0.08);
+          border: 1px solid rgba(255,215,0,0.2);
+          border-radius: 18px;
+          border-bottom-left-radius: 4px;
+          padding: 12px 18px;
+          display: flex; align-items: center; gap: 5px;
         }
         .dot {
-          width:7px; height:7px; border-radius:50%;
-          background:#aaa;
+          width:6px; height:6px; border-radius:50%;
+          background:#FFD700;
           animation:bounce 1.2s infinite;
         }
         .dot:nth-child(2) { animation-delay:.2s; }
@@ -209,23 +226,23 @@ export default function ChatSupportPage() {
           30% { transform:translateY(-5px); }
         }
 
-        /* INPUT AREA — white box at bottom */
+        /* INPUT AREA */
         .input-area {
-          background:#fff;
-          border-top:1px solid #e8e8e8;
-          padding:12px 16px;
+          background: rgba(0,0,0,0.25);
+          border-top: 1.5px solid rgba(255,215,0,0.22);
+          padding:14px 20px;
           display:flex;
           align-items:center;
-          gap:10px;
+          gap:12px;
         }
 
         .mic-btn {
           background:none; border:none; cursor:pointer;
-          color:#aaa; padding:4px; display:flex; align-items:center;
-          transition:color .18s;
+          color: rgba(255,215,0,0.6); padding:6px; display:flex; align-items:center;
+          transition: all 0.2s;
           flex-shrink:0;
         }
-        .mic-btn:hover { color:#26a69a; }
+        .mic-btn:hover { color:#FFD700; transform: scale(1.08); }
 
         .msg-input {
           flex:1;
@@ -233,20 +250,20 @@ export default function ChatSupportPage() {
           outline:none;
           font-size:14px;
           font-family:'Poppins',sans-serif;
-          color:#333;
+          color:#fff;
           background:transparent;
         }
-        .msg-input::placeholder { color:#bbb; }
+        .msg-input::placeholder { color:rgba(255,215,0,0.35); }
 
         .send-btn {
           background:none; border:none; cursor:pointer;
-          color:#9e9e9e; padding:4px; display:flex; align-items:center;
-          transition:color .18s, transform .15s;
+          color: rgba(255,215,0,0.45); padding:6px; display:flex; align-items:center;
+          transition: all 0.2s, transform .15s;
           flex-shrink:0;
         }
-        .send-btn:hover { color:#26a69a; transform:scale(1.1); }
+        .send-btn:hover { color:#FFD700; transform:scale(1.15); }
         .send-btn:active { transform:scale(0.96); }
-        .send-btn.active { color:#26a69a; }
+        .send-btn.active { color:#FFD700; filter: drop-shadow(0 0 8px rgba(255,215,0,0.5)); }
       `}</style>
 
       <div className="cs-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -254,15 +271,15 @@ export default function ChatSupportPage() {
         {/* NAVBAR COMPONENT */}
         <Navbar dropdownOpen={dropdownOpen} setDropdownOpen={setDropdownOpen} setActivePage={() => {}} />
 
-        {/* Green bar */}
-        <div className="green-bar" />
+        {/* Gold bar */}
+        <div className="gold-bar" />
 
         {/* BREADCRUMB */}
         <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
           <a href="/dashboard">Home</a>
           <span className="sep">/</span>
-          <span>Chat Support</span>
+          <span className="current">Support Center</span>
         </div>
 
         <div className="page-body">
@@ -274,19 +291,19 @@ export default function ChatSupportPage() {
                 <div className="admin-avatar">
                   {/* Admin person SVG */}
                   <svg width="42" height="42" viewBox="0 0 50 50" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="25" cy="18" rx="10" ry="11" fill="#f5cba7"/>
-                    <ellipse cx="25" cy="10" rx="10" ry="6" fill="#1a1a1a"/>
-                    <ellipse cx="16" cy="14" rx="4" ry="6" fill="#1a1a1a"/>
-                    <ellipse cx="34" cy="14" rx="4" ry="6" fill="#1a1a1a"/>
-                    <path d="M10 45 Q12 33 25 31 Q38 33 40 45 Z" fill="#333"/>
-                    <rect x="22" y="30" width="6" height="16" fill="#fff" opacity="0.2"/>
+                    <ellipse cx="25" cy="18" rx="10" ry="11" fill="#120228"/>
+                    <ellipse cx="25" cy="10" rx="10" ry="6" fill="#FFD700"/>
+                    <ellipse cx="16" cy="14" rx="4" ry="6" fill="#FFD700"/>
+                    <ellipse cx="34" cy="14" rx="4" ry="6" fill="#FFD700"/>
+                    <path d="M10 45 Q12 33 25 31 Q38 33 40 45 Z" fill="#120228"/>
+                    <rect x="22" y="30" width="6" height="16" fill="#FFD700" opacity="0.4"/>
                   </svg>
                 </div>
                 <div className="online-dot" />
               </div>
               <div className="admin-info">
-                <div className="admin-name">Admin</div>
-                <div className="admin-status">Active Now</div>
+                <div className="admin-name">Support Center</div>
+                <div className="admin-status">🟢 Active Now</div>
               </div>
             </div>
 
@@ -296,11 +313,11 @@ export default function ChatSupportPage() {
                 <div key={msg.id} className={`msg-row ${msg.sender}`}>
                   <div className={`msg-avatar-sm ${msg.sender === "admin" ? "admin-sm" : "user-sm"}`}>
                     {msg.sender === "admin" ? (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="white" opacity="0.9">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" opacity="0.9">
                         <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                       </svg>
                     ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="white" opacity="0.9">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="#fff" opacity="0.9">
                         <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                       </svg>
                     )}
@@ -316,7 +333,7 @@ export default function ChatSupportPage() {
               {isTyping && (
                 <div className="typing-row">
                   <div className="msg-avatar-sm admin-sm">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="white" opacity="0.9">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="#FFD700" opacity="0.9">
                       <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
                     </svg>
                   </div>

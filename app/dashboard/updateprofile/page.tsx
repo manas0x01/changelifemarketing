@@ -285,20 +285,24 @@ export default function EditProfilePage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         .ep-root {
           font-family: 'Poppins', sans-serif;
-          background: #f0f2f5;
+          background: #1a0533;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
           min-height: 100vh;
+          color: #fff;
         }
 
-        /* ── GREEN BAR ── */
-        .green-bar { height: 8px; background: linear-gradient(90deg, #00c853, #1de9b6); }
+        /* GOLD BAR */
+        .gold-bar { height:4px; background:linear-gradient(90deg, #FFD700, #f0a500); }
 
-        /* ── BREADCRUMB ── */
+        /* BREADCRUMB */
         .breadcrumb {
           padding: 12px 20px;
           display: flex;
@@ -309,51 +313,51 @@ export default function EditProfilePage() {
         }
         .breadcrumb-left {
           display: flex; align-items: center; gap: 6px;
-          font-size: 13px; color: #555;
+          font-size: 13px; color: rgba(255,215,0,0.7);
         }
-        .breadcrumb-left a { color: #555; text-decoration: none; }
-        .breadcrumb-left a:hover { text-decoration: underline; }
-        .breadcrumb-left .sep { color: #999; }
-        .breadcrumb-left .current { color: #333; font-weight: 500; }
+        .breadcrumb-left a { color: rgba(255,215,0,0.7); text-decoration: none; }
+        .breadcrumb-left a:hover { color:#FFD700; text-decoration: underline; }
+        .breadcrumb-left .sep { color: rgba(255,215,0,0.4); }
+        .breadcrumb-left .current { color: #FFD700; font-weight: 700; }
 
         .return-btn {
-          background: #546e7a;
-          color: #fff;
-          border: none;
+          background: rgba(255,215,0,0.1);
+          color: #FFD700;
+          border: 1.5px solid rgba(255,215,0,0.25);
           border-radius: 6px;
-          padding: 9px 18px;
+          padding: 8px 18px;
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 600;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
-          transition: background 0.18s;
-          display: inline-block;
+          transition: all 0.2s;
+          white-space: nowrap;
           text-decoration: none;
         }
-        .return-btn:hover { 
-          background: #455a64;
-          text-decoration: none;
-        }
+        .return-btn:hover { background: rgba(255,215,0,0.25); border-color:#FFD700; transform: translateY(-1px); }
 
         /* ── PAGE BODY ── */
         .page-body { padding: 0 20px 30px; }
 
         /* ── SECTION CARD ── */
         .section-card {
-          background: #fff;
-          border-radius: 10px;
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
           margin-bottom: 20px;
         }
         .section-header {
-          background: linear-gradient(90deg, #26a69a, #1de9b6);
+          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,215,0,0.25);
           padding: 12px 20px;
           font-size: 13px;
           font-weight: 700;
-          color: #fff;
+          color: #FFD700;
           letter-spacing: 0.8px;
           text-transform: uppercase;
+          text-shadow: 0 0 8px rgba(255,215,0,0.45);
         }
 
         /* ── PLACEMENT INFO ── */
@@ -367,10 +371,10 @@ export default function EditProfilePage() {
 
         .placement-item {
           font-size: 13.5px;
-          color: #333;
+          color: rgba(255,215,0,0.8);
           font-weight: 400;
         }
-        .placement-item span { font-weight: 400; }
+        .placement-item strong { color: #FFD700; font-weight: 700; }
 
         /* ── FORM SECTION ── */
         .form-body { padding: 20px; }
@@ -388,36 +392,46 @@ export default function EditProfilePage() {
 
         .form-label {
           font-size: 13px;
-          font-weight: 500;
-          color: #333;
+          font-weight: 600;
+          color: #FFD700;
         }
-        .form-label .req { color: #e53935; margin-right: 1px; }
+        .form-label .req { color: #FFD700; margin-right: 1px; }
 
         /* Inputs */
         .form-input, .form-select {
           width: 100%;
-          border: 1px solid #d0d0d0;
-          border-radius: 5px;
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 6px;
           padding: 9px 12px;
           font-size: 13px;
           font-family: 'Poppins', sans-serif;
-          color: #333;
-          background: #f9f9f9;
+          color: #FFD700;
+          background: rgba(0,0,0,0.25);
           outline: none;
-          transition: border-color 0.18s, background 0.18s;
+          transition: border-color 0.18s, box-shadow 0.18s;
           appearance: none;
           -webkit-appearance: none;
+          height: 40px;
         }
         .form-input:focus, .form-select:focus {
-          border-color: #26a69a;
-          background: #fff;
+          border-color: #FFD700;
+          background: rgba(0,0,0,0.35);
+          box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
         }
         .form-select {
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23FFD700'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
           background-repeat: no-repeat;
-          background-position: right 10px center;
+          background-position: right 12px center;
           padding-right: 30px;
           cursor: pointer;
+        }
+        .form-select option {
+          background-color: #1a0533;
+          color: #FFD700;
+        }
+        .form-input:disabled, .form-select:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
         }
 
         /* Gender radio */
@@ -426,9 +440,9 @@ export default function EditProfilePage() {
           align-items: center;
           gap: 20px;
           padding: 10px 12px;
-          border: 1px solid #d0d0d0;
-          border-radius: 5px;
-          background: #f9f9f9;
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 6px;
+          background: rgba(0,0,0,0.25);
           min-height: 40px;
         }
         .radio-label {
@@ -436,11 +450,12 @@ export default function EditProfilePage() {
           align-items: center;
           gap: 6px;
           font-size: 13px;
-          color: #333;
+          color: #FFD700;
           cursor: pointer;
+          font-weight: 500;
         }
         .radio-label input[type="radio"] {
-          accent-color: #1976d2;
+          accent-color: #FFD700;
           width: 15px;
           height: 15px;
           cursor: pointer;
@@ -471,33 +486,36 @@ export default function EditProfilePage() {
           padding: 10px 0 4px;
         }
         .update-btn {
-          background: #1976d2;
-          color: #fff;
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color: #120228;
           border: none;
           border-radius: 7px;
           padding: 11px 40px;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 800;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
-          transition: background 0.18s, transform 0.15s;
-          letter-spacing: 0.3px;
+          transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          box-shadow: 0 4px 15px rgba(255,215,0,0.25);
         }
-        .update-btn:hover { background: #1565c0; transform: translateY(-1px); }
+        .update-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,215,0,0.35); }
         .update-btn:active { transform: scale(0.98); }
+        .update-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* ── SUCCESS TOAST ── */
         .toast {
           position: fixed;
           bottom: 28px;
           right: 28px;
-          background: #26a69a;
-          color: #fff;
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color: #120228;
           padding: 12px 22px;
           border-radius: 8px;
           font-size: 13.5px;
-          font-weight: 500;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+          font-weight: 700;
+          box-shadow: 0 6px 22px rgba(255,215,0,0.4);
           z-index: 999;
           animation: fadeInUp 0.3s ease;
         }
@@ -511,14 +529,14 @@ export default function EditProfilePage() {
         .skeleton-label {
           height: 12px;
           width: 80px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, #2d0a5c 25%, #3d1475 50%, #2d0a5c 75%);
           background-size: 200% 100%;
           border-radius: 3px;
           animation: shimmer 2s infinite;
         }
         .skeleton-input {
           height: 38px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, #2d0a5c 25%, #3d1475 50%, #2d0a5c 75%);
           background-size: 200% 100%;
           border-radius: 5px;
           animation: shimmer 2s infinite;
@@ -538,13 +556,13 @@ export default function EditProfilePage() {
           setActivePage={setActivePage}
         />
 
-        {/* Green bar */}
-        <div className="green-bar" />
+        {/* Gold bar */}
+        <div className="gold-bar" />
 
         {/* ── BREADCRUMB ── */}
         <div className="breadcrumb">
           <div className="breadcrumb-left">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#555">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>
             <Link href="/dashboard">Home</Link>

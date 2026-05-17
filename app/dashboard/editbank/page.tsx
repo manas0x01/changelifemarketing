@@ -143,19 +143,24 @@ export default function EditBankPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         .eb-root {
           font-family: 'Poppins', sans-serif;
-          background: #f0f2f5;
+          background: #1a0533;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
           min-height: 100vh;
+          color: #fff;
         }
-        /* ── GREEN BAR ── */
-        .green-bar { height: 8px; background: linear-gradient(90deg, #00c853, #1de9b6); }
 
-        /* ── BREADCRUMB ROW ── */
+        /* GOLD BAR */
+        .gold-bar { height:4px; background:linear-gradient(90deg, #FFD700, #f0a500); }
+
+        /* BREADCRUMB ROW */
         .breadcrumb-row {
           display: flex;
           align-items: center;
@@ -166,47 +171,53 @@ export default function EditBankPage() {
         }
         .breadcrumb-left {
           display: flex; align-items: center; gap: 6px;
-          font-size: 13px; color: #555;
+          font-size: 13px; color: rgba(255,215,0,0.7);
         }
-        .breadcrumb-left a { color: #555; text-decoration: none; }
-        .breadcrumb-left a:hover { text-decoration: underline; }
-        .breadcrumb-left .sep { color: #999; }
-        .breadcrumb-left .current { color: #333; font-weight: 500; }
+        .breadcrumb-left a { color: rgba(255,215,0,0.7); text-decoration: none; }
+        .breadcrumb-left a:hover { color:#FFD700; text-decoration: underline; }
+        .breadcrumb-left .sep { color: rgba(255,215,0,0.4); }
+        .breadcrumb-left .current { color: #FFD700; font-weight: 700; }
 
         .return-btn {
-          background: #546e7a;
-          color: #fff;
-          border: none;
+          background: rgba(255,215,0,0.1);
+          color: #FFD700;
+          border: 1.5px solid rgba(255,215,0,0.25);
           border-radius: 6px;
-          padding: 9px 20px;
+          padding: 8px 18px;
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 600;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
-          transition: background 0.18s;
+          transition: all 0.2s;
           white-space: nowrap;
+          text-decoration: none;
         }
-        .return-btn:hover { background: #455a64; }
-        /* ── PAGE BODY ── */
+        .return-btn:hover { background: rgba(255,215,0,0.25); border-color:#FFD700; transform: translateY(-1px); }
+
+        /* PAGE BODY */
         .page-body { padding: 0 20px 30px; }
 
-        /* ── SECTION CARD ── */
+        /* CARD */
         .section-card {
-          background: #fff;
-          border-radius: 10px;
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 16px;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
         }
         .section-header {
-          background: linear-gradient(90deg, #26a69a, #1de9b6);
-          padding: 13px 20px;
-          font-size: 13px;
-          font-weight: 700;
-          color: #fff;
+          background: linear-gradient(90deg, #1d033a, #110122);
+          border-bottom: 1.5px solid rgba(255,215,0,0.22);
+          padding: 16px 20px;
+          font-size: 14px;
+          font-weight: 800;
+          color: #FFD700;
           letter-spacing: 0.8px;
           text-transform: uppercase;
+          text-shadow: 0 0 8px rgba(255,215,0,0.3);
         }
-        /* ── FORM BODY ── */
+
+        /* FORM BODY */
         .form-body { padding: 24px 20px 20px; }
 
         /* 2-col grid */
@@ -224,69 +235,77 @@ export default function EditBankPage() {
 
         .form-label {
           font-size: 13.5px;
-          font-weight: 400;
-          color: #333;
+          font-weight: 600;
+          color: rgba(255,215,0,0.85);
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
 
         .form-input, .form-select {
           width: 100%;
-          border: 1px solid #d0d0d0;
-          border-radius: 5px;
+          border: 1.5px solid rgba(255,215,0,0.25);
+          border-radius: 6px;
           padding: 10px 13px;
           font-size: 13.5px;
           font-family: 'Poppins', sans-serif;
-          color: #333;
-          background: #fff;
+          color: #fff;
+          background: rgba(0,0,0,0.25);
           outline: none;
-          transition: border-color 0.18s, box-shadow 0.18s;
+          transition: all 0.2s;
         }
         .form-input:focus, .form-select:focus {
-          border-color: #26a69a;
-          box-shadow: 0 0 0 2px rgba(38,166,154,0.12);
+          border-color: #FFD700;
+          box-shadow: 0 0 10px rgba(255,215,0,0.2);
         }
         .form-select {
           appearance: none;
           -webkit-appearance: none;
-          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23666'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23FFD700'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
           background-repeat: no-repeat;
           background-position: right 12px center;
           padding-right: 32px;
           cursor: pointer;
         }
+        .form-select option {
+          background: #1d033a;
+          color: #fff;
+        }
 
-        /* ── UPDATE BUTTON ── */
+        /* UPDATE BUTTON */
         .update-wrap {
           display: flex;
           justify-content: center;
           padding-top: 4px;
         }
         .update-btn {
-          background: #1976d2;
-          color: #fff;
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color: #120228;
           border: none;
           border-radius: 7px;
           padding: 11px 36px;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 800;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
-          letter-spacing: 0.3px;
-          transition: background 0.18s, transform 0.15s;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          transition: all 0.2s, transform 0.15s;
+          box-shadow: 0 4px 12px rgba(255,215,0,0.2);
         }
-        .update-btn:hover { background: #1565c0; transform: translateY(-1px); }
+        .update-btn:hover { background: linear-gradient(135deg, #FFE042 0%, #f0b500 100%); transform: translateY(-1px); }
         .update-btn:active { transform: scale(0.98); }
 
-        /* ── TOAST ── */
+        /* TOAST */
         .toast {
           position: fixed;
           bottom: 28px; right: 28px;
-          background: #26a69a;
-          color: #fff;
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color: #120228;
           padding: 12px 22px;
           border-radius: 8px;
           font-size: 13.5px;
-          font-weight: 500;
-          box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+          font-weight: 800;
+          box-shadow: 0 6px 20px rgba(255,215,0,0.3);
           z-index: 999;
           animation: fadeUp 0.3s ease;
         }
@@ -295,19 +314,19 @@ export default function EditBankPage() {
           to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ── SKELETON LOADER ── */
+        /* SKELETON LOADER */
         .skeleton-group { display: flex; flex-direction: column; gap: 7px; }
         .skeleton-label {
           height: 12px;
           width: 90px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, rgba(29,3,58,0.5) 25%, rgba(168,85,247,0.2) 50%, rgba(29,3,58,0.5) 75%);
           background-size: 200% 100%;
           border-radius: 3px;
           animation: shimmer 2s infinite;
         }
         .skeleton-input {
           height: 40px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, rgba(29,3,58,0.5) 25%, rgba(168,85,247,0.2) 50%, rgba(29,3,58,0.5) 75%);
           background-size: 200% 100%;
           border-radius: 5px;
           animation: shimmer 2s infinite;
@@ -326,12 +345,13 @@ export default function EditBankPage() {
           setDropdownOpen={setDropdownOpen}
           setActivePage={() => {}}
         />
-        {/* Green bar */}
-        <div className="green-bar" />
-        {/* ── BREADCRUMB ── */}
+        {/* Gold bar */}
+        <div className="gold-bar" />
+
+        {/* BREADCRUMB */}
         <div className="breadcrumb-row">
           <div className="breadcrumb-left">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#555">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>
             <Link href="/dashboard">Home</Link>
@@ -342,7 +362,8 @@ export default function EditBankPage() {
           </div>
           <Link href="/dashboard/profile" className="return-btn">Return to Profile</Link>
         </div>
-        {/* ── MAIN CARD ── */}
+
+        {/* MAIN CARD */}
         <div className="page-body">
           <div className="section-card">
             <div className="section-header">Edit Bank Details</div>
@@ -394,13 +415,13 @@ export default function EditBankPage() {
                 <>
                   {error && (
                     <div style={{
-                      background: "#ffebee",
-                      color: "#c62828",
+                      background: "rgba(239, 68, 68, 0.12)",
+                      color: "#ff8888",
                       padding: "12px 16px",
                       borderRadius: "6px",
                       marginBottom: "20px",
                       fontSize: "13px",
-                      border: "1px solid #ef5350"
+                      border: "1px solid rgba(239, 68, 68, 0.3)"
                     }}>
                       ❌ {error}
                     </div>

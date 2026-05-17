@@ -58,19 +58,28 @@ export default function ChangePasswordPage() {
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&display=swap');
         * { margin:0; padding:0; box-sizing:border-box; }
 
-        .cp-root { font-family:'Poppins',sans-serif; background:#f0f2f5; min-height:100vh; }
+        .cp-root {
+          font-family: 'Poppins', sans-serif;
+          background: #1a0533;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+          min-height: 100vh;
+          color: #fff;
+        }
 
-        /* GREEN BAR */
-        .green-bar { height:8px; background:linear-gradient(90deg,#00c853,#1de9b6); }
+        /* GOLD BAR */
+        .gold-bar { height:4px; background:linear-gradient(90deg, #FFD700, #f0a500); }
 
         /* BREADCRUMB */
-        .breadcrumb { padding:12px 20px; font-size:13px; color:#555; display:flex; align-items:center; gap:6px; }
-        .breadcrumb a { color:#555; text-decoration:none; }
-        .breadcrumb a:hover { text-decoration:underline; }
-        .breadcrumb .sep { color:#999; }
+        .breadcrumb { padding:12px 20px; font-size:13px; color:rgba(255,215,0,0.7); display:flex; align-items:center; gap:6px; }
+        .breadcrumb a { color:rgba(255,215,0,0.7); text-decoration:none; }
+        .breadcrumb a:hover { color:#FFD700; text-decoration:underline; }
+        .breadcrumb .sep { color:rgba(255,215,0,0.4); }
+        .breadcrumb .current { color:#FFD700; font-weight:700; }
 
         /* PAGE BODY */
         .page-body {
@@ -81,21 +90,24 @@ export default function ChangePasswordPage() {
         /* CARD */
         .cp-card {
           width:100%; max-width:680px;
-          border-radius:10px;
-          overflow:hidden;
-          box-shadow:0 2px 14px rgba(0,0,0,0.09);
-          background:#fff;
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 16px;
+          overflow: hidden;
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
         }
 
         /* HEADER */
         .card-header {
-          background:linear-gradient(90deg,#26a69a,#1de9b6);
-          padding:14px 22px;
-          font-size:13.5px;
-          font-weight:700;
-          color:#fff;
+          background: linear-gradient(90deg, #1d033a, #110122);
+          border-bottom: 1.5px solid rgba(255,215,0,0.22);
+          padding:16px 22px;
+          font-size:14px;
+          font-weight:800;
+          color:#FFD700;
           letter-spacing:0.8px;
           text-transform:uppercase;
+          text-shadow: 0 0 8px rgba(255,215,0,0.3);
         }
 
         /* FORM BODY */
@@ -105,96 +117,99 @@ export default function ChangePasswordPage() {
 
         .form-label {
           display:block;
-          font-size:13.5px;
-          font-weight:500;
-          color:#333;
+          font-size:13px;
+          font-weight:600;
+          color:rgba(255,215,0,0.85);
           margin-bottom:8px;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
         }
-        .form-label .req { color:#e53935; margin-right:1px; }
+        .form-label .req { color:#ff4444; margin-right:3px; }
 
         .form-input {
           width:100%;
-          border:1px solid #d4d4d4;
+          border: 1.5px solid rgba(255,215,0,0.25);
           border-radius:6px;
           padding:11px 14px;
           font-size:14px;
           font-family:'Poppins',sans-serif;
-          color:#333;
-          background:#fff;
+          color:#fff;
+          background: rgba(0,0,0,0.25);
           outline:none;
-          transition:border-color .18s, box-shadow .18s;
-          -webkit-autofill:none;
+          transition: all 0.2s;
         }
         .form-input:-webkit-autofill,
         .form-input:-webkit-autofill:hover,
         .form-input:-webkit-autofill:focus,
         .form-input:-webkit-autofill:active {
-          -webkit-box-shadow: 0 0 0 30px white inset !important;
-          -webkit-text-fill-color: #333 !important;
+          -webkit-box-shadow: 0 0 0 30px #1a0533 inset !important;
+          -webkit-text-fill-color: #fff !important;
         }
-        .form-input::placeholder { color:#c0c0c0; }
+        .form-input::placeholder { color:rgba(255,215,0,0.3); }
         .form-input:focus {
-          border-color:#26a69a;
-          box-shadow:0 0 0 2.5px rgba(38,166,154,0.14);
+          border-color:#FFD700;
+          box-shadow:0 0 10px rgba(255,215,0,0.2);
         }
 
         /* Error / Success */
         .error-msg {
-          background:#fdecea;
-          border-left:4px solid #e53935;
+          background: rgba(239, 68, 68, 0.12);
+          border-left: 4px solid #ff4444;
           border-radius:4px;
           padding:10px 14px;
           font-size:13px;
-          color:#c62828;
+          color:#ff8888;
           margin-bottom:18px;
           display:flex; align-items:center; gap:6px;
         }
         .success-msg {
-          background:#e8f5e9;
-          border-left:4px solid #26a69a;
+          background: rgba(16, 185, 129, 0.12);
+          border-left: 4px solid #00ff88;
           border-radius:4px;
           padding:10px 14px;
           font-size:13px;
-          color:#1b5e20;
+          color:#00ff88;
           margin-bottom:18px;
           display:flex; align-items:center; gap:6px;
         }
 
-        /* Proceed button — centered, blue, exact match */
+        /* Proceed button */
         .proceed-wrap { display:flex; justify-content:center; padding-top:4px; }
 
         .proceed-btn {
-          background:#1976d2;
-          color:#fff;
+          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          color:#120228;
           border:none;
           border-radius:7px;
           padding:11px 48px;
           font-size:14.5px;
-          font-weight:600;
+          font-weight:800;
           font-family:'Poppins',sans-serif;
           cursor:pointer;
-          letter-spacing:0.3px;
-          transition:background .18s, transform .15s;
+          letter-spacing:0.5px;
+          text-transform: uppercase;
+          transition: all 0.2s, transform .15s;
+          box-shadow: 0 4px 12px rgba(255,215,0,0.2);
         }
-        .proceed-btn:hover:not(:disabled) { background:#1565c0; transform:translateY(-1px); }
+        .proceed-btn:hover:not(:disabled) { background: linear-gradient(135deg, #FFE042 0%, #f0b500 100%); transform:translateY(-1px); }
         .proceed-btn:active:not(:disabled) { transform:scale(0.98); }
-        .proceed-btn:disabled { background:#9fa8da; cursor:not-allowed; opacity:0.7; }
+        .proceed-btn:disabled { background:rgba(255,215,0,0.25); color:rgba(255,215,0,0.4); cursor:not-allowed; opacity:0.7; box-shadow:none; }
       `}</style>
 
       <div className="cp-root">
         <Navbar dropdownOpen={dropdownOpen} setDropdownOpen={setDropdownOpen} setActivePage={setActivePage} />
 
-        {/* Green bar */}
-        <div className="green-bar" />
+        {/* Gold bar */}
+        <div className="gold-bar" />
 
         {/* BREADCRUMB */}
         <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
           <a href="/dashboard">Home</a>
           <span className="sep">/</span>
           <span>Setting</span>
           <span className="sep">/</span>
-          <span>Change Password</span>
+          <span className="current">Change Password</span>
         </div>
 
         <div className="page-body">
@@ -209,7 +224,7 @@ export default function ChangePasswordPage() {
               {/* Error */}
               {error && (
                 <div className="error-msg">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#c62828"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff4444"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
                   {error}
                 </div>
               )}
@@ -217,7 +232,7 @@ export default function ChangePasswordPage() {
               {/* Success */}
               {success && (
                 <div className="success-msg">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#00ff88"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                   Password changed successfully!
                 </div>
               )}

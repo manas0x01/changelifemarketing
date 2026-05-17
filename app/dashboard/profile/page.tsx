@@ -118,49 +118,55 @@ export default function ProfilePage() {
 
         .profile-root {
           font-family: 'Poppins', sans-serif;
-          background: #f0f2f5;
+          background: #1a0533;
+          background-image:
+            radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
           min-height: 100vh;
         }
 
-        /* ── GREEN BAR ── */
+        /* ── GOLD BAR ── */
         .green-bar {
-          height: 8px;
-          background: linear-gradient(90deg, #00c853, #1de9b6);
+          height: 3px;
+          background: linear-gradient(90deg, transparent, #FFD700, #FFD700, #FFD700, transparent);
         }
 
         /* ── BREADCRUMB ── */
         .breadcrumb {
           padding: 12px 20px;
           font-size: 13px;
-          color: #555;
+          color: #FFD700;
           display: flex;
           align-items: center;
           gap: 6px;
         }
-        .breadcrumb a { color: #555; text-decoration: none; }
-        .breadcrumb a:hover { text-decoration: underline; }
-        .breadcrumb .sep { color: #999; }
-        .breadcrumb .current { color: #333; font-weight: 500; }
+        .breadcrumb a { color: #FFD700; text-decoration: none; opacity: 0.85; }
+        .breadcrumb a:hover { text-decoration: underline; opacity: 1; }
+        .breadcrumb .sep { color: rgba(255,215,0,0.4); }
+        .breadcrumb .current { color: #FFD700; font-weight: 600; }
+        .breadcrumb svg { fill: #FFD700 !important; }
 
         /* ── PROFILE HERO CARD ── */
         .hero-card {
-          background: #fff;
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
           margin: 0 20px 20px;
-          border-radius: 10px;
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
         }
 
         /* Banner */
         .hero-banner {
           width: 100%;
           height: 220px;
-          background: #111;
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
           position: relative;
           overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
+          border-bottom: 1.5px solid rgba(255,215,0,0.2);
         }
 
         /* WELCOME text rendered purely in CSS */
@@ -174,25 +180,26 @@ export default function ProfilePage() {
           font-weight: 900;
           letter-spacing: 10px;
           text-transform: uppercase;
-          background: linear-gradient(180deg, #ffffff 0%, #888888 50%, #444 100%);
+          background: linear-gradient(180deg, #FFD700 0%, #b8860b 50%, #5c4308 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           line-height: 1.1;
-          text-shadow: none;
           font-family: 'Poppins', sans-serif;
+          text-shadow: 0 0 12px rgba(255, 215, 0, 0.45);
         }
         .welcome-line2 {
           font-size: clamp(12px, 2vw, 22px);
-          font-weight: 600;
+          font-weight: 700;
           letter-spacing: 18px;
           text-transform: uppercase;
-          background: linear-gradient(180deg, #cccccc 0%, #666 100%);
+          background: linear-gradient(180deg, #FFD700 0%, #e6b800 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
           margin-top: 4px;
           font-family: 'Poppins', sans-serif;
+          text-shadow: 0 0 8px rgba(255, 215, 0, 0.3);
         }
 
         /* Subtle dark vignette overlay */
@@ -206,19 +213,20 @@ export default function ProfilePage() {
 
         /* Avatar + name strip */
         .hero-strip {
-          background: #111;
+          background: rgba(0,0,0,0.25);
           display: flex;
           align-items: center;
           gap: 18px;
           padding: 10px 20px 14px;
           position: relative;
+          border-bottom: 1.5px solid rgba(255,215,0,0.2);
         }
         .hero-avatar {
           width: 110px;
           height: 110px;
           border-radius: 50%;
-          border: 4px solid #fff;
-          box-shadow: 0 3px 12px rgba(0,0,0,0.25);
+          border: 3.5px solid #FFD700;
+          box-shadow: 0 4px 15px rgba(255,215,0,0.35);
           flex-shrink: 0;
           margin-top: -55px;
           position: relative;
@@ -227,9 +235,10 @@ export default function ProfilePage() {
         }
         .hero-username {
           font-size: 20px;
-          font-weight: 600;
-          color: #fff;
+          font-weight: 700;
+          color: #FFD700;
           padding-bottom: 2px;
+          text-shadow: 0 0 8px rgba(255,215,0,0.3);
         }
 
         /* ── TABS ── */
@@ -237,14 +246,13 @@ export default function ProfilePage() {
           display: flex;
           gap: 0;
           padding: 0 20px;
-          border-bottom: 1px solid #e0e0e0;
-          background: #fff;
+          background: rgba(0,0,0,0.15);
         }
         .tab-btn {
-          padding: 12px 20px;
+          padding: 14px 20px;
           font-size: 13.5px;
-          font-weight: 500;
-          color: #666;
+          font-weight: 600;
+          color: rgba(255,215,0,0.6);
           cursor: pointer;
           border: none;
           background: none;
@@ -253,10 +261,11 @@ export default function ProfilePage() {
           transition: color 0.18s;
           border-bottom: 2px solid transparent;
         }
-        .tab-btn:hover { color: #333; }
+        .tab-btn:hover { color: #FFD700; }
         .tab-btn.active {
-          color: #e53935;
-          border-bottom: 2px solid #e53935;
+          color: #FFD700;
+          border-bottom: 2px solid #FFD700;
+          text-shadow: 0 0 8px rgba(255,215,0,0.3);
         }
 
         /* ── CONTENT GRID ── */
@@ -274,19 +283,22 @@ export default function ProfilePage() {
 
         /* ── DETAIL CARD ── */
         .detail-card {
-          background: #fff;
-          border-radius: 10px;
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
         }
         .detail-header {
-          background: linear-gradient(90deg, #26a69a, #1de9b6);
-          padding: 11px 18px;
-          font-size: 12.5px;
+          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,215,0,0.25);
+          padding: 13px 20px;
+          font-size: 13px;
           font-weight: 700;
-          color: #fff;
+          color: #FFD700;
           letter-spacing: 0.8px;
           text-transform: uppercase;
+          text-shadow: 0 0 8px rgba(255,215,0,0.45);
         }
 
         /* ── DETAIL ROWS ── */
@@ -295,22 +307,22 @@ export default function ProfilePage() {
           align-items: center;
           justify-content: space-between;
           padding: 13px 18px;
-          border-bottom: 1px solid #f0f0f0;
+          border-bottom: 1px solid rgba(255,215,0,0.12);
           transition: background 0.12s;
         }
         .detail-row:last-child { border-bottom: none; }
-        .detail-row:hover { background: #fafafa; }
+        .detail-row:hover { background: rgba(255,215,0,0.04); }
 
         .detail-label {
           font-size: 13.5px;
           font-weight: 600;
-          color: #222;
+          color: rgba(255,215,0,0.7);
           flex-shrink: 0;
         }
         .detail-value {
           font-size: 13.5px;
-          font-weight: 400;
-          color: #555;
+          font-weight: 600;
+          color: #FFD700;
           text-align: right;
           margin-left: 16px;
           word-break: break-all;
@@ -361,17 +373,17 @@ export default function ProfilePage() {
           width: 110px;
           height: 110px;
           border-radius: 50%;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, #2d0a5c 25%, #3d1475 50%, #2d0a5c 75%);
           background-size: 200% 100%;
           animation: shimmer 2s infinite;
           margin-top: -55px;
-          border: 4px solid #fff;
+          border: 3.5px solid rgba(255,215,0,0.3);
           flex-shrink: 0;
         }
 
         .skeleton-text {
           height: 20px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, #2d0a5c 25%, #3d1475 50%, #2d0a5c 75%);
           background-size: 200% 100%;
           border-radius: 4px;
           animation: shimmer 2s infinite;
@@ -379,14 +391,15 @@ export default function ProfilePage() {
         }
 
         .skeleton-card {
-          background: #fff;
-          border-radius: 10px;
+          background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
+          border: 1.5px solid rgba(255,215,0,0.22);
+          border-radius: 12px;
           overflow: hidden;
-          box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+          box-shadow: 0 12px 36px rgba(0,0,0,0.65);
         }
 
         .skeleton-header {
-          background: #f0f0f0;
+          background: rgba(255,215,0,0.1);
           height: 42px;
           padding: 11px 18px;
         }
@@ -396,14 +409,14 @@ export default function ProfilePage() {
           justify-content: space-between;
           align-items: center;
           padding: 13px 18px;
-          border-bottom: 1px solid #f0f0f0;
+          border-bottom: 1px solid rgba(255,215,0,0.1);
         }
         .skeleton-row:last-child { border-bottom: none; }
 
         .skeleton-label {
           height: 14px;
           width: 120px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, #2d0a5c 25%, #3d1475 50%, #2d0a5c 75%);
           background-size: 200% 100%;
           border-radius: 3px;
           animation: shimmer 2s infinite;
@@ -412,7 +425,7 @@ export default function ProfilePage() {
         .skeleton-value {
           height: 14px;
           width: 150px;
-          background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+          background: linear-gradient(90deg, #2d0a5c 25%, #3d1475 50%, #2d0a5c 75%);
           background-size: 200% 100%;
           border-radius: 3px;
           animation: shimmer 2s infinite;

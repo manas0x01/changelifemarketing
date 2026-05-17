@@ -11,7 +11,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
   return (
     <>
-<style>{`
+      <style>{`
   @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 
   .dashboard-wrapper {
@@ -169,7 +169,7 @@ function DashboardLayoutContent({ children }: { children: ReactNode }) {
       <div className="dashboard-wrapper">
         {/* Mobile Overlay - shows when sidebar is open */}
         {isOpen && (
-          <div 
+          <div
             className="sidebar-overlay active"
             onClick={() => toggleSidebar()}
             role="button"

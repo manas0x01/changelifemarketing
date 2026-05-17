@@ -6,7 +6,7 @@ export async function GET() {
         documentName: 'Goods and Services Tax (GST) Certificate',
         documentTypeLabel: 'GST',
         description: 'Official registration certificate for Goods and Services Tax (GSTIN) for Company.',
-        thumbnailImage: '/images/gstcertificate.png',
+        thumbnailImage: '/images/GST.jpeg',
         documentUrl: '#',
       },
       {

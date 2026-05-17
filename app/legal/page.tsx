@@ -38,7 +38,7 @@ const LEGAL_DOCS: LegalDoc[] = [
   },
   {
     _id: '3',
-documentName: 'TAX DEDUCTION ACCOUNT NUMBER (TAN) CARD',
+    documentName: 'TAX DEDUCTION ACCOUNT NUMBER (TAN) CARD',
     documentTypeLabel: 'TAN',
     description:
       'The TAN card for Change Life Marketing issued by the Indian Income Tax Department (ITD). This 10-character unique identifier is mandatory for all tax-related transactions, bank accounts, and income tax filing in India.',
@@ -52,6 +52,15 @@ documentName: 'TAX DEDUCTION ACCOUNT NUMBER (TAN) CARD',
     description:
       'Official registration with the Labour Resource Department for Change Life Marketing. This certificate ensures compliance with labour laws and regulations.',
     thumbnailImage: '/images/labourregistration.jpeg',
+    documentUrl: '#',
+  },
+  {
+    _id: '5',
+    documentName: 'Goods and Services Tax (GST) Certificate',
+    documentTypeLabel: 'GST',
+    description:
+      'Official registration certificate for Goods and Services Tax (GSTIN) for Change Life Marketing. This ensures our compliance with the Indian taxation system.',
+    thumbnailImage: '/images/GST.jpeg',
     documentUrl: '#',
   },
 ];
@@ -302,7 +311,7 @@ export default function LegalPage() {
             className="mt-14 flex flex-wrap gap-8 md:gap-16"
           >
             {[
-              { label: 'Certificates', value: `${LEGAL_DOCS.length}` },
+              { label: 'Certificates', value: `5` },
               { label: 'Established', value: 'Jan 2026' },
               { label: 'Compliance', value: '100%' },
             ].map((s) => (

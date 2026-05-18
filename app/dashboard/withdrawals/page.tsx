@@ -19,6 +19,51 @@ export default function WithdrawalsHistoryPage() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [filterStatus, setFilterStatus] = useState<"All" | "Pending" | "Approved" | "Rejected">("All");
+  const [datePreset, setDatePreset] = useState<"All" | "Daily" | "Weekly" | "Monthly">("All");
+
+  // Date Presets Calculation
+  const getPresets = () => {
+    const now = new Date();
+    
+    // Daily (Today)
+    const today = new Date(now);
+    const todayStr = today.toDateString();
+    
+    // Weekly (Mon-Sun)
+    const startOfWeek = new Date(now);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    
+    // Monthly (1st to last of current month)
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+    const fmt = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+    const fmtFull = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+    return {
+      today: {
+        label: `Daily (${fmtFull(now)})`,
+        date: todayStr
+      },
+      week: {
+        label: `Weekly (${fmt(startOfWeek)} – ${fmt(endOfWeek)})`,
+        start: startOfWeek,
+        end: endOfWeek
+      },
+      month: {
+        label: `Monthly (${fmt(startOfMonth)} – ${fmt(endOfMonth)})`,
+        start: startOfMonth,
+        end: endOfMonth
+      }
+    };
+  };
+
+  const presets = getPresets();
   const [requests, setRequests] = useState<WithdrawRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,20 +97,49 @@ export default function WithdrawalsHistoryPage() {
     fetchRequests();
   }, []);
 
-  const filteredRequests = requests.filter((r) => {
+  // Filter by date presets first for summaries and main list
+  const dateFilteredRequests = requests.filter((r) => {
+    if (datePreset === "All") return true;
+    
+    const reqDate = new Date(r.requestDate);
+    
+    if (datePreset === "Daily") {
+      return reqDate.toDateString() === presets.today.date;
+    }
+    
+    if (datePreset === "Weekly") {
+      const start = new Date(presets.week.start);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(presets.week.end);
+      end.setHours(23, 59, 59, 999);
+      return reqDate >= start && reqDate <= end;
+    }
+    
+    if (datePreset === "Monthly") {
+      const start = new Date(presets.month.start);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(presets.month.end);
+      end.setHours(23, 59, 59, 999);
+      return reqDate >= start && reqDate <= end;
+    }
+    
+    return true;
+  });
+
+  const filteredRequests = dateFilteredRequests.filter((r) => {
     if (filterStatus === "All") return true;
     return r.status === filterStatus;
   });
 
-  // Calculate summaries
-  const totalRequested = requests.reduce((acc, r) => acc + r.amount, 0);
-  const totalApproved = requests
+  // Calculate summaries based on current date selection
+  const totalRequested = dateFilteredRequests.reduce((acc, r) => acc + r.amount, 0);
+  const totalApproved = dateFilteredRequests
     .filter((r) => r.status === "Approved")
     .reduce((acc, r) => acc + r.amount, 0);
-  const totalPending = requests
+  const totalPending = dateFilteredRequests
     .filter((r) => r.status === "Pending")
     .reduce((acc, r) => acc + r.amount, 0);
-  const totalRejected = requests
+  const totalRejected = dateFilteredRequests
     .filter((r) => r.status === "Rejected")
     .reduce((acc, r) => acc + r.amount, 0);
 
@@ -334,6 +408,38 @@ export default function WithdrawalsHistoryPage() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Date Filters Presets */}
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", padding: "16px 20px 8px", borderBottom: "1px solid rgba(255,215,0,0.12)" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "rgba(255,215,0,0.5)", marginRight: "8px" }}>Filter By Period:</span>
+              {([
+                { id: "All", label: "All Time" },
+                { id: "Daily", label: presets.today.label },
+                { id: "Weekly", label: presets.week.label },
+                { id: "Monthly", label: presets.month.label },
+              ] as const).map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setDatePreset(p.id)}
+                  style={{
+                    background: datePreset === p.id ? "linear-gradient(135deg, #FFD700 0%, #f0a500 100%)" : "rgba(0,0,0,0.25)",
+                    border: "1px solid " + (datePreset === p.id ? "#FFD700" : "rgba(255,215,0,0.2)"),
+                    color: datePreset === p.id ? "#120228" : "rgba(255,215,0,0.7)",
+                    padding: "6px 12px",
+                    fontSize: "11px",
+                    fontWeight: 700,
+                    borderRadius: "14px",
+                    cursor: "pointer",
+                    textTransform: "uppercase",
+                    transition: "all 0.2s",
+                    boxShadow: datePreset === p.id ? "0 2px 8px rgba(255,215,0,0.25)" : "none",
+                  }}
+                  suppressHydrationWarning={true}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
 
             {/* ERROR STATE */}

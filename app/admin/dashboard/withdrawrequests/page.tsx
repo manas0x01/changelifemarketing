@@ -535,6 +535,74 @@ export default function AdminDashboardWithdrawRequests() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [datePreset, setDatePreset] = useState("all");
+
+  // Date Presets Calculation
+  const getPresets = () => {
+    const now = new Date();
+    
+    // Daily (Today)
+    const today = new Date(now);
+    const todayStr = today.toISOString().split("T")[0];
+    
+    // Weekly (Mon-Sun)
+    const startOfWeek = new Date(now);
+    const day = startOfWeek.getDay();
+    const diff = startOfWeek.getDate() - day + (day === 0 ? -6 : 1);
+    startOfWeek.setDate(diff);
+    const weekStartStr = startOfWeek.toISOString().split("T")[0];
+    
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(startOfWeek.getDate() + 6);
+    const weekEndStr = endOfWeek.toISOString().split("T")[0];
+    
+    // Monthly (1st to last of current month)
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthStartStr = new Date(startOfMonth.getTime() - startOfMonth.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+    
+    const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const monthEndStr = new Date(endOfMonth.getTime() - endOfMonth.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+
+    const fmt = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short" });
+    const fmtFull = (d: Date) => d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+
+    return {
+      today: {
+        label: `Daily (${fmtFull(now)})`,
+        start: todayStr,
+        end: todayStr
+      },
+      week: {
+        label: `Weekly (${fmt(startOfWeek)} – ${fmt(endOfWeek)})`,
+        start: weekStartStr,
+        end: weekEndStr
+      },
+      month: {
+        label: `Monthly (${fmt(startOfMonth)} – ${fmt(endOfMonth)})`,
+        start: monthStartStr,
+        end: monthEndStr
+      }
+    };
+  };
+
+  const presets = getPresets();
+
+  const handleDatePresetChange = (id: string) => {
+    setDatePreset(id);
+    if (id === "all") {
+      setDateFrom("");
+      setDateTo("");
+    } else if (id === "daily") {
+      setDateFrom(presets.today.start);
+      setDateTo(presets.today.end);
+    } else if (id === "weekly") {
+      setDateFrom(presets.week.start);
+      setDateTo(presets.week.end);
+    } else if (id === "monthly") {
+      setDateFrom(presets.month.start);
+      setDateTo(presets.month.end);
+    }
+  };
 
   // Modals
   const [detailModal, setDetailModal] = useState<{ open: boolean; req: WithdrawRequest | null }>({ open: false, req: null });
@@ -686,7 +754,7 @@ export default function AdminDashboardWithdrawRequests() {
                 <input
                   type="date"
                   value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
+                  onChange={(e) => { setDateFrom(e.target.value); setDatePreset("custom"); }}
                   className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] rounded transition-colors"
                   suppressHydrationWarning={true}
                 />
@@ -696,7 +764,7 @@ export default function AdminDashboardWithdrawRequests() {
                 <input
                   type="date"
                   value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
+                  onChange={(e) => { setDateTo(e.target.value); setDatePreset("custom"); }}
                   className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] rounded transition-colors"
                   suppressHydrationWarning={true}
                 />
@@ -713,13 +781,37 @@ export default function AdminDashboardWithdrawRequests() {
               </div>
               <div>
                 <button
-                  onClick={() => { setSearch(""); setDateFrom(""); setDateTo(""); setFilterStatus("all"); }}
+                  onClick={() => { setSearch(""); setDateFrom(""); setDateTo(""); setFilterStatus("all"); setDatePreset("all"); }}
                   className="w-full px-4 py-2.5 border border-[#0A6E5A]/20 text-[#0A6E5A] font-['Roboto'] font-semibold text-[0.85rem] rounded hover:bg-[#0A6E5A]/5 transition-colors"
                   suppressHydrationWarning={true}
                 >
                   Clear
                 </button>
               </div>
+            </div>
+
+            {/* Quick Date Presets Row */}
+            <div className="flex flex-wrap items-center gap-2 mt-4 pt-3 border-t border-[#0A6E5A]/5">
+              <span className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/40 mr-2">Quick Date Filters:</span>
+              {[
+                { id: "all", label: "All Time" },
+                { id: "daily", label: presets.today.label },
+                { id: "weekly", label: presets.week.label },
+                { id: "monthly", label: presets.month.label },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => handleDatePresetChange(p.id)}
+                  className={`px-3 py-1.5 text-[0.7rem] font-bold uppercase rounded-full transition-all ${
+                    datePreset === p.id
+                      ? "bg-[#0A6E5A] text-white shadow-sm"
+                      : "bg-[#F5F7F6] text-[#0A6E5A] border border-[#0A6E5A]/10 hover:bg-[#0A6E5A]/5"
+                  }`}
+                  suppressHydrationWarning={true}
+                >
+                  {p.label}
+                </button>
+              ))}
             </div>
 
             {/* Status Tabs */}

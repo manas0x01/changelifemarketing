@@ -20,7 +20,7 @@ export default function ChangePasswordPage() {
 
     if (!oldPassword.trim()) { setError("Please enter your old password."); setLoading(false); return; }
     if (!newPassword.trim()) { setError("Please enter a new password."); setLoading(false); return; }
-    if (newPassword.length < 8) { setError("New password must be at least 8 characters."); setLoading(false); return; }
+    if (newPassword.length < 5) { setError("New password must be at least 5 characters."); setLoading(false); return; }
     if (newPassword !== rePassword) { setError("New passwords do not match."); setLoading(false); return; }
 
     try {

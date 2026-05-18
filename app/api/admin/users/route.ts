@@ -219,18 +219,18 @@ export async function PATCH(req: NextRequest) {
       user.isBlocked = isBlocked;
     }
     if (password && password.trim()) {
-      if (password.trim().length < 8) {
+      if (password.trim().length < 5) {
         return NextResponse.json(
-          { success: false, message: 'Password must be at least 8 characters long.' },
+          { success: false, message: 'Password must be at least 5 characters long.' },
           { status: 400 }
         );
       }
       user.password = password.trim();
     }
     if (transactionPassword && transactionPassword.trim()) {
-      if (transactionPassword.trim().length < 4) {
+      if (transactionPassword.trim().length < 6) {
         return NextResponse.json(
-          { success: false, message: 'Transaction Password must be at least 4 characters long.' },
+          { success: false, message: 'Transaction Password must be at least 6 characters long.' },
           { status: 400 }
         );
       }

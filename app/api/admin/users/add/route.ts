@@ -15,9 +15,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (password.length < 8) {
+    if (password.length < 5) {
       return NextResponse.json(
-        { message: 'Password must be at least 8 characters' },
+        { message: 'Password must be at least 5 characters' },
         { status: 400 }
       );
     }
@@ -35,9 +35,9 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-    if (String(transactionPassword).trim().length < 4) {
+    if (String(transactionPassword).trim().length < 6) {
       return NextResponse.json(
-        { message: 'Transaction Password must be at least 4 characters' },
+        { message: 'Transaction Password must be at least 6 characters' },
         { status: 400 }
       );
     }

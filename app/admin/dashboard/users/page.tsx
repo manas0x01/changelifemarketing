@@ -102,8 +102,8 @@ const AddUserModal = ({ onClose, onSuccess }: {
       toast.error('Username and password are required');
       return;
     }
-    if (formData.password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+    if (formData.password.length < 5) {
+      toast.error('Password must be at least 5 characters');
       return;
     }
     if (formData.mobileNo && formData.mobileNo.length !== 10) {
@@ -119,8 +119,8 @@ const AddUserModal = ({ onClose, onSuccess }: {
       toast.error('Transaction passwords do not match');
       return;
     }
-    if (formData.transactionPassword.trim().length < 4) {
-      toast.error('Transaction Password must be at least 4 characters');
+    if (formData.transactionPassword.trim().length < 6) {
+      toast.error('Transaction Password must be at least 6 characters');
       return;
     }
 
@@ -202,7 +202,7 @@ const AddUserModal = ({ onClose, onSuccess }: {
             <input type="text" name="username" value={formData.username} onChange={handleChange} placeholder="Enter username" className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
           </div>
           <div>
-            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Password (min 8 chars) *</label>
+            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Password (min 5 chars) *</label>
             <input type="password" name="password" value={formData.password} onChange={handleChange} placeholder="Enter password" className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
           </div>
           <div>

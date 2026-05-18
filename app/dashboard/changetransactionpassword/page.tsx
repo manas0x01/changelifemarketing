@@ -23,8 +23,8 @@ export default function ChangeTransactionPasswordPage() {
       setLoading(false);
       return;
     }
-    if (newTransactionPassword.length < 4) {
-      setError("New transaction password must be at least 4 characters.");
+    if (newTransactionPassword.length < 6) {
+      setError("New transaction password must be at least 6 characters.");
       setLoading(false);
       return;
     }

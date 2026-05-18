@@ -123,35 +123,35 @@ export default function ProfilePage() {
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height: 100vh;
         }
 
         /* ── GOLD BAR ── */
         .green-bar {
           height: 3px;
-          background: linear-gradient(90deg, transparent, #FFD700, #FFD700, #FFD700, transparent);
+          background: linear-gradient(90deg, transparent, #ffe97c, #ffe97c, #ffe97c, transparent);
         }
 
         /* ── BREADCRUMB ── */
         .breadcrumb {
           padding: 12px 20px;
           font-size: 13px;
-          color: #FFD700;
+          color: #ffe97c;
           display: flex;
           align-items: center;
           gap: 6px;
         }
-        .breadcrumb a { color: #FFD700; text-decoration: none; opacity: 0.85; }
+        .breadcrumb a { color: #ffe97c; text-decoration: none; opacity: 0.85; }
         .breadcrumb a:hover { text-decoration: underline; opacity: 1; }
-        .breadcrumb .sep { color: rgba(255,215,0,0.4); }
-        .breadcrumb .current { color: #FFD700; font-weight: 600; }
-        .breadcrumb svg { fill: #FFD700 !important; }
+        .breadcrumb .sep { color: rgba(255,233,124,0.4); }
+        .breadcrumb .current { color: #ffe97c; font-weight: 600; }
+        .breadcrumb svg { fill: #ffe97c !important; }
 
         /* ── PROFILE HERO CARD ── */
         .hero-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           margin: 0 20px 20px;
           border-radius: 12px;
           overflow: hidden;
@@ -168,7 +168,7 @@ export default function ProfilePage() {
           display: flex;
           align-items: center;
           justify-content: center;
-          border-bottom: 1.5px solid rgba(255,215,0,0.2);
+          border-bottom: 1.5px solid rgba(255,233,124,0.2);
         }
 
         /* WELCOME text rendered purely in CSS */
@@ -182,7 +182,7 @@ export default function ProfilePage() {
           font-weight: 900;
           letter-spacing: 10px;
           text-transform: uppercase;
-          background: linear-gradient(180deg, #FFD700 0%, #b8860b 50%, #5c4308 100%);
+          background: linear-gradient(180deg, #ffe97c 0%, #b8860b 50%, #5c4308 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -195,7 +195,7 @@ export default function ProfilePage() {
           font-weight: 700;
           letter-spacing: 18px;
           text-transform: uppercase;
-          background: linear-gradient(180deg, #FFD700 0%, #e6b800 100%);
+          background: linear-gradient(180deg, #ffe97c 0%, #e6b800 100%);
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
           background-clip: text;
@@ -221,14 +221,14 @@ export default function ProfilePage() {
           gap: 18px;
           padding: 10px 20px 14px;
           position: relative;
-          border-bottom: 1.5px solid rgba(255,215,0,0.2);
+          border-bottom: 1.5px solid rgba(255,233,124,0.2);
         }
         .hero-avatar {
           width: 110px;
           height: 110px;
           border-radius: 50%;
-          border: 3.5px solid #FFD700;
-          box-shadow: 0 4px 15px rgba(255,215,0,0.35);
+          border: 3.5px solid #ffe97c;
+          box-shadow: 0 4px 15px rgba(255,233,124,0.35);
           flex-shrink: 0;
           margin-top: -55px;
           position: relative;
@@ -238,9 +238,9 @@ export default function ProfilePage() {
         .hero-username {
           font-size: 20px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           padding-bottom: 2px;
-          text-shadow: 0 0 8px rgba(255,215,0,0.3);
+          text-shadow: 0 0 8px rgba(255,233,124,0.3);
         }
 
         /* ── TABS ── */
@@ -254,7 +254,7 @@ export default function ProfilePage() {
           padding: 14px 20px;
           font-size: 13.5px;
           font-weight: 600;
-          color: rgba(255,215,0,0.6);
+          color: rgba(255,233,124,0.6);
           cursor: pointer;
           border: none;
           background: none;
@@ -263,11 +263,11 @@ export default function ProfilePage() {
           transition: color 0.18s;
           border-bottom: 2px solid transparent;
         }
-        .tab-btn:hover { color: #FFD700; }
+        .tab-btn:hover { color: #ffe97c; }
         .tab-btn.active {
-          color: #FFD700;
-          border-bottom: 2px solid #FFD700;
-          text-shadow: 0 0 8px rgba(255,215,0,0.3);
+          color: #ffe97c;
+          border-bottom: 2px solid #ffe97c;
+          text-shadow: 0 0 8px rgba(255,233,124,0.3);
         }
 
         /* ── CONTENT GRID ── */
@@ -286,21 +286,21 @@ export default function ProfilePage() {
         /* ── DETAIL CARD ── */
         .detail-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
         }
         .detail-header {
-          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.25);
+          background: linear-gradient(90deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.25);
           padding: 13px 20px;
           font-size: 13px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           letter-spacing: 0.8px;
           text-transform: uppercase;
-          text-shadow: 0 0 8px rgba(255,215,0,0.45);
+          text-shadow: 0 0 8px rgba(255,233,124,0.45);
         }
 
         /* ── DETAIL ROWS ── */
@@ -309,22 +309,22 @@ export default function ProfilePage() {
           align-items: center;
           justify-content: space-between;
           padding: 13px 18px;
-          border-bottom: 1px solid rgba(255,215,0,0.12);
+          border-bottom: 1px solid rgba(255,233,124,0.12);
           transition: background 0.12s;
         }
         .detail-row:last-child { border-bottom: none; }
-        .detail-row:hover { background: rgba(255,215,0,0.04); }
+        .detail-row:hover { background: rgba(255,233,124,0.04); }
 
         .detail-label {
           font-size: 13.5px;
           font-weight: 600;
-          color: rgba(255,215,0,0.7);
+          color: rgba(255,233,124,0.7);
           flex-shrink: 0;
         }
         .detail-value {
           font-size: 13.5px;
           font-weight: 600;
-          color: #FFD700;
+          color: #ffe97c;
           text-align: right;
           margin-left: 16px;
           word-break: break-all;
@@ -353,17 +353,17 @@ export default function ProfilePage() {
           outline: none;
           transition: border-color 0.18s;
         }
-        .form-input:focus { border-color: #26a69a; }
+        .form-input:focus { border-color: #ffe97c; }
 
         .save-btn {
           margin-top: 18px;
-          background: linear-gradient(90deg, #26c6da, #1de9b6);
-          color: #fff;
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
+          color: #120228;
           border: none;
           border-radius: 7px;
           padding: 10px 28px;
           font-size: 14px;
-          font-weight: 600;
+          font-weight: 800;
           font-family: 'Poppins', sans-serif;
           cursor: pointer;
           transition: opacity 0.18s, transform 0.15s;
@@ -379,7 +379,7 @@ export default function ProfilePage() {
           background-size: 200% 100%;
           animation: shimmer 2s infinite;
           margin-top: -55px;
-          border: 3.5px solid rgba(255,215,0,0.3);
+          border: 3.5px solid rgba(255,233,124,0.3);
           flex-shrink: 0;
         }
 
@@ -394,14 +394,14 @@ export default function ProfilePage() {
 
         .skeleton-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65);
         }
 
         .skeleton-header {
-          background: rgba(255,215,0,0.1);
+          background: rgba(255,233,124,0.1);
           height: 42px;
           padding: 11px 18px;
         }
@@ -411,7 +411,7 @@ export default function ProfilePage() {
           justify-content: space-between;
           align-items: center;
           padding: 13px 18px;
-          border-bottom: 1px solid rgba(255,215,0,0.1);
+          border-bottom: 1px solid rgba(255,233,124,0.1);
         }
         .skeleton-row:last-child { border-bottom: none; }
 
@@ -453,7 +453,7 @@ export default function ProfilePage() {
 
         {/* ── BREADCRUMB ── */}
         <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#555">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffe97c">
             <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
           </svg>
           <Link href="/dashboard">Home</Link>

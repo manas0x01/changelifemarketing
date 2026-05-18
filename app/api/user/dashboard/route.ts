@@ -137,10 +137,56 @@ export async function GET(req: NextRequest) {
       bankName: user.bankAccountDetails?.bankName || user.bankName || "",
     };
 
+    // 3. Compute Real-time Cycle History from sessionBasedIncome
+    const cycleHistory: any[] = [];
+    if (Array.isArray(user.sessionBasedIncome) && user.sessionBasedIncome.length > 0) {
+      const groups: Record<string, { morning: number; evening: number; rawDate: Date }> = {};
+      
+      user.sessionBasedIncome.forEach((item: any) => {
+        const itemDate = new Date(item.date || item.sessionDate);
+        if (isNaN(itemDate.getTime())) return;
+        
+        const day = itemDate.getDate();
+        const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+        const month = monthNames[itemDate.getMonth()];
+        const year = itemDate.getFullYear();
+        const dateStr = `${day} ${month} ${year}`;
+        
+        if (!groups[dateStr]) {
+          groups[dateStr] = { morning: 0, evening: 0, rawDate: itemDate };
+        }
+        
+        const type = (item.sessionType || '').toLowerCase();
+        if (type === 'morning') {
+          groups[dateStr].morning += item.pairs || 0;
+        } else if (type === 'evening') {
+          groups[dateStr].evening += item.pairs || 0;
+        }
+      });
+      
+      const sortedKeys = Object.keys(groups).sort((a, b) => {
+        return groups[b].rawDate.getTime() - groups[a].rawDate.getTime();
+      });
+      
+      sortedKeys.forEach((dateKey) => {
+        const grp = groups[dateKey];
+        cycleHistory.push({
+          date: dateKey,
+          cycles: [
+            { label: "12:00 AM - 12:00 PM (Morning)", moon: false },
+            { label: "12:00 PM - 12:00 AM (Evening)", moon: true }
+          ],
+          matches: [grp.morning, grp.evening],
+          cappings: [1, 1] // Basic income capping per cycle is 1
+        });
+      });
+    }
+
     const respData = {
       totalTeam,
       totalDirect,
       totalActiveDirect,
+      cycleHistory,
       totalLeftBasicUser: detailedStats.leftBasic,
       totalRightBasicUser: detailedStats.rightBasic,
       totalLeftBoosterUser: detailedStats.leftBooster,

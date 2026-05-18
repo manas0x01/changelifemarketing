@@ -294,13 +294,13 @@ export default function EditProfilePage() {
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height: 100vh;
           color: #fff;
         }
 
         /* GOLD BAR */
-        .gold-bar { height:4px; background:linear-gradient(90deg, #FFD700, #f0a500); }
+        .gold-bar { height:4px; background:linear-gradient(90deg, #ffe97c, #f0a500); }
 
         /* BREADCRUMB */
         .breadcrumb {
@@ -313,17 +313,17 @@ export default function EditProfilePage() {
         }
         .breadcrumb-left {
           display: flex; align-items: center; gap: 6px;
-          font-size: 13px; color: rgba(255,215,0,0.7);
+          font-size: 13px; color: rgba(255,233,124,0.7);
         }
-        .breadcrumb-left a { color: rgba(255,215,0,0.7); text-decoration: none; }
-        .breadcrumb-left a:hover { color:#FFD700; text-decoration: underline; }
-        .breadcrumb-left .sep { color: rgba(255,215,0,0.4); }
-        .breadcrumb-left .current { color: #FFD700; font-weight: 700; }
+        .breadcrumb-left a { color: rgba(255,233,124,0.7); text-decoration: none; }
+        .breadcrumb-left a:hover { color:#ffe97c; text-decoration: underline; }
+        .breadcrumb-left .sep { color: rgba(255,233,124,0.4); }
+        .breadcrumb-left .current { color: #ffe97c; font-weight: 700; }
 
         .return-btn {
-          background: rgba(255,215,0,0.1);
-          color: #FFD700;
-          border: 1.5px solid rgba(255,215,0,0.25);
+          background: rgba(255,233,124,0.1);
+          color: #ffe97c;
+          border: 1.5px solid rgba(255,233,124,0.25);
           border-radius: 6px;
           padding: 8px 18px;
           font-size: 13px;
@@ -334,7 +334,7 @@ export default function EditProfilePage() {
           white-space: nowrap;
           text-decoration: none;
         }
-        .return-btn:hover { background: rgba(255,215,0,0.25); border-color:#FFD700; transform: translateY(-1px); }
+        .return-btn:hover { background: rgba(255,233,124,0.25); border-color:#ffe97c; transform: translateY(-1px); }
 
         /* ── PAGE BODY ── */
         .page-body { padding: 0 20px 30px; }
@@ -342,22 +342,22 @@ export default function EditProfilePage() {
         /* ── SECTION CARD ── */
         .section-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
           margin-bottom: 20px;
         }
         .section-header {
-          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.25);
+          background: linear-gradient(90deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.25);
           padding: 12px 20px;
           font-size: 13px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           letter-spacing: 0.8px;
           text-transform: uppercase;
-          text-shadow: 0 0 8px rgba(255,215,0,0.45);
+          text-shadow: 0 0 8px rgba(255,233,124,0.45);
         }
 
         /* ── PLACEMENT INFO ── */
@@ -371,10 +371,10 @@ export default function EditProfilePage() {
 
         .placement-item {
           font-size: 13.5px;
-          color: rgba(255,215,0,0.8);
+          color: rgba(255,233,124,0.8);
           font-weight: 400;
         }
-        .placement-item strong { color: #FFD700; font-weight: 700; }
+        .placement-item strong { color: #ffe97c; font-weight: 700; }
 
         /* ── FORM SECTION ── */
         .form-body { padding: 20px; }
@@ -393,19 +393,19 @@ export default function EditProfilePage() {
         .form-label {
           font-size: 13px;
           font-weight: 600;
-          color: #FFD700;
+          color: #ffe97c;
         }
-        .form-label .req { color: #FFD700; margin-right: 1px; }
+        .form-label .req { color: #ffe97c; margin-right: 1px; }
 
         /* Inputs */
         .form-input, .form-select {
           width: 100%;
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 6px;
           padding: 9px 12px;
           font-size: 13px;
           font-family: 'Poppins', sans-serif;
-          color: #FFD700;
+          color: #ffe97c;
           background: rgba(0,0,0,0.25);
           outline: none;
           transition: border-color 0.18s, box-shadow 0.18s;
@@ -414,9 +414,9 @@ export default function EditProfilePage() {
           height: 40px;
         }
         .form-input:focus, .form-select:focus {
-          border-color: #FFD700;
+          border-color: #ffe97c;
           background: rgba(0,0,0,0.35);
-          box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+          box-shadow: 0 0 0 3px rgba(255,233,124,0.15);
         }
         .form-select {
           background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='%23FFD700'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
@@ -427,7 +427,7 @@ export default function EditProfilePage() {
         }
         .form-select option {
           background-color: #1a0533;
-          color: #FFD700;
+          color: #ffe97c;
         }
         .form-input:disabled, .form-select:disabled {
           opacity: 0.6;
@@ -440,7 +440,7 @@ export default function EditProfilePage() {
           align-items: center;
           gap: 20px;
           padding: 10px 12px;
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 6px;
           background: rgba(0,0,0,0.25);
           min-height: 40px;
@@ -450,12 +450,12 @@ export default function EditProfilePage() {
           align-items: center;
           gap: 6px;
           font-size: 13px;
-          color: #FFD700;
+          color: #ffe97c;
           cursor: pointer;
           font-weight: 500;
         }
         .radio-label input[type="radio"] {
-          accent-color: #FFD700;
+          accent-color: #ffe97c;
           width: 15px;
           height: 15px;
           cursor: pointer;
@@ -486,7 +486,7 @@ export default function EditProfilePage() {
           padding: 10px 0 4px;
         }
         .update-btn {
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
           border: none;
           border-radius: 7px;
@@ -498,9 +498,9 @@ export default function EditProfilePage() {
           transition: background 0.18s, transform 0.15s, box-shadow 0.18s;
           letter-spacing: 0.5px;
           text-transform: uppercase;
-          box-shadow: 0 4px 15px rgba(255,215,0,0.25);
+          box-shadow: 0 4px 15px rgba(255,233,124,0.25);
         }
-        .update-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,215,0,0.35); }
+        .update-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,233,124,0.35); }
         .update-btn:active { transform: scale(0.98); }
         .update-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -509,13 +509,13 @@ export default function EditProfilePage() {
           position: fixed;
           bottom: 28px;
           right: 28px;
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
           padding: 12px 22px;
           border-radius: 8px;
           font-size: 13.5px;
           font-weight: 700;
-          box-shadow: 0 6px 22px rgba(255,215,0,0.4);
+          box-shadow: 0 6px 22px rgba(255,233,124,0.4);
           z-index: 999;
           animation: fadeInUp 0.3s ease;
         }
@@ -562,7 +562,7 @@ export default function EditProfilePage() {
         {/* ── BREADCRUMB ── */}
         <div className="breadcrumb">
           <div className="breadcrumb-left">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffe97c">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>
             <Link href="/dashboard">Home</Link>

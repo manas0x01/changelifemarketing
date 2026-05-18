@@ -165,20 +165,20 @@ export default function WithdrawalsHistoryPage() {
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height: 100vh;
           color: #fff;
         }
 
         /* GOLD BAR */
-        .gold-bar { height:4px; background:linear-gradient(90deg, #FFD700, #f0a500); }
+        .gold-bar { height:4px; background:linear-gradient(90deg, #ffe97c, #f0a500); }
 
         /* BREADCRUMB */
-        .breadcrumb { padding:12px 20px; font-size:13px; color:rgba(255,215,0,0.7); display:flex; align-items:center; gap:6px; }
-        .breadcrumb a { color:rgba(255,215,0,0.7); text-decoration:none; }
-        .breadcrumb a:hover { color:#FFD700; text-decoration:underline; }
-        .breadcrumb .sep { color:rgba(255,215,0,0.4); }
-        .breadcrumb .current { color:#FFD700; font-weight:700; }
+        .breadcrumb { padding:12px 20px; font-size:13px; color:rgba(255,233,124,0.7); display:flex; align-items:center; gap:6px; }
+        .breadcrumb a { color:rgba(255,233,124,0.7); text-decoration:none; }
+        .breadcrumb a:hover { color:#ffe97c; text-decoration:underline; }
+        .breadcrumb .sep { color:rgba(255,233,124,0.4); }
+        .breadcrumb .current { color:#ffe97c; font-weight:700; }
 
         /* PAGE BODY */
         .page-body { padding:0 10px 40px; }
@@ -199,7 +199,7 @@ export default function WithdrawalsHistoryPage() {
         }
         .summary-card {
           background: linear-gradient(135deg, #250845 0%, #17022e 100%);
-          border: 1px solid rgba(255,215,0,0.18);
+          border: 1px solid rgba(255,233,124,0.18);
           border-radius: 12px;
           padding: 16px;
           text-align: center;
@@ -210,7 +210,7 @@ export default function WithdrawalsHistoryPage() {
           font-weight: 600;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          color: rgba(255,215,0,0.7);
+          color: rgba(255,233,124,0.7);
           margin-bottom: 6px;
         }
         .summary-val {
@@ -218,7 +218,7 @@ export default function WithdrawalsHistoryPage() {
           font-weight: 800;
           color: #fff;
         }
-        .val-gold { color: #FFD700; text-shadow: 0 0 8px rgba(255,215,0,0.25); }
+        .val-gold { color: #ffe97c; text-shadow: 0 0 8px rgba(255,233,124,0.25); }
         .val-emerald { color: #00ff88; text-shadow: 0 0 8px rgba(0,255,136,0.25); }
         .val-amber { color: #f59e0b; text-shadow: 0 0 8px rgba(245,158,11,0.25); }
         .val-rose { color: #ff5555; text-shadow: 0 0 8px rgba(255,85,85,0.25); }
@@ -226,7 +226,7 @@ export default function WithdrawalsHistoryPage() {
         /* MAIN CARD */
         .main-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 16px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
@@ -235,26 +235,26 @@ export default function WithdrawalsHistoryPage() {
         /* HEADER */
         .section-header {
           background: linear-gradient(90deg, #1d033a, #110122);
-          border-bottom: 1.5px solid rgba(255,215,0,0.22);
+          border-bottom: 1.5px solid rgba(255,233,124,0.22);
           padding:16px 20px;
           display:flex; align-items:center; justify-content:space-between;
           flex-wrap: wrap;
           gap: 12px;
         }
-        .section-title { font-size:14px; font-weight:800; color:#FFD700; letter-spacing:0.8px; text-transform:uppercase; text-shadow: 0 0 8px rgba(255,215,0,0.3); }
+        .section-title { font-size:14px; font-weight:800; color:#ffe97c; letter-spacing:0.8px; text-transform:uppercase; text-shadow: 0 0 8px rgba(255,233,124,0.3); }
         
         /* FILTERS */
         .tabs-row {
           display: flex;
           background: rgba(0,0,0,0.25);
-          border: 1px solid rgba(255,215,0,0.2);
+          border: 1px solid rgba(255,233,124,0.2);
           border-radius: 20px;
           padding: 3px;
         }
         .tab-btn {
           background: transparent;
           border: none;
-          color: rgba(255,215,0,0.6);
+          color: rgba(255,233,124,0.6);
           padding: 6px 14px;
           font-size: 11px;
           font-weight: 700;
@@ -265,12 +265,12 @@ export default function WithdrawalsHistoryPage() {
           transition: all 0.2s;
         }
         .tab-btn:hover {
-          color: #FFD700;
+          color: #ffe97c;
         }
         .tab-btn.active {
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
-          box-shadow: 0 2px 8px rgba(255,215,0,0.25);
+          box-shadow: 0 2px 8px rgba(255,233,124,0.25);
         }
 
         /* STATUS BADGE */
@@ -306,22 +306,22 @@ export default function WithdrawalsHistoryPage() {
         .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; }
         .data-table { width:100%; border-collapse:collapse; font-size:12px; min-width:900px; }
         @media(min-width:768px) { .data-table { font-size:13px; } }
-        .data-table thead tr { background: rgba(0, 0, 0, 0.35); border-bottom: 2px solid rgba(255,215,0,0.22); }
+        .data-table thead tr { background: rgba(0, 0, 0, 0.35); border-bottom: 2px solid rgba(255,233,124,0.22); }
         .data-table thead th {
           padding:14px 16px; text-align:left;
-          color:#FFD700; font-weight:700; font-size:13px;
+          color:#ffe97c; font-weight:700; font-size:13px;
           white-space:nowrap; text-transform:uppercase; letter-spacing:0.8px;
         }
         .data-table tbody tr:nth-child(odd)  { background: rgba(29, 3, 58, 0.35); }
         .data-table tbody tr:nth-child(even) { background: rgba(17, 1, 34, 0.35); }
-        .data-table tbody tr:hover { background: rgba(255,215,0,0.06); transition:background .15s; }
+        .data-table tbody tr:hover { background: rgba(255,233,124,0.06); transition:background .15s; }
         .data-table tbody td {
           padding:13px 16px; color:#ffffff;
-          border-bottom:1px solid rgba(255,215,0,0.12); font-size:13px; white-space:nowrap;
+          border-bottom:1px solid rgba(255,233,124,0.12); font-size:13px; white-space:nowrap;
           vertical-align:middle;
         }
 
-        .amt-text { font-weight: 800; color: #FFD700; font-size: 14px; }
+        .amt-text { font-weight: 800; color: #ffe97c; font-size: 14px; }
         .utr-text { font-family: monospace; color: #a855f7; font-weight: 600; letter-spacing: 0.5px; }
         .remark-text { white-space: normal; max-width: 250px; color: rgba(255,255,255,0.7); font-size: 12.5px; line-height: 1.4; }
 
@@ -336,7 +336,7 @@ export default function WithdrawalsHistoryPage() {
           animation: skeletonShimmer 2s infinite;
         }
         .skeleton-row td { padding: 13px 16px; }
-        .skeleton-cell { height: 20px; background: rgba(255,215,0,0.1); border-radius: 4px; }
+        .skeleton-cell { height: 20px; background: rgba(255,233,124,0.1); border-radius: 4px; }
 
         /* Error state */
         .error-container {
@@ -363,7 +363,7 @@ export default function WithdrawalsHistoryPage() {
 
         {/* BREADCRUMB */}
         <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffe97c"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
           <a href="/dashboard">Home</a>
           <span className="sep">/</span>
           <span>Daily Payout</span>
@@ -411,8 +411,8 @@ export default function WithdrawalsHistoryPage() {
             </div>
 
             {/* Date Filters Presets */}
-            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", padding: "16px 20px 8px", borderBottom: "1px solid rgba(255,215,0,0.12)" }}>
-              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "rgba(255,215,0,0.5)", marginRight: "8px" }}>Filter By Period:</span>
+            <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: "8px", padding: "16px 20px 8px", borderBottom: "1px solid rgba(255,233,124,0.12)" }}>
+              <span style={{ fontSize: "11px", fontWeight: 700, textTransform: "uppercase", color: "rgba(255,233,124,0.5)", marginRight: "8px" }}>Filter By Period:</span>
               {([
                 { id: "All", label: "All Time" },
                 { id: "Daily", label: presets.today.label },
@@ -423,9 +423,9 @@ export default function WithdrawalsHistoryPage() {
                   key={p.id}
                   onClick={() => setDatePreset(p.id)}
                   style={{
-                    background: datePreset === p.id ? "linear-gradient(135deg, #FFD700 0%, #f0a500 100%)" : "rgba(0,0,0,0.25)",
-                    border: "1px solid " + (datePreset === p.id ? "#FFD700" : "rgba(255,215,0,0.2)"),
-                    color: datePreset === p.id ? "#120228" : "rgba(255,215,0,0.7)",
+                    background: datePreset === p.id ? "linear-gradient(135deg, #ffe97c 0%, #f0a500 100%)" : "rgba(0,0,0,0.25)",
+                    border: "1px solid " + (datePreset === p.id ? "#ffe97c" : "rgba(255,233,124,0.2)"),
+                    color: datePreset === p.id ? "#120228" : "rgba(255,233,124,0.7)",
                     padding: "6px 12px",
                     fontSize: "11px",
                     fontWeight: 700,
@@ -433,7 +433,7 @@ export default function WithdrawalsHistoryPage() {
                     cursor: "pointer",
                     textTransform: "uppercase",
                     transition: "all 0.2s",
-                    boxShadow: datePreset === p.id ? "0 2px 8px rgba(255,215,0,0.25)" : "none",
+                    boxShadow: datePreset === p.id ? "0 2px 8px rgba(255,233,124,0.25)" : "none",
                   }}
                   suppressHydrationWarning={true}
                 >
@@ -483,7 +483,7 @@ export default function WithdrawalsHistoryPage() {
                     </>
                   ) : filteredRequests.length === 0 ? (
                     <tr>
-                      <td colSpan={8} style={{ textAlign: "center", padding: "45px", color: "rgba(255,215,0,0.5)" }}>
+                      <td colSpan={8} style={{ textAlign: "center", padding: "45px", color: "rgba(255,233,124,0.5)" }}>
                         No withdrawal requests found in this category.
                       </td>
                     </tr>

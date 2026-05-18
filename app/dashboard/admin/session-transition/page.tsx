@@ -5,40 +5,40 @@ import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
 export default function SessionTransitionPage() {
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [activePage, setActivePage] = useState<"dashboard" | "profile">("dashboard");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState<any>(null);
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [activePage, setActivePage] = useState<"dashboard" | "profile">("dashboard");
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState<any>(null);
 
-  const handleManualTrigger = async () => {
-    // Manual trigger is disabled as requested by user
-    toast.info("Session transition is now fully automated and triggers at 12 AM / 12 PM.");
-    return;
-  };
+    const handleManualTrigger = async () => {
+        // Manual trigger is disabled as requested by user
+        toast.info("Session transition is now fully automated and triggers at 12 AM / 12 PM.");
+        return;
+    };
 
-  const getCurrentTime = () => {
-    const now = new Date();
-    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-  };
+    const getCurrentTime = () => {
+        const now = new Date();
+        return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+    };
 
-  const getCurrentSession = () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    return currentHour >= 0 && currentHour < 12 ? "Morning (12 AM - 12 PM)" : "Evening (12 PM - 12 AM)";
-  };
+    const getCurrentSession = () => {
+        const now = new Date();
+        const currentHour = now.getHours();
+        return currentHour >= 0 && currentHour < 12 ? "Morning (12 AM - 12 PM)" : "Evening (12 PM - 12 AM)";
+    };
 
-  const isTransitionPeriod = () => {
-    const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
-    
-    return (currentHour === 11 && currentMinute >= 50) || 
-           (currentHour === 23 && currentMinute >= 50);
-  };
+    const isTransitionPeriod = () => {
+        const now = new Date();
+        const currentHour = now.getHours();
+        const currentMinute = now.getMinutes();
 
-  return (
-    <>
-      <style>{`
+        return (currentHour === 11 && currentMinute >= 50) ||
+            (currentHour === 23 && currentMinute >= 50);
+    };
+
+    return (
+        <>
+            <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
@@ -208,87 +208,87 @@ export default function SessionTransitionPage() {
         }
       `}</style>
 
-      <div className="st-root">
-        <Navbar dropdownOpen={dropdownOpen} setDropdownOpen={setDropdownOpen} setActivePage={setActivePage} />
+            <div className="st-root">
+                <Navbar dropdownOpen={dropdownOpen} setDropdownOpen={setDropdownOpen} setActivePage={setActivePage} />
 
-        <div className="green-bar" />
+                <div className="green-bar" />
 
-        <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <a href="/dashboard">Home</a>
-          <span className="sep">/</span>
-          <span>Admin</span>
-          <span className="sep">/</span>
-          <span>Session Transition</span>
-        </div>
+                <div className="breadcrumb">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" /></svg>
+                    <a href="/dashboard">Home</a>
+                    <span className="sep">/</span>
+                    <span>Admin</span>
+                    <span className="sep">/</span>
+                    <span>Session Transition</span>
+                </div>
 
-        <div className="page-body">
-          <div className="main-card">
-            <div className="section-header">
-              <span className="section-title">Session Transition Control</span>
+                <div className="page-body">
+                    <div className="main-card">
+                        <div className="section-header">
+                            <span className="section-title">Session Transition Control</span>
+                        </div>
+
+                        <div className="card-content">
+                            <div className="info-grid">
+                                <div className="info-card">
+                                    <div className="info-label">Current Time</div>
+                                    <div className="info-value">{getCurrentTime()}</div>
+                                </div>
+
+                                <div className="info-card">
+                                    <div className="info-label">Current Session</div>
+                                    <div className="info-value">{getCurrentSession()}</div>
+                                </div>
+
+                                <div className="info-card">
+                                    <div className="info-label">Transition Period</div>
+                                    <div className={`info-value ${isTransitionPeriod() ? 'status-active' : 'status-inactive'}`}>
+                                        {isTransitionPeriod() ? 'ACTIVE (11:50-12:00)' : 'INACTIVE'}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button
+                                className="trigger-btn"
+                                onClick={handleManualTrigger}
+                                disabled={true}
+                            >
+                                Transition is now Automated
+                            </button>
+
+                            <div className="note-text">
+                                ℹ️ Session transition is now automatically handled by the system at 12:00 AM (Morning start) and 12:00 PM (Evening start). Manual triggers are no longer required.
+                            </div>
+
+                            {result && (
+                                <div className="result-box">
+                                    <div className="result-title">Transition Completed Successfully</div>
+                                    <div className="result-item">
+                                        <span className="result-label">Users Processed</span>
+                                        <span className="result-value">{result.usersProcessed}</span>
+                                    </div>
+                                    <div className="result-item">
+                                        <span className="result-label">Total Income Added</span>
+                                        <span className="result-value">₹{result.totalIncomeAdded.toLocaleString()}</span>
+                                    </div>
+                                    <div className="result-item">
+                                        <span className="result-label">Total Pairs Flushed</span>
+                                        <span className="result-value">{result.totalPairsFlushed}</span>
+                                    </div>
+                                    <div className="result-item">
+                                        <span className="result-label">From Session</span>
+                                        <span className="result-value">{result.fromSession}</span>
+                                    </div>
+                                    <div className="result-item">
+                                        <span className="result-label">To Session</span>
+                                        <span className="result-value">{result.toSession}</span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
             </div>
-
-            <div className="card-content">
-              <div className="info-grid">
-                <div className="info-card">
-                  <div className="info-label">Current Time</div>
-                  <div className="info-value">{getCurrentTime()}</div>
-                </div>
-                
-                <div className="info-card">
-                  <div className="info-label">Current Session</div>
-                  <div className="info-value">{getCurrentSession()}</div>
-                </div>
-                
-                <div className="info-card">
-                  <div className="info-label">Transition Period</div>
-                  <div className={`info-value ${isTransitionPeriod() ? 'status-active' : 'status-inactive'}`}>
-                    {isTransitionPeriod() ? 'ACTIVE (11:50-12:00)' : 'INACTIVE'}
-                  </div>
-                </div>
-              </div>
-
-              <button
-                className="trigger-btn"
-                onClick={handleManualTrigger}
-                disabled={true}
-              >
-                Transition is now Automated
-              </button>
-
-              <div className="note-text">
-                ℹ️ Session transition is now automatically handled by the system at 12:00 AM (Morning start) and 12:00 PM (Evening start). Manual triggers are no longer required.
-              </div>
-
-              {result && (
-                <div className="result-box">
-                  <div className="result-title">Transition Completed Successfully</div>
-                  <div className="result-item">
-                    <span className="result-label">Users Processed</span>
-                    <span className="result-value">{result.usersProcessed}</span>
-                  </div>
-                  <div className="result-item">
-                    <span className="result-label">Total Income Added</span>
-                    <span className="result-value">₹{result.totalIncomeAdded.toLocaleString()}</span>
-                  </div>
-                  <div className="result-item">
-                    <span className="result-label">Total Pairs Flushed</span>
-                    <span className="result-value">{result.totalPairsFlushed}</span>
-                  </div>
-                  <div className="result-item">
-                    <span className="result-label">From Session</span>
-                    <span className="result-value">{result.fromSession}</span>
-                  </div>
-                  <div className="result-item">
-                    <span className="result-label">To Session</span>
-                    <span className="result-value">{result.toSession}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </>
-  );
+        </>
+    );
 }

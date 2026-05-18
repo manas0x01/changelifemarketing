@@ -3,54 +3,65 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 
-export default function ChangePasswordPage() {
+export default function ChangeTransactionPasswordPage() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [activePage, setActivePage] = useState<"dashboard" | "profile">("dashboard");
-  const [oldPassword,  setOldPassword]  = useState("");
-  const [newPassword,  setNewPassword]  = useState("");
-  const [rePassword,   setRePassword]   = useState("");
-  const [error,        setError]        = useState("");
-  const [success,      setSuccess]      = useState(false);
-  const [loading,      setLoading]      = useState(false);
+  const [oldTransactionPassword, setOldTransactionPassword] = useState("");
+  const [newTransactionPassword, setNewTransactionPassword] = useState("");
+  const [reTransactionPassword, setReTransactionPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const handleProceed = async () => {
     setError("");
     setSuccess(false);
     setLoading(true);
 
-    if (!oldPassword.trim()) { setError("Please enter your old password."); setLoading(false); return; }
-    if (!newPassword.trim()) { setError("Please enter a new password."); setLoading(false); return; }
-    if (newPassword.length < 8) { setError("New password must be at least 8 characters."); setLoading(false); return; }
-    if (newPassword !== rePassword) { setError("New passwords do not match."); setLoading(false); return; }
+    if (!newTransactionPassword.trim()) {
+      setError("Please enter a new transaction password.");
+      setLoading(false);
+      return;
+    }
+    if (newTransactionPassword.length < 4) {
+      setError("New transaction password must be at least 4 characters.");
+      setLoading(false);
+      return;
+    }
+    if (newTransactionPassword !== reTransactionPassword) {
+      setError("New transaction passwords do not match.");
+      setLoading(false);
+      return;
+    }
 
     try {
-      const response = await fetch('/api/user/change-password', {
+      const response = await fetch('/api/user/change-transaction-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
         body: JSON.stringify({
-          oldPassword,
-          newPassword,
+          oldTransactionPassword,
+          newTransactionPassword,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        setError(data.error || "Failed to change password");
+        setError(data.error || "Failed to change transaction password");
         setLoading(false);
         return;
       }
 
       setSuccess(true);
-      setOldPassword("");
-      setNewPassword("");
-      setRePassword("");
+      setOldTransactionPassword("");
+      setNewTransactionPassword("");
+      setReTransactionPassword("");
       setLoading(false);
     } catch (err) {
-      setError("An error occurred while changing the password");
+      setError("An error occurred while changing the transaction password");
       setLoading(false);
     }
   };
@@ -72,7 +83,7 @@ export default function ChangePasswordPage() {
         }
 
         /* GOLD BAR */
-        .gold-bar { height:4px; background:linear-gradient(90deg, #ffe97c, #f0a500); }
+        .gold-bar { height:3px; background:linear-gradient(90deg, transparent, #ffe97c, #ffe97c, #ffe97c, transparent); }
 
         /* BREADCRUMB */
         .breadcrumb { padding:12px 20px; font-size:13px; color:rgba(255,233,124,0.7); display:flex; align-items:center; gap:6px; }
@@ -164,11 +175,11 @@ export default function ChangePasswordPage() {
         }
         .success-msg {
           background: rgba(16, 185, 129, 0.12);
-          border-left: 4px solid #00ff88;
+          border-left: 4px solid #ffe97c;
           border-radius:4px;
           padding:10px 14px;
           font-size:13px;
-          color:#00ff88;
+          color:#ffe97c;
           margin-bottom:18px;
           display:flex; align-items:center; gap:6px;
         }
@@ -177,7 +188,7 @@ export default function ChangePasswordPage() {
         .proceed-wrap { display:flex; justify-content:center; padding-top:4px; }
 
         .proceed-btn {
-          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #ffe97c 100%);
           color:#120228;
           border:none;
           border-radius:7px;
@@ -191,7 +202,7 @@ export default function ChangePasswordPage() {
           transition: all 0.2s, transform .15s;
           box-shadow: 0 4px 12px rgba(255,233,124,0.2);
         }
-        .proceed-btn:hover:not(:disabled) { background: linear-gradient(135deg, #FFE042 0%, #f0b500 100%); transform:translateY(-1px); }
+        .proceed-btn:hover:not(:disabled) { background: linear-gradient(135deg, #ffe97c 0%, #ffe97c 100%); transform:translateY(-1px); }
         .proceed-btn:active:not(:disabled) { transform:scale(0.98); }
         .proceed-btn:disabled { background:rgba(255,233,124,0.25); color:rgba(255,233,124,0.4); cursor:not-allowed; opacity:0.7; box-shadow:none; }
       `}</style>
@@ -209,14 +220,14 @@ export default function ChangePasswordPage() {
           <span className="sep">/</span>
           <span>Setting</span>
           <span className="sep">/</span>
-          <span className="current">Change Password</span>
+          <span className="current">Change Transaction Password</span>
         </div>
 
         <div className="page-body">
           <div className="cp-card">
 
             {/* HEADER */}
-            <div className="card-header">Change Password</div>
+            <div className="card-header">Change Transaction Password</div>
 
             {/* FORM */}
             <div className="form-body">
@@ -232,50 +243,50 @@ export default function ChangePasswordPage() {
               {/* Success */}
               {success && (
                 <div className="success-msg">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#00ff88"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
-                  Password changed successfully!
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffe97c"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                  Transaction password changed successfully!
                 </div>
               )}
 
               {/* Old Password */}
               <div className="form-group">
                 <label className="form-label">
-                  <span className="req">*</span>Enter Old Password :
+                  Enter Old Transaction Password (if set) :
                 </label>
                 <input
                   className="form-input"
                   type="password"
-                  placeholder="Enter Old Password"
-                  value={oldPassword}
-                  onChange={(e) => { setOldPassword(e.target.value); setError(""); setSuccess(false); }}
+                  placeholder="Enter Old Transaction Password"
+                  value={oldTransactionPassword}
+                  onChange={(e) => { setOldTransactionPassword(e.target.value); setError(""); setSuccess(false); }}
                 />
               </div>
 
               {/* New Password */}
               <div className="form-group">
                 <label className="form-label">
-                  <span className="req">*</span>Enter New Password :
+                  <span className="req">*</span>Enter New Transaction Password :
                 </label>
                 <input
                   className="form-input"
                   type="password"
-                  placeholder="Enter New Password"
-                  value={newPassword}
-                  onChange={(e) => { setNewPassword(e.target.value); setError(""); setSuccess(false); }}
+                  placeholder="Enter New Transaction Password"
+                  value={newTransactionPassword}
+                  onChange={(e) => { setNewTransactionPassword(e.target.value); setError(""); setSuccess(false); }}
                 />
               </div>
 
               {/* Re-Enter New Password */}
               <div className="form-group">
                 <label className="form-label">
-                  <span className="req">*</span>Re-Enter New Password :
+                  <span className="req">*</span>Re-Enter New Transaction Password :
                 </label>
                 <input
                   className="form-input"
                   type="password"
-                  placeholder="Re-Enter New Password"
-                  value={rePassword}
-                  onChange={(e) => { setRePassword(e.target.value); setError(""); setSuccess(false); }}
+                  placeholder="Re-Enter New Transaction Password"
+                  value={reTransactionPassword}
+                  onChange={(e) => { setReTransactionPassword(e.target.value); setError(""); setSuccess(false); }}
                   onKeyDown={(e) => e.key === "Enter" && handleProceed()}
                 />
               </div>

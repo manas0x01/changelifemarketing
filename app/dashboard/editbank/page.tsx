@@ -166,13 +166,13 @@ export default function EditBankPage() {
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height: 100vh;
           color: #fff;
         }
 
         /* GOLD BAR */
-        .gold-bar { height:4px; background:linear-gradient(90deg, #FFD700, #f0a500); }
+        .gold-bar { height:4px; background:linear-gradient(90deg, #ffe97c, #f0a500); }
 
         /* BREADCRUMB ROW */
         .breadcrumb-row {
@@ -185,17 +185,17 @@ export default function EditBankPage() {
         }
         .breadcrumb-left {
           display: flex; align-items: center; gap: 6px;
-          font-size: 13px; color: rgba(255,215,0,0.7);
+          font-size: 13px; color: rgba(255,233,124,0.7);
         }
-        .breadcrumb-left a { color: rgba(255,215,0,0.7); text-decoration: none; }
-        .breadcrumb-left a:hover { color:#FFD700; text-decoration: underline; }
-        .breadcrumb-left .sep { color: rgba(255,215,0,0.4); }
-        .breadcrumb-left .current { color: #FFD700; font-weight: 700; }
+        .breadcrumb-left a { color: rgba(255,233,124,0.7); text-decoration: none; }
+        .breadcrumb-left a:hover { color:#ffe97c; text-decoration: underline; }
+        .breadcrumb-left .sep { color: rgba(255,233,124,0.4); }
+        .breadcrumb-left .current { color: #ffe97c; font-weight: 700; }
 
         .return-btn {
-          background: rgba(255,215,0,0.1);
-          color: #FFD700;
-          border: 1.5px solid rgba(255,215,0,0.25);
+          background: rgba(255,233,124,0.1);
+          color: #ffe97c;
+          border: 1.5px solid rgba(255,233,124,0.25);
           border-radius: 6px;
           padding: 8px 18px;
           font-size: 13px;
@@ -206,7 +206,7 @@ export default function EditBankPage() {
           white-space: nowrap;
           text-decoration: none;
         }
-        .return-btn:hover { background: rgba(255,215,0,0.25); border-color:#FFD700; transform: translateY(-1px); }
+        .return-btn:hover { background: rgba(255,233,124,0.25); border-color:#ffe97c; transform: translateY(-1px); }
 
         /* PAGE BODY */
         .page-body { padding: 0 20px 30px; }
@@ -214,21 +214,21 @@ export default function EditBankPage() {
         /* CARD */
         .section-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 16px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
         }
         .section-header {
           background: linear-gradient(90deg, #1d033a, #110122);
-          border-bottom: 1.5px solid rgba(255,215,0,0.22);
+          border-bottom: 1.5px solid rgba(255,233,124,0.22);
           padding: 16px 20px;
           font-size: 14px;
           font-weight: 800;
-          color: #FFD700;
+          color: #ffe97c;
           letter-spacing: 0.8px;
           text-transform: uppercase;
-          text-shadow: 0 0 8px rgba(255,215,0,0.3);
+          text-shadow: 0 0 8px rgba(255,233,124,0.3);
         }
 
         /* FORM BODY */
@@ -250,14 +250,14 @@ export default function EditBankPage() {
         .form-label {
           font-size: 13.5px;
           font-weight: 600;
-          color: rgba(255,215,0,0.85);
+          color: rgba(255,233,124,0.85);
           text-transform: uppercase;
           letter-spacing: 0.5px;
         }
 
         .form-input, .form-select {
           width: 100%;
-          border: 1.5px solid rgba(255,215,0,0.25);
+          border: 1.5px solid rgba(255,233,124,0.25);
           border-radius: 6px;
           padding: 10px 13px;
           font-size: 13.5px;
@@ -268,14 +268,14 @@ export default function EditBankPage() {
           transition: all 0.2s;
         }
         .form-input:focus, .form-select:focus {
-          border-color: #FFD700;
-          box-shadow: 0 0 10px rgba(255,215,0,0.2);
+          border-color: #ffe97c;
+          box-shadow: 0 0 10px rgba(255,233,124,0.2);
         }
         .form-input:disabled, .form-select:disabled {
           opacity: 0.65;
           cursor: not-allowed;
-          border-color: rgba(255,215,0,0.1);
-          background: rgba(255,215,0,0.02);
+          border-color: rgba(255,233,124,0.1);
+          background: rgba(255,233,124,0.02);
         }
         .form-select {
           appearance: none;
@@ -298,7 +298,7 @@ export default function EditBankPage() {
           padding-top: 4px;
         }
         .update-btn {
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
           border: none;
           border-radius: 7px;
@@ -310,7 +310,7 @@ export default function EditBankPage() {
           letter-spacing: 0.5px;
           text-transform: uppercase;
           transition: all 0.2s, transform 0.15s;
-          box-shadow: 0 4px 12px rgba(255,215,0,0.2);
+          box-shadow: 0 4px 12px rgba(255,233,124,0.2);
         }
         .update-btn:hover { background: linear-gradient(135deg, #FFE042 0%, #f0b500 100%); transform: translateY(-1px); }
         .update-btn:active { transform: scale(0.98); }
@@ -319,13 +319,13 @@ export default function EditBankPage() {
         .toast {
           position: fixed;
           bottom: 28px; right: 28px;
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
           padding: 12px 22px;
           border-radius: 8px;
           font-size: 13.5px;
           font-weight: 800;
-          box-shadow: 0 6px 20px rgba(255,215,0,0.3);
+          box-shadow: 0 6px 20px rgba(255,233,124,0.3);
           z-index: 999;
           animation: fadeUp 0.3s ease;
         }
@@ -371,7 +371,7 @@ export default function EditBankPage() {
         {/* BREADCRUMB */}
         <div className="breadcrumb-row">
           <div className="breadcrumb-left">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffe97c">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
             </svg>
             <Link href="/dashboard">Home</Link>

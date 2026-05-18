@@ -505,21 +505,21 @@ export default function NewRegisterPage() {
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height: 100vh;
         }
 
         /* ── GOLD BAR ── */
         .green-bar {
           height: 3px;
-          background: linear-gradient(90deg, transparent, #FFD700, #FFD700, #FFD700, transparent);
+          background: linear-gradient(90deg, transparent, #ffe97c, #ffe97c, #ffe97c, transparent);
         }
 
         /* ── BREADCRUMB ── */
         .breadcrumb {
           padding: 12px 20px;
           font-size: 13px;
-          color: #FFD700;
+          color: #ffe97c;
           font-weight: 500;
           display: flex;
           align-items: center;
@@ -527,10 +527,10 @@ export default function NewRegisterPage() {
           text-transform: uppercase;
           letter-spacing: 0.3px;
         }
-        .breadcrumb a { color: #FFD700; text-decoration: none; font-weight: 500; opacity: 0.85; }
+        .breadcrumb a { color: #ffe97c; text-decoration: none; font-weight: 500; opacity: 0.85; }
         .breadcrumb a:hover { text-decoration: underline; opacity: 1; }
         .breadcrumb .sep { color: rgba(255, 215, 0, 0.4); font-weight: 400; }
-        .breadcrumb .current { color: #FFD700; }
+        .breadcrumb .current { color: #ffe97c; }
 
         /* ── PAGE BODY ── */
         .page-body { padding: 0 20px 30px; }
@@ -538,22 +538,22 @@ export default function NewRegisterPage() {
         /* ── SECTION CARD ── */
         .section-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
           margin-bottom: 20px;
         }
         .section-header {
-          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.25);
+          background: linear-gradient(90deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.25);
           padding: 13px 20px;
           font-size: 13px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           letter-spacing: 0.8px;
           text-transform: uppercase;
-          text-shadow: 0 0 8px rgba(255,215,0,0.45);
+          text-shadow: 0 0 8px rgba(255,233,124,0.45);
         }
 
         /* ── LOADING OVERLAY ── */
@@ -575,20 +575,20 @@ export default function NewRegisterPage() {
         .loading-circle {
           width: 60px;
           height: 60px;
-          border: 4px solid rgba(255,215,0,0.15);
-          border-top: 4px solid #FFD700;
+          border: 4px solid rgba(255,233,124,0.15);
+          border-top: 4px solid #ffe97c;
           border-radius: 50%;
           animation: spin 1s linear infinite;
           margin-bottom: 20px;
-          box-shadow: 0 0 15px rgba(255,215,0,0.2);
+          box-shadow: 0 0 15px rgba(255,233,124,0.2);
         }
 
         .loading-text {
           font-size: 18px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           letter-spacing: 1px;
-          text-shadow: 0 0 8px rgba(255,215,0,0.4);
+          text-shadow: 0 0 8px rgba(255,233,124,0.4);
         }
 
         @keyframes spin {
@@ -607,14 +607,14 @@ export default function NewRegisterPage() {
         .txn-label {
           font-size: 13.5px;
           font-weight: 600;
-          color: #FFD700;
+          color: #ffe97c;
           white-space: nowrap;
           flex-shrink: 0;
           display: flex;
           align-items: center;
           height: 42px;
         }
-        .txn-label .req { color: #FFD700; margin-right: 1px; }
+        .txn-label .req { color: #ffe97c; margin-right: 1px; }
 
         .txn-input-group {
           flex: 1;
@@ -625,24 +625,24 @@ export default function NewRegisterPage() {
         }
 
         .txn-input {
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 5px;
           padding: 10px 14px;
           font-size: 13.5px;
           font-family: 'Poppins', sans-serif;
-          color: #FFD700;
+          color: #ffe97c;
           background: rgba(0,0,0,0.25);
           outline: none;
           transition: border-color 0.18s, box-shadow 0.18s;
         }
-        .txn-input::placeholder { color: rgba(255,215,0,0.3); text-transform: uppercase; font-size: 12.5px; }
-        .txn-input:focus { border-color: #FFD700; box-shadow: 0 0 0 3px rgba(255,215,0,0.18); }
+        .txn-input::placeholder { color: rgba(255,233,124,0.3); text-transform: uppercase; font-size: 12.5px; }
+        .txn-input:focus { border-color: #ffe97c; box-shadow: 0 0 0 3px rgba(255,233,124,0.18); }
 
         .txn-error { color: #e53935; font-size: 12px; margin-top: 2px; padding-left: 0; }
 
         /* ── PROCEED / SUBMIT BUTTONS ── */
         .proceed-btn {
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
           border: none;
           border-radius: 6px;
@@ -656,7 +656,7 @@ export default function NewRegisterPage() {
           transition: background 0.18s, transform 0.15s;
           white-space: nowrap;
           flex-shrink: 0;
-          box-shadow: 0 4px 15px rgba(255,215,0,0.3);
+          box-shadow: 0 4px 15px rgba(255,233,124,0.3);
         }
         .proceed-btn:hover { opacity:0.92; transform: translateY(-1px); }
         .proceed-btn:active { transform: scale(0.98); }
@@ -679,28 +679,28 @@ export default function NewRegisterPage() {
         .form-label {
           font-size: 13px;
           font-weight: 600;
-          color: #FFD700;
+          color: #ffe97c;
         }
-        .form-label .req { color: #FFD700; margin-right: 1px; }
+        .form-label .req { color: #ffe97c; margin-right: 1px; }
 
         .form-input, .form-select {
           width: 100%;
           background: rgba(0,0,0,0.25);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 5px;
           padding: 10px 13px;
           font-size: 13.5px;
           font-family: 'Poppins', sans-serif;
-          color: #FFD700;
+          color: #ffe97c;
           outline: none;
           transition: border-color 0.18s, box-shadow 0.18s;
         }
         .form-input:focus, .form-select:focus {
-          border-color: #FFD700;
-          box-shadow: 0 0 0 3px rgba(255,215,0,0.18);
+          border-color: #ffe97c;
+          box-shadow: 0 0 0 3px rgba(255,233,124,0.18);
         }
-        .form-input::placeholder { color: rgba(255,215,0,0.3); }
-        .form-input:disabled { background: rgba(255,215,0,0.04); opacity: 0.85; cursor: not-allowed; }
+        .form-input::placeholder { color: rgba(255,233,124,0.3); }
+        .form-input:disabled { background: rgba(255,233,124,0.04); opacity: 0.85; cursor: not-allowed; }
         .form-input[style*="borderColor: #e53935"] {
           border-color: #e53935 !important;
           box-shadow: 0 0 0 3px rgba(229,57,53,0.2) !important;
@@ -716,7 +716,7 @@ export default function NewRegisterPage() {
         }
         .form-select option {
           background-color: #1a0533;
-          color: #FFD700;
+          color: #ffe97c;
         }
 
         /* gender radio */
@@ -724,12 +724,12 @@ export default function NewRegisterPage() {
           display: flex; align-items: center; gap: 20px;
           padding: 10px 13px;
           background: rgba(0,0,0,0.25);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 5px;
           min-height: 42px;
         }
-        .radio-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #FFD700; cursor: pointer; }
-        .radio-label input[type="radio"] { accent-color: #FFD700; width: 15px; height: 15px; cursor: pointer; }
+        .radio-label { display: flex; align-items: center; gap: 6px; font-size: 13px; color: #ffe97c; cursor: pointer; }
+        .radio-label input[type="radio"] { accent-color: #ffe97c; width: 15px; height: 15px; cursor: pointer; }
 
         /* mobile split */
         .mobile-split { display: flex; gap: 8px; }
@@ -742,16 +742,16 @@ export default function NewRegisterPage() {
 
         /* section sub-header */
         .sub-header {
-          background: linear-gradient(90deg, rgba(255,215,0,0.05), rgba(168,85,247,0.05));
+          background: linear-gradient(90deg, rgba(255,233,124,0.05), rgba(168,85,247,0.05));
           padding: 9px 16px;
           font-size: 12.5px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           letter-spacing: 0.6px;
           text-transform: uppercase;
           margin: 20px -20px 18px;
-          border-top: 1.5px solid rgba(255,215,0,0.20);
-          border-bottom: 1.5px solid rgba(255,215,0,0.20);
+          border-top: 1.5px solid rgba(255,233,124,0.20);
+          border-bottom: 1.5px solid rgba(255,233,124,0.20);
         }
 
         /* submit wrap */
@@ -776,7 +776,7 @@ export default function NewRegisterPage() {
 
         .congratulations-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 12px;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
           max-width: 500px;
@@ -805,11 +805,11 @@ export default function NewRegisterPage() {
         }
 
         .congratulations-header {
-          background: linear-gradient(135deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.25);
+          background: linear-gradient(135deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.25);
           padding: 32px 20px;
           text-align: center;
-          color: #FFD700;
+          color: #ffe97c;
         }
 
         .congratulations-header h2 {
@@ -817,7 +817,7 @@ export default function NewRegisterPage() {
           font-weight: 700;
           margin: 0 0 8px;
           letter-spacing: -0.5px;
-          text-shadow: 0 0 8px rgba(255,215,0,0.45);
+          text-shadow: 0 0 8px rgba(255,233,124,0.45);
         }
 
         .congratulations-header p {
@@ -870,17 +870,17 @@ export default function NewRegisterPage() {
           padding: 11px 12px;
           background: rgba(0,0,0,0.25);
           border-radius: 6px;
-          border-left: 3.5px solid #FFD700;
-          border-top: 1px solid rgba(255,215,0,0.1);
-          border-right: 1px solid rgba(255,215,0,0.1);
-          border-bottom: 1px solid rgba(255,215,0,0.1);
+          border-left: 3.5px solid #ffe97c;
+          border-top: 1px solid rgba(255,233,124,0.1);
+          border-right: 1px solid rgba(255,233,124,0.1);
+          border-bottom: 1px solid rgba(255,233,124,0.1);
           gap: 12px;
         }
 
         .detail-label {
           font-size: 12px;
           font-weight: 600;
-          color: rgba(255,215,0,0.7);
+          color: rgba(255,233,124,0.7);
           text-transform: uppercase;
           letter-spacing: 0.5px;
           flex-shrink: 0;
@@ -890,7 +890,7 @@ export default function NewRegisterPage() {
         .detail-value {
           font-size: 14px;
           font-weight: 600;
-          color: #FFD700;
+          color: #ffe97c;
           word-break: break-all;
           text-align: right;
           flex-grow: 1;
@@ -928,12 +928,12 @@ export default function NewRegisterPage() {
         .congratulations-footer {
           padding: 16px 20px;
           text-align: center;
-          border-top: 1.5px solid rgba(255,215,0,0.15);
+          border-top: 1.5px solid rgba(255,233,124,0.15);
         }
 
         .congratulations-footer p {
           font-size: 12px;
-          color: rgba(255,215,0,0.6);
+          color: rgba(255,233,124,0.6);
           margin: 0 0 14px;
           line-height: 1.4;
           padding: 0 8px;
@@ -950,7 +950,7 @@ export default function NewRegisterPage() {
         }
 
         .done-btn {
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
           border: none;
           border-radius: 8px;
@@ -1083,8 +1083,8 @@ export default function NewRegisterPage() {
                           VALIDATE
                         </button>
                       ) : (
-                        <span style={{ color: "#26a69a", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
-                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
+                        <span style={{ color: "#ffe97c", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: 10 }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffe97c"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" /></svg>
                           Verified
                         </span>
                       )}
@@ -1490,9 +1490,9 @@ export default function NewRegisterPage() {
                   <span className="detail-value">{newUserData.transactionPassword}</span>
                 </div>
 
-                <div className="detail-row" style={{ borderTop: "1px solid #eee", marginTop: "8px", paddingTop: "8px" }}>
-                  <span className="detail-label" style={{ fontWeight: 700, color: "#26a69a" }}>Registration Time</span>
-                  <span className="detail-value" style={{ fontWeight: 700, color: "#26a69a" }}>
+                <div className="detail-row" style={{ borderTop: "1px solid rgba(255,233,124,0.15)", marginTop: "8px", paddingTop: "8px" }}>
+                  <span className="detail-label" style={{ fontWeight: 700, color: "#ffe97c" }}>Registration Time</span>
+                  <span className="detail-value" style={{ fontWeight: 700, color: "#ffe97c" }}>
                     {newUserData.regDate ? `${String(newUserData.regDate.getDate()).padStart(2, '0')}/${String(newUserData.regDate.getMonth() + 1).padStart(2, '0')}/${newUserData.regDate.getFullYear()} ${String(newUserData.regDate.getHours()).padStart(2, '0')}:${String(newUserData.regDate.getMinutes()).padStart(2, '0')}:${String(newUserData.regDate.getSeconds()).padStart(2, '0')}` : "-"}
                   </span>
                 </div>
@@ -1510,9 +1510,8 @@ export default function NewRegisterPage() {
                 >
                   Go to Dashboard
                 </button>
-                <button
+                 <button
                   className="done-btn"
-                  style={{ background: "#26a69a" }}
                   onClick={() => {
                     // Navigate to network tree with the selected position
                     const selectedPos = position === "Default (Auto-assigned)" ? "left" : position;

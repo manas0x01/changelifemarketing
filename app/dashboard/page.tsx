@@ -50,37 +50,36 @@ interface DashboardData {
   userProfile: { fullName: string; userId: string; username: string; mobileNo: string; email: string; joiningDate: string };
   bankDetails: BankDetails;
   cycleHistory: CycleRow[];
+  isBooster?: boolean;
 }
 
 /* ── Premium SVG Icons ── */
 const TeamIcon = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="#F5C518" />
+    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z" fill="#ffe97c" />
   </svg>
 );
 const MoneyIcon = () => (
-  <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-    <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16C9.39 5.55 7.73 6.7 7.73 8.77c0 2.45 2.02 3.67 4.97 4.33 2.5.59 3 1.45 3 2.38 0 .68-.48 1.77-2.7 1.77-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.8V21h3v-2.15c1.95-.37 3.49-1.47 3.5-3.48-.01-2.84-2.42-3.81-4.72-4.37z" fill="#F5C518" />
-  </svg>
+  <span style={{ fontSize: "22px", fontWeight: "800", color: "#ffe97c", display: "inline-flex", alignItems: "center", justifyContent: "center", lineHeight: 1, fontFamily: "sans-serif" }}>₹</span>
 );
 const WalletIcon = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-    <path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" fill="#F5C518" />
+    <path d="M21 18v1a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1h-9a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h9zm-9-2h10V8H12v8zm4-2.5a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" fill="#ffe97c" />
   </svg>
 );
 const PinIcon = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#F5C518" />
+    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="#ffe97c" />
   </svg>
 );
 const UserIcon = () => (
   <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
-    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" fill="#F5C518" />
+    <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z" fill="#ffe97c" />
   </svg>
 );
 const TrendUpIcon = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
-    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" fill="#FFD700" />
+    <path d="M16 6l2.29 2.29-4.88 4.88-4-4L2 16.59 3.41 18l6-6 4 4 6.3-6.29L22 12V6z" fill="#ffe97c" />
   </svg>
 );
 const MoonIcon = () => <span style={{ fontSize: 13 }}>🌙</span>;
@@ -96,7 +95,7 @@ const statCards = [
   { title: "Basic Users", icon: <TeamIcon />, accent: "#f97316", trend: "7.8%" },
   { title: "Booster Users", icon: <TeamIcon />, accent: "#22c55e", trend: "15.4%" },
   { title: "Total Pins", icon: <PinIcon />, accent: "#ec4899", trend: "6.2%" },
-  { title: "Total Income", icon: <WalletIcon />, accent: "#F5C518", trend: "12.5%" },
+  { title: "Total Income", icon: <WalletIcon />, accent: "#ffe97c", trend: "12.5%" },
   { title: "Wallet Balance", icon: <WalletIcon />, accent: "#10b981", trend: "15.0%" },
 ];
 
@@ -129,6 +128,7 @@ export default function Dashboard() {
     userProfile: { fullName: "N/A", userId: "N/A", username: "N/A", mobileNo: "N/A", email: "N/A", joiningDate: "N/A" },
     bankDetails: { accountHolderName: "", accountNumber: "", ifscCode: "", bankName: "" },
     cycleHistory: [] as CycleRow[],
+    isBooster: false,
   });
   const {
     totalTeam, totalDirect, totalActiveDirect,
@@ -136,7 +136,8 @@ export default function Dashboard() {
     totalLeftBoosterUser, totalRightBoosterUser,
     basicIncome, boosterIncome, totalPins, totalIncome,
     availableBalance = 0,
-    userProfile, bankDetails, cycleHistory
+    userProfile, bankDetails, cycleHistory,
+    isBooster = false
   } = dashboardData;
   const [loading, setLoading] = useState(true);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -173,6 +174,7 @@ export default function Dashboard() {
           userProfile: d.userProfile ?? prev.userProfile,
           bankDetails: d.bankDetails ?? prev.bankDetails,
           cycleHistory: d.cycleHistory ?? prev.cycleHistory,
+          isBooster: d.isBooster ?? prev.isBooster ?? false,
         }));
       }
     } catch (error: any) {
@@ -220,6 +222,28 @@ export default function Dashboard() {
     finally { setWithdrawLoading(false); }
   };
 
+  const totalLeftRight = totalTeam.left + totalTeam.right;
+  const leftPct = totalLeftRight === 0 ? 50 : Math.round((totalTeam.left / totalLeftRight) * 100);
+  const rightPct = 100 - leftPct;
+
+  const getActionableAdvice = () => {
+    if (availableBalance >= 1000) {
+      return "🎉 Ready for Withdrawal! Your wallet has reached the minimum ₹1,000 limit. Click 'Withdraw' above to submit your request.";
+    }
+    
+    if (totalDirect.left === 0 || totalDirect.right === 0) {
+      return "💡 Quick Tip: sponsor at least 1 direct member on both Left and Right to unlock pair matching and start earning!";
+    }
+    
+    if (totalTeam.left > totalTeam.right) {
+      return "💡 Strategy: Your Left team is stronger. Place your next sign-up on the RIGHT to maximize paired matching income!";
+    } else if (totalTeam.right > totalTeam.left) {
+      return "💡 Strategy: Your Right team is stronger. Place your next sign-up on the LEFT to maximize paired matching income!";
+    }
+    
+    return "🚀 Keep up the momentum! Encourage your direct members to activate their accounts to accelerate matching commissions.";
+  };
+
   return (
     <>
       <style>{`
@@ -229,14 +253,14 @@ export default function Dashboard() {
           --royal: #1a0533;
           --royal-mid: #2d0a5c;
           --royal-card: #250845;
-          --royal-border: rgba(255,215,0,0.25);
-          --gold: #FFD700;
-          --gold-light: #FFD700;
-          --gold-dim: #FFD700;
+          --royal-border: rgba(255,245,198,0.25);
+          --gold: #ffe97c;
+          --gold-light: #ffe97c;
+          --gold-dim: #ffd24d;
           --purple-glow: rgba(168,85,247,0.35);
-          --text-primary: #FFD700;
-          --text-secondary: #FFD700;
-          --text-gold: #FFD700;
+          --text-primary: #ffe97c;
+          --text-secondary: #ffe97c;
+          --text-gold: #ffe97c;
         }
 
         * { margin:0; padding:0; box-sizing:border-box; }
@@ -247,14 +271,14 @@ export default function Dashboard() {
           min-height: 100vh;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.25) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(245,197,24,0.12) 0%, transparent 65%),
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,245,198,0.12) 0%, transparent 65%),
             radial-gradient(circle at 50% 50%, rgba(168,85,247,0.05) 0%, transparent 50%);
         }
 
         /* ── Gold shimmer top bar ── */
         .gold-bar {
           height: 3px;
-          background: linear-gradient(90deg, transparent, #FFD700, #FFD700, #FFD700, transparent);
+          background: linear-gradient(90deg, transparent, #ffe97c, #ffe97c, #ffe97c, transparent);
           background-size: 200% 100%;
           animation: shimmer 3s infinite linear;
         }
@@ -272,8 +296,8 @@ export default function Dashboard() {
           font-size: 12px;
           letter-spacing: 2.8px;
           text-transform: uppercase;
-          color: #FFD700;
-          text-shadow: 0 0 8px rgba(245,197,24,0.45);
+          color: var(--text-primary);
+          text-shadow: 0 0 8px rgba(255,245,198,0.45);
           margin-bottom: 16px;
           padding-left: 2px;
           display: flex;
@@ -351,8 +375,8 @@ export default function Dashboard() {
         .stat-card-title {
           font-size: 11.5px;
           font-weight: 800;
-          color: #FFD700;
-          text-shadow: 0 0 8px rgba(255,215,0,0.5);
+          color: var(--text-primary);
+          text-shadow: 0 0 8px rgba(255,245,198,0.3);
           letter-spacing: 0.8px;
           text-transform: uppercase;
           margin-bottom: 8px;
@@ -361,26 +385,26 @@ export default function Dashboard() {
         .stat-card-value {
           font-size: 22px;
           font-weight: 900;
-          color: #FFD700;
-          text-shadow: 0 0 10px rgba(255,215,0,0.45);
+          color: var(--text-primary);
+          text-shadow: 0 0 10px rgba(255,245,198,0.3);
           line-height: 1.2;
           animation: fadeIn 0.3s ease;
         }
         .stat-card-value-split {
           font-size: 17px;
           font-weight: 900;
-          color: #FFD700;
-          text-shadow: 0 0 10px rgba(255,215,0,0.4);
+          color: var(--text-primary);
+          text-shadow: 0 0 10px rgba(255,245,198,0.3);
         }
         @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:translateY(0)} }
 
         .stat-view-hint {
           font-size: 10.5px;
-          color: #FFD700;
+          color: var(--text-primary);
           font-weight: 700;
           letter-spacing: 0.3px;
           display: inline-flex;
-          text-shadow: 0 0 4px rgba(255,215,0,0.35);
+          text-shadow: 0 0 4px rgba(255,245,198,0.3);
           align-items: center;
           gap: 4px;
         }
@@ -391,7 +415,7 @@ export default function Dashboard() {
           display: inline-flex;
           align-items: center;
           gap: 5px;
-          background: linear-gradient(135deg, #FFD700 0%, #FFD700 100%);
+          background: linear-gradient(135deg, var(--gold) 0%, #E5A900 100%);
           color: #1a0533;
           border: none;
           border-radius: 20px;
@@ -402,12 +426,12 @@ export default function Dashboard() {
           cursor: pointer;
           margin-top: 8px;
           transition: transform 0.15s, box-shadow 0.15s;
-          box-shadow: 0 4px 15px rgba(255,215,0,0.4);
+          box-shadow: 0 4px 15px rgba(255,245,198,0.25);
           letter-spacing: 0.3px;
         }
         .withdraw-pill:hover {
           transform: scale(1.06);
-          box-shadow: 0 6px 20px rgba(255,215,0,0.6), 0 0 10px rgba(255,215,0,0.25);
+          box-shadow: 0 6px 20px rgba(255,245,198,0.45), 0 0 10px rgba(255,245,198,0.2);
         }
 
         /* ── BOTTOM GRID ── */
@@ -422,20 +446,20 @@ export default function Dashboard() {
         /* ── Section cards ── */
         .section-card {
           background: linear-gradient(145deg, var(--royal-card) 0%, rgba(37, 8, 69, 0.9) 100%);
-          border: 1.5px solid rgba(255,215,0,0.25);
+          border: 1.5px solid rgba(255,233,124,0.25);
           border-radius: 18px;
           overflow: hidden;
           box-shadow: 0 10px 40px rgba(0,0,0,0.55), 0 0 25px rgba(168,85,247,0.1);
         }
 
         .section-header {
-          background: linear-gradient(90deg, rgba(255,215,0,0.22), rgba(168,85,247,0.18));
-          border-bottom: 1.5px solid rgba(255,215,0,0.35);
+          background: linear-gradient(90deg, rgba(255,233,124,0.22), rgba(168,85,247,0.18));
+          border-bottom: 1.5px solid rgba(255,233,124,0.35);
           padding: 14px 20px;
           font-family: 'Cinzel', serif;
           font-size: 11.5px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           text-shadow: 0 0 6px rgba(245,197,24,0.35);
           letter-spacing: 1.8px;
           text-transform: uppercase;
@@ -446,7 +470,7 @@ export default function Dashboard() {
         .section-header::before {
           content: '';
           width: 4px; height: 14px;
-          background: linear-gradient(180deg, #F5C518, #a855f7);
+          background: linear-gradient(180deg, #ffe97c, #a855f7);
           border-radius: 2px;
           flex-shrink: 0;
           box-shadow: 0 0 8px rgba(245,197,24,0.5);
@@ -578,7 +602,7 @@ export default function Dashboard() {
         }
         .action-btn {
           display: flex; align-items: center; gap: 7px;
-          background: linear-gradient(135deg, #FFD700 0%, #FFD700 50%, #d49a00 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #ffe97c 50%, #d49a00 100%);
           color: #1a0533;
           border: none; border-radius: 10px;
           padding: 10px 20px;
@@ -638,7 +662,7 @@ export default function Dashboard() {
         /* ── Loading shimmer ── */
         .loading-bar {
           height: 2px;
-          background: linear-gradient(90deg, transparent, #F5C518, transparent);
+          background: linear-gradient(90deg, transparent, #ffe97c, transparent);
           background-size: 200%;
           animation: shimmer 1.5s infinite;
           border-radius: 2px;
@@ -679,7 +703,7 @@ export default function Dashboard() {
           font-weight: 700; display: flex; align-items: center; gap: 6px;
         }
         .success-msg {
-          color: #FFD700; font-size: 12px; margin-top: 8px;
+          color: #ffe97c; font-size: 12px; margin-top: 8px;
           font-weight: 700; display: flex; align-items: center; gap: 6px;
         }
       `}</style>
@@ -713,8 +737,8 @@ export default function Dashboard() {
                     <div
                       key={card.title}
                       className="stat-card"
-                      style={{ 
-                        borderColor: isActive ? "#F5C518" : "rgba(168,85,247,0.22)",
+                      style={{
+                        borderColor: isActive ? "#ffe97c" : "rgba(168,85,247,0.22)",
                         boxShadow: isActive ? `0 12px 36px rgba(0,0,0,0.65), 0 0 25px rgba(245,197,24,0.45), inset 0 0 12px rgba(245,197,24,0.2)` : undefined
                       }}
                       onClick={() => {
@@ -760,7 +784,7 @@ export default function Dashboard() {
                         ) : card.title === "Booster Users" && isActive ? (
                           <span className="stat-card-value-split">L: {totalLeftBoosterUser} <span style={{ color: 'rgba(245,197,24,0.3)' }}>|</span> R: {totalRightBoosterUser}</span>
                         ) : card.title === "Total Pins" && isActive ? (
-                          <div style={{ fontSize: 13, fontWeight: 800, color: '#FFD700' }}>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: '#ffe97c' }}>
                             A:{totalPins.active} | U:{totalPins.used} | T:{totalPins.total}
                           </div>
                         ) : card.title === "Total Income" && isActive ? (
@@ -802,7 +826,7 @@ export default function Dashboard() {
                       <div style={{
                         display: 'flex', alignItems: 'center', gap: 4,
                         marginTop: 8, fontSize: 10, fontWeight: 700,
-                        color: '#FFD700', textShadow: '0 0 6px rgba(255,215,0,0.35)'
+                        color: '#ffe97c', textShadow: '0 0 6px rgba(255,233,124,0.35)'
                       }}>
                         <TrendUpIcon />
                         <span>{card.trend} growth</span>
@@ -813,8 +837,8 @@ export default function Dashboard() {
                         <div style={{
                           position: 'absolute', bottom: 0, left: 0, right: 0,
                           height: 2.5,
-                          background: `linear-gradient(90deg, transparent, #F5C518, transparent)`,
-                          boxShadow: `0 0 10px #F5C518`
+                          background: `linear-gradient(90deg, transparent, #ffe97c, transparent)`,
+                          boxShadow: `0 0 10px #ffe97c`
                         }} />
                       )}
                     </div>
@@ -848,7 +872,7 @@ export default function Dashboard() {
                             row.cycles.map((cycle, ci) => (
                               <tr key={`${ri}-${ci}`}>
                                 {ci === 0 && (
-                                  <td rowSpan={2} style={{ color: '#F5C518', fontWeight: 700, fontSize: 12 }}>
+                                  <td rowSpan={2} style={{ color: '#ffe97c', fontWeight: 700, fontSize: 12 }}>
                                     {row.date}
                                   </td>
                                 )}
@@ -859,7 +883,7 @@ export default function Dashboard() {
                                   </div>
                                 </td>
                                 <td style={{ color: '#c084fc', fontWeight: 700 }}>{row.matches[ci]}</td>
-                                <td style={{ color: '#FFD700', fontWeight: 700 }}>{row.cappings[ci]}</td>
+                                <td style={{ color: '#ffe97c', fontWeight: 700 }}>{row.cappings[ci]}</td>
                               </tr>
                             ))
                           )}
@@ -928,9 +952,58 @@ export default function Dashboard() {
                 </div>
 
                 {/* Insight panel */}
-                <div className="section-card">
-                  <div className="section-header">Insights</div>
-                  <div style={{ padding: 20, minHeight: 200 }} />
+                <div className="section-card" style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div className="section-header">Insights & Strategy</div>
+                  <div style={{ padding: '22px 20px', display: 'flex', flexDirection: 'column', gap: 18, flex: 1 }}>
+                    
+                    {/* Advice card */}
+                    <div style={{
+                      background: 'rgba(255,233,124,0.06)',
+                      borderLeft: '4px solid #ffe97c',
+                      borderRadius: '8px',
+                      padding: '12px 14px',
+                      fontSize: '12.5px',
+                      fontWeight: 700,
+                      color: '#ffe97c',
+                      lineHeight: '1.5',
+                      textShadow: '0 0 4px rgba(255,233,124,0.25)'
+                    }}>
+                      {getActionableAdvice()}
+                    </div>
+
+                    {/* Team balance bar */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: 800, color: 'rgba(255,233,124,0.65)', marginBottom: 6, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                        <span>Left Team ({totalTeam.left} members)</span>
+                        <span>Right Team ({totalTeam.right} members)</span>
+                      </div>
+                      <div style={{ height: 8, background: 'rgba(255,245,198,0.1)', borderRadius: 4, overflow: 'hidden', display: 'flex' }}>
+                        <div style={{ width: `${leftPct}%`, background: 'linear-gradient(90deg, #ffe97c, #ffd24d)', height: '100%' }} />
+                        <div style={{ width: `${rightPct}%`, background: 'linear-gradient(90deg, #a855f7, #8b5cf6)', height: '100%' }} />
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10.5px', color: 'rgba(255,233,124,0.5)', marginTop: 4, fontWeight: 700 }}>
+                        <span>Ratio: {leftPct}%</span>
+                        <span>{rightPct}%</span>
+                      </div>
+                    </div>
+
+                    {/* Key indicators grid */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 4 }}>
+                      <div style={{ background: 'rgba(0,0,0,0.15)', borderRadius: 10, padding: 12, border: '1px solid rgba(255,245,198,0.1)' }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 800, color: 'rgba(255,233,124,0.5)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>Booster Phase</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: '#ffe97c' }}>
+                          {isBooster ? "🚀 Booster Qualified" : "⭐ Basic Phase"}
+                        </div>
+                      </div>
+                      <div style={{ background: 'rgba(0,0,0,0.15)', borderRadius: 10, padding: 12, border: '1px solid rgba(255,245,198,0.1)' }}>
+                        <div style={{ fontSize: 10.5, fontWeight: 800, color: 'rgba(255,233,124,0.5)', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>EPINs Available</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: '#ffe97c' }}>
+                          {totalPins.active} Active
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
                 </div>
               </div>
 
@@ -1013,7 +1086,7 @@ export default function Dashboard() {
             <DialogTitle style={{
               fontSize: "clamp(18px,5vw,22px)",
               fontWeight: 900,
-              color: "#F5C518",
+              color: "#ffe97c",
               marginBottom: 6,
               fontFamily: "'Cinzel', serif",
               letterSpacing: "1px",
@@ -1037,7 +1110,7 @@ export default function Dashboard() {
               marginBottom: 14,
               fontSize: 11,
               fontWeight: 800,
-              color: "#F5C518",
+              color: "#ffe97c",
               textTransform: "uppercase",
               letterSpacing: "1px",
               display: "flex",
@@ -1143,7 +1216,7 @@ export default function Dashboard() {
               style={{
                 fontFamily: "'Nunito', sans-serif",
                 fontSize: 14, fontWeight: 900,
-                background: "linear-gradient(135deg, #F5C518 0%, #f0a500 100%)",
+                background: "linear-gradient(135deg, #ffe97c 0%, #E5A900 100%)",
                 color: "#1a0533",
                 border: "none",
                 borderRadius: 10,

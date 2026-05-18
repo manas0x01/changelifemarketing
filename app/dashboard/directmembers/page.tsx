@@ -113,7 +113,7 @@ export default function DirectMembersPage() {
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height: 100vh;
         }
 
@@ -121,16 +121,16 @@ export default function DirectMembersPage() {
         .breadcrumb {
           padding: 12px 20px;
           font-size: 13px;
-          color: #FFD700;
+          color: #ffe97c;
           display: flex;
           align-items: center;
           gap: 6px;
         }
-        .breadcrumb a { color: #FFD700; text-decoration: none; opacity: 0.85; }
+        .breadcrumb a { color: #ffe97c; text-decoration: none; opacity: 0.85; }
         .breadcrumb a:hover { text-decoration: underline; opacity: 1; }
-        .breadcrumb .sep { color: rgba(255,215,0,0.4); }
-        .breadcrumb .current { color: #FFD700; font-weight: 600; }
-        .breadcrumb svg { fill: #FFD700 !important; }
+        .breadcrumb .sep { color: rgba(255,233,124,0.4); }
+        .breadcrumb .current { color: #ffe97c; font-weight: 600; }
+        .breadcrumb svg { fill: #ffe97c !important; }
 
         /* PAGE BODY */
         .page-body { padding:0 20px 40px; }
@@ -138,7 +138,7 @@ export default function DirectMembersPage() {
         /* MAIN CARD */
         .main-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
@@ -146,8 +146,8 @@ export default function DirectMembersPage() {
 
         /* HEADER */
         .section-header {
-          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.25);
+          background: linear-gradient(90deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.25);
           padding: 12px 16px;
           display: flex;
           align-items: center;
@@ -156,34 +156,34 @@ export default function DirectMembersPage() {
         .section-title {
           font-size: 13px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           letter-spacing: 0.8px;
           text-transform: uppercase;
-          text-shadow: 0 0 8px rgba(255,215,0,0.45);
+          text-shadow: 0 0 8px rgba(255,233,124,0.45);
         }
         .header-actions { display: flex; align-items: center; gap: 8px; }
         .icon-btn {
-          background: rgba(255,215,0,0.15);
-          border: 1px solid rgba(255,215,0,0.25);
+          background: rgba(255,233,124,0.15);
+          border: 1px solid rgba(255,233,124,0.25);
           border-radius: 5px;
           padding: 6px 10px;
           cursor: pointer;
-          color: #FFD700;
+          color: #ffe97c;
           display: flex;
           align-items: center;
           transition: background .18s;
         }
-        .icon-btn:hover { background: rgba(255,215,0,0.3); }
-        .icon-btn svg { fill: #FFD700 !important; }
+        .icon-btn:hover { background: rgba(255,233,124,0.3); }
+        .icon-btn svg { fill: #ffe97c !important; }
 
         /* NOTE */
         .note-text {
-          color: #FFD700;
+          color: #ffe97c;
           font-size: 13.5px;
           font-weight: 600;
           padding: 16px 16px 12px;
           opacity: 0.85;
-          text-shadow: 0 0 4px rgba(255,215,0,0.2);
+          text-shadow: 0 0 4px rgba(255,233,124,0.2);
         }
 
         /* FILTER ROW */
@@ -196,34 +196,34 @@ export default function DirectMembersPage() {
         .filter-label {
           font-size: 12.5px;
           font-weight: 600;
-          color: #FFD700;
+          color: #ffe97c;
           white-space: nowrap;
         }
 
         .filter-date {
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 6px;
           padding: 9px 12px;
           font-size: 13px;
           font-family: 'Poppins', sans-serif;
-          color: #FFD700;
+          color: #ffe97c;
           background: rgba(0,0,0,0.25);
           outline: none; height: 40px;
           transition: border-color .18s, box-shadow .18s; min-width: 170px;
         }
         .filter-date:focus {
-          border-color: #FFD700;
+          border-color: #ffe97c;
           background: rgba(0,0,0,0.35);
-          box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+          box-shadow: 0 0 0 3px rgba(255,233,124,0.15);
         }
 
         .filter-page {
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 6px;
           padding: 9px 12px;
           font-size: 13px;
           font-family: 'Poppins', sans-serif;
-          color: #FFD700;
+          color: #ffe97c;
           background: rgba(0,0,0,0.25);
           outline: none; height: 40px;
           min-width: 90px; cursor: pointer;
@@ -235,16 +235,16 @@ export default function DirectMembersPage() {
         }
         .filter-page option {
           background-color: #1a0533;
-          color: #FFD700;
+          color: #ffe97c;
         }
         .filter-page:focus {
-          border-color: #FFD700;
+          border-color: #ffe97c;
           background: rgba(0,0,0,0.35);
-          box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+          box-shadow: 0 0 0 3px rgba(255,233,124,0.15);
         }
 
         .filter-btn {
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
           border: none;
           border-radius: 6px;
@@ -258,14 +258,14 @@ export default function DirectMembersPage() {
           white-space: nowrap;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          box-shadow: 0 4px 15px rgba(255,215,0,0.25);
+          box-shadow: 0 4px 15px rgba(255,233,124,0.25);
         }
-        .filter-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,215,0,0.35); }
+        .filter-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,233,124,0.35); }
         .filter-btn:active:not(:disabled) { transform: scale(0.98); }
         .filter-btn:disabled {
-          background: rgba(255,215,0,0.2) !important;
-          color: rgba(255,215,0,0.4) !important;
-          border: 1px solid rgba(255,215,0,0.15) !important;
+          background: rgba(255,233,124,0.2) !important;
+          color: rgba(255,233,124,0.4) !important;
+          border: 1px solid rgba(255,233,124,0.15) !important;
           box-shadow: none !important;
           cursor: not-allowed;
           transform: none;
@@ -283,13 +283,13 @@ export default function DirectMembersPage() {
           min-width: 700px;
         }
         .data-table thead tr {
-          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.2);
+          background: linear-gradient(90deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.2);
         }
         .data-table thead th {
           padding: 13px 16px;
           text-align: left;
-          color: #FFD700;
+          color: #ffe97c;
           font-weight: 700;
           font-size: 13px;
           white-space: nowrap;
@@ -299,7 +299,7 @@ export default function DirectMembersPage() {
         .data-table tbody tr:hover { background: rgba(255, 215, 0, 0.08); transition: background .15s; }
         .data-table tbody td {
           padding: 12px 16px;
-          color: #FFD700;
+          color: #ffe97c;
           border-bottom: 1px solid rgba(255, 215, 0, 0.12);
           font-size: 13px;
           white-space: nowrap;
@@ -309,7 +309,7 @@ export default function DirectMembersPage() {
         .directs-badge {
           display: inline-block;
           background: rgba(255, 215, 0, 0.2);
-          color: #FFD700;
+          color: #ffe97c;
           font-weight: 700;
           font-size: 12.5px;
           padding: 3px 12px;
@@ -318,22 +318,22 @@ export default function DirectMembersPage() {
           text-align: center;
           border: 1px solid rgba(255, 215, 0, 0.4);
         }
-        .directs-badge.zero { background: rgba(255, 255, 255, 0.05); color: rgba(255,215,0,0.4); border-color: rgba(255, 215, 0, 0.1); }
+        .directs-badge.zero { background: rgba(255, 255, 255, 0.05); color: rgba(255,233,124,0.4); border-color: rgba(255, 215, 0, 0.1); }
 
         /* Empty state */
         .empty-state {
           text-align: center;
           padding: 36px 20px;
-          color: rgba(255,215,0,0.4);
+          color: rgba(255,233,124,0.4);
           font-size: 13.5px;
         }
-        .empty-state svg { margin: 0 auto 10px; display: block; fill: rgba(255,215,0,0.4) !important; }
+        .empty-state svg { margin: 0 auto 10px; display: block; fill: rgba(255,233,124,0.4) !important; }
 
         /* Record count */
         .record-count {
           padding: 8px 16px;
           font-size: 12.5px;
-          color: rgba(255,215,0,0.6);
+          color: rgba(255,233,124,0.6);
           border-top: 1px solid rgba(255, 215, 0, 0.12);
           text-align: right;
         }
@@ -375,7 +375,7 @@ export default function DirectMembersPage() {
 
         {/* BREADCRUMB */}
         <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffe97c"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
           <a href="/dashboard">Home</a>
           <span className="sep">/</span>
           <span className="current">My Network</span>

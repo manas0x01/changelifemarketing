@@ -173,8 +173,8 @@ function AvatarBooster({ x, y, r }: { x: number; y: number; r: number }) {
           <feComposite in="SourceGraphic" in2="blur" operator="over" />
         </filter>
       </defs>
-      <circle cx={x} cy={y} r={r + 8} fill="none" stroke="#FFD700" strokeWidth="4" filter="url(#goldHalo)" opacity="0.9" />
-      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#FFD700" strokeWidth="3" />
+      <circle cx={x} cy={y} r={r + 8} fill="none" stroke="#ffe97c" strokeWidth="4" filter="url(#goldHalo)" opacity="0.9" />
+      <circle cx={x} cy={y} r={r} fill="#fff" stroke="#ffe97c" strokeWidth="3" />
       <g opacity="1">
         <ellipse cx={x} cy={y - f(0.1)} rx={f(0.37)} ry={f(0.43)} fill="#f5cba7" />
         <ellipse cx={x} cy={y - f(0.46)} rx={f(0.4)} ry={f(0.2)} fill="#3d2b1f" />
@@ -247,13 +247,13 @@ function TreeSVG({
           <g key={`e-${i}`}>
             <path
               d={`M${e.x1},${e.y1} L${e.x1},${midY} L${e.x2},${midY} L${e.x2},${e.y2}`}
-              stroke="#FFD700"
+              stroke="#ffe97c"
               strokeWidth="2.5"
               fill="none"
               opacity="0.8"
             />
             {/* Glowing intersection dot */}
-            <circle cx={e.x1} cy={midY} r="4.5" fill="#FFD700" filter="url(#goldHalo)" />
+            <circle cx={e.x1} cy={midY} r="4.5" fill="#ffe97c" filter="url(#goldHalo)" />
           </g>
         );
       })}
@@ -333,7 +333,7 @@ function TreeSVG({
                 x={x - estimatedCardWidth / 2} y={cardTop}
                 width={estimatedCardWidth} height={cardH} rx="12"
                 fill="url(#cardBg)"
-                stroke={booster ? "#FFD700" : "rgba(255, 215, 0, 0.35)"}
+                stroke={booster ? "#ffe97c" : "rgba(255, 215, 0, 0.35)"}
                 strokeWidth="2.5"
                 filter="url(#nodeShadow)"
               />
@@ -342,7 +342,7 @@ function TreeSVG({
               <text
                 x={x} y={cardTop + 30}
                 textAnchor="middle" fontSize="20" fontWeight="900"
-                fill="#FFD700"
+                fill="#ffe97c"
                 fontFamily="Poppins,sans-serif"
                 style={{ textShadow: "0 0 6px rgba(255, 215, 0, 0.4)" }}
               >
@@ -368,8 +368,8 @@ function TreeSVG({
 
             {/* Floating Status Badge */}
             <g transform={`translate(${x - 55}, ${cardTop - 18})`}>
-              <rect width="110" height="26" rx="13" fill={booster ? "#FFD700" : "rgba(255, 215, 0, 0.22)"} stroke="#FFD700" strokeWidth="1" />
-              <text x="55" y="17" textAnchor="middle" fontSize="10" fill={booster ? "#120228" : "#FFD700"} fontWeight="900" letterSpacing="1">
+              <rect width="110" height="26" rx="13" fill={booster ? "#ffe97c" : "rgba(255, 215, 0, 0.22)"} stroke="#ffe97c" strokeWidth="1" />
+              <text x="55" y="17" textAnchor="middle" fontSize="10" fill={booster ? "#120228" : "#ffe97c"} fontWeight="900" letterSpacing="1">
                 {booster ? "BOOSTER" : "ACTIVE"}
               </text>
             </g>
@@ -377,8 +377,8 @@ function TreeSVG({
             {/* More Downline Indicator */}
             {depth === maxd && n.children && n.children.length > 0 && (
               <g transform={`translate(${x}, ${cardTop + cardH + 40})`}>
-                <rect x="-80" y="-15" width="160" height="30" rx="15" fill="rgba(255, 215, 0, 0.15)" stroke="#FFD700" strokeWidth="1.5" />
-                <text textAnchor="middle" y="6" fontSize="12" fill="#FFD700" fontWeight="900" fontFamily="Poppins,sans-serif" letterSpacing="0.8">
+                <rect x="-80" y="-15" width="160" height="30" rx="15" fill="rgba(255, 215, 0, 0.15)" stroke="#ffe97c" strokeWidth="1.5" />
+                <text textAnchor="middle" y="6" fontSize="12" fill="#ffe97c" fontWeight="900" fontFamily="Poppins,sans-serif" letterSpacing="0.8">
                   MORE LEVELS BELOW
                 </text>
               </g>
@@ -467,8 +467,8 @@ function TreeLegend() {
           <AvatarActive x={20} y={20} r={16} />
         </svg>
         <div style={{ textAlign: "left" }}>
-          <div style={{ fontSize: "10px", fontWeight: "900", color: "#FFD700", letterSpacing: "0.5px" }}>ACTIVE</div>
-          <div style={{ fontSize: "9px", color: "rgba(255,215,0,0.7)", fontWeight: "500" }}>Active Member</div>
+          <div style={{ fontSize: "10px", fontWeight: "900", color: "#ffe97c", letterSpacing: "0.5px" }}>ACTIVE</div>
+          <div style={{ fontSize: "9px", color: "rgba(255,233,124,0.7)", fontWeight: "500" }}>Active Member</div>
         </div>
       </div>
 
@@ -479,7 +479,7 @@ function TreeLegend() {
         </div>
         <div style={{ textAlign: "left" }}>
           <div style={{ fontSize: "10px", fontWeight: "900", color: "#00ff88", letterSpacing: "0.5px" }}>OPEN POSITION</div>
-          <div style={{ fontSize: "9px", color: "rgba(255,215,0,0.7)", fontWeight: "500" }}>Available Slot</div>
+          <div style={{ fontSize: "9px", color: "rgba(255,233,124,0.7)", fontWeight: "500" }}>Available Slot</div>
         </div>
       </div>
 
@@ -489,8 +489,8 @@ function TreeLegend() {
           <AvatarBooster x={20} y={20} r={16} />
         </svg>
         <div style={{ textAlign: "left" }}>
-          <div style={{ fontSize: "10px", fontWeight: "900", color: "#FFD700", letterSpacing: "0.5px" }}>BOOSTER</div>
-          <div style={{ fontSize: "9px", color: "rgba(255,215,0,0.7)", fontWeight: "500" }}>Upline / Sponsor</div>
+          <div style={{ fontSize: "10px", fontWeight: "900", color: "#ffe97c", letterSpacing: "0.5px" }}>BOOSTER</div>
+          <div style={{ fontSize: "9px", color: "rgba(255,233,124,0.7)", fontWeight: "500" }}>Upline / Sponsor</div>
         </div>
       </div>
     </div>
@@ -560,7 +560,7 @@ function MemberPopup({
           zIndex: 2200, width: 308,
           borderRadius: 14, overflow: "hidden",
           boxShadow: "0 16px 48px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15)",
-          border: `2.5px solid ${booster ? "#FFD700" : "rgba(255,215,0,0.4)"}`,
+          border: `2.5px solid ${booster ? "#ffe97c" : "rgba(255,233,124,0.4)"}`,
           fontFamily: "Poppins,sans-serif",
           animation: "ntPopIn .2s cubic-bezier(.16,1,.3,1)",
           maxWidth: "calc(100vw - 20px)",
@@ -569,11 +569,11 @@ function MemberPopup({
       >
         <div style={{
           background: booster
-            ? "linear-gradient(135deg, #FFD700, #e65100)"
+            ? "linear-gradient(135deg, #ffe97c, #e65100)"
             : "linear-gradient(135deg, #1d033a, #110122)",
           padding: "11px 14px",
           display: "flex", alignItems: "center", justifyContent: "space-between",
-          borderBottom: "1.5px solid rgba(255,215,0,0.22)"
+          borderBottom: "1.5px solid rgba(255,233,124,0.22)"
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{
@@ -583,14 +583,14 @@ function MemberPopup({
               {booster ? "👑" : "👤"}
             </div>
             <div>
-              <p style={{ color: booster ? "#120228" : "#FFD700", fontWeight: 700, fontSize: 13, margin: 0 }}>{n.id}</p>
-              <p style={{ color: booster ? "#120228" : "rgba(255,215,0,0.85)", fontSize: 10.5, margin: 0 }}>{n.name}</p>
+              <p style={{ color: booster ? "#120228" : "#ffe97c", fontWeight: 700, fontSize: 13, margin: 0 }}>{n.id}</p>
+              <p style={{ color: booster ? "#120228" : "rgba(255,233,124,0.85)", fontSize: 10.5, margin: 0 }}>{n.name}</p>
             </div>
           </div>
           <button onClick={onClose}
             style={{
               background: "rgba(255,255,255,0.18)", border: "none", borderRadius: 7,
-              color: booster ? "#120228" : "#FFD700", cursor: "pointer", padding: "4px 9px", fontSize: 13, fontWeight: 700
+              color: booster ? "#120228" : "#ffe97c", cursor: "pointer", padding: "4px 9px", fontSize: 13, fontWeight: 700
             }}>
             ✕
           </button>
@@ -600,10 +600,10 @@ function MemberPopup({
           {infoRows.map(row => (
             <div key={row.label} style={{
               display: "flex", justifyContent: "space-between", alignItems: "center",
-              padding: "5.5px 0", borderBottom: "1px solid rgba(255,215,0,0.12)"
+              padding: "5.5px 0", borderBottom: "1px solid rgba(255,233,124,0.12)"
             }}>
-              <span style={{ fontSize: 11, color: "rgba(255,215,0,0.6)", fontWeight: 500 }}>{row.label}</span>
-              <span style={{ fontSize: 11.5, color: "#FFD700", fontWeight: 600 }}>{row.val}</span>
+              <span style={{ fontSize: 11, color: "rgba(255,233,124,0.6)", fontWeight: 500 }}>{row.label}</span>
+              <span style={{ fontSize: 11.5, color: "#ffe97c", fontWeight: 600 }}>{row.val}</span>
             </div>
           ))}
 
@@ -611,10 +611,10 @@ function MemberPopup({
             {countBadges.map(b => (
               <div key={b.label} style={{
                 flex: 1, textAlign: "center", padding: "8px 4px",
-                borderRadius: 9, background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,215,0,0.22)"
+                borderRadius: 9, background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,233,124,0.22)"
               }}>
-                <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#FFD700", lineHeight: 1 }}>{b.val}</p>
-                <p style={{ margin: "3px 0 0", fontSize: 8, fontWeight: 700, color: "#FFD700", letterSpacing: 0.6 }}>{b.label}</p>
+                <p style={{ margin: 0, fontSize: 18, fontWeight: 700, color: "#ffe97c", lineHeight: 1 }}>{b.val}</p>
+                <p style={{ margin: "3px 0 0", fontSize: 8, fontWeight: 700, color: "#ffe97c", letterSpacing: 0.6 }}>{b.label}</p>
               </div>
             ))}
           </div>
@@ -623,10 +623,10 @@ function MemberPopup({
             {detailBadges.map(b => (
               <div key={b.label} style={{
                 textAlign: "center", padding: "6px 2px",
-                borderRadius: 8, background: "rgba(0,0,0,0.25)", border: "1.2px solid rgba(255,215,0,0.22)"
+                borderRadius: 8, background: "rgba(0,0,0,0.25)", border: "1.2px solid rgba(255,233,124,0.22)"
               }}>
-                <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#FFD700", lineHeight: 1 }}>{b.val}</p>
-                <p style={{ margin: "2px 0 0", fontSize: 7, fontWeight: 700, color: "#FFD700", letterSpacing: 0.4 }}>{b.label}</p>
+                <p style={{ margin: 0, fontSize: 15, fontWeight: 700, color: "#ffe97c", lineHeight: 1 }}>{b.val}</p>
+                <p style={{ margin: "2px 0 0", fontSize: 7, fontWeight: 700, color: "#ffe97c", letterSpacing: 0.4 }}>{b.label}</p>
               </div>
             ))}
           </div>
@@ -636,7 +636,7 @@ function MemberPopup({
               onClick={(e) => { e.stopPropagation(); if (onExplore) onExplore(n.userId); }}
               style={{
                 flex: 1,
-                background: "linear-gradient(135deg, #FFD700 0%, #f0a500 100%)",
+                background: "linear-gradient(135deg, #ffe97c 0%, #f0a500 100%)",
                 color: "#120228",
                 border: "none",
                 borderRadius: 8,
@@ -644,7 +644,7 @@ function MemberPopup({
                 fontSize: "11px",
                 fontWeight: 800,
                 cursor: "pointer",
-                boxShadow: "0 4px 12px rgba(255,215,0,0.2)",
+                boxShadow: "0 4px 12px rgba(255,233,124,0.2)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -971,12 +971,12 @@ function MemberPopup({
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height: 100vh;
         }
 
-        .nt-bc { padding:10px 16px; font-size:12px; color:#FFD700; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
-        .nt-bc a { color:#FFD700; text-decoration:none; opacity:0.85; }
+        .nt-bc { padding:10px 16px; font-size:12px; color:#ffe97c; display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+        .nt-bc a { color:#ffe97c; text-decoration:none; opacity:0.85; }
         .nt-bc a:hover { text-decoration:underline; opacity:1; }
 
         .nt-body { padding:14px 10px 44px; }
@@ -985,25 +985,25 @@ function MemberPopup({
 
         .nt-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
         }
 
         .nt-hdr {
-          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.25);
+          background: linear-gradient(90deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.25);
           padding:12px 16px;
           display:flex; align-items:center; justify-content:space-between;
         }
         .nt-hdr-title {
           font-size: 13px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           letter-spacing: 0.8px;
           text-transform: uppercase;
-          text-shadow: 0 0 8px rgba(255,215,0,0.45);
+          text-shadow: 0 0 8px rgba(255,233,124,0.45);
         }
 
         .nt-legend {
@@ -1013,35 +1013,35 @@ function MemberPopup({
           gap: 18px;
           padding: 12px 16px 10px;
           flex-wrap: wrap;
-          border-bottom: 1px solid rgba(255,215,0,0.12);
+          border-bottom: 1px solid rgba(255,233,124,0.12);
           background: rgba(0,0,0,0.2);
         }
         .nt-leg-item { display:flex; flex-direction:column; align-items:center; gap:5px; }
-        .nt-leg-lbl  { font-size:11px; color:#FFD700; font-weight:500; }
+        .nt-leg-lbl  { font-size:11px; color:#ffe97c; font-weight:500; }
 
-        .nt-filter { padding:12px 14px 14px; border-bottom: 1.5px solid rgba(255,215,0,0.22); }
+        .nt-filter { padding:12px 14px 14px; border-bottom: 1.5px solid rgba(255,233,124,0.22); }
         .nt-f-row  { display:flex; align-items:flex-end; gap:10px; flex-wrap:wrap; }
         .nt-f-grp  { display:flex; flex-direction:column; gap:4px; flex:1; min-width:190px; }
-        .nt-f-lbl  { font-size:12px; font-weight:600; color:#FFD700; }
+        .nt-f-lbl  { font-size:12px; font-weight:600; color:#ffe97c; }
         .nt-f-in   {
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 6px;
           padding: 8px 12px;
           font-size: 13px;
           font-family: 'Poppins', sans-serif;
-          color: #FFD700;
+          color: #ffe97c;
           background: rgba(0,0,0,0.25);
           outline: none; height: 38px; width: 100%;
           transition: border-color .18s, box-shadow .18s;
         }
-        .nt-f-in::placeholder { color: rgba(255,215,0,0.4); }
+        .nt-f-in::placeholder { color: rgba(255,233,124,0.4); }
         .nt-f-in:focus {
-          border-color: #FFD700;
+          border-color: #ffe97c;
           background: rgba(0,0,0,0.35);
-          box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+          box-shadow: 0 0 0 3px rgba(255,233,124,0.15);
         }
         .nt-f-btn  {
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
           border: none;
           border-radius: 6px;
@@ -1056,19 +1056,19 @@ function MemberPopup({
           display: flex;
           align-items: center;
           gap: 8px;
-          box-shadow: 0 4px 15px rgba(255,215,0,0.25);
+          box-shadow: 0 4px 15px rgba(255,233,124,0.25);
         }
-        .nt-f-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,215,0,0.35); }
+        .nt-f-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,233,124,0.35); }
         .nt-f-btn:disabled {
-          background: rgba(255,215,0,0.2) !important;
-          color: rgba(255,215,0,0.4) !important;
-          border: 1px solid rgba(255,215,0,0.15) !important;
+          background: rgba(255,233,124,0.2) !important;
+          color: rgba(255,233,124,0.4) !important;
+          border: 1px solid rgba(255,233,124,0.15) !important;
           box-shadow: none !important;
           cursor: not-allowed;
           transform: none;
         }
         .nt-err {
-          color: #FFD700;
+          color: #ffe97c;
           font-size: 12px;
           margin-top: 8px;
           padding: 7px 12px;
@@ -1077,13 +1077,13 @@ function MemberPopup({
           border-left: 3px solid #ff4444;
         }
 
-        .nt-tree-wrap { display:flex; flex-direction:column; border-top:1px solid rgba(255,215,0,0.22); }
+        .nt-tree-wrap { display:flex; flex-direction:column; border-top:1px solid rgba(255,233,124,0.22); }
         @media(min-width:768px) { .nt-tree-wrap { flex-direction:row; } }
 
         .nt-sidebar {
           width: 100%;
           padding: 12px 14px;
-          border-bottom: 1px solid rgba(255,215,0,0.22);
+          border-bottom: 1px solid rgba(255,233,124,0.22);
           display: flex;
           align-items: center;
           gap: 12px;
@@ -1095,7 +1095,7 @@ function MemberPopup({
             flex-direction: column;
             align-items: center;
             padding: 18px 12px;
-            border-right: 1px solid rgba(255,215,0,0.22);
+            border-right: 1px solid rgba(255,233,124,0.22);
             border-bottom: none;
             flex-shrink: 0;
           }
@@ -1106,8 +1106,8 @@ function MemberPopup({
           width: 58px;
           height: 58px;
           border-radius: 50%;
-          background: rgba(255,215,0,0.1);
-          border: 2.5px solid rgba(255,215,0,0.3);
+          background: rgba(255,233,124,0.1);
+          border: 2.5px solid rgba(255,233,124,0.3);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1116,10 +1116,10 @@ function MemberPopup({
         }
         @media(min-width:768px) { .nt-sb-av { width: 68px; height: 68px; margin-bottom: 10px; } }
 
-        .nt-sb-lbl { font-size: 11px; font-weight: 700; color: #FFD700; line-height: 1.5; text-shadow: 0 0 4px rgba(255,215,0,0.25); }
+        .nt-sb-lbl { font-size: 11px; font-weight: 700; color: #ffe97c; line-height: 1.5; text-shadow: 0 0 4px rgba(255,233,124,0.25); }
         .nt-sb-row { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
         .nt-sb-dot { width: 10px; height: 10px; border-radius: 50%; background: #ff5722; flex-shrink: 0; }
-        .nt-sb-id  { font-size: 12px; font-weight: 600; color: #FFD700; word-break: break-all; }
+        .nt-sb-id  { font-size: 12px; font-weight: 600; color: #ffe97c; word-break: break-all; }
 
         .nt-canvas {
           flex:1;
@@ -1144,7 +1144,7 @@ function MemberPopup({
         @media(min-width:1024px) { .nt-canvas-inner { padding:32px 36px 44px; } }
 
         .nt-spin { display:inline-block; width:34px; height:34px;
-                   border:4px solid rgba(255,215,0,.25); border-top-color:#FFD700;
+                   border:4px solid rgba(255,233,124,.25); border-top-color:#ffe97c;
                    border-radius:50%; animation:ntSpin .85s linear infinite; }
 
         .nt-overlay { position:fixed; inset:0; z-index:2100; background:transparent; }
@@ -1154,14 +1154,14 @@ function MemberPopup({
           <Navbar dropdownOpen={ddOpen} setDropdownOpen={setDdOpen} setActivePage={() => { }} />
 
           <div className="nt-bc">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffe97c">
               <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" />
             </svg>
             <a href="/dashboard">Home</a>
             <span style={{ color: "rgba(255, 215, 0, 0.4)" }}>/</span>
             <span>My Network</span>
             <span style={{ color: "rgba(255, 215, 0, 0.4)" }}>/</span>
-            <span style={{ color: "#FFD700", fontWeight: 700 }}>Network Tree</span>
+            <span style={{ color: "#ffe97c", fontWeight: 700 }}>Network Tree</span>
           </div>
 
           <div className="nt-body">
@@ -1241,7 +1241,7 @@ function MemberPopup({
                         <div style={{
                           fontSize: "11px",
                           fontWeight: "700",
-                          color: "#FFD700",
+                          color: "#ffe97c",
                           borderBottom: "1px solid rgba(255, 215, 0, 0.22)",
                           paddingBottom: "4px",
                           marginBottom: "8px",
@@ -1252,21 +1252,21 @@ function MemberPopup({
                         </div>
 
                         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px" }}>
-                          <div style={{ background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,215,0,0.22)", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
+                          <div style={{ background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,233,124,0.22)", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
                             <div style={{ fontSize: "9px", color: "rgba(255, 215, 0, 0.6)", fontWeight: "600" }}>LEFT USER</div>
-                            <div style={{ fontSize: "14px", fontWeight: "700", color: "#FFD700" }}>{treeRoot.leftCount || 0}</div>
+                            <div style={{ fontSize: "14px", fontWeight: "700", color: "#ffe97c" }}>{treeRoot.leftCount || 0}</div>
                           </div>
-                          <div style={{ background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,215,0,0.22)", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
+                          <div style={{ background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,233,124,0.22)", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
                             <div style={{ fontSize: "9px", color: "rgba(255, 215, 0, 0.6)", fontWeight: "600" }}>RIGHT USER</div>
-                            <div style={{ fontSize: "14px", fontWeight: "700", color: "#FFD700" }}>{treeRoot.rightCount || 0}</div>
+                            <div style={{ fontSize: "14px", fontWeight: "700", color: "#ffe97c" }}>{treeRoot.rightCount || 0}</div>
                           </div>
-                          <div style={{ background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,215,0,0.22)", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
-                            <div style={{ fontSize: "9px", color: "#FFD700", fontWeight: "700" }}>L BOOSTER</div>
-                            <div style={{ fontSize: "14px", fontWeight: "800", color: "#FFD700" }}>{treeRoot.totalLeftBoosterUser || 0}</div>
+                          <div style={{ background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,233,124,0.22)", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
+                            <div style={{ fontSize: "9px", color: "#ffe97c", fontWeight: "700" }}>L BOOSTER</div>
+                            <div style={{ fontSize: "14px", fontWeight: "800", color: "#ffe97c" }}>{treeRoot.totalLeftBoosterUser || 0}</div>
                           </div>
-                          <div style={{ background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,215,0,0.22)", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
-                            <div style={{ fontSize: "9px", color: "#FFD700", fontWeight: "700" }}>R BOOSTER</div>
-                            <div style={{ fontSize: "14px", fontWeight: "800", color: "#FFD700" }}>{treeRoot.totalRightBoosterUser || 0}</div>
+                          <div style={{ background: "rgba(0,0,0,0.25)", border: "1.5px solid rgba(255,233,124,0.22)", padding: "6px", borderRadius: "6px", textAlign: "center" }}>
+                            <div style={{ fontSize: "9px", color: "#ffe97c", fontWeight: "700" }}>R BOOSTER</div>
+                            <div style={{ fontSize: "14px", fontWeight: "800", color: "#ffe97c" }}>{treeRoot.totalRightBoosterUser || 0}</div>
                           </div>
                         </div>
 
@@ -1279,7 +1279,7 @@ function MemberPopup({
                           textAlign: "center",
                           fontSize: "10px",
                           fontWeight: "700",
-                          color: "#FFD700"
+                          color: "#ffe97c"
                         }}>
                           Status: {treeRoot.type === "booster" ? "BOOSTER" : "ACTIVE"}
                         </div>
@@ -1299,8 +1299,8 @@ function MemberPopup({
                         zIndex: 100,
                         background: "rgba(29, 3, 58, 0.85)",
                         backdropFilter: "blur(8px)",
-                        color: "#FFD700",
-                        border: "1.5px solid rgba(255,215,0,0.3)",
+                        color: "#ffe97c",
+                        border: "1.5px solid rgba(255,233,124,0.3)",
                         borderRadius: "6px",
                         padding: "6px 12px",
                         fontSize: "10.5px",

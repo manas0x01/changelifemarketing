@@ -187,7 +187,7 @@ export default function TransferEPinPage() {
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height: 100vh;
         }
 
@@ -195,16 +195,16 @@ export default function TransferEPinPage() {
         .breadcrumb {
           padding: 12px 20px;
           font-size: 13px;
-          color: #FFD700;
+          color: #ffe97c;
           display: flex;
           align-items: center;
           gap: 6px;
         }
-        .breadcrumb a { color: #FFD700; text-decoration: none; opacity: 0.85; }
+        .breadcrumb a { color: #ffe97c; text-decoration: none; opacity: 0.85; }
         .breadcrumb a:hover { text-decoration: underline; opacity: 1; }
-        .breadcrumb .sep { color: rgba(255,215,0,0.4); }
-        .breadcrumb .current { color: #FFD700; font-weight: 600; }
-        .breadcrumb svg { fill: #FFD700 !important; }
+        .breadcrumb .sep { color: rgba(255,233,124,0.4); }
+        .breadcrumb .current { color: #ffe97c; font-weight: 600; }
+        .breadcrumb svg { fill: #ffe97c !important; }
 
         /* PAGE BODY */
         .page-body {
@@ -217,7 +217,7 @@ export default function TransferEPinPage() {
         /* ── CENTERED CARD ── */
         .center-card, .history-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 12px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
@@ -227,15 +227,15 @@ export default function TransferEPinPage() {
         }
 
         .section-header, .history-header {
-          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.25);
+          background: linear-gradient(90deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.25);
           padding: 13px 20px;
           font-size: 13px;
           font-weight: 700;
-          color: #FFD700;
+          color: #ffe97c;
           letter-spacing: 0.8px;
           text-transform: uppercase;
-          text-shadow: 0 0 8px rgba(255,215,0,0.45);
+          text-shadow: 0 0 8px rgba(255,233,124,0.45);
         }
 
         /* ── VALIDATE BODY ── */
@@ -245,11 +245,11 @@ export default function TransferEPinPage() {
         .txn-label {
           font-size: 13.5px;
           font-weight: 600;
-          color: #FFD700;
+          color: #ffe97c;
           margin-bottom: 10px;
           display: block;
         }
-        .txn-label .req { color: #FFD700; margin-right: 1px; }
+        .txn-label .req { color: #ffe97c; margin-right: 1px; }
 
         .txn-row {
           display: flex;
@@ -260,22 +260,22 @@ export default function TransferEPinPage() {
         .txn-input {
           flex: 1;
           min-width: 220px;
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 6px;
           padding: 10px 14px;
           font-size: 13.5px;
           font-family: 'Poppins', sans-serif;
-          color: #FFD700;
+          color: #ffe97c;
           background: rgba(0,0,0,0.25);
           outline: none;
           transition: border-color .18s, box-shadow .18s;
           height: 40px;
         }
-        .txn-input::placeholder { color: rgba(255,215,0,0.4); }
+        .txn-input::placeholder { color: rgba(255,233,124,0.4); }
         .txn-input:focus {
-          border-color: #FFD700;
+          border-color: #ffe97c;
           background: rgba(0,0,0,0.35);
-          box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+          box-shadow: 0 0 0 3px rgba(255,233,124,0.15);
         }
 
         .txn-error {
@@ -286,7 +286,7 @@ export default function TransferEPinPage() {
 
         /* PROCEED BTN */
         .proceed-btn {
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color: #120228;
           border: none;
           border-radius: 6px;
@@ -300,9 +300,9 @@ export default function TransferEPinPage() {
           flex-shrink: 0;
           text-transform: uppercase;
           letter-spacing: 0.5px;
-          box-shadow: 0 4px 15px rgba(255,215,0,0.25);
+          box-shadow: 0 4px 15px rgba(255,233,124,0.25);
         }
-        .proceed-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,215,0,0.35); }
+        .proceed-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(255,233,124,0.35); }
         .proceed-btn:active:not(:disabled) { transform: scale(0.98); }
         .proceed-btn:disabled {
           opacity: 0.5;
@@ -326,28 +326,28 @@ export default function TransferEPinPage() {
         .form-label {
           font-size: 13px;
           font-weight: 600;
-          color: #FFD700;
+          color: #ffe97c;
         }
-        .form-label .req { color: #FFD700; margin-right: 1px; }
+        .form-label .req { color: #ffe97c; margin-right: 1px; }
 
         .form-input, .form-select {
           width: 100%;
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 6px;
           padding: 10px 13px;
           font-size: 13.5px;
           font-family: 'Poppins', sans-serif;
-          color: #FFD700;
+          color: #ffe97c;
           background: rgba(0,0,0,0.25);
           outline: none;
           transition: border-color .18s, box-shadow .18s;
           height: 40px;
         }
-        .form-input::placeholder { color: rgba(255,215,0,0.4); }
+        .form-input::placeholder { color: rgba(255,233,124,0.4); }
         .form-input:focus, .form-select:focus {
-          border-color: #FFD700;
+          border-color: #ffe97c;
           background: rgba(0,0,0,0.35);
-          box-shadow: 0 0 0 3px rgba(255,215,0,0.15);
+          box-shadow: 0 0 0 3px rgba(255,233,124,0.15);
         }
         .form-select {
           appearance: none;
@@ -360,14 +360,14 @@ export default function TransferEPinPage() {
         }
         .form-select option {
           background-color: #1a0533;
-          color: #FFD700;
+          color: #ffe97c;
         }
 
         .form-input[readonly] {
           background: rgba(0,0,0,0.5);
-          color: rgba(255,215,0,0.5);
+          color: rgba(255,233,124,0.5);
           cursor: not-allowed;
-          border-color: rgba(255,215,0,0.1);
+          border-color: rgba(255,233,124,0.1);
         }
 
         /* verified badge */
@@ -375,21 +375,21 @@ export default function TransferEPinPage() {
           display: inline-flex;
           align-items: center;
           gap: 4px;
-          color: #FFD700;
+          color: #ffe97c;
           font-size: 13px;
           font-weight: 600;
           flex-shrink: 0;
         }
-        .verified-badge svg { fill: #FFD700 !important; }
+        .verified-badge svg { fill: #ffe97c !important; }
 
         /* info note */
         .info-note {
-          background: rgba(255,215,0,0.06);
-          border-left: 4px solid #FFD700;
+          background: rgba(255,233,124,0.06);
+          border-left: 4px solid #ffe97c;
           border-radius: 4px;
           padding: 10px 14px;
           font-size: 12.5px;
-          color: #FFD700;
+          color: #ffe97c;
           margin-bottom: 20px;
         }
 
@@ -421,14 +421,14 @@ export default function TransferEPinPage() {
         }
 
         .history-table thead tr {
-          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.2);
+          background: linear-gradient(90deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.2);
         }
 
         .history-table thead th {
           padding: 12px 14px;
           text-align: left;
-          color: #FFD700;
+          color: #ffe97c;
           font-weight: 700;
           font-size: 12px;
           white-space: nowrap;
@@ -440,7 +440,7 @@ export default function TransferEPinPage() {
 
         .history-table tbody td {
           padding: 11px 14px;
-          color: #FFD700;
+          color: #ffe97c;
           border-bottom: 1px solid rgba(255, 215, 0, 0.12);
           font-size: 12px;
         }
@@ -451,8 +451,8 @@ export default function TransferEPinPage() {
           border-radius: 20px;
           font-size: 11px;
           font-weight: 600;
-          color: #fff;
-          background: #26a69a;
+          color: #120228;
+          background: #ffe97c;
         }
 
         .status-failed {
@@ -478,21 +478,21 @@ export default function TransferEPinPage() {
         .history-empty {
           text-align: center;
           padding: 30px 20px;
-          color: rgba(255,215,0,0.4);
+          color: rgba(255,233,124,0.4);
           font-size: 13px;
         }
 
         .history-loading {
           text-align: center;
           padding: 30px 20px;
-          color: #FFD700;
+          color: #ffe97c;
           font-size: 13px;
           display: flex;
           align-items: center;
           justify-content: center;
           gap: 10px;
         }
-        .history-loading svg { stroke: #FFD700 !important; }
+        .history-loading svg { stroke: #ffe97c !important; }
 
         /* Skeleton Styles */
         .skeleton-row { animation: pulse 1.5s ease-in-out infinite; }
@@ -550,7 +550,7 @@ export default function TransferEPinPage() {
                       </button>
                     ) : (
                       <span className="verified-badge">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#26a69a"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffe97c"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
                         Verified
                       </span>
                     )}

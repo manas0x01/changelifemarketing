@@ -220,139 +220,139 @@ export default function BuyEPinPage() {
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height:100vh;
         }
 
         .green-bar {
           height:3px;
-          background:linear-gradient(90deg, transparent, #FFD700, #FFD700, #FFD700, transparent);
+          background:linear-gradient(90deg, transparent, #ffe97c, #ffe97c, #ffe97c, transparent);
         }
 
         .breadcrumb {
-          padding:12px 20px; font-size:13px; color:#FFD700; display:flex; align-items:center; gap:6px;
+          padding:12px 20px; font-size:13px; color:#ffe97c; display:flex; align-items:center; gap:6px;
         }
-        .breadcrumb a { color:#FFD700; text-decoration:none; opacity:0.85; }
+        .breadcrumb a { color:#ffe97c; text-decoration:none; opacity:0.85; }
         .breadcrumb a:hover { text-decoration:underline; opacity:1; }
-        .breadcrumb .sep { color:rgba(255,215,0,0.4); }
+        .breadcrumb .sep { color:rgba(255,233,124,0.4); }
 
         .page-body { padding:20px; display:flex; justify-content:center; }
 
         .buy-card {
           width:100%; max-width:620px;
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius:18px;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
           overflow:hidden;
         }
 
         .card-header {
-          background: linear-gradient(90deg, rgba(255,215,0,0.15), rgba(168,85,247,0.12));
-          border-bottom: 1.5px solid rgba(255,215,0,0.25);
+          background: linear-gradient(90deg, rgba(255,233,124,0.15), rgba(168,85,247,0.12));
+          border-bottom: 1.5px solid rgba(255,233,124,0.25);
           padding:18px 24px;
           display:flex; align-items:center; gap:12px;
         }
         .card-header-icon {
           width:42px; height:42px; border-radius:50%;
-          background:rgba(255,215,0,0.15);
+          background:rgba(255,233,124,0.15);
           display:flex; align-items:center; justify-content:center;
           font-size:20px;
         }
-        .card-header-text h2 { font-size:16px; font-weight:700; color:#FFD700; text-shadow:0 0 8px rgba(255,215,0,0.45); }
-        .card-header-text p  { font-size:12.5px; color:#FFD700; opacity:0.8; }
+        .card-header-text h2 { font-size:16px; font-weight:700; color:#ffe97c; text-shadow:0 0 8px rgba(255,233,124,0.45); }
+        .card-header-text p  { font-size:12.5px; color:#ffe97c; opacity:0.8; }
 
         .price-banner {
           background: linear-gradient(135deg, #250845 0%, #17042c 100%);
-          border-bottom: 1.5px solid rgba(255,215,0,0.2);
+          border-bottom: 1.5px solid rgba(255,233,124,0.2);
           margin:0; padding:14px 24px;
           display:flex; align-items:center; justify-content:space-between;
           flex-wrap:wrap; gap:8px;
         }
         .price-per {
-          font-size:13px; color:rgba(255,215,0,0.7);
+          font-size:13px; color:rgba(255,233,124,0.7);
         }
-        .price-per strong { font-size:22px; color:#FFD700; font-weight:700; text-shadow: 0 0 10px rgba(255,215,0,0.45); }
-        .price-per span   { font-size:13px; color:rgba(255,215,0,0.5); }
+        .price-per strong { font-size:22px; color:#ffe97c; font-weight:700; text-shadow: 0 0 10px rgba(255,233,124,0.45); }
+        .price-per span   { font-size:13px; color:rgba(255,233,124,0.5); }
 
         .total-price {
           text-align:right;
         }
-        .total-label { font-size:12px; color:rgba(255,215,0,0.6); }
-        .total-val   { font-size:26px; font-weight:800; color:#FFD700; line-height:1; text-shadow:0 0 12px rgba(255,215,0,0.5); }
-        .total-pins  { font-size:11.5px; color:rgba(255,215,0,0.5); }
+        .total-label { font-size:12px; color:rgba(255,233,124,0.6); }
+        .total-val   { font-size:26px; font-weight:800; color:#ffe97c; line-height:1; text-shadow:0 0 12px rgba(255,233,124,0.5); }
+        .total-pins  { font-size:11.5px; color:rgba(255,233,124,0.5); }
 
         .form-body { padding:24px; }
 
         .form-group { margin-bottom:20px; }
-        .form-label { font-size:13px; font-weight:600; color:#FFD700; display:block; margin-bottom:7px; }
-        .form-label .req { color:#FFD700; margin-right:2px; }
+        .form-label { font-size:13px; font-weight:600; color:#ffe97c; display:block; margin-bottom:7px; }
+        .form-label .req { color:#ffe97c; margin-right:2px; }
 
         .form-input {
           width:100%;
           background: rgba(0,0,0,0.25);
-          border:1.5px solid rgba(255,215,0,0.22);
+          border:1.5px solid rgba(255,233,124,0.22);
           border-radius:8px;
           padding:11px 14px; font-size:13.5px;
-          font-family:'Poppins',sans-serif; color:#FFD700;
+          font-family:'Poppins',sans-serif; color:#ffe97c;
           outline:none; transition:border-color .18s, box-shadow .18s;
         }
-        .form-input:focus { border-color:#FFD700; box-shadow:0 0 0 3px rgba(255,215,0,0.18); }
-        .form-input::placeholder { color:rgba(255,215,0,0.3); }
-        .form-input:disabled { background:rgba(255,215,0,0.04); opacity:0.8; cursor:not-allowed; }
+        .form-input:focus { border-color:#ffe97c; box-shadow:0 0 0 3px rgba(255,233,124,0.18); }
+        .form-input::placeholder { color:rgba(255,233,124,0.3); }
+        .form-input:disabled { background:rgba(255,233,124,0.04); opacity:0.8; cursor:not-allowed; }
 
         .form-error {
-          background:rgba(229,57,53,0.15); border-left:4px solid #FFD700; border-radius:4px;
-          padding:9px 13px; font-size:13px; color:#FFD700;
+          background:rgba(229,57,53,0.15); border-left:4px solid #ffe97c; border-radius:4px;
+          padding:9px 13px; font-size:13px; color:#ffe97c;
           margin-bottom:16px; display:flex; align-items:center; gap:6px;
         }
 
         .file-upload-box {
-          border:2px dashed rgba(255,215,0,0.4); border-radius:10px; padding:20px;
+          border:2px dashed rgba(255,233,124,0.4); border-radius:10px; padding:20px;
           text-align:center; cursor:pointer; transition:all .18s;
-          background:rgba(255,215,0,0.03);
+          background:rgba(255,233,124,0.03);
         }
-        .file-upload-box:hover { background:rgba(255,215,0,0.06); border-color:#FFD700; }
+        .file-upload-box:hover { background:rgba(255,233,124,0.06); border-color:#ffe97c; }
         .file-upload-input { display:none; }
         .upload-icon { font-size:32px; margin-bottom:8px; }
-        .upload-text { font-size:13px; color:#FFD700; font-weight:600; }
-        .upload-hint { font-size:11.5px; color:rgba(255,215,0,0.5); margin-top:4px; }
+        .upload-text { font-size:13px; color:#ffe97c; font-weight:600; }
+        .upload-hint { font-size:11.5px; color:rgba(255,233,124,0.5); margin-top:4px; }
 
         .file-preview {
           margin-top:12px; padding:12px; background:rgba(0,0,0,0.2); border-radius:8px;
           display:flex; align-items:center; gap:12px;
-          border:1px solid rgba(255,215,0,0.15);
+          border:1px solid rgba(255,233,124,0.15);
         }
         .file-preview img { width:60px; height:60px; border-radius:6px; object-fit:cover; }
         .file-info { text-align:left; flex:1; }
-        .file-name { font-size:12px; font-weight:600; color:#FFD700; }
-        .file-size { font-size:11px; color:rgba(255,215,0,0.5); margin-top:2px; }
-        .remove-file { color:#FFD700; cursor:pointer; font-weight:600; font-size:12px; }
+        .file-name { font-size:12px; font-weight:600; color:#ffe97c; }
+        .file-size { font-size:11px; color:rgba(255,233,124,0.5); margin-top:2px; }
+        .remove-file { color:#ffe97c; cursor:pointer; font-weight:600; font-size:12px; }
 
         .amount-box {
           background:rgba(0,0,0,0.25);
-          border:1.5px solid rgba(255,215,0,0.2); border-radius:10px;
+          border:1.5px solid rgba(255,233,124,0.2); border-radius:10px;
           padding:14px 16px;
         }
         .amount-row {
           display:flex; justify-content:space-between; align-items:center;
           padding:5px 0;
         }
-        .amount-row + .amount-row { border-top:1px dashed rgba(255,215,0,0.15); }
-        .amount-label { font-size:13px; color:rgba(255,215,0,0.7); }
-        .amount-val   { font-size:13px; font-weight:600; color:#FFD700; }
-        .amount-row.total .amount-label { font-size:14px; font-weight:700; color:#FFD700; }
-        .amount-row.total .amount-val   { font-size:18px; font-weight:800; color:#FFD700; text-shadow:0 0 6px rgba(255,215,0,0.35); }
+        .amount-row + .amount-row { border-top:1px dashed rgba(255,233,124,0.15); }
+        .amount-label { font-size:13px; color:rgba(255,233,124,0.7); }
+        .amount-val   { font-size:13px; font-weight:600; color:#ffe97c; }
+        .amount-row.total .amount-label { font-size:14px; font-weight:700; color:#ffe97c; }
+        .amount-row.total .amount-val   { font-size:18px; font-weight:800; color:#ffe97c; text-shadow:0 0 6px rgba(255,233,124,0.35); }
 
         .submit-btn {
           width:100%;
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color:#120228; border:none; border-radius:10px;
           padding:14px; font-size:15px; font-weight:800;
           font-family:'Poppins',sans-serif; cursor:pointer;
           transition:opacity .18s, transform .15s;
           display:flex; align-items:center; justify-content:center; gap:8px;
-          box-shadow:0 4px 15px rgba(255,215,0,0.35);
+          box-shadow:0 4px 15px rgba(255,233,124,0.35);
           margin-top:4px;
         }
         .submit-btn:hover  { opacity:0.92; transform:translateY(-1px); }
@@ -364,27 +364,27 @@ export default function BuyEPinPage() {
         }
         .success-icon {
           width:72px; height:72px; border-radius:50%;
-          background:linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background:linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           display:flex; align-items:center; justify-content:center;
           margin:0 auto 18px;
-          box-shadow:0 6px 20px rgba(255,215,0,0.3);
+          box-shadow:0 6px 20px rgba(255,233,124,0.3);
           animation:popIn .4s cubic-bezier(.175,.885,.32,1.275);
         }
         @keyframes popIn {
           from { transform:scale(0); opacity:0; }
           to   { transform:scale(1); opacity:1; }
         }
-        .success-title { font-size:20px; font-weight:800; color:#FFD700; margin-bottom:8px; text-shadow:0 0 8px rgba(255,215,0,0.4); }
-        .success-sub   { font-size:13.5px; color:rgba(255,215,0,0.7); margin-bottom:20px; line-height:1.6; }
+        .success-title { font-size:20px; font-weight:800; color:#ffe97c; margin-bottom:8px; text-shadow:0 0 8px rgba(255,233,124,0.4); }
+        .success-sub   { font-size:13.5px; color:rgba(255,233,124,0.7); margin-bottom:20px; line-height:1.6; }
 
         .success-details {
-          background:rgba(0,0,0,0.25); border:1.5px solid rgba(255,215,0,0.22); border-radius:10px;
+          background:rgba(0,0,0,0.25); border:1.5px solid rgba(255,233,124,0.22); border-radius:10px;
           padding:16px; text-align:left; margin-bottom:22px;
         }
-        .detail-row { display:flex; justify-content:space-between; padding:5px 0; font-size:13px; color:#FFD700; }
-        .detail-row + .detail-row { border-top:1px dashed rgba(255,215,0,0.15); }
-        .detail-key { color:rgba(255,215,0,0.65); }
-        .detail-val { font-weight:600; color:#FFD700; }
+        .detail-row { display:flex; justify-content:space-between; padding:5px 0; font-size:13px; color:#ffe97c; }
+        .detail-row + .detail-row { border-top:1px dashed rgba(255,233,124,0.15); }
+        .detail-key { color:rgba(255,233,124,0.65); }
+        .detail-val { font-weight:600; color:#ffe97c; }
 
         .error-state {
           padding:48px 24px; text-align:center;
@@ -395,14 +395,14 @@ export default function BuyEPinPage() {
           margin:0 auto 16px; font-size:28px;
           border:1px solid rgba(229,57,53,0.3);
         }
-        .error-title { font-size:17px; font-weight:700; color:#FFD700; margin-bottom:6px; }
-        .error-sub   { font-size:13px; color:rgba(255,215,0,0.6); margin-bottom:20px; }
+        .error-title { font-size:17px; font-weight:700; color:#ffe97c; margin-bottom:6px; }
+        .error-sub   { font-size:13px; color:rgba(255,233,124,0.6); margin-bottom:20px; }
         .retry-btn {
-          background:linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background:linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color:#120228; border:none; border-radius:8px;
           padding:11px 32px; font-size:14px; font-weight:800;
           font-family:'Poppins',sans-serif; cursor:pointer;
-          box-shadow: 0 4px 15px rgba(255,215,0,0.35);
+          box-shadow: 0 4px 15px rgba(255,233,124,0.35);
         }
       `}</style>
 
@@ -416,8 +416,8 @@ export default function BuyEPinPage() {
         <div className="green-bar" />
 
         <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#555"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
-          <a href="#">Home</a>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffe97c"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <a href="/dashboard">Home</a>
           <span className="sep">/</span>
           <a href="#">E-Pin Management</a>
           <span className="sep">/</span>
@@ -550,7 +550,7 @@ export default function BuyEPinPage() {
                   <label className="form-label"><span className="req">*</span>Number of E-Pins :</label>
                   <div style={{display:'flex', alignItems:'center', gap:'8px', marginTop:'8px'}}>
                     <button
-                      style={{width:'44px', height:'44px', border:'1.5px solid #d0d0d0', borderRadius:'8px', background:'#f5f5f5', cursor:'pointer', fontSize:'18px', fontWeight:'700'}}
+                      style={{width:'44px', height:'44px', border:'1.5px solid rgba(255,233,124,0.3)', borderRadius:'8px', background:'rgba(255,233,124,0.08)', color:'#ffe97c', cursor:'pointer', fontSize:'18px', fontWeight:'700'}}
                       onClick={() => handlePinChange(numPins - 1)}
                     >−</button>
                     <input
@@ -558,10 +558,10 @@ export default function BuyEPinPage() {
                       min={1} max={99}
                       value={numPins}
                       onChange={(e) => handlePinChange(parseInt(e.target.value) || 1)}
-                      style={{width:'70px', height:'44px', textAlign:'center', border:'1.5px solid #d0d0d0', borderRadius:'8px', fontSize:'18px', fontWeight:'700', outline:'none'}}
+                      style={{width:'70px', height:'44px', textAlign:'center', background:'rgba(0,0,0,0.25)', color:'#ffe97c', border:'1.5px solid rgba(255,233,124,0.3)', borderRadius:'8px', fontSize:'18px', fontWeight:'700', outline:'none'}}
                     />
                     <button
-                      style={{width:'44px', height:'44px', border:'1.5px solid #d0d0d0', borderRadius:'8px', background:'#f5f5f5', cursor:'pointer', fontSize:'18px', fontWeight:'700'}}
+                      style={{width:'44px', height:'44px', border:'1.5px solid rgba(255,233,124,0.3)', borderRadius:'8px', background:'rgba(255,233,124,0.08)', color:'#ffe97c', cursor:'pointer', fontSize:'18px', fontWeight:'700'}}
                       onClick={() => handlePinChange(numPins + 1)}
                     >+</button>
                   </div>
@@ -590,26 +590,26 @@ export default function BuyEPinPage() {
                 <div className="form-group">
                   <label className="form-label"><span className="req">*</span>Payment Screenshot :</label>
                   <div style={{
-                    border: '2px dashed #26a69a',
+                    border: '2px dashed rgba(255,233,124,0.4)',
                     borderRadius: '10px',
                     padding: '30px 20px',
                     textAlign: 'center',
                     cursor: uploading ? 'not-allowed' : 'pointer',
-                    backgroundColor: '#f0fdf9',
+                    backgroundColor: 'rgba(255,233,124,0.03)',
                     transition: 'all 0.2s ease',
                     marginTop: '8px',
                     opacity: uploading ? 0.6 : 1
                   }}
                   onMouseOver={(e) => {
                     if (!uploading) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = '#e0f7f4';
-                      (e.currentTarget as HTMLElement).style.borderColor = '#1de9b6';
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,233,124,0.08)';
+                      (e.currentTarget as HTMLElement).style.borderColor = '#ffe97c';
                     }
                   }}
                   onMouseOut={(e) => {
                     if (!uploading) {
-                      (e.currentTarget as HTMLElement).style.backgroundColor = '#f0fdf9';
-                      (e.currentTarget as HTMLElement).style.borderColor = '#26a69a';
+                      (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,233,124,0.03)';
+                      (e.currentTarget as HTMLElement).style.borderColor = 'rgba(255,233,124,0.4)';
                     }
                   }}
                   onClick={() => !uploading && document.getElementById('fileInput')?.click()}
@@ -617,14 +617,14 @@ export default function BuyEPinPage() {
                     {uploading ? (
                       <>
                         <div style={{ fontSize: '32px', marginBottom: '8px' }}>⏳</div>
-                        <div style={{ fontSize: '13px', color: '#333', fontWeight: '600' }}>Uploading to cloud...</div>
-                        <div style={{ fontSize: '11.5px', color: '#888', marginTop: '4px' }}>Please wait</div>
+                        <div style={{ fontSize: '13px', color: '#ffe97c', fontWeight: '600' }}>Uploading to cloud...</div>
+                        <div style={{ fontSize: '11.5px', color: 'rgba(255,233,124,0.5)', marginTop: '4px' }}>Please wait</div>
                       </>
                     ) : (
                       <>
                         <div style={{ fontSize: '32px', marginBottom: '8px' }}>📸</div>
-                        <div style={{ fontSize: '13px', color: '#333', fontWeight: '600' }}>Click to upload payment screenshot</div>
-                        <div style={{ fontSize: '11.5px', color: '#888', marginTop: '4px' }}>JPG, PNG up to 5MB</div>
+                        <div style={{ fontSize: '13px', color: '#ffe97c', fontWeight: '600' }}>Click to upload payment screenshot</div>
+                        <div style={{ fontSize: '11.5px', color: 'rgba(255,233,124,0.5)', marginTop: '4px' }}>JPG, PNG up to 5MB</div>
                       </>
                     )}
                     <input
@@ -641,7 +641,8 @@ export default function BuyEPinPage() {
                     <div style={{
                       marginTop: '16px',
                       padding: '12px',
-                      backgroundColor: '#f5f5f5',
+                      backgroundColor: 'rgba(0,0,0,0.2)',
+                      border: '1.5px solid rgba(255,233,124,0.22)',
                       borderRadius: '8px',
                       display: 'flex',
                       alignItems: 'center',
@@ -654,20 +655,20 @@ export default function BuyEPinPage() {
                         objectFit: 'cover'
                       }} />
                       <div style={{ textAlign: 'left', flex: 1 }}>
-                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#333' }}>{uploadedFile?.name}</div>
-                        <div style={{ fontSize: '11px', color: '#888', marginTop: '2px' }}>{((uploadedFile?.size ?? 0) / 1024).toFixed(2)} KB</div>
-                        {cloudinaryUrl && <div style={{ fontSize: '11px', color: '#26a69a', marginTop: '2px' }}>✓ Uploaded to cloud</div>}
+                        <div style={{ fontSize: '12px', fontWeight: '600', color: '#ffe97c' }}>{uploadedFile?.name}</div>
+                        <div style={{ fontSize: '11px', color: 'rgba(255,233,124,0.5)', marginTop: '2px' }}>{((uploadedFile?.size ?? 0) / 1024).toFixed(2)} KB</div>
+                        {cloudinaryUrl && <div style={{ fontSize: '11px', color: '#ffe97c', marginTop: '2px' }}>✓ Uploaded to cloud</div>}
                       </div>
                       <div 
                         style={{ 
-                          color: '#e53935', 
+                          color: '#ffe97c', 
                           cursor: 'pointer', 
                           fontWeight: '600', 
                           fontSize: '12px',
                           padding: '6px 12px',
-                          backgroundColor: '#fff',
+                          backgroundColor: 'rgba(255,233,124,0.1)',
                           borderRadius: '6px',
-                          border: '1px solid #e53935',
+                          border: '1px solid rgba(255,233,124,0.3)',
                           transition: 'all 0.2s'
                         }}
                         onClick={async () => {
@@ -700,12 +701,10 @@ export default function BuyEPinPage() {
                           setCloudinaryPublicId("");
                         }}
                         onMouseOver={(e) => {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = '#e53935';
-                          (e.currentTarget as HTMLElement).style.color = '#fff';
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,233,124,0.2)';
                         }}
                         onMouseOut={(e) => {
-                          (e.currentTarget as HTMLElement).style.backgroundColor = '#fff';
-                          (e.currentTarget as HTMLElement).style.color = '#e53935';
+                          (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(255,233,124,0.1)';
                         }}
                       >
                         Remove

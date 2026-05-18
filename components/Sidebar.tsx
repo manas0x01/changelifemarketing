@@ -271,13 +271,13 @@ export default function Sidebar() {
           --sb-bg:        #120228;
           --sb-bg-mid:    #1a0533;
           --sb-card:      #200640;
-          --sb-gold:      #FFD700;
-          --sb-gold-dim:  #FFD700;
-          --sb-gold-glow: rgba(255,215,0,0.18);
+          --sb-gold:      #ffe97c;
+          --sb-gold-dim:  #ffe97c;
+          --sb-gold-glow: rgba(255,233,124,0.18);
           --sb-purple:    #a855f7;
-          --sb-border:    rgba(255,215,0,0.25);
-          --sb-text:      #FFD700;
-          --sb-text-dim:  #FFD700;
+          --sb-border:    rgba(255,245,198,0.22);
+          --sb-text:      #ffe97c;
+          --sb-text-dim:  #ffe97c;
         }
 
         /* ── Sidebar shell ── */

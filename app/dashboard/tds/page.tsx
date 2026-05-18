@@ -75,20 +75,20 @@ export default function TDSReportPage() {
           background: #1a0533;
           background-image:
             radial-gradient(ellipse 80% 50% at 20% 0%, rgba(168,85,247,0.2) 0%, transparent 65%),
-            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,215,0,0.12) 0%, transparent 65%);
+            radial-gradient(ellipse 60% 40% at 80% 100%, rgba(255,233,124,0.12) 0%, transparent 65%);
           min-height: 100vh;
           color: #fff;
         }
 
         /* GOLD BAR */
-        .gold-bar { height:4px; background:linear-gradient(90deg, #FFD700, #f0a500); }
+        .gold-bar { height:4px; background:linear-gradient(90deg, #ffe97c, #f0a500); }
 
         /* BREADCRUMB */
-        .breadcrumb { padding:12px 20px; font-size:13px; color:rgba(255,215,0,0.7); display:flex; align-items:center; gap:6px; }
-        .breadcrumb a { color:rgba(255,215,0,0.7); text-decoration:none; }
-        .breadcrumb a:hover { color:#FFD700; text-decoration:underline; }
-        .breadcrumb .sep { color:rgba(255,215,0,0.4); }
-        .breadcrumb .current { color:#FFD700; font-weight:700; }
+        .breadcrumb { padding:12px 20px; font-size:13px; color:rgba(255,233,124,0.7); display:flex; align-items:center; gap:6px; }
+        .breadcrumb a { color:rgba(255,233,124,0.7); text-decoration:none; }
+        .breadcrumb a:hover { color:#ffe97c; text-decoration:underline; }
+        .breadcrumb .sep { color:rgba(255,233,124,0.4); }
+        .breadcrumb .current { color:#ffe97c; font-weight:700; }
 
         /* PAGE BODY */
         .page-body { padding:0 10px 40px; }
@@ -97,7 +97,7 @@ export default function TDSReportPage() {
         /* MAIN CARD */
         .main-card {
           background: linear-gradient(135deg, #1d033a 0%, #110122 100%);
-          border: 1.5px solid rgba(255,215,0,0.22);
+          border: 1.5px solid rgba(255,233,124,0.22);
           border-radius: 16px;
           overflow: hidden;
           box-shadow: 0 12px 36px rgba(0,0,0,0.65), 0 0 20px rgba(168,85,247,0.15);
@@ -106,32 +106,32 @@ export default function TDSReportPage() {
         /* HEADER */
         .section-header {
           background: linear-gradient(90deg, #1d033a, #110122);
-          border-bottom: 1.5px solid rgba(255,215,0,0.22);
+          border-bottom: 1.5px solid rgba(255,233,124,0.22);
           padding:16px 20px;
           display:flex; align-items:center; justify-content:space-between;
         }
-        .section-title { font-size:14px; font-weight:800; color:#FFD700; letter-spacing:0.8px; text-transform:uppercase; text-shadow: 0 0 8px rgba(255,215,0,0.3); }
+        .section-title { font-size:14px; font-weight:800; color:#ffe97c; letter-spacing:0.8px; text-transform:uppercase; text-shadow: 0 0 8px rgba(255,233,124,0.3); }
         .header-actions { display:flex; align-items:center; gap:8px; }
         
         .icon-btn {
-          background: rgba(255,215,0,0.1); border: 1.5px solid rgba(255,215,0,0.25); border-radius:6px;
-          padding:6px 10px; cursor:pointer; color:#FFD700;
+          background: rgba(255,233,124,0.1); border: 1.5px solid rgba(255,233,124,0.25); border-radius:6px;
+          padding:6px 10px; cursor:pointer; color:#ffe97c;
           display:flex; align-items:center; transition: all 0.2s;
         }
-        .icon-btn:hover { background: rgba(255,215,0,0.25); border-color:#FFD700; transform: translateY(-1px); }
+        .icon-btn:hover { background: rgba(255,233,124,0.25); border-color:#ffe97c; transform: translateY(-1px); }
         .icon-btn-excel { background: rgba(0,200,80,0.15); border-color: rgba(0,200,80,0.35); color: #00ff88; }
         .icon-btn-excel:hover { background: rgba(0,200,80,0.35); border-color: #00ff88; }
 
         /* FILTER AREA */
         .filter-area { padding:20px 20px 10px; }
-        .filter-label { font-size:12.5px; font-weight:600; color:rgba(255,215,0,0.7); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:6px; display:block; }
+        .filter-label { font-size:12.5px; font-weight:600; color:rgba(255,233,124,0.7); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom:6px; display:block; }
 
         .filter-row { display:flex; align-items:center; gap:12px; flex-wrap:wrap; margin-bottom:14px; }
 
         .cycle-select {
-          border: 1.5px solid rgba(255,215,0,0.25); border-radius:6px;
+          border: 1.5px solid rgba(255,233,124,0.25); border-radius:6px;
           padding:9px 12px; font-size:13px;
-          font-family:'Poppins',sans-serif; color:#FFD700;
+          font-family:'Poppins',sans-serif; color:#ffe97c;
           background: rgba(0,0,0,0.25); outline:none; height:40px; flex: 1; min-width:180px;
           cursor:pointer; transition: all 0.2s;
           appearance:none; -webkit-appearance:none;
@@ -139,16 +139,16 @@ export default function TDSReportPage() {
           background-repeat:no-repeat; background-position:right 10px center; padding-right:30px;
         }
         @media(min-width:768px) { .cycle-select { flex: none; min-width:220px; } }
-        .cycle-select:focus { border-color:#FFD700; box-shadow:0 0 10px rgba(255,215,0,0.2); }
+        .cycle-select:focus { border-color:#ffe97c; box-shadow:0 0 10px rgba(255,233,124,0.2); }
 
         .filter-btn {
-          background: linear-gradient(135deg, #FFD700 0%, #f0a500 100%);
+          background: linear-gradient(135deg, #ffe97c 0%, #f0a500 100%);
           color:#120228; border:none; border-radius:6px;
           padding:0 20px; height:40px; font-size:14px; font-weight:800;
           font-family:'Poppins',sans-serif; cursor:pointer;
           transition: all 0.2s, transform .15s;
           flex: 1;
-          box-shadow: 0 4px 12px rgba(255,215,0,0.2);
+          box-shadow: 0 4px 12px rgba(255,233,124,0.2);
         }
         @media(min-width:768px) { .filter-btn { padding:0 28px; flex: none; } }
         .filter-btn:hover { background: linear-gradient(135deg, #FFE042 0%, #f0b500 100%); transform:translateY(-1px); }
@@ -156,7 +156,7 @@ export default function TDSReportPage() {
 
         /* TOTAL SUMMARY */
         .total-summary {
-          font-size:15px; font-weight:700; color:rgba(255,215,0,0.85);
+          font-size:15px; font-weight:700; color:rgba(255,233,124,0.85);
           padding:2px 20px 16px;
         }
         .total-summary span { color:#ff4444; text-shadow: 0 0 8px rgba(255,68,68,0.3); font-size: 17px; }
@@ -165,18 +165,18 @@ export default function TDSReportPage() {
         .table-wrap { overflow-x:auto; -webkit-overflow-scrolling: touch; }
         .data-table { width:100%; border-collapse:collapse; font-size:12px; min-width:800px; }
         @media(min-width:768px) { .data-table { font-size:13px; } }
-        .data-table thead tr { background: rgba(0, 0, 0, 0.35); border-bottom: 2px solid rgba(255,215,0,0.22); }
+        .data-table thead tr { background: rgba(0, 0, 0, 0.35); border-bottom: 2px solid rgba(255,233,124,0.22); }
         .data-table thead th {
           padding:14px 16px; text-align:left;
-          color:#FFD700; font-weight:700; font-size:13px;
+          color:#ffe97c; font-weight:700; font-size:13px;
           white-space:nowrap; text-transform:uppercase; letter-spacing:0.8px;
         }
         .data-table tbody tr:nth-child(odd)  { background: rgba(29, 3, 58, 0.35); }
         .data-table tbody tr:nth-child(even) { background: rgba(17, 1, 34, 0.35); }
-        .data-table tbody tr:hover { background: rgba(255,215,0,0.06); transition:background .15s; }
+        .data-table tbody tr:hover { background: rgba(255,233,124,0.06); transition:background .15s; }
         .data-table tbody td {
           padding:13px 16px; color:#ffffff;
-          border-bottom:1px solid rgba(255,215,0,0.12); font-size:13px; white-space:nowrap;
+          border-bottom:1px solid rgba(255,233,124,0.12); font-size:13px; white-space:nowrap;
           vertical-align:middle;
         }
 
@@ -185,12 +185,12 @@ export default function TDSReportPage() {
 
         /* Footer */
         .table-footer {
-          padding:14px 20px; font-size:12.5px; color:rgba(255,215,0,0.6);
-          border-top:1.5px solid rgba(255,215,0,0.22);
+          padding:14px 20px; font-size:12.5px; color:rgba(255,233,124,0.6);
+          border-top:1.5px solid rgba(255,233,124,0.22);
           display:flex; justify-content:space-between; align-items:center;
           background: rgba(0,0,0,0.15);
         }
-        .footer-total { font-weight:800; color:#FFD700; font-size:13.5px; }
+        .footer-total { font-weight:800; color:#ffe97c; font-size:13.5px; }
 
         /* Skeleton Loader */
         @keyframes skeletonShimmer {
@@ -203,7 +203,7 @@ export default function TDSReportPage() {
           animation: skeletonShimmer 2s infinite;
         }
         .skeleton-row td { padding: 13px 16px; }
-        .skeleton-cell { height: 20px; background: rgba(255,215,0,0.1); border-radius: 4px; }
+        .skeleton-cell { height: 20px; background: rgba(255,233,124,0.1); border-radius: 4px; }
       `}</style>
 
       <div className="pp-root" onClick={() => dropdownOpen && setDropdownOpen(false)}>
@@ -211,7 +211,7 @@ export default function TDSReportPage() {
         <div className="gold-bar" />
 
         <div className="breadcrumb">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="#FFD700"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffe97c"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg>
           <a href="/dashboard">Home</a>
           <span className="sep">/</span>
           <span>Daily Payout</span>
@@ -225,7 +225,7 @@ export default function TDSReportPage() {
               <span className="section-title">TDS Deduction Report</span>
               <div className="header-actions">
                 <button className="icon-btn" title="Print" onClick={() => window.print()}>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#FFD700"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffe97c"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
                 </button>
                 <button className="icon-btn icon-btn-excel" title="Export CSV" onClick={handleExportCSV}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="#00ff88"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 1.5L18.5 9H13V3.5zM8.5 18l-1.5-2.5L5.5 18H4l2-3.5L4 11h1.5l1.5 2.5L8.5 11H10l-2 3.5 2 3.5H8.5zm5.5 0h-1v-5h-1.5v-1H15v1h-1v5zm3.5 0h-3v-6h1v5h2v1z"/></svg>
@@ -270,7 +270,7 @@ export default function TDSReportPage() {
                       ))}
                     </>
                   ) : data.length === 0 ? (
-                    <tr><td colSpan={4} style={{ textAlign: "center", padding: "45px", color: "rgba(255,215,0,0.5)" }}>No records found</td></tr>
+                    <tr><td colSpan={4} style={{ textAlign: "center", padding: "45px", color: "rgba(255,233,124,0.5)" }}>No records found</td></tr>
                   ) : (
                     data.map((row) => (
                       <tr key={row.srNo}>

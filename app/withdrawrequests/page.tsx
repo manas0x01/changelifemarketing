@@ -57,7 +57,7 @@ const formatAmount = (n: number) =>
   "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
 const STATUS_CONFIG = {
-  Pending:  { bg: "#fff3e0", color: "#e65100", dot: "#ff9800", label: "Pending"  },
+  Pending: { bg: "#fff3e0", color: "#e65100", dot: "#ff9800", label: "Pending" },
   Approved: { bg: "#e8f5e9", color: "#1b5e20", dot: "#43a047", label: "Approved" },
   Rejected: { bg: "#fce4ec", color: "#880e4f", dot: "#e53935", label: "Rejected" },
 };
@@ -65,37 +65,37 @@ const STATUS_CONFIG = {
 // ── ICONS ──
 const IconSearch = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+    <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
   </svg>
 );
 const IconFilter = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/>
+    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
   </svg>
 );
 const IconRefresh = () => (
   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
+    <polyline points="23 4 23 10 17 10" /><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
   </svg>
 );
 const IconBank = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
-    <path d="M11.5 1L2 6v2h19V6L11.5 1zM4 9v9H2v2h19v-2h-2V9h-3v9h-3V9H9v9H6V9H4zM2 20h19v2H2v-2z"/>
+    <path d="M11.5 1L2 6v2h19V6L11.5 1zM4 9v9H2v2h19v-2h-2V9h-3v9h-3V9H9v9H6V9H4zM2 20h19v2H2v-2z" />
   </svg>
 );
 const IconCheck = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12"/>
+    <polyline points="20 6 9 17 4 12" />
   </svg>
 );
 const IconX = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
   </svg>
 );
 const IconEye = () => (
   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
   </svg>
 );
 
@@ -103,22 +103,22 @@ const IconEye = () => (
 export default function AdminWithdrawRequests() {
   const [requests, setRequests] = useState<WithdrawRequest[]>([]);
   const [summary, setSummary] = useState<Summary>({
-    Pending:  { count: 0, amount: 0 },
+    Pending: { count: 0, amount: 0 },
     Approved: { count: 0, amount: 0 },
     Rejected: { count: 0, amount: 0 },
-    Total:    { count: 0, amount: 0 },
+    Total: { count: 0, amount: 0 },
   });
   const [loading, setLoading] = useState(true);
-  const [total, setTotal]     = useState(0);
-  const [page, setPage]       = useState(1);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
 
   // Filters
   const [filterStatus, setFilterStatus] = useState("all");
-  const [search, setSearch]             = useState("");
-  const [searchInput, setSearchInput]   = useState("");
-  const [dateFrom, setDateFrom]         = useState("");
-  const [dateTo, setDateTo]             = useState("");
+  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   // Detail modal
   const [detailModal, setDetailModal] = useState<{ open: boolean; req: WithdrawRequest | null }>({ open: false, req: null });
@@ -140,7 +140,7 @@ export default function AdminWithdrawRequests() {
         page: String(page),
         limit: "15",
         ...(dateFrom && { dateFrom }),
-        ...(dateTo   && { dateTo }),
+        ...(dateTo && { dateTo }),
       });
       const res = await fetch(`/api/admin/withdraw-requests?${params}`, {
         credentials: "include",
@@ -177,8 +177,8 @@ export default function AdminWithdrawRequests() {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          status:      actionModal.action,
-          utrNumber:   actionModal.utrNumber,
+          status: actionModal.action,
+          utrNumber: actionModal.utrNumber,
           paymentMode: actionModal.paymentMode,
           adminRemark: actionModal.adminRemark,
         }),
@@ -549,9 +549,9 @@ export default function AdminWithdrawRequests() {
           <div className="ar-summary">
             {[
               { label: "Total Requests", count: summary.Total.count, amount: summary.Total.amount, grad: "linear-gradient(135deg, #1a237e 0%, #283593 100%)" },
-              { label: "Pending",        count: summary.Pending.count, amount: summary.Pending.amount, grad: "linear-gradient(135deg, #FF9800 0%, #F57C00 100%)" },
-              { label: "Approved",       count: summary.Approved.count, amount: summary.Approved.amount, grad: "linear-gradient(135deg, #43a047 0%, #2e7d32 100%)" },
-              { label: "Rejected",       count: summary.Rejected.count, amount: summary.Rejected.amount, grad: "linear-gradient(135deg, #e53935 0%, #c62828 100%)" },
+              { label: "Pending", count: summary.Pending.count, amount: summary.Pending.amount, grad: "linear-gradient(135deg, #FF9800 0%, #F57C00 100%)" },
+              { label: "Approved", count: summary.Approved.count, amount: summary.Approved.amount, grad: "linear-gradient(135deg, #43a047 0%, #2e7d32 100%)" },
+              { label: "Rejected", count: summary.Rejected.count, amount: summary.Rejected.amount, grad: "linear-gradient(135deg, #e53935 0%, #c62828 100%)" },
             ].map((c) => (
               <div key={c.label} className="ar-sum-card" style={{ background: c.grad }}>
                 <div className="ar-sum-label">{c.label}</div>
@@ -988,7 +988,7 @@ export default function AdminWithdrawRequests() {
                 />
               </div>
 
-              {actionModal.error   && <div className="ar-merror">⚠️ {actionModal.error}</div>}
+              {actionModal.error && <div className="ar-merror">⚠️ {actionModal.error}</div>}
               {actionModal.success && <div className="ar-msuccess">✅ {actionModal.success}</div>}
             </div>
             <div className="ar-modal-footer">

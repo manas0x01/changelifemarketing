@@ -666,7 +666,7 @@ export default function AdminDashboardUsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit, setLimit] = useState(20);
   const [sortBy, setSortBy] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFilter, setShowFilter] = useState(false);
@@ -676,13 +676,13 @@ export default function AdminDashboardUsersPage() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const searchRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const fetchUsers = useCallback(async (overrides?: Partial<{ search: string; roleFilter: string; typeFilter: string; page: number; sortBy: SortField; sortOrder: SortOrder }>) => {
+  const fetchUsers = useCallback(async (overrides?: Partial<{ search: string; roleFilter: string; typeFilter: string; page: number; limit: number; sortBy: SortField; sortOrder: SortOrder }>) => {
     setLoading(true);
     setError('');
     try {
       const params = new URLSearchParams({
         page: String(overrides?.page ?? page),
-        limit: String(limit),
+        limit: String(overrides?.limit ?? limit),
         search: overrides?.search ?? search,
         role: overrides?.roleFilter ?? roleFilter,
         memberType: overrides?.typeFilter ?? typeFilter,
@@ -704,7 +704,13 @@ export default function AdminDashboardUsersPage() {
     }
   }, [page, limit, search, roleFilter, typeFilter, sortBy, sortOrder]);
 
-  useEffect(() => { fetchUsers(); }, [page, sortBy, sortOrder, roleFilter, typeFilter]);
+  useEffect(() => { fetchUsers(); }, [page, limit, sortBy, sortOrder, roleFilter, typeFilter]);
+
+  const handleLimitChange = (newLimit: number) => {
+    setLimit(newLimit);
+    setPage(1);
+    fetchUsers({ limit: newLimit, page: 1 });
+  };
 
   const handleSearch = (val: string) => {
     setSearch(val);
@@ -837,6 +843,23 @@ export default function AdminDashboardUsersPage() {
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                 <span className="hidden sm:inline">Refresh</span>
               </button>
+              {/* Per-page selector */}
+              <div className="flex items-center gap-1.5">
+                {[20, 50, 100, 500].map((n) => (
+                  <button
+                    key={n}
+                    onClick={() => handleLimitChange(n)}
+                    suppressHydrationWarning={true}
+                    className={`px-2.5 py-2 font-['Roboto'] text-[0.75rem] font-medium transition-all ${
+                      limit === n
+                        ? 'bg-[#0A6E5A] text-white'
+                        : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/8'
+                    }`}
+                  >
+                    {n === 500 ? 'All' : n}
+                  </button>
+                ))}
+              </div>
               <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2.5 bg-[#C9A84C] text-[#FFFFFF] font-['Roboto'] text-[0.8rem] font-medium hover:bg-[#C9A84C]/90 transition-colors" suppressHydrationWarning={true}>
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Export</span>

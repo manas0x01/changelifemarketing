@@ -50,7 +50,7 @@ export async function DELETE(req: NextRequest) {
     // Update ancestor counts
     if (placementId && placementPosition) {
       await updateTeamCounts(placementId, placementPosition, -1);
-      
+
       // Also clear the reference in the parent's child field
       const parent = await User.findOne({
         $or: [{ userId: placementId }, { username: placementId }]
@@ -89,31 +89,31 @@ export async function GET(req: NextRequest) {
     }
     await connectDB();
     const { searchParams } = new URL(req.url);
-    const page        = Math.max(1, parseInt(searchParams.get('page')    ?? '1',  10));
-    const limit       = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
-    const search      = searchParams.get('search')?.trim()      ?? '';
-    const role        = searchParams.get('role')?.trim()        ?? '';
-    const memberType  = searchParams.get('memberType')?.trim()  ?? '';
-    const sortBy      = searchParams.get('sortBy')              ?? 'createdAt';
-    const sortOrder   = searchParams.get('sortOrder') === 'asc' ? 1 : -1;
-    const skip        = (page - 1) * limit;
+    const page = Math.max(1, parseInt(searchParams.get('page') ?? '1', 10));
+    const limit = Math.min(500, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
+    const search = searchParams.get('search')?.trim() ?? '';
+    const role = searchParams.get('role')?.trim() ?? '';
+    const memberType = searchParams.get('memberType')?.trim() ?? '';
+    const sortBy = searchParams.get('sortBy') ?? 'createdAt';
+    const sortOrder = searchParams.get('sortOrder') === 'asc' ? 1 : -1;
+    const skip = (page - 1) * limit;
     const filter: QueryFilter = {};
 
-    if (role)       filter.role       = role;
+    if (role) filter.role = role;
     if (memberType) filter.memberType = memberType;
 
     if (search) {
       const regex = { $regex: search, $options: 'i' };
       filter.$or = [
-        { username:  regex },
-        { userId:    regex },
-        { fullName:  regex },
-        { email:     regex },
-        { phone:     regex },
-        { mobileNo:  regex },
+        { username: regex },
+        { userId: regex },
+        { fullName: regex },
+        { email: regex },
+        { phone: regex },
+        { mobileNo: regex },
         { sponsorId: regex },
-        { city:      regex },
-        { state:     regex },
+        { city: regex },
+        { state: regex },
       ];
     }
     const allowedSorts = new Set([
@@ -141,12 +141,12 @@ export async function GET(req: NextRequest) {
     const [summary] = await User.aggregate([
       {
         $group: {
-          _id:           null,
-          totalUsers:    { $sum: 1 },
-          totalAdmin:    { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
-          totalBooster:     { $sum: { $cond: [{ $eq: ['$memberType', 'gold'] }, 1, 0] } },
-          totalActive:   { $sum: { $cond: [{ $eq: ['$memberType', 'active'] }, 1, 0] } },
-          totalIncome:   { $sum: { $add: ['$basicIncome', { $ifNull: [ { $ifNull: ['$boosterIncome.amount', '$boosterIncomeAmount'] }, 0 ] } ] } },
+          _id: null,
+          totalUsers: { $sum: 1 },
+          totalAdmin: { $sum: { $cond: [{ $eq: ['$role', 'admin'] }, 1, 0] } },
+          totalBooster: { $sum: { $cond: [{ $eq: ['$memberType', 'gold'] }, 1, 0] } },
+          totalActive: { $sum: { $cond: [{ $eq: ['$memberType', 'active'] }, 1, 0] } },
+          totalIncome: { $sum: { $add: ['$basicIncome', { $ifNull: [{ $ifNull: ['$boosterIncome.amount', '$boosterIncomeAmount'] }, 0] }] } },
         },
       },
     ]);
@@ -166,7 +166,7 @@ export async function GET(req: NextRequest) {
         summary: summary ?? {
           totalUsers: 0,
           totalAdmin: 0,
-          totalBooster:  0,
+          totalBooster: 0,
           totalActive: 0,
           totalIncome: 0,
         },
@@ -206,9 +206,9 @@ export async function PATCH(req: NextRequest) {
         { status: 404 }
       );
     }
-    const allowedRoles       = ['user', 'admin', 'moderator'];
+    const allowedRoles = ['user', 'admin', 'moderator'];
     const allowedMemberTypes = ['gold', 'active'];
-    
+
     if (role && allowedRoles.includes(role)) {
       user.role = role;
     }
@@ -272,7 +272,7 @@ export async function PATCH(req: NextRequest) {
     await user.save();
 
     const updated = await User.findById(id).select('username userId fullName role memberType isBlocked plainPassword plainTransactionPassword bankName branchName accountNo ifsc accountType bankDetailsStatus');
-    
+
     return NextResponse.json(
       { success: true, message: 'User updated successfully.', data: updated },
       { status: 200 }

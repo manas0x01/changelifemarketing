@@ -70,12 +70,23 @@ export const authOptions: NextAuthOptions = {
           await connectDB();
           const user = await User.findOne({
             $or: [
-              { username: { $regex: new RegExp(`^${credentials.username}$`, 'i') } },
-              { userId: { $regex: new RegExp(`^${credentials.username}$`, 'i') } },
-              { email: { $regex: new RegExp(`^${credentials.username}$`, 'i') } },
+              { username: { $regex: new RegExp(`^${credentials.username.trim()}$`, 'i') } },
+              { userId: { $regex: new RegExp(`^${credentials.username.trim()}$`, 'i') } },
+              { email: { $regex: new RegExp(`^${credentials.username.trim()}$`, 'i') } },
             ],
           }).select("+password");
-          if (!user || !(await user.comparePassword(credentials.password))) {
+          
+          console.log("Login attempt for:", credentials.username);
+          console.log("User found:", user ? user.username : "No user found");
+          
+          if (!user) {
+            throw new Error("Invalid username or password");
+          }
+          
+          const isPasswordValid = await user.comparePassword(credentials.password.trim());
+          console.log("Is password valid?", isPasswordValid);
+          
+          if (!isPasswordValid) {
             throw new Error("Invalid username or password");
           }
           if (user.isBlocked) {

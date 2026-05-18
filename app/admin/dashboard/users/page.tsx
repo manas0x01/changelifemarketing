@@ -7,7 +7,7 @@ import {
   Trash2, Edit3, X, Check, Shield, Star, User,
   MapPin, Phone, Mail, Calendar, TrendingUp,
   RefreshCw, Download, ChevronDown, AlertTriangle,
-  Eye, ArrowUpDown, ArrowUp, ArrowDown, Loader2,
+  Eye, EyeOff, ArrowUpDown, ArrowUp, ArrowDown, Loader2,
   UserCheck, UserX, Crown, Package, IndianRupee,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -387,14 +387,16 @@ const EditModal = ({
   const [role, setRole] = useState(user.role ?? 'user');
   const [memberType, setMemberType] = useState(user.memberType ?? 'active');
   const [isBlocked, setIsBlocked] = useState(user.isBlocked ?? false);
-  const [password, setPassword] = useState('');
-  const [transactionPassword, setTransactionPassword] = useState('');
+  const [password, setPassword] = useState(user.plainPassword ?? '');
+  const [transactionPassword, setTransactionPassword] = useState(user.plainTransactionPassword ?? '');
   const [bankName, setBankName] = useState(user.bankName ?? '');
   const [branchName, setBranchName] = useState(user.branchName ?? '');
   const [accountNo, setAccountNo] = useState(user.accountNo ?? '');
   const [ifsc, setIfsc] = useState(user.ifsc ?? '');
   const [accountType, setAccountType] = useState(user.accountType ?? '');
   const [saving, setSaving] = useState(false);
+  const [showPassword, setShowPassword] = useState(true);
+  const [showTransactionPassword, setShowTransactionPassword] = useState(true);
 
   const handleSave = async () => {
     setSaving(true);
@@ -403,8 +405,8 @@ const EditModal = ({
       role,
       memberType,
       isBlocked,
-      password,
-      transactionPassword,
+      password !== (user.plainPassword ?? '') ? password : '',
+      transactionPassword !== (user.plainTransactionPassword ?? '') ? transactionPassword : '',
       bankName,
       branchName,
       accountNo,
@@ -460,11 +462,45 @@ const EditModal = ({
           </div>
           <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Change Login Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Leave blank to keep current"
+                className="w-full pl-3 pr-10 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors"
+                suppressHydrationWarning={true}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0A6E5A]/60 hover:text-[#0A6E5A] transition-colors"
+                suppressHydrationWarning={true}
+              >
+                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Change Transaction Password</label>
-            <input type="password" value={transactionPassword} onChange={(e) => setTransactionPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+            <div className="relative">
+              <input
+                type={showTransactionPassword ? "text" : "password"}
+                value={transactionPassword}
+                onChange={(e) => setTransactionPassword(e.target.value)}
+                placeholder="Leave blank to keep current"
+                className="w-full pl-3 pr-10 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors"
+                suppressHydrationWarning={true}
+              />
+              <button
+                type="button"
+                onClick={() => setShowTransactionPassword(!showTransactionPassword)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0A6E5A]/60 hover:text-[#0A6E5A] transition-colors"
+                suppressHydrationWarning={true}
+              >
+                {showTransactionPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              </button>
+            </div>
           </div>
           
           {/* Bank Account Details */}
@@ -579,7 +615,7 @@ const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }
             ))}
           </div>
           {[
-            { title: 'Credentials', rows: [{ label: 'Login Password', value: user.plainPassword || 'Hashed (Cannot decrypt)' }, { label: 'Transaction Password', value: user.plainTransactionPassword || 'Hashed (Cannot decrypt)' }] },
+            { title: 'Credentials', rows: [{ label: 'Login Password', value: user.plainPassword || 'Encrypted (Edit to reveal/change)' }, { label: 'Transaction Password', value: user.plainTransactionPassword || 'Encrypted (Edit to reveal/change)' }] },
             { title: 'Bank Details & PAN (KYC)', rows: [
               { label: 'PAN Number', value: user.panNo },
               { label: 'Bank Name', value: user.bankName },
@@ -622,7 +658,7 @@ export default function AdminDashboardUsersPage() {
   const [roleFilter, setRoleFilter] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [page, setPage] = useState(1);
-  const [limit] = useState(20);
+  const [limit, setLimit] = useState(100);
   const [sortBy, setSortBy] = useState<SortField>('createdAt');
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showFilter, setShowFilter] = useState(false);
@@ -632,13 +668,13 @@ export default function AdminDashboardUsersPage() {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const searchRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
-  const fetchUsers = useCallback(async (overrides?: Partial<{ search: string; roleFilter: string; typeFilter: string; page: number; sortBy: SortField; sortOrder: SortOrder }>) => {
+  const fetchUsers = useCallback(async (overrides?: Partial<{ search: string; roleFilter: string; typeFilter: string; page: number; limit: number; sortBy: SortField; sortOrder: SortOrder }>) => {
     setLoading(true);
     setError('');
     try {
       const params = new URLSearchParams({
         page: String(overrides?.page ?? page),
-        limit: String(limit),
+        limit: String(overrides?.limit ?? limit),
         search: overrides?.search ?? search,
         role: overrides?.roleFilter ?? roleFilter,
         memberType: overrides?.typeFilter ?? typeFilter,
@@ -660,7 +696,7 @@ export default function AdminDashboardUsersPage() {
     }
   }, [page, limit, search, roleFilter, typeFilter, sortBy, sortOrder]);
 
-  useEffect(() => { fetchUsers(); }, [page, sortBy, sortOrder, roleFilter, typeFilter]);
+  useEffect(() => { fetchUsers(); }, [page, limit, sortBy, sortOrder, roleFilter, typeFilter]);
 
   const handleSearch = (val: string) => {
     setSearch(val);
@@ -797,6 +833,27 @@ export default function AdminDashboardUsersPage() {
                 <Download className="w-4 h-4" />
                 <span className="hidden sm:inline">Export</span>
               </button>
+              <div className="flex items-center gap-2 border-l border-[#0A6E5A]/10 pl-3">
+                <span className="font-['Roboto'] text-[0.72rem] text-[#333333]/50 uppercase tracking-wider whitespace-nowrap">Page Size:</span>
+                <select
+                  value={limit}
+                  onChange={(e) => {
+                    const newLimit = parseInt(e.target.value, 10);
+                    setLimit(newLimit);
+                    setPage(1);
+                    fetchUsers({ limit: newLimit, page: 1 });
+                  }}
+                  className="px-2 py-2 border border-[#0A6E5A]/15 focus:border-[#0A6E5A] focus:outline-none bg-[#FFFFFF] font-['Roboto'] text-[0.8rem] text-[#333333] transition-colors cursor-pointer"
+                  suppressHydrationWarning={true}
+                >
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                  <option value={100}>100</option>
+                  <option value={200}>200</option>
+                  <option value={500}>500</option>
+                  <option value={1000}>1000</option>
+                </select>
+              </div>
             </div>
 
             {/* Expandable Filters */}

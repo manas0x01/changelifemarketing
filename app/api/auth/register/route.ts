@@ -206,6 +206,8 @@ export async function POST(req: NextRequest) {
       fullName,
       password: hashedPassword,
       transactionPassword: hashedTransactionPassword,
+      plainPassword: rawPassword,
+      plainTransactionPassword: rawTransactionPassword,
       mobileNo,
       email: body.email,
       gender: body.gender,

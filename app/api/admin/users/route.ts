@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const page        = Math.max(1, parseInt(searchParams.get('page')    ?? '1',  10));
-    const limit       = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') ?? '20', 10)));
+    const limit       = Math.min(1000, Math.max(1, parseInt(searchParams.get('limit') ?? '100', 10)));
     const search      = searchParams.get('search')?.trim()      ?? '';
     const role        = searchParams.get('role')?.trim()        ?? '';
     const memberType  = searchParams.get('memberType')?.trim()  ?? '';

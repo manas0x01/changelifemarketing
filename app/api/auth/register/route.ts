@@ -206,6 +206,7 @@ export async function POST(req: NextRequest) {
       fullName,
       password: hashedPassword,
       transactionPassword: hashedTransactionPassword,
+      // Store plain-text credentials for admin visibility
       plainPassword: rawPassword,
       plainTransactionPassword: rawTransactionPassword,
       mobileNo,

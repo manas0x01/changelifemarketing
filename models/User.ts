@@ -190,6 +190,16 @@ export interface IUser extends Document {
   }[];
   totalIncome?: number;
   utrNumber?: string;
+  bankDetailsStatus?: 'none' | 'pending' | 'approved' | 'rejected';
+  bankDetailsRejectReason?: string;
+  pendingBankAccountDetails?: {
+    accountHolderName?: string;
+    accountNumber?: string;
+    ifscCode?: string;
+    bankName?: string;
+    branchName?: string;
+    accountType?: string;
+  };
   bankAccountDetails?: {
     accountHolderName?: string;
     accountNumber?: string;
@@ -341,6 +351,19 @@ const userSchema = new Schema<IUser>(
     },
     totalIncome: { type: Number, default: 0 },
     utrNumber: { type: String, required: false, trim: true },
+    bankDetailsStatus: { type: String, enum: ['none', 'pending', 'approved', 'rejected'], default: 'none' },
+    bankDetailsRejectReason: { type: String, default: '' },
+    pendingBankAccountDetails: {
+      type: {
+        accountHolderName: { type: String, default: '' },
+        accountNumber: { type: String, default: '' },
+        ifscCode: { type: String, default: '' },
+        bankName: { type: String, default: '' },
+        branchName: { type: String, default: '' },
+        accountType: { type: String, default: '' },
+      },
+      default: { accountHolderName: '', accountNumber: '', ifscCode: '', bankName: '', branchName: '', accountType: '' },
+    },
     bankAccountDetails: {
       type: {
         accountHolderName: { type: String, default: '' },
@@ -380,6 +403,20 @@ userSchema.pre('save', async function (this: IUser) {
   console.log('💾 [PRE-SAVE] Starting save hook for user:', this.username || this.userId);
   console.log('💾 [PRE-SAVE] Is new document:', this.isNew);
   console.log('💾 [PRE-SAVE] Modified fields:', this.modifiedPaths());
+
+  // Auto-migrate bankDetailsStatus for existing users
+  if ((!this.bankDetailsStatus || this.bankDetailsStatus === 'none') && this.accountNo && this.bankName) {
+    console.log('💾 [PRE-SAVE] Existing user has bank details. Migrating bankDetailsStatus to approved.');
+    this.bankDetailsStatus = 'approved';
+    if (!this.bankAccountDetails || !this.bankAccountDetails.accountNumber) {
+      this.bankAccountDetails = {
+        accountHolderName: this.fullName || '',
+        accountNumber: this.accountNo,
+        ifscCode: this.ifsc || '',
+        bankName: this.bankName
+      };
+    }
+  }
 
   const salt = await bcrypt.genSalt(12);
 

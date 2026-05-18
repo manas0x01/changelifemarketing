@@ -192,7 +192,7 @@ export async function PATCH(req: NextRequest) {
     }
     await connectDB();
     const body = await req.json();
-    const { id, role, memberType, isBlocked, password, transactionPassword } = body;
+    const { id, role, memberType, isBlocked, password, transactionPassword, bankName, branchName, accountNo, ifsc, accountType } = body;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, message: 'Invalid or missing user ID.' },
@@ -237,9 +237,41 @@ export async function PATCH(req: NextRequest) {
       user.transactionPassword = transactionPassword.trim();
     }
 
+    // Direct bank details editing by Admin
+    let updatedBank = false;
+    if (Object.prototype.hasOwnProperty.call(body, 'bankName')) {
+      (user as any).bankName = bankName || '';
+      user.bankDetailsStatus = 'approved'; // Mark as approved directly
+      updatedBank = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'branchName')) {
+      (user as any).branchName = branchName || '';
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'accountNo')) {
+      (user as any).accountNo = accountNo || '';
+      updatedBank = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'ifsc')) {
+      (user as any).ifsc = ifsc || '';
+      updatedBank = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'accountType')) {
+      (user as any).accountType = accountType || '';
+    }
+
+    // Synchronize nested bankAccountDetails if bank credentials changed
+    if (updatedBank) {
+      user.bankAccountDetails = {
+        accountHolderName: user.fullName || user.username || "",
+        accountNumber: (user as any).accountNo || "",
+        ifscCode: (user as any).ifsc || "",
+        bankName: (user as any).bankName || "",
+      };
+    }
+
     await user.save();
 
-    const updated = await User.findById(id).select('username userId fullName role memberType isBlocked plainPassword plainTransactionPassword');
+    const updated = await User.findById(id).select('username userId fullName role memberType isBlocked plainPassword plainTransactionPassword bankName branchName accountNo ifsc accountType bankDetailsStatus');
     
     return NextResponse.json(
       { success: true, message: 'User updated successfully.', data: updated },

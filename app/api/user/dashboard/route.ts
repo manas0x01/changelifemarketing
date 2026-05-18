@@ -107,6 +107,16 @@ export async function GET(req: NextRequest) {
 
     const totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);
 
+    let totalWithdrawn = 0;
+    if (user.withdrawRequests && user.withdrawRequests.length > 0) {
+      user.withdrawRequests.forEach((wReq: any) => {
+        if (wReq.status === 'Approved' || wReq.status === 'Pending') {
+          totalWithdrawn += wReq.amount;
+        }
+      });
+    }
+    const availableBalance = totalIncome - totalWithdrawn;
+
     const totalPins = {
       active: user.activePins || 0,
       used: user.usedPins || 0,
@@ -140,11 +150,12 @@ export async function GET(req: NextRequest) {
       boosterIncomeAmount: boosterIncome.amount,
       isBooster: boosterIncome.isBooster,
       totalIncome,
+      availableBalance,
       totalPins,
       userProfile,
       bankDetails,
     };
-    console.log('[DASHBOARD] responding with:', { basicIncome, boosterIncome, totalIncome, isBooster: boosterIncome.isBooster });
+    console.log('[DASHBOARD] responding with:', { basicIncome, boosterIncome, totalIncome, availableBalance, isBooster: boosterIncome.isBooster });
     return NextResponse.json({ success: true, data: respData });
 
   } catch (error: any) {

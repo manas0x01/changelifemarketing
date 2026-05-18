@@ -5,6 +5,37 @@ import User from '@/models/User';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
+export async function GET(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params;
+    await connectDB();
+    const session = await getServerSession(authOptions);
+    if (!session?.user || session.user.role !== 'admin') {
+      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    }
+    const withdrawReq = await WithdrawRequest.findById(id).lean();
+    if (!withdrawReq) {
+      return NextResponse.json({ error: 'Withdraw request not found.' }, { status: 404 });
+    }
+    
+    // Fetch live, complete user details
+    const user = await User.findOne({ userId: withdrawReq.userId })
+      .select('fullName username email mobileNo joiningDate registeredPackage sponsorId bankDetailsStatus bankAccountDetails totalTeam basicIncome boosterIncome totalIncome isBlocked')
+      .lean();
+      
+    return NextResponse.json({
+      success: true,
+      withdrawRequest: withdrawReq,
+      userProfile: user || null
+    });
+  } catch (error: any) {
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function PATCH(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

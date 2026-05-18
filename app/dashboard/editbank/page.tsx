@@ -18,10 +18,13 @@ export default function EditBankPage() {
     accountType: "-- Select --",
     panNo: "",
   });
+  const [bankStatus, setBankStatus] = useState("none");
+  const [rejectReason, setRejectReason] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+
   useEffect(() => {
     const fetchBankDetails = async () => {
       try {
@@ -65,6 +68,8 @@ export default function EditBankPage() {
             accountType: data.data.accountType || "-- Select --",
             panNo: data.data.panNo || "",
           });
+          setBankStatus(data.data.bankDetailsStatus || "none");
+          setRejectReason(data.data.bankDetailsRejectReason || "");
         }
         setError(null);
       } catch (err) {
@@ -75,16 +80,19 @@ export default function EditBankPage() {
     };
     fetchBankDetails();
   }, [router]);
+
   const handleInputChange = (field: keyof typeof bankData, value: string) => {
     setBankData((prev) => ({
       ...prev,
       [field]: value,
     }));
   };
+
   const handleUpdate = async () => {
     try {
       setSaving(true);
       setError(null);
+      
       // Validate account type is not default placeholder
       if (bankData.accountType === "-- Select --") {
         setError("Please select an account type");
@@ -108,6 +116,7 @@ export default function EditBankPage() {
         ...bankData,
         accountType: bankData.accountType === "-- Select --" ? "" : bankData.accountType
       };
+      
       const response = await fetch("/api/user/update-profile", {
         method: "POST",
         headers: {
@@ -131,8 +140,10 @@ export default function EditBankPage() {
         }
         throw new Error(errorData.error || "Failed to update bank details");
       }
-      const data = await response.json();
+      
       setSuccess(true);
+      setBankStatus("pending"); // Lock immediately on success
+      setRejectReason("");
       setTimeout(() => setSuccess(false), 2500);
     } catch (err) {
       setError(err instanceof Error ? err.message : "An error occurred");
@@ -140,6 +151,9 @@ export default function EditBankPage() {
       setSaving(false);
     }
   };
+
+  const isLocked = bankStatus === "pending" || bankStatus === "approved";
+
   return (
     <>
       <style>{`
@@ -256,6 +270,12 @@ export default function EditBankPage() {
         .form-input:focus, .form-select:focus {
           border-color: #FFD700;
           box-shadow: 0 0 10px rgba(255,215,0,0.2);
+        }
+        .form-input:disabled, .form-select:disabled {
+          opacity: 0.65;
+          cursor: not-allowed;
+          border-color: rgba(255,215,0,0.1);
+          background: rgba(255,215,0,0.02);
         }
         .form-select {
           appearance: none;
@@ -427,6 +447,63 @@ export default function EditBankPage() {
                     </div>
                   )}
 
+                  {/* Status Banners */}
+                  {bankStatus === "pending" && (
+                    <div style={{
+                      background: "rgba(251, 191, 36, 0.12)",
+                      color: "#fbbf24",
+                      padding: "14px 18px",
+                      borderRadius: "6px",
+                      marginBottom: "24px",
+                      fontSize: "13.5px",
+                      border: "1px solid rgba(251, 191, 36, 0.3)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px"
+                    }}>
+                      ⏳ <span>Your bank details are pending Admin approval. You cannot modify them at this time.</span>
+                    </div>
+                  )}
+
+                  {bankStatus === "approved" && (
+                    <div style={{
+                      background: "rgba(16, 185, 129, 0.12)",
+                      color: "#34d399",
+                      padding: "14px 18px",
+                      borderRadius: "6px",
+                      marginBottom: "24px",
+                      fontSize: "13.5px",
+                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "10px"
+                    }}>
+                      ✅ <span>Your bank details have been approved. To request changes, please contact the Administrator.</span>
+                    </div>
+                  )}
+
+                  {bankStatus === "rejected" && (
+                    <div style={{
+                      background: "rgba(239, 68, 68, 0.12)",
+                      color: "#f87171",
+                      padding: "14px 18px",
+                      borderRadius: "6px",
+                      marginBottom: "24px",
+                      fontSize: "13.5px",
+                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "flex-start",
+                      gap: "6px"
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", fontWeight: "700" }}>
+                        ❌ <span>Submission Rejected</span>
+                      </div>
+                      <span style={{ fontSize: "13px", opacity: 0.9 }}>Reason: {rejectReason || "Not specified by Admin"}</span>
+                      <span style={{ fontSize: "12px", opacity: 0.75, marginTop: "4px" }}>Please correct the details below and re-submit for approval.</span>
+                    </div>
+                  )}
+
                   <div className="form-grid">
 
                     {/* Bank Name */}
@@ -439,6 +516,7 @@ export default function EditBankPage() {
                         value={bankData.bankName}
                         onChange={(e) => handleInputChange("bankName", e.target.value)}
                         placeholder="Enter bank name"
+                        disabled={isLocked}
                       />
                     </div>
 
@@ -452,6 +530,7 @@ export default function EditBankPage() {
                         value={bankData.ifsc}
                         onChange={(e) => handleInputChange("ifsc", e.target.value.toUpperCase())}
                         placeholder="e.g., CBIN0284349"
+                        disabled={isLocked}
                       />
                     </div>
 
@@ -465,6 +544,7 @@ export default function EditBankPage() {
                         value={bankData.accountNo}
                         onChange={(e) => handleInputChange("accountNo", e.target.value)}
                         placeholder="Enter account number"
+                        disabled={isLocked}
                       />
                     </div>
 
@@ -478,6 +558,7 @@ export default function EditBankPage() {
                         value={bankData.branchName}
                         onChange={(e) => handleInputChange("branchName", e.target.value)}
                         placeholder="Enter branch name"
+                        disabled={isLocked}
                       />
                     </div>
 
@@ -488,6 +569,7 @@ export default function EditBankPage() {
                         className="form-select"
                         value={bankData.accountType}
                         onChange={(e) => handleInputChange("accountType", e.target.value)}
+                        disabled={isLocked}
                       >
                         {accountTypes.map((t) => (
                           <option key={t} value={t}>{t}</option>
@@ -505,25 +587,28 @@ export default function EditBankPage() {
                         value={bankData.panNo}
                         onChange={(e) => handleInputChange("panNo", e.target.value.toUpperCase())}
                         placeholder="e.g., ABCDE1234F"
+                        disabled={isLocked}
                       />
                     </div>
 
                   </div>
 
                   {/* Update Button */}
-                  <div className="update-wrap">
-                    <button
-                      className="update-btn"
-                      onClick={handleUpdate}
-                      disabled={saving}
-                      style={{
-                        opacity: saving ? 0.7 : 1,
-                        cursor: saving ? "not-allowed" : "pointer"
-                      }}
-                    >
-                      {saving ? "Saving..." : "Update Bank Details"}
-                    </button>
-                  </div>
+                  {!isLocked && (
+                    <div className="update-wrap">
+                      <button
+                        className="update-btn"
+                        onClick={handleUpdate}
+                        disabled={saving}
+                        style={{
+                          opacity: saving ? 0.7 : 1,
+                          cursor: saving ? "not-allowed" : "pointer"
+                        }}
+                      >
+                        {saving ? "Saving..." : "Update Bank Details"}
+                      </button>
+                    </div>
+                  )}
                 </>
               )}
             </div>
@@ -532,7 +617,7 @@ export default function EditBankPage() {
 
         {/* Toast */}
         {success && (
-          <div className="toast">✓ Bank details updated successfully!</div>
+          <div className="toast">✓ Bank details submitted successfully!</div>
         )}
 
       </div>

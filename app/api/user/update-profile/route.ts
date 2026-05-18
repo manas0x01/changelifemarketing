@@ -46,14 +46,37 @@ export async function GET(req: NextRequest) {
 
     const user = userId
       ? await User.findById(userId).select(
-          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType"
+          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType bankDetailsStatus bankDetailsRejectReason pendingBankAccountDetails"
         )
       : await User.findOne({ username }).select(
-          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType"
+          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType bankDetailsStatus bankDetailsRejectReason pendingBankAccountDetails"
         );
 
     if (!user) {
       return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
+    // Determine the values to return for the edit bank form based on status
+    const status = user.bankDetailsStatus || "none";
+    let bankName = "";
+    let branchName = "";
+    let accountNo = "";
+    let ifsc = "";
+    let accountType = "";
+
+    if (status === "approved") {
+      bankName = (user as any).bankName || "";
+      branchName = (user as any).branchName || "";
+      accountNo = (user as any).accountNo || "";
+      ifsc = (user as any).ifsc || "";
+      accountType = (user as any).accountType || "";
+    } else if (status === "pending" || status === "rejected") {
+      const pending = (user as any).pendingBankAccountDetails || {};
+      bankName = pending.bankName || "";
+      branchName = pending.branchName || "";
+      accountNo = pending.accountNumber || "";
+      ifsc = pending.ifscCode || "";
+      accountType = pending.accountType || "";
     }
 
     return NextResponse.json({
@@ -81,11 +104,13 @@ export async function GET(req: NextRequest) {
         placementId: user.placementId || "",
         placementName: user.placementName || "",
         placementPosition: user.placementPosition || "",
-        bankName: (user as any).bankName || "",
-        branchName: (user as any).branchName || "",
-        accountNo: (user as any).accountNo || "",
-        ifsc: (user as any).ifsc || "",
-        accountType: (user as any).accountType || "",
+        bankName,
+        branchName,
+        accountNo,
+        ifsc,
+        accountType,
+        bankDetailsStatus: status,
+        bankDetailsRejectReason: (user as any).bankDetailsRejectReason || "",
       },
     });
   } catch (error: any) {
@@ -105,11 +130,57 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
     }
 
+    await connectDB();
+
+    const user = userId
+      ? await User.findById(userId)
+      : await User.findOne({ username });
+
+    if (!user) {
+      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
+    }
+
     const body = await req.json();
 
-    // Build update object with allowed fields only
+    // Check if bank details are being submitted/edited
+    const hasBankFields = ["bankName", "branchName", "accountNo", "ifsc", "accountType"].some(
+      (key) => Object.prototype.hasOwnProperty.call(body, key)
+    );
+
+    const currentStatus = user.bankDetailsStatus || "none";
+
+    if (hasBankFields) {
+      // If user has already submitted (pending or approved), they cannot edit
+      if (currentStatus === "pending" || currentStatus === "approved") {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Bank details have already been submitted or approved. You can only fill them once.",
+          },
+          { status: 400 }
+        );
+      }
+
+      // Save under pendingBankAccountDetails instead of updating direct bank fields
+      user.pendingBankAccountDetails = {
+        accountHolderName: body.fullName || user.fullName || "",
+        accountNumber: body.accountNo || "",
+        ifscCode: body.ifsc || "",
+        bankName: body.bankName || "",
+        branchName: body.branchName || "",
+        accountType: body.accountType || "",
+      };
+      user.bankDetailsStatus = "pending";
+      (user as any).bankDetailsRejectReason = ""; // Clear previous reject reason
+    }
+
+    // Build update object with allowed fields, excluding direct bank fields
     const update: any = {};
     for (const key of ALLOWED_UPDATE_FIELDS) {
+      // Skip direct updates to bank details for users (handled above via pending)
+      if (["bankName", "branchName", "accountNo", "ifsc", "accountType"].includes(key)) {
+        continue;
+      }
       if (Object.prototype.hasOwnProperty.call(body, key)) {
         update[key] = body[key];
       }
@@ -136,21 +207,16 @@ export async function POST(req: NextRequest) {
       update.dateOfBirth = d;
     }
 
-    await connectDB();
-
-    const user = userId
-      ? await User.findById(userId)
-      : await User.findOne({ username });
-
-    if (!user) {
-      return NextResponse.json({ success: false, message: "User not found" }, { status: 404 });
-    }
-
     // Apply updates
     (user as any).set(update);
     await user.save();
 
-    return NextResponse.json({ success: true, message: "Profile updated" });
+    return NextResponse.json({
+      success: true,
+      message: hasBankFields
+        ? "Bank details submitted and pending Admin approval."
+        : "Profile updated successfully.",
+    });
   } catch (error: any) {
     console.error("❌ POST update-profile error:", error);
     return NextResponse.json({ success: false, message: "Failed to update profile" }, { status: 500 });

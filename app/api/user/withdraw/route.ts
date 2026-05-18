@@ -41,6 +41,14 @@ export async function POST(req: NextRequest) {
     const ifscCode = user.bankAccountDetails?.ifscCode || user.ifsc || "N/A";
     const bankName = user.bankAccountDetails?.bankName || user.bankName || "N/A";
 
+    // Check bank details approval status
+    if (user.bankDetailsStatus !== 'approved') {
+      return NextResponse.json(
+        { success: false, message: "Your bank details must be approved by the Admin before you can make a withdrawal." },
+        { status: 400 }
+      );
+    }
+
     // Check bank details
     if (accountNumber === "N/A" || !accountNumber) {
       return NextResponse.json(

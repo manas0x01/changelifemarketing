@@ -92,6 +92,30 @@ const StatCard = ({ label, count, amount, gradient }: any) => (
 // ── DETAIL MODAL ──
 const DetailModal = ({ req, onClose, onApprove, onReject }: any) => {
   const sc = getStatusConfig(req.status);
+  const [liveData, setLiveData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let active = true;
+    const fetchLiveDetails = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch(`/api/admin/withdraw-requests/${req._id}`, { credentials: 'include' });
+        if (!res.ok) throw new Error("Failed to load");
+        const json = await res.json();
+        if (active && json.success) {
+          setLiveData(json);
+        }
+      } catch (e) {
+        console.error("Error loading live details:", e);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchLiveDetails();
+    return () => { active = false; };
+  }, [req._id]);
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -150,58 +174,146 @@ const DetailModal = ({ req, onClose, onApprove, onReject }: any) => {
             </div>
           </div>
 
-          {/* User Info */}
+          {/* User Info & Profile */}
           <div>
-            <h4 className="font-['Roboto'] text-[0.7rem] uppercase tracking-widest text-[#C9A84C] mb-4 flex items-center gap-2">
-              <User className="w-3.5 h-3.5" /> User Information
+            <h4 className="font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#C9A84C] mb-4 flex items-center gap-2 border-b border-[#0A6E5A]/10 pb-2">
+              <User className="w-4 h-4 text-[#0A6E5A]" /> Live User Profile
             </h4>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">User ID</p>
-                <p className="font-['Roboto'] text-[0.9rem] font-bold text-[#0A6E5A]">{req.userId}</p>
+            {loading ? (
+              <div className="flex items-center justify-center py-6 gap-2 text-sm text-[#333]/50">
+                <Loader2 className="w-4 h-4 animate-spin text-[#0A6E5A]" /> Loading live profile details...
               </div>
-              <div>
-                <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">Mobile</p>
-                <p className="font-['Roboto'] text-[0.9rem] text-[#333]">{req.mobileNo || "—"}</p>
+            ) : liveData?.userProfile ? (
+              <div className="grid grid-cols-2 gap-x-6 gap-y-4 text-sm bg-[#F5F7F6] p-4 rounded-lg border border-[#0A6E5A]/5">
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Full Name</p>
+                  <p className="font-semibold text-[#333]">{liveData.userProfile.fullName || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Username / ID</p>
+                  <p className="font-bold text-[#0A6E5A]">{liveData.userProfile.username} ({liveData.userProfile.userId})</p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Email Address</p>
+                  <p className="text-[#333]">{liveData.userProfile.email || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Mobile Number</p>
+                  <p className="text-[#333]">{liveData.userProfile.mobileNo || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Joining Date</p>
+                  <p className="text-[#333]">{formatDate(liveData.userProfile.joiningDate)?.split(' ')[0]}</p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Registered Package</p>
+                  <p className="font-semibold text-[#C9A84C]">{liveData.userProfile.registeredPackage || "N/A"}</p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Sponsor Username / ID</p>
+                  <p className="text-[#333] font-medium">{liveData.userProfile.sponsorId || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Total Team Size</p>
+                  <p className="font-semibold text-[#333]">
+                    Left: {liveData.userProfile.totalTeam?.left || 0} | Right: {liveData.userProfile.totalTeam?.right || 0}
+                  </p>
+                </div>
+                <div className="col-span-2 border-t border-[#0A6E5A]/5 pt-3 flex justify-between items-center">
+                  <div>
+                    <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-0.5">Live Wallet Balance</p>
+                    <p className="font-['Fraunces'] text-[1.15rem] text-[#0A6E5A] font-bold">
+                      {formatAmount(liveData.userProfile.totalIncome)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-0.5 text-right">Account Block Status</p>
+                    <span className={`inline-flex px-2 py-0.5 rounded text-[0.7rem] font-bold uppercase ${liveData.userProfile.isBlocked ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+                      {liveData.userProfile.isBlocked ? "🚫 Blocked" : "✅ Active"}
+                    </span>
+                  </div>
+                </div>
               </div>
-              <div className="col-span-2">
-                <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">Full Name</p>
-                <p className="font-['Roboto'] text-[0.9rem] text-[#333]">{req.userFullName || req.userName}</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 text-sm bg-[#F5F7F6] p-4 rounded-lg border border-[#0A6E5A]/5">
+                <div>
+                  <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">User ID</p>
+                  <p className="font-['Roboto'] text-[0.9rem] font-bold text-[#0A6E5A]">{req.userId}</p>
+                </div>
+                <div>
+                  <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">Mobile</p>
+                  <p className="font-['Roboto'] text-[0.9rem] text-[#333]">{req.mobileNo || "—"}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">Full Name</p>
+                  <p className="font-['Roboto'] text-[0.9rem] text-[#333]">{req.userFullName || req.userName}</p>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Bank Info */}
           <div>
-            <h4 className="font-['Roboto'] text-[0.7rem] uppercase tracking-widest text-[#C9A84C] mb-4 flex items-center gap-2">
-              <Banknote className="w-3.5 h-3.5" /> Bank Details
+            <h4 className="font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#C9A84C] mb-4 flex items-center justify-between border-b border-[#0A6E5A]/10 pb-2">
+              <span className="flex items-center gap-2">
+                <Banknote className="w-4 h-4 text-[#0A6E5A]" /> Bank Details
+              </span>
+              {!loading && liveData?.userProfile && (
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded text-[0.7rem] font-bold uppercase ${
+                  liveData.userProfile.bankDetailsStatus === 'approved' ? "bg-emerald-100 text-emerald-800" :
+                  liveData.userProfile.bankDetailsStatus === 'pending' ? "bg-amber-100 text-amber-800" :
+                  liveData.userProfile.bankDetailsStatus === 'rejected' ? "bg-rose-100 text-rose-800" :
+                  "bg-gray-100 text-gray-800"
+                }`}>
+                  {liveData.userProfile.bankDetailsStatus === 'approved' ? "Verified" :
+                   liveData.userProfile.bankDetailsStatus === 'pending' ? "Pending Approval" :
+                   liveData.userProfile.bankDetailsStatus === 'rejected' ? "Rejected" :
+                   "Not Configured"}
+                </span>
+              )}
             </h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 text-sm bg-[#F5F7F6] p-4 rounded-lg border border-[#0A6E5A]/5">
               <div>
-                <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">Account Holder</p>
-                <p className="font-['Roboto'] text-[0.9rem] text-[#333]">{req.bankDetails?.accountHolderName || "—"}</p>
-              </div>
-              <div>
-                <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">Bank Name</p>
-                <p className="font-['Roboto'] text-[0.9rem] text-[#333]">{req.bankDetails?.bankName || "—"}</p>
-              </div>
-              <div>
-                <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">Account Number</p>
-                <p className="font-['Roboto'] text-[0.9rem] text-[#0A6E5A] tracking-widest">
-                  {req.bankDetails?.accountNumber ? `••••${req.bankDetails.accountNumber.slice(-4)}` : "—"}
+                <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Account Holder</p>
+                <p className="font-semibold text-[#333]">
+                  {(!loading && liveData?.userProfile?.bankAccountDetails?.accountHolderName) || req.bankDetails?.accountHolderName || "—"}
                 </p>
               </div>
               <div>
-                <p className="font-['Roboto'] text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-2">IFSC Code</p>
-                <p className="font-['Roboto'] text-[0.9rem] text-[#333] tracking-widest">{req.bankDetails?.ifscCode || "—"}</p>
+                <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Bank Name</p>
+                <p className="font-semibold text-[#333]">
+                  {(!loading && liveData?.userProfile?.bankAccountDetails?.bankName) || req.bankDetails?.bankName || "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">Account Number</p>
+                <p className="font-bold text-[#0A6E5A] tracking-wider">
+                  {(!loading && liveData?.userProfile?.bankAccountDetails?.accountNumber) || req.bankDetails?.accountNumber || "—"}
+                </p>
+              </div>
+              <div>
+                <p className="text-[0.65rem] uppercase tracking-widest text-[#333]/50 mb-1">IFSC Code</p>
+                <p className="font-semibold text-[#333] tracking-widest">
+                  {(!loading && liveData?.userProfile?.bankAccountDetails?.ifscCode) || req.bankDetails?.ifscCode || "—"}
+                </p>
               </div>
             </div>
+            
+            {/* Caution Banner */}
+            {!loading && liveData?.userProfile && liveData.userProfile.bankDetailsStatus !== 'approved' && (
+              <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded text-[0.8rem] text-amber-800 flex items-start gap-2">
+                <AlertTriangle className="w-4 h-4 shrink-0 mt-0.5" />
+                <div>
+                  <strong>Caution:</strong> The user's bank details are not verified. Current status is <strong>{liveData.userProfile.bankDetailsStatus || 'none'}</strong>. Please verify bank eligibility before approving the withdrawal.
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Processing Info */}
           {(req.utrNumber || req.adminRemark) && (
             <div>
-              <h4 className="font-['Roboto'] text-[0.7rem] uppercase tracking-widest text-[#C9A84C] mb-4 flex items-center gap-2">
+              <h4 className="font-['Roboto'] text-[0.7rem] uppercase tracking-widest text-[#C9A84C] mb-4 flex items-center gap-2 border-b border-[#0A6E5A]/10 pb-2">
                 <Check className="w-3.5 h-3.5" /> Processing Details
               </h4>
               <div className="space-y-3">
@@ -710,7 +822,7 @@ export default function AdminDashboardWithdrawRequests() {
                               </div>
                             </td>
                             <td className="px-4 py-3.5">
-                              <div className="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <div className="flex gap-1.5">
                                 <button
                                   onClick={() => openDetailModal(req)}
                                   className="flex items-center gap-1.5 px-2.5 py-1.5 bg-[#0A6E5A]/8 hover:bg-[#0A6E5A]/15 text-[#0A6E5A] font-['Roboto'] text-[0.7rem] font-bold rounded transition-colors"

@@ -14,6 +14,7 @@ interface ProfileData {
   userId: string;
   avatar: string;
   fullName: string;
+  bankDetailsStatus?: string;
 }
 
 export default function ProfilePage() {
@@ -75,6 +76,7 @@ export default function ProfilePage() {
           userId: user.userId || user._id || "N/A",
           avatar: "/images/user.png",
           fullName: user.fullName || "N/A",
+          bankDetailsStatus: user.bankDetailsStatus || "none",
           personalDetails: [
             { label: "Full Name", value: user.fullName || "N/A" },
             { label: "Email", value: user.email || "N/A" },
@@ -563,7 +565,48 @@ export default function ProfilePage() {
 
                 {/* Bank Details */}
                 <div className="detail-card" style={{ alignSelf: "flex-start" }}>
-                  <div className="detail-header">Bank Details</div>
+                  <div className="detail-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span>Bank Details</span>
+                    {profileData.bankDetailsStatus && (
+                      <span style={{
+                        fontSize: "11px",
+                        padding: "3px 8px",
+                        borderRadius: "4px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.5px",
+                        fontWeight: "bold",
+                        background: profileData.bankDetailsStatus === 'approved' 
+                          ? 'rgba(16, 185, 129, 0.2)' 
+                          : profileData.bankDetailsStatus === 'pending'
+                            ? 'rgba(251, 191, 36, 0.2)'
+                            : profileData.bankDetailsStatus === 'rejected'
+                              ? 'rgba(239, 68, 68, 0.2)'
+                              : 'rgba(255, 255, 255, 0.1)',
+                        color: profileData.bankDetailsStatus === 'approved' 
+                          ? '#10b981' 
+                          : profileData.bankDetailsStatus === 'pending'
+                            ? '#fbbf24'
+                            : profileData.bankDetailsStatus === 'rejected'
+                              ? '#ef4444'
+                              : '#9ca3af',
+                        border: profileData.bankDetailsStatus === 'approved' 
+                          ? '1px solid rgba(16, 185, 129, 0.4)' 
+                          : profileData.bankDetailsStatus === 'pending'
+                            ? '1px solid rgba(251, 191, 36, 0.4)'
+                            : profileData.bankDetailsStatus === 'rejected'
+                              ? '1px solid rgba(239, 68, 68, 0.4)'
+                              : '1px solid rgba(255, 255, 255, 0.2)',
+                      }}>
+                        {profileData.bankDetailsStatus === 'approved' 
+                          ? 'Approved' 
+                          : profileData.bankDetailsStatus === 'pending'
+                            ? 'Pending Verification'
+                            : profileData.bankDetailsStatus === 'rejected'
+                              ? 'Rejected'
+                              : 'Not Filled'}
+                      </span>
+                    )}
+                  </div>
                   {profileData.bankDetails.map((row) => (
                     <div className="detail-row" key={row.label}>
                       <span className="detail-label">{row.label}</span>

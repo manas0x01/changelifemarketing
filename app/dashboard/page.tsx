@@ -46,6 +46,7 @@ interface DashboardData {
   boosterIncome: BoosterIncome;
   totalPins: { active: number; used: number; total: number };
   totalIncome: number;
+  availableBalance?: number;
   userProfile: { fullName: string; userId: string; username: string; mobileNo: string; email: string; joiningDate: string };
   bankDetails: BankDetails;
   cycleHistory: CycleRow[];
@@ -96,6 +97,7 @@ const statCards = [
   { title: "Booster Users", icon: <TeamIcon />, accent: "#22c55e", trend: "15.4%" },
   { title: "Total Pins", icon: <PinIcon />, accent: "#ec4899", trend: "6.2%" },
   { title: "Total Income", icon: <WalletIcon />, accent: "#F5C518", trend: "12.5%" },
+  { title: "Wallet Balance", icon: <WalletIcon />, accent: "#10b981", trend: "15.0%" },
 ];
 
 export default function Dashboard() {
@@ -110,6 +112,7 @@ export default function Dashboard() {
   const [showBoosterIncomeInfo, setShowBoosterIncomeInfo] = useState(false);
   const [showTotalPinsInfo, setShowTotalPinsInfo] = useState(false);
   const [showTotalIncomeInfo, setShowTotalIncomeInfo] = useState(false);
+  const [showWalletBalanceInfo, setShowWalletBalanceInfo] = useState(false);
   const [dashboardData, setDashboardData] = useState<DashboardData>({
     totalTeam: { left: 0, right: 0 },
     totalDirect: { left: 0, right: 0 },
@@ -122,6 +125,7 @@ export default function Dashboard() {
     boosterIncome: { amount: 0, LG: 0, RG: 0, totalMatching: 0 },
     totalPins: { active: 0, used: 0, total: 0 },
     totalIncome: 0,
+    availableBalance: 0,
     userProfile: { fullName: "N/A", userId: "N/A", username: "N/A", mobileNo: "N/A", email: "N/A", joiningDate: "N/A" },
     bankDetails: { accountHolderName: "", accountNumber: "", ifscCode: "", bankName: "" },
     cycleHistory: [] as CycleRow[],
@@ -131,6 +135,7 @@ export default function Dashboard() {
     totalLeftBasicUser, totalRightBasicUser,
     totalLeftBoosterUser, totalRightBoosterUser,
     basicIncome, boosterIncome, totalPins, totalIncome,
+    availableBalance = 0,
     userProfile, bankDetails, cycleHistory
   } = dashboardData;
   const [loading, setLoading] = useState(true);
@@ -163,6 +168,7 @@ export default function Dashboard() {
           basicIncome: d.basicIncome ?? prev.basicIncome,
           boosterIncome: { amount, LG: incoming.LG ?? 0, RG: incoming.RG ?? 0, totalMatching },
           totalIncome: d.totalIncome ?? prev.totalIncome,
+          availableBalance: d.availableBalance ?? prev.availableBalance ?? 0,
           totalPins: d.totalPins ?? prev.totalPins,
           userProfile: d.userProfile ?? prev.userProfile,
           bankDetails: d.bankDetails ?? prev.bankDetails,
@@ -190,7 +196,7 @@ export default function Dashboard() {
     const amt = Number(withdrawAmount);
     if (!withdrawAmount || isNaN(amt)) { setWithdrawError("Please enter a valid amount."); return; }
     if (amt < 1000) { setWithdrawError("Minimum withdrawal amount is ₹1000."); return; }
-    if (amt > totalIncome) { setWithdrawError("Amount exceeds your total income balance."); return; }
+    if (amt > availableBalance) { setWithdrawError("Amount exceeds your available wallet balance."); return; }
     try {
       setWithdrawLoading(true);
       const res = await fetch("/api/user/withdraw", {
@@ -204,7 +210,10 @@ export default function Dashboard() {
         setWithdrawError(data.error || data.message || "Withdrawal failed.");
       } else {
         setWithdrawSuccess(data.message || "Withdrawal request submitted!");
-        setDashboardData((prev: DashboardData) => ({ ...prev, totalIncome: data.remainingBalance ?? (prev.totalIncome - amt) }));
+        setDashboardData((prev: DashboardData) => ({
+          ...prev,
+          availableBalance: data.remainingBalance ?? (prev.availableBalance ? prev.availableBalance - amt : prev.totalIncome - amt)
+        }));
         setWithdrawAmount("");
       }
     } catch { setWithdrawError("Network error. Please try again."); }
@@ -697,7 +706,8 @@ export default function Dashboard() {
                     (card.title === "Basic Users" && showBasicUsersInfo) ||
                     (card.title === "Booster Users" && showBoosterUsersInfo) ||
                     (card.title === "Total Pins" && showTotalPinsInfo) ||
-                    (card.title === "Total Income" && showTotalIncomeInfo);
+                    (card.title === "Total Income" && showTotalIncomeInfo) ||
+                    (card.title === "Wallet Balance" && showWalletBalanceInfo);
 
                   return (
                     <div
@@ -717,6 +727,7 @@ export default function Dashboard() {
                         else if (card.title === "Booster Users") setShowBoosterUsersInfo(!showBoosterUsersInfo);
                         else if (card.title === "Total Pins") setShowTotalPinsInfo(!showTotalPinsInfo);
                         else if (card.title === "Total Income") setShowTotalIncomeInfo(!showTotalIncomeInfo);
+                        else if (card.title === "Wallet Balance") setShowWalletBalanceInfo(!showWalletBalanceInfo);
                       }}
                     >
                       {/* Glow blob */}
@@ -755,6 +766,21 @@ export default function Dashboard() {
                         ) : card.title === "Total Income" && isActive ? (
                           <div>
                             ₹ {totalIncome.toLocaleString("en-IN")}
+                            <br />
+                            <button
+                              className="withdraw-pill"
+                              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+                                e.stopPropagation();
+                                setWithdrawOpen(true);
+                                setWithdrawError(""); setWithdrawSuccess(""); setWithdrawAmount("");
+                              }}
+                            >
+                              💸 Withdraw
+                            </button>
+                          </div>
+                        ) : card.title === "Wallet Balance" && isActive ? (
+                          <div>
+                            ₹ {availableBalance.toLocaleString("en-IN")}
                             <br />
                             <button
                               className="withdraw-pill"

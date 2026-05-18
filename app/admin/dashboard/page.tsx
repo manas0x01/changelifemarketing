@@ -391,7 +391,7 @@ export default function AdminDashboard() {
                 <CardHeader
                   title="Withdraw Requests"
                   action={
-                    <a href="/admin/withdraw-requests" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
+                    <a href="/admin/dashboard/withdrawrequests" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
                       All <ArrowRight className="w-3.5 h-3.5" />
                     </a>
                   }

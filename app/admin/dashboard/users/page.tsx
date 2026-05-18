@@ -48,6 +48,7 @@ interface UserRecord {
   accountNo?: string;
   ifsc?: string;
   accountType?: string;
+  bankDetailsStatus?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -362,17 +363,54 @@ const SortIcon = ({ field, current, order }: { field: string; current: string; o
   return order === 'asc' ? <ArrowUp className="w-3 h-3 text-[#C9A84C]" /> : <ArrowDown className="w-3 h-3 text-[#C9A84C]" />;
 };
 
-const EditModal = ({ user, onClose, onSave }: { user: UserRecord; onClose: () => void; onSave: (id: string, role: string, memberType: string, isBlocked: boolean, password?: string, transactionPassword?: string) => Promise<void> }) => {
+const EditModal = ({
+  user,
+  onClose,
+  onSave
+}: {
+  user: UserRecord;
+  onClose: () => void;
+  onSave: (
+    id: string,
+    role: string,
+    memberType: string,
+    isBlocked: boolean,
+    password?: string,
+    transactionPassword?: string,
+    bankName?: string,
+    branchName?: string,
+    accountNo?: string,
+    ifsc?: string,
+    accountType?: string
+  ) => Promise<void>;
+}) => {
   const [role, setRole] = useState(user.role ?? 'user');
   const [memberType, setMemberType] = useState(user.memberType ?? 'active');
   const [isBlocked, setIsBlocked] = useState(user.isBlocked ?? false);
   const [password, setPassword] = useState('');
   const [transactionPassword, setTransactionPassword] = useState('');
+  const [bankName, setBankName] = useState(user.bankName ?? '');
+  const [branchName, setBranchName] = useState(user.branchName ?? '');
+  const [accountNo, setAccountNo] = useState(user.accountNo ?? '');
+  const [ifsc, setIfsc] = useState(user.ifsc ?? '');
+  const [accountType, setAccountType] = useState(user.accountType ?? '');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave(user._id, role, memberType, isBlocked, password, transactionPassword);
+    await onSave(
+      user._id,
+      role,
+      memberType,
+      isBlocked,
+      password,
+      transactionPassword,
+      bankName,
+      branchName,
+      accountNo,
+      ifsc,
+      accountType
+    );
     setSaving(false);
   };
 
@@ -427,6 +465,38 @@ const EditModal = ({ user, onClose, onSave }: { user: UserRecord; onClose: () =>
           <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Change Transaction Password</label>
             <input type="password" value={transactionPassword} onChange={(e) => setTransactionPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+          </div>
+          
+          {/* Bank Account Details */}
+          <div className="pt-4 border-t border-[#0A6E5A]/10 space-y-4">
+            <h4 className="font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#C9A84C] font-bold">Bank Account Details (KYC)</h4>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Bank Name</label>
+              <input type="text" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="Enter bank name" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true} />
+            </div>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Branch Name</label>
+              <input type="text" value={branchName} onChange={(e) => setBranchName(e.target.value)} placeholder="Enter branch name" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true} />
+            </div>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Account Number</label>
+              <input type="text" value={accountNo} onChange={(e) => setAccountNo(e.target.value)} placeholder="Enter account number" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true} />
+            </div>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">IFSC Code</label>
+              <input type="text" value={ifsc} onChange={(e) => setIfsc(e.target.value)} placeholder="Enter IFSC code" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true} />
+            </div>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Account Type</label>
+              <select value={accountType} onChange={(e) => setAccountType(e.target.value)} className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true}>
+                <option value="">-- Select --</option>
+                <option value="Saving">Saving</option>
+                <option value="Current">Current</option>
+                <option value="Salary">Salary</option>
+                <option value="NRI">NRI</option>
+                <option value="Joint">Joint</option>
+              </select>
+            </div>
           </div>
         </div>
         <div className="px-6 pb-6 flex gap-3 pt-4 border-t border-[#0A6E5A]/10">
@@ -604,12 +674,27 @@ export default function AdminDashboardUsersPage() {
     setSortOrder(newOrder);
   };
 
-  const handleSaveEdit = async (id: string, role: string, memberType: string, isBlocked: boolean, password?: string, transactionPassword?: string) => {
+  const handleSaveEdit = async (
+    id: string,
+    role: string,
+    memberType: string,
+    isBlocked: boolean,
+    password?: string,
+    transactionPassword?: string,
+    bankName?: string,
+    branchName?: string,
+    accountNo?: string,
+    ifsc?: string,
+    accountType?: string
+  ) => {
     try {
       const res = await fetch('/api/admin/users', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, role, memberType, isBlocked, password, transactionPassword })
+        body: JSON.stringify({
+          id, role, memberType, isBlocked, password, transactionPassword,
+          bankName, branchName, accountNo, ifsc, accountType
+        })
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.message);
@@ -619,7 +704,13 @@ export default function AdminDashboardUsersPage() {
         memberType,
         isBlocked,
         plainPassword: json.data?.plainPassword ?? u.plainPassword,
-        plainTransactionPassword: json.data?.plainTransactionPassword ?? u.plainTransactionPassword
+        plainTransactionPassword: json.data?.plainTransactionPassword ?? u.plainTransactionPassword,
+        bankName: json.data?.bankName ?? bankName ?? u.bankName,
+        branchName: json.data?.branchName ?? branchName ?? u.branchName,
+        accountNo: json.data?.accountNo ?? accountNo ?? u.accountNo,
+        ifsc: json.data?.ifsc ?? ifsc ?? u.ifsc,
+        accountType: json.data?.accountType ?? accountType ?? u.accountType,
+        bankDetailsStatus: json.data?.bankDetailsStatus ?? u.bankDetailsStatus
       } : u));
       setEditUser(null);
       toast.success('User updated successfully.');

@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
     const user = await User.findOne({
       username: session.user.username,
     }).select(
-      "fullName username userId email mobileNo role createdAt joiningDate registeredPackage address city state pincode panNo bankName branchName accountNo ifsc accountType"
+      "fullName username userId email mobileNo role createdAt joiningDate registeredPackage address city state pincode panNo bankName branchName accountNo ifsc accountType bankDetailsStatus bankDetailsRejectReason pendingBankAccountDetails"
     );
     if (!user) {
       return NextResponse.json(
@@ -49,11 +49,14 @@ export async function GET(req: NextRequest) {
         state: user.state || "",
         pincode: user.pincode || "",
         panNo: user.panNo || "",
-        bankName: (user as any).bankName || "",
-        branchName: (user as any).branchName || "",
-        accountNo: (user as any).accountNo || "",
-        ifsc: (user as any).ifsc || "",
-        accountType: (user as any).accountType || "",
+        bankDetailsStatus: user.bankDetailsStatus || "none",
+        bankDetailsRejectReason: (user as any).bankDetailsRejectReason || "",
+        pendingBankAccountDetails: (user as any).pendingBankAccountDetails || null,
+        bankName: user.bankDetailsStatus === 'approved' ? ((user as any).bankName || "") : "",
+        branchName: user.bankDetailsStatus === 'approved' ? ((user as any).branchName || "") : "",
+        accountNo: user.bankDetailsStatus === 'approved' ? ((user as any).accountNo || "") : "",
+        ifsc: user.bankDetailsStatus === 'approved' ? ((user as any).ifsc || "") : "",
+        accountType: user.bankDetailsStatus === 'approved' ? ((user as any).accountType || "") : "",
       },
     });
 

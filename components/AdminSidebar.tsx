@@ -18,6 +18,7 @@ import {
   ChevronRight,
   Menu,
   X,
+  Landmark,
 } from "lucide-react";
 
 const navItems = [
@@ -52,8 +53,13 @@ const navItems = [
     icon: Users,
   },
   {
+    label: "Bank Approvals",
+    href: "/admin/dashboard/bank-approvals",
+    icon: Landmark,
+  },
+  {
     label: "Withdraw Requests",
-    href: "/admin/dashboard/withdraw-requests",
+    href: "/admin/dashboard/withdrawrequests",
     icon: Wallet,
   },
 ];

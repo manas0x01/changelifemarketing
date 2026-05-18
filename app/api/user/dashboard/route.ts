@@ -120,6 +120,13 @@ export async function GET(req: NextRequest) {
       email: user.email || "N/A",
       joiningDate: user.joiningDate || user.createdAt || "N/A",
     };
+    const bankDetails = {
+      accountHolderName: user.bankAccountDetails?.accountHolderName || user.fullName || "",
+      accountNumber: user.bankAccountDetails?.accountNumber || user.accountNo || "",
+      ifscCode: user.bankAccountDetails?.ifscCode || user.ifsc || "",
+      bankName: user.bankAccountDetails?.bankName || user.bankName || "",
+    };
+
     const respData = {
       totalTeam,
       totalDirect,
@@ -135,6 +142,7 @@ export async function GET(req: NextRequest) {
       totalIncome,
       totalPins,
       userProfile,
+      bankDetails,
     };
     console.log('[DASHBOARD] responding with:', { basicIncome, boosterIncome, totalIncome, isBooster: boosterIncome.isBooster });
     return NextResponse.json({ success: true, data: respData });

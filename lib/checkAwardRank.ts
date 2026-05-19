@@ -16,7 +16,7 @@ export async function checkAwardRank(user: any) {
   }
 
   if (!user.awardRankStatus) {
-    user.awardRankStatus = { currentRank: 0, rankName: "Member" };
+    user.awardRankStatus = { rank: 0, rankName: "Member" };
   }
 
   if (!Array.isArray(user.awardRankRecords)) {
@@ -56,7 +56,7 @@ export async function checkAwardRank(user: any) {
     const availableRight = totalRight - usedRight;
 
     // The next rank to achieve is the one after the current rank
-    const nextRankIndex = (user.awardRankStatus.currentRank || 0);
+    const nextRankIndex = (user.awardRankStatus.rank || 0);
     if (nextRankIndex >= RANKS.length) break;
 
     const targetRank = RANKS[nextRankIndex];
@@ -65,7 +65,7 @@ export async function checkAwardRank(user: any) {
       // ACHIEVED!
       user.boosterCountUsedForRank.left += targetRank.left;
       user.boosterCountUsedForRank.right += targetRank.right;
-      user.awardRankStatus.currentRank = targetRank.rank;
+      user.awardRankStatus.rank = targetRank.rank;
       user.awardRankStatus.rankName = targetRank.name;
       user.awardRankStatus.achievementDate = new Date();
 

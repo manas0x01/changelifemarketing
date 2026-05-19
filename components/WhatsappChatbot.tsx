@@ -53,7 +53,7 @@ const BOT_RESPONSES: Record<string, { text: string; quickReplies?: QuickReply[] 
     ],
   },
   business: {
-    text: `💰 *Business Plan & Income*\n\n🎯 *Booster Plan — Binary System*\n\n• Joining: FREE (No Investment!)\n• First Product Purchase se activation\n• Left & Right team banao\n• Har pair pe income milti hai!\n\n💵 *Income Sources:*\n🔹 Pair Bonus — Har matching pair pe\n🔹 Level Income — Deep levels tak\n🔹 Rank Bonus — Bronze se Global Ambassador\n🔹 Leadership Bonus — Team performance pe\n🔹 Royalty Income — Passive income\n\n📈 Jitna bada team, utni badi income!\nTop ranks pe ₹3,00,000+ monthly possible!`,
+    text: `💰 *Business Plan & Income (Double Phase)*\n\nChange Life Marketing aapke liye laaya hai sabse solid high-payout income plan:\n\n1️⃣ *Phase 1 — Basic Level:*\n• Har Matching Pair pe: *₹1,000*\n• Capping: *1 pair per session* (₹2,000 Daily Max)\n• Cut Pairs: Pair sequence *#3, #6, #9, & #12* subject to system cuts (₹0 payout)\n• Carry Forward: No carry-forward, session close pe flash-out hota hai.\n\n2️⃣ *Phase 2 — Booster Level:*\n• Har matching pair pe: *₹1,000*\n• Capping: *10 pairs per session* (₹10,000 per session / ₹20,000 Daily Max!)\n• Carry Forward: Unpaired units permanently *carry forward indefinitely*!\n• Cuts: *No cuts applied* on Booster pairs!\n• Qualification: Complete 12 valid Basic sessions to upgrade to Booster.\n\n📈 Stable calculations and automated payouts at the end of each session window!`,
     quickReplies: [
       { label: '🏆 Ranks Dekhein', value: 'ranks' },
       { label: '💬 Full Plan WhatsApp pe', value: 'whatsapp' },
@@ -69,7 +69,7 @@ const BOT_RESPONSES: Record<string, { text: string; quickReplies?: QuickReply[] 
     ],
   },
   ranks: {
-    text: `🏆 *Ranks & Awards System*\n\n🥉 Bronze Associate — 5 pairs → ₹50\n🥈 Silver Associate — 15 pairs → ₹150\n🥇 Gold Associate — 30 pairs → ₹300\n💎 Platinum Associate — 60 pairs → ₹600\n❤️ Ruby Director — 120 pairs → ₹1,200\n💚 Emerald Director — 250 pairs → ₹2,500\n💠 Diamond Director — 500 pairs → ₹5,000\n🔵 Blue Diamond — 1000 pairs → ₹10,000\n⬛ Black Diamond — 2000 pairs → ₹20,000\n👑 Crown Diamond — 4000 pairs → ₹40,000\n🌟 Presidential Diamond — 8000 pairs → ₹80,000\n🌍 Ambassador — 15000 pairs → ₹1,50,000\n🌐 Global Ambassador — 30000 pairs → ₹3,00,000\n\nHar rank pe special gifts & recognition bhi milta hai! 🎁`,
+    text: `🏆 *Booster Awards & Ranks System*\n\nHamare Booster Level achievers ke liye special Rewards & Recognition:\n\n🥇 *1. Gold Rank* (5 Pairs) ➔ Bag + Business Kit\n🥈 *2. Super Gold* (10 Pairs) ➔ Smart Watch\n🎖️ *3. Gold Star* (25 Pairs) ➔ Suit Length\n🔮 *4. Pearl Ex* (50 Pairs) ➔ Mixer Grinder\n💚 *5. Emerald* (100 Pairs) ➔ Refrigerator\n❤️ *6. Ruby* (200 Pairs) ➔ Mobile Phone\n💻 *7. Platinum* (500 Pairs) ➔ Laptop\n🏍️ *8. Diamond* (1000 Pairs) ➔ Motorcycle\n💎 *9. Double Diamond* (2000 Pairs) ➔ ₹1.5 Lakh Gift\n⬛ *10. Black Diamond* (4000 Pairs) ➔ ₹2.5 Lakh Gift\n🔵 *11. Blue Diamond* (8000 Pairs) ➔ ₹5 Lakh Gift\n👑 *12. Royal Diamond* (16000 Pairs) ➔ ₹7.5 Lakh Gift\n🏆 *13. Crown Diamond* (32000 Pairs) ➔ ₹10 Lakh Gift!\n\nAll awards are credited automatically as your Booster pairs matching count grows! 🎁`,
     quickReplies: [
       { label: '💰 Business Plan Dekhein', value: 'business' },
       { label: '💬 More Details WhatsApp pe', value: 'whatsapp' },

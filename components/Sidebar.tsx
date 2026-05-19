@@ -195,6 +195,7 @@ export default function Sidebar() {
       { pattern: "/dashboard/withdrawals", activeId: "daily-payout", submenuId: "daily-payout-Withdrawal History", menuToOpen: "daily-payout" },
       { pattern: "/dashboard/registration", activeId: "registration", submenuId: null },
       { pattern: "/dashboard/invoice", activeId: "invoice", submenuId: null },
+      { pattern: "/dashboard/chatsupport", activeId: "chat-support", submenuId: null },
     ];
     const route = routePatterns.find(r => pathname.includes(r.pattern));
     if (route) {

@@ -95,16 +95,22 @@ Once you upgrade to the **Booster Phase (Phase 2)**, **NO MORE CUTS** are applie
   // 6. Awards / Rewards / Ranks
   if (q.includes("award") || q.includes("reward") || q.includes("rank") || q.includes("gift")) {
     return `🏆 **Awards & Rewards (Booster Achievers):**
-As a Booster member, you unlock fantastic rewards based on matching Booster pairs in your team:
-• **5 Pairs**: Gold Rank ➔ Bag + Business Kit
-• **10 Pairs**: Super Gold Rank ➔ Smart Watch
-• **25 Pairs**: Gold Star Rank ➔ Suit Length
-• **50 Pairs**: Pearl Ex Rank ➔ Mixer Grinder
-• **100 Pairs**: Emerald Rank ➔ Refrigerator
-• **200 Pairs**: Ruby Rank ➔ Mobile Phone
-• **500 Pairs**: Platinum Rank ➔ Laptop
-• **1,000 Pairs**: Diamond Rank ➔ Motorcycle
-• **Ranks go up to Crown Diamond (32,000 pairs)** yielding a ₹10 Lakh Gift!`;
+As a Booster member, you unlock fantastic rewards based on matching Booster pairs in your team. 
+
+⚠️ *Important Note:* Ranks are progressive and non-cumulative (fresh pairs basis). Matched pairs are consumed for each rank achievement.
+• **Gold Rank** (5 Pairs): Bag + Business Kit
+• **Super Gold Rank** (10 Pairs): Smart Watch (Requires 10 fresh matches after Gold. Cumulative lifetime = 15 matched pairs)
+• **Gold Star Rank** (25 Pairs): Suit Length (Requires 25 fresh matches after Super Gold. Cumulative lifetime = 40 matched pairs)
+• **Pearl Ex Rank** (50 Pairs): Mixer Grinder (Requires 50 fresh matches. Cumulative = 90 matched pairs)
+• **Emerald Rank** (100 Pairs): Refrigerator (Requires 100 fresh matches. Cumulative = 190 matched pairs)
+• **Ruby Rank** (200 Pairs): Mobile Phone (Requires 200 fresh matches)
+• **Platinum Rank** (500 Pairs): Laptop (Requires 500 fresh matches)
+• **Diamond Rank** (1,000 Pairs): Motorcycle (Requires 1,000 fresh matches)
+• **Double Diamond** (2,000 Pairs): ₹1.5 Lakh Cash Gift
+• **Black Diamond** (4,000 Pairs): ₹2.5 Lakh Cash Gift
+• **Blue Diamond** (8,000 Pairs): ₹5 Lakh Cash Gift
+• **Royal Diamond** (16,000 Pairs): ₹7.5 Lakh Cash Gift
+• **Crown Diamond** (32,000 Pairs): ₹10 Lakh Cash Gift!`;
   }
 
   // 7. Session Timings / Daily Sessions

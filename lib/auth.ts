@@ -14,6 +14,7 @@ declare module "next-auth" {
     placementPosition?: 'left' | 'right';
     memberType?: string;
     registeredPackage?: string;
+    isBlocked?: boolean;
   }
 
   interface Session {
@@ -31,6 +32,7 @@ declare module "next-auth" {
       placementPosition?: 'left' | 'right' | null;
       memberType?: string | null;
       registeredPackage?: string | null;
+      isBlocked?: boolean;
     }
   }
 }
@@ -50,6 +52,7 @@ declare module "next-auth/jwt" {
     placementPosition?: 'left' | 'right' | null;
     memberType?: string | null;
     registeredPackage?: string | null;
+    isBlocked?: boolean | null;
   }
 }
 
@@ -89,9 +92,6 @@ export const authOptions: NextAuthOptions = {
           if (!isPasswordValid) {
             throw new Error("Invalid username or password");
           }
-          if (user.isBlocked) {
-            throw new Error("Your account has been blocked by the Administrator.");
-          }
           return {
             id: user._id.toString(),
             email: user.email ?? undefined,
@@ -106,6 +106,7 @@ export const authOptions: NextAuthOptions = {
             placementPosition: user.placementPosition ?? undefined,
             memberType: user.memberType ?? undefined,
             registeredPackage: user.registeredPackage ?? undefined,
+            isBlocked: user.isBlocked || false,
           } as any;
 
         } catch (error: any) {
@@ -144,6 +145,7 @@ export const authOptions: NextAuthOptions = {
         token.placementPosition = user.placementPosition || null;
         token.memberType = user.memberType || null;
         token.registeredPackage = user.registeredPackage || null;
+        token.isBlocked = (user as any).isBlocked || false;
       }
 
       return token;
@@ -164,6 +166,7 @@ export const authOptions: NextAuthOptions = {
         session.user.placementPosition = token.placementPosition || null;
         session.user.memberType = token.memberType || null;
         session.user.registeredPackage = token.registeredPackage || null;
+        session.user.isBlocked = !!token.isBlocked;
       }
 
       return session;

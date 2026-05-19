@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Filter, RefreshCw, Banknote, Check, X, Eye, TrendingUp,
   AlertTriangle, Loader2, Copy, Calendar, User, Phone, DollarSign,
-  ArrowLeft, ArrowRight, ChevronLeft, ChevronRight,
+  ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Download
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -682,6 +682,90 @@ export default function AdminDashboardWithdrawRequests() {
     setActionModal({ open: true, request: req, action, utrNumber: "", paymentMode: "NEFT", adminRemark: "", loading: false, error: "", success: "" });
   };
 
+  const exportToCSV = async () => {
+    try {
+      toast.info("Preparing CSV export...");
+      const params = new URLSearchParams({
+        status: filterStatus,
+        search,
+        page: "1",
+        limit: "-1",
+        ...(dateFrom && { dateFrom }),
+        ...(dateTo && { dateTo }),
+      });
+      const res = await fetch(`/api/admin/withdraw-requests?${params}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch all records for CSV export");
+      const data = await res.json();
+      const allRequests = data.requests || [];
+      if (allRequests.length === 0) {
+        toast.error("No records found to export.");
+        return;
+      }
+
+      const headers = [
+        "Request No",
+        "User ID",
+        "Username",
+        "Full Name",
+        "Mobile No",
+        "Amount",
+        "Status",
+        "Bank Name",
+        "Account Holder Name",
+        "Account Number",
+        "IFSC Code",
+        "Request Date",
+        "Processed Date",
+        "Processed By",
+        "UTR Number",
+        "Payment Mode",
+        "Admin Remark"
+      ];
+
+      const rows = allRequests.map((r: WithdrawRequest) => {
+        return [
+          r.requestNo || "",
+          r.userId || "",
+          r.userName || "",
+          r.userFullName || "",
+          r.mobileNo || "",
+          r.amount || 0,
+          r.status || "",
+          r.bankDetails?.bankName || "",
+          r.bankDetails?.accountHolderName || "",
+          r.bankDetails?.accountNumber || "",
+          r.bankDetails?.ifscCode || "",
+          r.requestDate ? new Date(r.requestDate).toISOString() : "",
+          r.processedDate ? new Date(r.processedDate).toISOString() : "",
+          r.processedBy || "",
+          r.utrNumber || "",
+          r.paymentMode || "",
+          r.adminRemark || ""
+        ];
+      });
+
+      const csvContent = [
+        headers.join(","),
+        ...rows.map((e: any[]) => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
+      ].join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", `withdraw_requests_${Date.now()}.csv`);
+      link.style.visibility = "hidden";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success("CSV file exported successfully!");
+    } catch (e: any) {
+      toast.error(e.message || "Failed to export CSV");
+    }
+  };
+
   return (
     <div className="bg-[#F5F7F6] min-h-screen">
       {/* Page Header */}
@@ -689,17 +773,26 @@ export default function AdminDashboardWithdrawRequests() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="font-['Fraunces'] text-[2rem] md:text-[2.5rem] text-[#0A6E5A]">Withdraw Requests</h1>
-            <p className="font-['Roboto'] text-[#333]/60 text-sm mt-1">Manage and process user withdrawal requests</p>
+            <p className="font-['Roboto'] text-[#33]/60 text-sm mt-1">Manage and process user withdrawal requests</p>
           </div>
-          <button
-            onClick={fetchData}
-            disabled={loading}
-            className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-[#0A6E5A] hover:bg-[#0A6E5A]/90 text-white font-['Roboto'] font-semibold text-[0.85rem] rounded transition-colors disabled:opacity-50"
-            suppressHydrationWarning={true}
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
+          <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={exportToCSV}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#C9A84C] hover:bg-[#B8963B] text-white font-['Roboto'] font-semibold text-[0.85rem] rounded transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+            <button
+              onClick={fetchData}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#0A6E5A] hover:bg-[#0A6E5A]/90 text-white font-['Roboto'] font-semibold text-[0.85rem] rounded transition-colors disabled:opacity-50"
+              suppressHydrationWarning={true}
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
         </div>
       </motion.div>
 

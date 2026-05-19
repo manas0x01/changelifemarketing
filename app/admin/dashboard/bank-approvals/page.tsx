@@ -4,7 +4,7 @@ import React, { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users, Check, X, Shield, Search, RefreshCw, AlertTriangle,
-  Loader2, ArrowUpDown, CreditCard, User, Landmark, HelpCircle,
+  Loader2, ArrowUpDown, CreditCard, User, Landmark, HelpCircle, Download
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -136,6 +136,61 @@ export default function AdminBankApprovalsPage() {
     }
   };
 
+  const exportToCSV = () => {
+    if (filteredRecords.length === 0) {
+      toast.error("No records to export.");
+      return;
+    }
+    const headers = [
+      "User ID",
+      "Username",
+      "Full Name",
+      "Email",
+      "Mobile No",
+      "Proposed Account Holder Name",
+      "Proposed Bank Name",
+      "Proposed Account Number",
+      "Proposed IFSC Code",
+      "Proposed Branch Name",
+      "Proposed Account Type",
+      "Submitted At"
+    ];
+
+    const rows = filteredRecords.map(r => {
+      const pending = r.pendingBankAccountDetails || {};
+      return [
+        r.userId || r.username,
+        r.username,
+        r.fullName || "",
+        r.email || "",
+        r.mobileNo || "",
+        pending.accountHolderName || r.fullName || "",
+        pending.bankName || "",
+        pending.accountNumber || "",
+        pending.ifscCode || "",
+        pending.branchName || "",
+        pending.accountType || "",
+        r.createdAt ? new Date(r.createdAt).toISOString() : ""
+      ];
+    });
+
+    const csvContent = [
+      headers.join(","),
+      ...rows.map(e => e.map(val => `"${String(val).replace(/"/g, '""')}"`).join(","))
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `bank_detail_approvals_${Date.now()}.csv`);
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success("CSV file exported successfully!");
+  };
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "N/A";
     const d = new Date(dateStr);
@@ -166,13 +221,22 @@ export default function AdminBankApprovalsPage() {
               Verify and approve user bank details before they are activated
             </p>
           </div>
-          <button
-            onClick={fetchPendingApprovals}
-            className="self-start sm:self-center flex items-center gap-2 px-4 py-2.5 border border-[#0A6E5A]/20 text-[#0A6E5A] font-['Roboto'] text-[0.8rem] font-semibold hover:bg-[#0A6E5A]/5 transition-colors"
-          >
-            <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
-            Refresh
-          </button>
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={exportToCSV}
+              className="flex items-center gap-2 px-4 py-2.5 bg-[#C9A84C] hover:bg-[#B8963B] text-white font-['Roboto'] text-[0.8rem] font-semibold transition-colors"
+            >
+              <Download className="w-4 h-4" />
+              Export CSV
+            </button>
+            <button
+              onClick={fetchPendingApprovals}
+              className="flex items-center gap-2 px-4 py-2.5 border border-[#0A6E5A]/20 text-[#0A6E5A] font-['Roboto'] text-[0.8rem] font-semibold hover:bg-[#0A6E5A]/5 transition-colors"
+            >
+              <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
+              Refresh
+            </button>
+          </div>
         </div>
       </motion.div>
 

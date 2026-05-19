@@ -200,8 +200,9 @@ export async function GET(req: NextRequest) {
       totalPins,
       userProfile,
       bankDetails,
+      isBlocked: user.isBlocked || false,
     };
-    console.log('[DASHBOARD] responding with:', { basicIncome, boosterIncome, totalIncome, availableBalance, isBooster: boosterIncome.isBooster });
+    console.log('[DASHBOARD] responding with:', { basicIncome, boosterIncome, totalIncome, availableBalance, isBooster: boosterIncome.isBooster, isBlocked: user.isBlocked });
     return NextResponse.json({ success: true, data: respData });
 
   } catch (error: any) {

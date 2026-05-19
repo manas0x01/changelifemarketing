@@ -51,6 +51,7 @@ interface DashboardData {
   bankDetails: BankDetails;
   cycleHistory: CycleRow[];
   isBooster?: boolean;
+  isBlocked?: boolean;
 }
 
 /* ── Premium SVG Icons ── */
@@ -129,6 +130,7 @@ export default function Dashboard() {
     bankDetails: { accountHolderName: "", accountNumber: "", ifscCode: "", bankName: "" },
     cycleHistory: [] as CycleRow[],
     isBooster: false,
+    isBlocked: false,
   });
   const {
     totalTeam, totalDirect, totalActiveDirect,
@@ -137,7 +139,8 @@ export default function Dashboard() {
     basicIncome, boosterIncome, totalPins, totalIncome,
     availableBalance = 0,
     userProfile, bankDetails, cycleHistory,
-    isBooster = false
+    isBooster = false,
+    isBlocked = false
   } = dashboardData;
   const [loading, setLoading] = useState(true);
   const [withdrawOpen, setWithdrawOpen] = useState(false);
@@ -175,6 +178,7 @@ export default function Dashboard() {
           bankDetails: d.bankDetails ?? prev.bankDetails,
           cycleHistory: d.cycleHistory ?? prev.cycleHistory,
           isBooster: d.isBooster ?? prev.isBooster ?? false,
+          isBlocked: d.isBlocked ?? prev.isBlocked ?? false,
         }));
       }
     } catch (error: any) {
@@ -195,6 +199,7 @@ export default function Dashboard() {
 
   const handleWithdraw = async () => {
     setWithdrawError(""); setWithdrawSuccess("");
+    if (isBlocked) { setWithdrawError("Your withdrawal facility has been disabled by the Administrator."); return; }
     const amt = Number(withdrawAmount);
     if (!withdrawAmount || isNaN(amt)) { setWithdrawError("Please enter a valid amount."); return; }
     if (amt < 1000) { setWithdrawError("Minimum withdrawal amount is ₹1000."); return; }
@@ -1099,6 +1104,21 @@ export default function Dashboard() {
           </DialogHeader>
 
           <div style={{ marginTop: 10 }}>
+            {isBlocked && (
+              <div style={{
+                background: 'rgba(239, 68, 68, 0.15)',
+                borderLeft: '4px solid #ef4444',
+                borderRadius: '8px',
+                padding: '12px 14px',
+                fontSize: '12.5px',
+                fontWeight: 700,
+                color: '#f87171',
+                lineHeight: '1.5',
+                marginBottom: '15px'
+              }}>
+                ⚠️ Your withdrawal facility has been disabled by the Administrator.
+              </div>
+            )}
             <div className="dialog-field">
               <label>Username</label>
               <div className="val">{userProfile.username}</div>
@@ -1212,18 +1232,18 @@ export default function Dashboard() {
             </Button>
             <Button
               onClick={handleWithdraw}
-              disabled={withdrawLoading}
+              disabled={withdrawLoading || isBlocked}
               style={{
                 fontFamily: "'Nunito', sans-serif",
                 fontSize: 14, fontWeight: 900,
-                background: "linear-gradient(135deg, #ffe97c 0%, #E5A900 100%)",
-                color: "#1a0533",
+                background: isBlocked ? "rgba(255,255,255,0.1)" : "linear-gradient(135deg, #ffe97c 0%, #E5A900 100%)",
+                color: isBlocked ? "rgba(255,255,255,0.3)" : "#1a0533",
                 border: "none",
                 borderRadius: 10,
                 padding: "11px 24px",
-                cursor: withdrawLoading ? "not-allowed" : "pointer",
-                opacity: withdrawLoading ? 0.7 : 1,
-                boxShadow: "0 4px 16px rgba(245,197,24,0.35)",
+                cursor: (withdrawLoading || isBlocked) ? "not-allowed" : "pointer",
+                opacity: (withdrawLoading || isBlocked) ? 0.7 : 1,
+                boxShadow: isBlocked ? "none" : "0 4px 16px rgba(245,197,24,0.35)",
                 width: "100%",
               }}
             >

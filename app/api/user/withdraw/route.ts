@@ -36,6 +36,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (user.isBlocked) {
+      return NextResponse.json(
+        { success: false, message: "Your withdrawal facility has been disabled by the Administrator." },
+        { status: 400 }
+      );
+    }
+
     const accountHolderName = user.bankAccountDetails?.accountHolderName || user.fullName || "N/A";
     const accountNumber = user.bankAccountDetails?.accountNumber || user.accountNo || "N/A";
     const ifscCode = user.bankAccountDetails?.ifscCode || user.ifsc || "N/A";

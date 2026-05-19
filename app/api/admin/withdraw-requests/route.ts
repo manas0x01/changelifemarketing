@@ -16,8 +16,9 @@ export async function GET(req: NextRequest) {
     const status   = searchParams.get('status') || 'all';
     const search   = searchParams.get('search') || '';
     const page     = Math.max(1, parseInt(searchParams.get('page') || '1'));
-    const limit    = Math.min(50, parseInt(searchParams.get('limit') || '15'));
-    const skip     = (page - 1) * limit;
+    const isExport = searchParams.get('limit') === '-1';
+    const limit    = isExport ? 1000000 : Math.min(50, parseInt(searchParams.get('limit') || '15'));
+    const skip     = isExport ? 0 : (page - 1) * limit;
     const dateFrom = searchParams.get('dateFrom');
     const dateTo   = searchParams.get('dateTo');
     const query: Record<string, any> = {};

@@ -192,7 +192,11 @@ export async function PATCH(req: NextRequest) {
     }
     await connectDB();
     const body = await req.json();
-    const { id, role, memberType, isBlocked, password, transactionPassword, bankName, branchName, accountNo, ifsc, accountType } = body;
+    const {
+      id, role, memberType, isBlocked, password, transactionPassword,
+      bankName, branchName, accountNo, ifsc, accountType,
+      username, userId, fullName
+    } = body;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
         { success: false, message: 'Invalid or missing user ID.' },
@@ -206,6 +210,42 @@ export async function PATCH(req: NextRequest) {
         { status: 404 }
       );
     }
+
+    const oldUsername = user.username || "";
+    const oldUserId = user.userId || user.username || "";
+    const oldFullName = user.fullName || user.username || "";
+
+    // Validate and update username
+    if (username && username.trim() && username.trim() !== oldUsername) {
+      const uTrim = username.trim();
+      const existingUser = await User.findOne({ username: uTrim, _id: { $ne: id } });
+      if (existingUser) {
+        return NextResponse.json(
+          { success: false, message: 'Username is already taken by another user.' },
+          { status: 400 }
+        );
+      }
+      user.username = uTrim;
+    }
+
+    // Validate and update userId
+    if (userId && userId.trim() && userId.trim() !== oldUserId) {
+      const uIdTrim = userId.trim();
+      const existingUser = await User.findOne({ userId: uIdTrim, _id: { $ne: id } });
+      if (existingUser) {
+        return NextResponse.json(
+          { success: false, message: 'User ID is already taken by another user.' },
+          { status: 400 }
+        );
+      }
+      user.userId = uIdTrim;
+    }
+
+    // Update fullName
+    if (fullName && fullName.trim()) {
+      user.fullName = fullName.trim();
+    }
+
     const allowedRoles = ['user', 'admin', 'moderator'];
     const allowedMemberTypes = ['gold', 'active'];
 
@@ -271,6 +311,71 @@ export async function PATCH(req: NextRequest) {
 
     await user.save();
 
+    // If username, userId, or fullName has changed, perform cascading updates to keep database consistent
+    const newUsername = user.username || "";
+    const newUserId = user.userId || user.username || "";
+    const newFullName = user.fullName || user.username || "";
+
+    if (oldUsername !== newUsername || oldUserId !== newUserId || oldFullName !== newFullName) {
+      // 1. Update direct descendants' sponsor fields
+      await User.updateMany(
+        { sponsorId: { $in: [oldUsername, oldUserId] } },
+        { $set: { sponsorId: newUserId, sponsorName: newFullName } }
+      );
+
+      // 2. Update direct descendants' placement fields
+      await User.updateMany(
+        { placementId: { $in: [oldUsername, oldUserId] } },
+        { $set: { placementId: newUserId, placementName: newFullName } }
+      );
+
+      // 3. Update leftChild/rightChild fields in ancestors
+      await User.updateMany(
+        { leftChild: oldUsername },
+        { $set: { leftChild: newUsername } }
+      );
+      await User.updateMany(
+        { rightChild: oldUsername },
+        { $set: { rightChild: newUsername } }
+      );
+
+      // 4. Update elements in sponsor's directMembers list
+      await User.updateMany(
+        { "directMembers.memberId": { $in: [oldUsername, oldUserId] } },
+        { $set: { "directMembers.$.memberId": newUserId, "directMembers.$.name": newFullName } }
+      );
+
+      // 5. Update WithdrawRequest collections
+      try {
+        const WithdrawRequest = mongoose.models.WithdrawRequest || require('@/models/WithdrawRequest').default;
+        if (WithdrawRequest) {
+          await WithdrawRequest.updateMany(
+            { userId: { $in: [oldUsername, oldUserId] } },
+            { $set: { userId: newUserId, userName: newUsername, userFullName: newFullName } }
+          );
+          await WithdrawRequest.updateMany(
+            { userName: oldUsername },
+            { $set: { userName: newUsername } }
+          );
+        }
+      } catch (e) {
+        console.error("Error updating WithdrawRequest references:", e);
+      }
+
+      // 6. Update Order collections
+      try {
+        const Order = mongoose.models.Order || require('@/models/Order').default;
+        if (Order) {
+          await Order.updateMany(
+            { userId: { $in: [oldUsername, oldUserId] } },
+            { $set: { userId: newUserId, username: newUsername, name: newFullName } }
+          );
+        }
+      } catch (e) {
+        console.error("Error updating Order references:", e);
+      }
+    }
+
     const updated = await User.findById(id).select('username userId fullName role memberType isBlocked plainPassword plainTransactionPassword bankName branchName accountNo ifsc accountType bankDetailsStatus');
 
     return NextResponse.json(
@@ -278,6 +383,7 @@ export async function PATCH(req: NextRequest) {
       { status: 200 }
     );
   } catch (err) {
+    console.error('Error updating user:', err);
     return NextResponse.json(
       { success: false, message: 'Internal server error.' },
       { status: 500 }

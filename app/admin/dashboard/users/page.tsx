@@ -381,7 +381,10 @@ const EditModal = ({
     branchName?: string,
     accountNo?: string,
     ifsc?: string,
-    accountType?: string
+    accountType?: string,
+    username?: string,
+    userId?: string,
+    fullName?: string
   ) => Promise<void>;
 }) => {
   const [role, setRole] = useState(user.role ?? 'user');
@@ -394,9 +397,20 @@ const EditModal = ({
   const [accountNo, setAccountNo] = useState(user.accountNo ?? '');
   const [ifsc, setIfsc] = useState(user.ifsc ?? '');
   const [accountType, setAccountType] = useState(user.accountType ?? '');
+  const [username, setUsername] = useState(user.username ?? '');
+  const [userId, setUserId] = useState(user.userId ?? '');
+  const [fullName, setFullName] = useState(user.fullName ?? '');
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
+    if (!username.trim()) {
+      toast.error('Username cannot be empty');
+      return;
+    }
+    if (!userId.trim()) {
+      toast.error('User ID cannot be empty');
+      return;
+    }
     setSaving(true);
     await onSave(
       user._id,
@@ -409,7 +423,10 @@ const EditModal = ({
       branchName,
       accountNo,
       ifsc,
-      accountType
+      accountType,
+      username.trim(),
+      userId.trim(),
+      fullName.trim()
     );
     setSaving(false);
   };
@@ -458,13 +475,34 @@ const EditModal = ({
               </button>
             </div>
           </div>
-          <div>
-            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Change Login Password</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+          
+          {/* Account Details */}
+          <div className="pt-4 border-t border-[#0A6E5A]/10 space-y-4">
+            <h4 className="font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#C9A84C] font-bold">Account Info</h4>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Username</label>
+              <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true} />
+            </div>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">User ID</label>
+              <input type="text" value={userId} onChange={(e) => setUserId(e.target.value)} placeholder="Enter User ID" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true} />
+            </div>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Full Name</label>
+              <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter full name" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true} />
+            </div>
           </div>
-          <div>
-            <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Change Transaction Password</label>
-            <input type="password" value={transactionPassword} onChange={(e) => setTransactionPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+
+          <div className="pt-4 border-t border-[#0A6E5A]/10 space-y-4">
+            <h4 className="font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#C9A84C] font-bold">Security Credentials</h4>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Change Login Password</label>
+              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+            </div>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Change Transaction Password</label>
+              <input type="password" value={transactionPassword} onChange={(e) => setTransactionPassword(e.target.value)} placeholder="Leave blank to keep current" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] placeholder:text-[#333333]/30 transition-colors" suppressHydrationWarning={true} />
+            </div>
           </div>
           
           {/* Bank Account Details */}
@@ -735,7 +773,10 @@ export default function AdminDashboardUsersPage() {
     branchName?: string,
     accountNo?: string,
     ifsc?: string,
-    accountType?: string
+    accountType?: string,
+    username?: string,
+    userId?: string,
+    fullName?: string
   ) => {
     try {
       const res = await fetch('/api/admin/users', {
@@ -743,7 +784,8 @@ export default function AdminDashboardUsersPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           id, role, memberType, isBlocked, password, transactionPassword,
-          bankName, branchName, accountNo, ifsc, accountType
+          bankName, branchName, accountNo, ifsc, accountType,
+          username, userId, fullName
         })
       });
       const json = await res.json();
@@ -753,6 +795,9 @@ export default function AdminDashboardUsersPage() {
         role,
         memberType,
         isBlocked,
+        username: json.data?.username ?? username ?? u.username,
+        userId: json.data?.userId ?? userId ?? u.userId,
+        fullName: json.data?.fullName ?? fullName ?? u.fullName,
         plainPassword: json.data?.plainPassword ?? u.plainPassword,
         plainTransactionPassword: json.data?.plainTransactionPassword ?? u.plainTransactionPassword,
         bankName: json.data?.bankName ?? bankName ?? u.bankName,
@@ -979,7 +1024,7 @@ export default function AdminDashboardUsersPage() {
                           <td className="px-4 py-3.5">{team > 0 ? (<div><p className="font-['Roboto'] text-[0.8rem] font-semibold text-[#0A6E5A]">{team}</p><p className="font-['Roboto'] text-[0.65rem] text-[#333333]/40">L:{user.totalTeam?.left ?? 0} · R:{user.totalTeam?.right ?? 0}</p></div>) : <span className="text-[#333333]/20">—</span>}</td>
                           <td className="px-4 py-3.5"><span className="font-['Roboto'] text-[0.72rem] text-[#333333]/50">{user.joiningDate ?? (user.createdAt ? new Date(user.createdAt).toLocaleDateString('en-IN') : '—')}</span></td>
                           <td className="px-4 py-3.5">
-                            <div className="flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="flex items-center gap-1.5">
                               <button onClick={() => setViewUser(user)} title="View" className="w-7 h-7 flex items-center justify-center rounded bg-[#0A6E5A]/8 hover:bg-[#0A6E5A]/15 transition-colors text-[#0A6E5A]" suppressHydrationWarning={true}>
                                 <Eye className="w-3.5 h-3.5" />
                               </button>

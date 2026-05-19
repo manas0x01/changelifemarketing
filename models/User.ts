@@ -504,7 +504,7 @@ userSchema.pre('save', async function (this: IUser) {
     // 3. AGGREGATE & TREE SYNC
     if (Array.isArray(this.sessionBasedIncome) && (totalLeft > 0 || totalRight > 0)) {
       console.log(`🔍 [SYNC] Checking Basic Income for ${this.username}. Tree: ${totalLeft}L | ${totalRight}R`);
-      
+
       // Step A: Fix missing fields and Enforce Cuts retroactively
       let cumulativePairs = 0;
       this.sessionBasedIncome.forEach((rec: any) => {
@@ -517,11 +517,11 @@ userSchema.pre('save', async function (this: IUser) {
           }
         }
 
-         // CAPPING FIX: Ensure no single session record exceeds 1000
-         if (Number(rec.netIncome) > 1000) {
-            console.log(`⚠️ [SYNC] Capping inflated income for ${this.username}: ${rec.netIncome} -> 1000`);
-            rec.netIncome = 1000;
-         }
+        // CAPPING FIX: Ensure no single session record exceeds 1000
+        if (Number(rec.netIncome) > 1000) {
+          console.log(`⚠️ [SYNC] Capping inflated income for ${this.username}: ${rec.netIncome} -> 1000`);
+          rec.netIncome = 1000;
+        }
 
         cumulativePairs += (Number(rec.pairs) || 0);
 
@@ -591,14 +591,14 @@ userSchema.pre('save', async function (this: IUser) {
     // 2.5 RETROACTIVE SYNC FOR BROKEN ACCOUNTS (Jumpstart)
     // If user has NO income records but has a tree, attempt to match the first pair.
     if ((this.basicIncome === 0 || !this.sessionBasedIncome || this.sessionBasedIncome.length === 0) && Math.min(totalLeft, totalRight) > 0) {
-        console.log(`[SELF-HEALING] User ${this.username} has potential pairs but no income. Attempting retroactive match.`);
-        const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
-        // Force sessionTeam to have at least 1,1 to trigger the match if it's currently empty
-        if (!this.sessionTeam) this.sessionTeam = { left: 0, right: 0 };
-        if (this.sessionTeam.left === 0) this.sessionTeam.left = 1;
-        if (this.sessionTeam.right === 0) this.sessionTeam.right = 1;
-        
-        await calculateBasicIncome(this, this.lastSessionType || (new Date().getHours() < 12 ? "morning" : "evening"), this.lastSessionDate || new Date());
+      console.log(`[SELF-HEALING] User ${this.username} has potential pairs but no income. Attempting retroactive match.`);
+      const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
+      // Force sessionTeam to have at least 1,1 to trigger the match if it's currently empty
+      if (!this.sessionTeam) this.sessionTeam = { left: 0, right: 0 };
+      if (this.sessionTeam.left === 0) this.sessionTeam.left = 1;
+      if (this.sessionTeam.right === 0) this.sessionTeam.right = 1;
+
+      await calculateBasicIncome(this, this.lastSessionType || (new Date().getHours() < 12 ? "morning" : "evening"), this.lastSessionDate || new Date());
     }
 
     // 3. SESSION TRANSITION HEALING (Real-time clock based)
@@ -611,17 +611,17 @@ userSchema.pre('save', async function (this: IUser) {
     const sessionChanged = (lastDateStr !== nowDateStr) || (this.lastSessionType !== currentSessionType);
 
     if (sessionChanged) {
-        console.log(`[SELF-HEALING] Session transition detected for ${this.username} (${this.lastSessionType} -> ${currentSessionType}). Flashing old session team.`);
-        
-        // Finalize old session before clearing
-        if (this.sessionTeam && (this.sessionTeam.left > 0 || this.sessionTeam.right > 0)) {
-           const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
-           await calculateBasicIncome(this, this.lastSessionType, this.lastSessionDate || new Date());
-        }
+      console.log(`[SELF-HEALING] Session transition detected for ${this.username} (${this.lastSessionType} -> ${currentSessionType}). Flashing old session team.`);
 
-        this.sessionTeam = { left: 0, right: 0 };
-        this.lastSessionType = currentSessionType as any;
-        this.lastSessionDate = now;
+      // Finalize old session before clearing
+      if (this.sessionTeam && (this.sessionTeam.left > 0 || this.sessionTeam.right > 0)) {
+        const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
+        await calculateBasicIncome(this, this.lastSessionType, this.lastSessionDate || new Date());
+      }
+
+      this.sessionTeam = { left: 0, right: 0 };
+      this.lastSessionType = currentSessionType as any;
+      this.lastSessionDate = now;
     }
 
     // 4. BOOSTER COUNT & CARRY-FORWARD SYNC (Real-time tree audit)
@@ -678,9 +678,9 @@ userSchema.pre('save', async function (this: IUser) {
         // but we'll be less strict about the date to allow manual overrides.
         let sessionRecord = (this.sessionBasedIncome || []).find((s: any) => {
           const recDate = new Date(s.date || s.sessionDate);
-          return recDate.toDateString() === todayStr && 
-                 s.sessionType === this.lastSessionType && 
-                 (Date.now() - recDate.getTime() < 10000);
+          return recDate.toDateString() === todayStr &&
+            s.sessionType === this.lastSessionType &&
+            (Date.now() - recDate.getTime() < 10000);
         });
         this.boosterMatchingRecords.forEach((record: any) => {
           if (record.status === 'Hold') {
@@ -776,12 +776,12 @@ userSchema.pre('save', async function (this: IUser) {
 
     // 6. AWARD RANK AUDIT (Third Level Rewards)
     if (this.isBooster) {
-       try {
-         const { checkAwardRank } = require('../lib/checkAwardRank');
-         await checkAwardRank(this);
-       } catch (err) {
-         console.error('❌ [PRE-SAVE] Error in checkAwardRank:', err);
-       }
+      try {
+        const { checkAwardRank } = require('../lib/checkAwardRank');
+        await checkAwardRank(this);
+      } catch (err) {
+        console.error('❌ [PRE-SAVE] Error in checkAwardRank:', err);
+      }
     }
 
     // Ensure totalIncome is the sum of all income sources

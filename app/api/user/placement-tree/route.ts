@@ -151,6 +151,11 @@ interface TreeNode {
   totalRightBoosterUser?: number;
   totalDirect?: { left: number; right: number };
   totalActiveDirect?: { left: number; right: number };
+  awardRankStatus?: {
+    rank: number;
+    rankName: string;
+    achievementDate?: Date | string;
+  };
   children?: TreeNode[];
 }
 
@@ -194,6 +199,11 @@ async function buildPlacementTree(
       left: currentUser.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === "left").length || 0,
       right: currentUser.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === "right").length || 0,
     },
+    awardRankStatus: currentUser.awardRankStatus ? {
+      rank: currentUser.awardRankStatus.rank || 0,
+      rankName: currentUser.awardRankStatus.rankName || "Member",
+      achievementDate: currentUser.awardRankStatus.achievementDate || undefined
+    } : { rank: 0, rankName: "Member" },
     totalActiveDirect: await (async () => {
        if (Array.isArray(currentUser.directMembers) && currentUser.directMembers.length > 0) {
          const directIds = currentUser.directMembers.map((m: any) => m.memberId);

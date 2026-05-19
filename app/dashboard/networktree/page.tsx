@@ -37,6 +37,11 @@ interface MNode {
   totalRightBasicUser?: number;
   totalLeftBoosterUser?: number;
   totalRightBoosterUser?: number;
+  awardRankStatus?: {
+    rank: number;
+    rankName: string;
+    achievementDate?: string;
+  };
   children?: MNode[];
 }
 
@@ -530,6 +535,7 @@ function MemberPopup({
     };
 
     const infoRows = [
+      { label: "Rank Status", val: n.awardRankStatus?.rankName || "Member" },
       { label: "Sponsor ID", val: n.sponsorId || "—" },
       { label: "Joining Date", val: formatDate(n.joiningDate) },
       { label: "Package", val: n.package || "—" },

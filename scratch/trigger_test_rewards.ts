@@ -37,11 +37,11 @@ async function main() {
   await mainUser.save();
   console.log("Main user upgraded to Booster, award status reset.");
 
-  // 4. Create 5 Booster descendants on Left leg (under CLM633778)
-  console.log("Creating 5 booster descendants on Left leg...");
+  // 4. Create 15 Booster descendants on Left leg (under CLM633778)
+  console.log("Creating 15 booster descendants on Left leg...");
   const leftChild = mainUser.leftChild || "CLM633778";
   let parentLeft = leftChild;
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 15; i++) {
     const username = `dummyL${i}`;
     await User.create({
       username,
@@ -56,11 +56,11 @@ async function main() {
     parentLeft = username;
   }
 
-  // 5. Create 5 Booster descendants on Right leg (under CLM150835)
-  console.log("Creating 5 booster descendants on Right leg...");
+  // 5. Create 15 Booster descendants on Right leg (under CLM150835)
+  console.log("Creating 15 booster descendants on Right leg...");
   const rightChild = mainUser.rightChild || "CLM150835";
   let parentRight = rightChild;
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 15; i++) {
     const username = `dummyR${i}`;
     await User.create({
       username,

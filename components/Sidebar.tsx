@@ -323,7 +323,7 @@ export default function Sidebar() {
           position: relative;
         }
         .logo-image {
-          max-width: 235px;
+          max-width: 130px;
           width: 100%;
           height: auto;
           display: block;
@@ -511,7 +511,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="sidebar-logo">
           <img
-            src="/images/WhatsApp_Image_2026-05-17_at_9.39.25_PM-removebg-preview.png"
+            src="/images/clm-new-logo.jpeg"
             alt="Change Life Marketing"
             className="logo-image"
           />

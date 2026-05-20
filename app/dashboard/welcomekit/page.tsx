@@ -508,7 +508,7 @@ export default function WelcomeKitPage() {
               <div className="cert-content">
                 {/* Logo */}
                 <div className="cert-logo">
-                  <img src="/images/changelifemarketinglogo.png" alt="Change Life Marketing" style={{ maxWidth: '140px', height: 'auto' }} suppressHydrationWarning />
+                  <img src="/images/clm-new-logo.png" alt="Change Life Marketing" style={{ maxWidth: '140px', height: 'auto' }} suppressHydrationWarning />
                 </div>
 
                 <div className="cert-heading">Certificate of Membership</div>
@@ -574,7 +574,7 @@ export default function WelcomeKitPage() {
               <div className="id-top-section">
                 {/* Logo */}
                 <div className="id-logo">
-                  <img src="/images/changelifemarketinglogo.png" alt="Change Life Marketing" style={{ maxWidth: '120px', height: 'auto' }} suppressHydrationWarning />
+                  <img src="/images/clm-new-logo.png" alt="Change Life Marketing" style={{ maxWidth: '120px', height: 'auto' }} suppressHydrationWarning />
                 </div>
 
                 {/* Avatar */}
@@ -629,7 +629,7 @@ export default function WelcomeKitPage() {
               {/* Logo top-right */}
               <div className="visit-top">
                 <div className="visit-logo">
-                  <img src="/images/changelifemarketinglogo.png" alt="Change Life Marketing" style={{ maxWidth: '110px', height: 'auto' }} suppressHydrationWarning />
+                  <img src="/images/clm-new-logo.png" alt="Change Life Marketing" style={{ maxWidth: '110px', height: 'auto' }} suppressHydrationWarning />
                 </div>
               </div>
 

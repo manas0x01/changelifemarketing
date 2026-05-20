@@ -20,7 +20,7 @@ export default function Footer() {
           <div>
             <div className="flex items-center gap-3 mb-4">
               <Image
-                src="/images/changelifemarketinglogo.png"
+                src="/images/clm-new-logo.jpeg"
                 alt="Change Life Marketing Logo"
                 className="w-12 h-12"
                 width={48}

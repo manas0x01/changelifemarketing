@@ -886,7 +886,7 @@ export default function TaxInvoicePage() {
         {/* HEADER */}
         <div className="header">
           <img
-            src="/images/clm logo.jpeg"
+            src="/images/clm-new-logo.png"
             alt="Change Life Marketing Logo"
             className="logo-img"
           />

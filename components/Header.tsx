@@ -62,7 +62,7 @@ export default function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center gap-3">
             <Image
-              src="/images/changelifemarketinglogo.png"
+              src="/images/clm-new-logo.png"
               alt="Change Life Marketing Logo"
               className="w-12 h-12"
               width={48}

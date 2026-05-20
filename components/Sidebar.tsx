@@ -511,7 +511,7 @@ export default function Sidebar() {
         {/* Logo */}
         <div className="sidebar-logo">
           <img
-            src="/images/clm-new-logo.jpeg"
+            src="/images/dashlogo.png"
             alt="Change Life Marketing"
             className="logo-image"
           />

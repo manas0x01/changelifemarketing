@@ -793,20 +793,7 @@ export default function Dashboard() {
                             A:{totalPins.active} | U:{totalPins.used} | T:{totalPins.total}
                           </div>
                         ) : card.title === "Total Income" && isActive ? (
-                          <div>
-                            ₹ {totalIncome.toLocaleString("en-IN")}
-                            <br />
-                            <button
-                              className="withdraw-pill"
-                              onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
-                                e.stopPropagation();
-                                setWithdrawOpen(true);
-                                setWithdrawError(""); setWithdrawSuccess(""); setWithdrawAmount("");
-                              }}
-                            >
-                              💸 Withdraw
-                            </button>
-                          </div>
+                          <>₹ {totalIncome.toLocaleString("en-IN")}</>
                         ) : card.title === "Wallet Balance" && isActive ? (
                           <div>
                             ₹ {availableBalance.toLocaleString("en-IN")}

@@ -60,8 +60,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Use the provided pins array directly
-    const pins = pinsArray.map((p: any) => String(p).trim());
+    // Use the provided pins array directly or generate unique ones
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    const pins = pinsArray.map((p: any) => {
+      const pinStr = String(p).trim();
+      if (pinStr === 'EPIN') {
+        const bytes = require('crypto').randomBytes(9);
+        let randomPin = '';
+        for (let i = 0; i < 12; i++) {
+          const val = bytes[i % bytes.length];
+          randomPin += chars[val % chars.length];
+        }
+        return randomPin;
+      }
+      return pinStr;
+    });
     const now = new Date();
     const newEPins = pins.map((pin) => ({
       pin,
@@ -99,6 +112,10 @@ export async function POST(req: NextRequest) {
           pinPurchaseHistory: purchaseEntry,
           pinRequests:        pinRequestEntry,
         },
+        $inc: {
+          activePins:        qty,
+          totalPins:         qty,
+        }
       },
       { runValidators: false }
     );

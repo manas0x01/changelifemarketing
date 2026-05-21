@@ -221,6 +221,8 @@ export interface IUser extends Document {
   isBlocked?: boolean;
   plainPassword?: string;
   plainTransactionPassword?: string;
+  resetPasswordToken?: string;
+  resetPasswordExpires?: Date;
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -389,6 +391,8 @@ const userSchema = new Schema<IUser>(
       default: [],
     },
     transactionPassword: { type: String, required: false, select: false },
+    resetPasswordToken: { type: String, required: false },
+    resetPasswordExpires: { type: Date, required: false },
   },
   { timestamps: true }
 );

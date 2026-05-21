@@ -1,14 +1,22 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-export default function ForgotPassword() {
-  const [userId, setUserId] = useState("");
-  const [email, setEmail] = useState("");
+function ResetPasswordContent() {
+  const searchParams = useSearchParams();
+  const token = searchParams.get("token");
+
+  const [loading, setLoading] = useState(true);
+  const [validating, setValidating] = useState(true);
+  const [tokenValid, setTokenValid] = useState(false);
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const [stars, setStars] = useState<any[]>([]);
 
   useEffect(() => {
@@ -24,40 +32,76 @@ export default function ForgotPassword() {
     setStars(generated);
   }, []);
 
-  const handleGetPassword = async (e: React.MouseEvent) => {
+  useEffect(() => {
+    async function checkToken() {
+      if (!token) {
+        setError("Invalid reset token. Please request a new password reset link.");
+        setValidating(false);
+        setLoading(false);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/auth/resetpassword/validate?token=${token}`);
+        const data = await res.json();
+        if (res.ok && data.success) {
+          setTokenValid(true);
+          setUsername(data.username || "");
+        } else {
+          setError(data.message || "Your password reset link is invalid or has expired.");
+        }
+      } catch (err) {
+        setError("Could not validate the reset link. Please try again.");
+      } finally {
+        setValidating(false);
+        setLoading(false);
+      }
+    }
+
+    checkToken();
+  }, [token]);
+
+  const handleSubmit = async (e: React.MouseEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
 
-    if (!userId && !email) {
-      setError("Please enter User ID or Email address.");
+    if (!password) {
+      setError("Please enter a new password.");
       return;
     }
 
-    setLoading(true);
+    if (password.length < 5) {
+      setError("Password must be at least 5 characters long.");
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
-      const res = await fetch("/api/auth/forgotpassword", {
+      const res = await fetch("/api/auth/resetpassword/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId: userId ? userId.trim() : undefined,
-          email: email ? email.trim() : undefined,
-        }),
+        body: JSON.stringify({ token, password }),
       });
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Failed to process request.");
+        setError(data.message || "Failed to reset password.");
         return;
       }
 
-      setSuccess(data.message || "Password reset link has been sent to your email address.");
-      setUserId("");
-      setEmail("");
+      setSuccess(data.message || "Your password has been successfully reset.");
+      setPassword("");
+      setConfirmPassword("");
     } catch (err) {
       setError("An error occurred. Please try again.");
     } finally {
-      setLoading(false);
+      setSubmitting(false);
     }
   };
 
@@ -68,7 +112,7 @@ export default function ForgotPassword() {
 
         *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .fp-root {
+        .rp-root {
           height: 100vh;
           width: 100%;
           font-family: 'Nunito', sans-serif;
@@ -83,7 +127,7 @@ export default function ForgotPassword() {
         }
 
         /* ── Starfield background ── */
-        .fp-bg {
+        .rp-bg {
           position: absolute;
           inset: 0;
           background:
@@ -221,7 +265,7 @@ export default function ForgotPassword() {
           gap: 10px;
           border-bottom: 1.5px solid #c8cfe8;
           padding-bottom: 8px;
-          margin-bottom: clamp(11px, 2.5vw, 16px);
+          margin-bottom: clamp(14px, 2.5vw, 20px);
           transition: border-color 0.2s;
         }
         .field:focus-within { border-color: #1a4ec0; }
@@ -239,44 +283,26 @@ export default function ForgotPassword() {
         }
         .field input::placeholder { color: #a0aac4; }
 
-        /* ── OR divider ── */
-        .or-divider {
-          display: flex;
-          align-items: center;
-          gap: 10px;
-          margin-bottom: clamp(11px, 2.5vw, 16px);
-          margin-top: -4px;
-        }
-        .or-line {
-          flex: 1;
-          height: 1px;
-          background: #d0d8ee;
-        }
-        .or-text {
-          font-size: 12px;
-          font-weight: 700;
-          color: #8895b5;
-          letter-spacing: 1px;
-        }
-
         /* ── Messages ── */
         .error-msg {
           color: #e53935;
-          font-size: 11px;
-          margin-bottom: 10px;
-          padding: 8px 12px;
+          font-size: 11.5px;
+          margin-bottom: 14px;
+          padding: 10px 14px;
           background: #fff0f0;
           border-radius: 8px;
           border-left: 3px solid #e53935;
+          line-height: 1.4;
         }
         .success-msg {
           color: #1b7c3a;
-          font-size: 11px;
-          margin-bottom: 10px;
-          padding: 8px 12px;
+          font-size: 11.5px;
+          margin-bottom: 14px;
+          padding: 10px 14px;
           background: #f0fff5;
           border-radius: 8px;
           border-left: 3px solid #2ecc71;
+          line-height: 1.4;
         }
 
         /* ── Button ── */
@@ -323,13 +349,36 @@ export default function ForgotPassword() {
         }
         .footer-link { color: #1565c0; text-decoration: underline; }
 
+        /* Spinner */
+        .spinner {
+          border: 3px solid rgba(13, 63, 166, 0.1);
+          width: 36px;
+          height: 36px;
+          border-radius: 50%;
+          border-left-color: #1a4ec0;
+          animation: spin 1s linear infinite;
+          margin: 20px auto;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+
+        .spinner-container {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 30px 10px;
+        }
+
         @media (max-width: 380px) {
           .card { padding: 12px clamp(10px, 2vw, 14px); border-radius: 16px; }
         }
       `}</style>
 
-      <div className="fp-root">
-        <div className="fp-bg" />
+      <div className="rp-root">
+        <div className="rp-bg" />
 
         {/* Stars */}
         <div className="stars">
@@ -367,79 +416,96 @@ export default function ForgotPassword() {
             <path d="M-50,350 Q250,160 650,440 Q880,540 1100,420" stroke="url(#gold1)" strokeWidth="0.8" fill="none" opacity="0.6"/>
             <path d="M-100,550 Q400,480 750,600 Q900,640 1100,580" stroke="url(#gold2)" strokeWidth="1.2" fill="none" opacity="0.5"/>
             <path d="M-100,620 Q350,540 700,660 Q900,700 1100,640" stroke="url(#gold1)" strokeWidth="0.9" fill="none" opacity="0.4"/>
-            {[
-              [140,170],[320,115],[520,140],[720,280],[850,330],
-              [200,240],[450,190],[650,380],[820,420],
-            ].map(([cx,cy],i) => (
-              <circle key={i} cx={cx} cy={cy} r="3" fill="#f5c842" opacity="0.75"/>
-            ))}
           </svg>
         </div>
 
-        {/* Login image above card */}
+        {/* Brand logo above card */}
         <div className="card-logo">
-          <img src="/images/login.png" alt="Forgot Password" />
+          <img src="/images/login.png" alt="Reset Password" />
         </div>
 
         {/* Card */}
         <div className="card">
-          <h2 className="card-title">Forgot Password?</h2>
-          <p className="card-subtitle">
-            Enter your User ID or Email and we'll send you a reset link.
-          </p>
-          
-          {/* User ID */}
-          <div className="field">
-            <span className="field-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </span>
-            <input
-              type="text"
-              placeholder="Enter User ID"
-              value={userId}
-              onChange={e => setUserId(e.target.value)}
-            />
-          </div>
+          <h2 className="card-title">Reset Password</h2>
 
-          {/* OR */}
-          <div className="or-divider">
-            <div className="or-line" />
-            <span className="or-text">OR</span>
-            <div className="or-line" />
-          </div>
+          {validating ? (
+            <div className="spinner-container">
+              <div className="spinner" />
+              <p className="card-subtitle" style={{ textAlign: "center", marginBottom: 0 }}>
+                Verifying your reset link...
+              </p>
+            </div>
+          ) : error && !tokenValid ? (
+            <div>
+              <div className="error-msg">{error}</div>
+              <Link href="/auth/forgotpassword" className="back-link">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 5l-7 7 7 7"/>
+                </svg>
+                Request New Link
+              </Link>
+            </div>
+          ) : success ? (
+            <div>
+              <div className="success-msg">{success}</div>
+              <Link href="/auth/login" className="submit-btn" style={{ display: "block", textDecoration: "none", textAlign: "center" }}>
+                Proceed to Login
+              </Link>
+            </div>
+          ) : (
+            <div>
+              <p className="card-subtitle">
+                Set a new password for user <strong>{username}</strong>.
+              </p>
 
-          {/* Email */}
-          <div className="field">
-            <span className="field-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="2" y="4" width="20" height="16" rx="2"/>
-                <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-              </svg>
-            </span>
-            <input
-              type="email"
-              placeholder="Enter Email Address"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-            />
-          </div>
+              {error && <div className="error-msg">{error}</div>}
 
-          {error && <div className="error-msg">{error}</div>}
-          {success && <div className="success-msg">{success}</div>}
+              {/* Password */}
+              <div className="field">
+                <span className="field-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input
+                  type="password"
+                  placeholder="Enter New Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  disabled={submitting}
+                />
+              </div>
 
-          <button className="submit-btn" onClick={handleGetPassword} disabled={loading}>
-            {loading ? "Sending..." : "Get Password"}
-          </button>
+              {/* Confirm Password */}
+              <div className="field">
+                <span className="field-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input
+                  type="password"
+                  placeholder="Confirm New Password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  disabled={submitting}
+                />
+              </div>
 
-          <Link href="/auth/login" className="back-link">
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 12H5M12 5l-7 7 7 7"/>
-            </svg>
-            Back To Login
-          </Link>
+              <button className="submit-btn" onClick={handleSubmit} disabled={submitting}>
+                {submitting ? "Resetting..." : "Reset Password"}
+              </button>
+
+              <Link href="/auth/login" className="back-link">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 12H5M12 5l-7 7 7 7"/>
+                </svg>
+                Back To Login
+              </Link>
+            </div>
+          )}
 
           <p className="footer-text">
             © 2026 <a href="#" className="footer-link">Change Life Marketing</a>
@@ -447,5 +513,26 @@ export default function ForgotPassword() {
         </div>
       </div>
     </>
+  );
+}
+
+export default function ResetPassword() {
+  return (
+    <Suspense fallback={
+      <div className="rp-root" style={{ height: "100vh", width: "100%", background: "#020d2e", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <div style={{
+            border: "3px solid rgba(26, 78, 192, 0.1)",
+            width: "36px",
+            height: "36px",
+            borderRadius: "50%",
+            borderLeftColor: "#1a4ec0",
+            animation: "spin 1s linear infinite"
+          }} />
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

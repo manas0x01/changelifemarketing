@@ -19,6 +19,7 @@ import {
   Menu,
   X,
   Landmark,
+  ArrowRightLeft,
 } from "lucide-react";
 
 const navItems = [
@@ -41,6 +42,11 @@ const navItems = [
     label: "PIN Requests",
     href: "/admin/dashboard/pinrequests",
     icon: ClipboardList,
+  },
+  {
+    label: "PIN Transfers",
+    href: "/admin/dashboard/pintransfers",
+    icon: ArrowRightLeft,
   },
   {
     label: "Orders",

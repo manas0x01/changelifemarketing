@@ -61,11 +61,23 @@ async function handleRequest(req: NextRequest) {
         return pin;
       });
 
+    const allEPins = (user.ePins || []).map((pin: any, index: number) => ({
+      srNo: index + 1,
+      ePin: pin.pin,
+      package: pin.packageName || 'EPIN',
+      status: pin.status || 'Active',
+      transferredTo: pin.transferredTo || 'N/A',
+      transferredToName: pin.transferredToName || 'N/A',
+      transferredDate: pin.transferDate ? new Date(pin.transferDate).toLocaleDateString('en-GB') : 'N/A',
+      usedDate: pin.usedDate ? new Date(pin.usedDate).toLocaleDateString('en-GB') : undefined,
+    }));
+
     console.log('📌 [GET-EPINS] All PINs count:', user.ePins?.length ?? 0);
     console.log('📌 [GET-EPINS] Available E-PINs:', availableEPins);
 
     return NextResponse.json({
       success: true,
+      ePins: allEPins,
       availableEPins,
       totalAvailable: availableEPins.length,
       message: 'Available E-PINs fetched successfully',

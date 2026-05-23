@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { verifyAdminPermission } from '@/lib/auth';
 import { connectDB } from '@/lib/database';
 import Order from '@/models/Order';
 import mongoose from 'mongoose';
@@ -10,11 +9,9 @@ type OrderStatus = (typeof VALID_STATUSES)[number];
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
-    const userRole = (session?.user as { role?: string })?.role;
-
-    if (!session || userRole !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
+    const auth = await verifyAdminPermission('orders');
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
 
     const { id } = await params;
@@ -70,11 +67,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const session = await getServerSession(authOptions);
-    const userRole = (session?.user as { role?: string })?.role;
-
-    if (!session || userRole !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required.' }, { status: 403 });
+    const auth = await verifyAdminPermission('orders');
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
 
     const { id } = await params;

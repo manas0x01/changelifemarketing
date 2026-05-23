@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import { getServerSession } from 'next-auth';
 import { connectDB } from "@/lib/database";
-import { authOptions } from "@/lib/auth";
+import { verifyAdminPermission } from "@/lib/auth";
 import Order from '@/models/Order';
 
 {/* Guards & Helpers */}
-function adminGuard(session: any) {
-  if (!session || session.user?.role !== 'admin') {
+async function orderGuard() {
+  const auth = await verifyAdminPermission('orders');
+  if (!auth.authorized) {
     return NextResponse.json(
-      { success: false, message: 'Unauthorized: Admin access required.' },
-      { status: 401 }
+      { success: false, message: auth.message },
+      { status: auth.status }
     );
   }
   return null;
@@ -22,8 +22,7 @@ function isValidId(id: string) {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const guard   = adminGuard(session);
+    const guard = await orderGuard();
     if (guard) return guard;
 
     await connectDB();
@@ -109,8 +108,7 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const guard   = adminGuard(session);
+    const guard = await orderGuard();
     if (guard) return guard;
 
     await connectDB();
@@ -148,8 +146,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const guard   = adminGuard(session);
+    const guard = await orderGuard();
     if (guard) return guard;
 
     await connectDB();

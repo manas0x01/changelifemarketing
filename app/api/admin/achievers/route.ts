@@ -1,19 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
-import { getServerSession } from 'next-auth';
+import { verifyAdminPermission } from '@/lib/auth';
 import { connectDB } from '@/lib/database';
-import { authOptions } from '@/lib/auth';
 import Achiever from '@/models/Achiever';
 
 function isValidId(id: string) {
   return mongoose.Types.ObjectId.isValid(id);
 }
 
-function adminGuard(session: any) {
-  if (!session || session.user?.role !== 'admin') {
+async function achieverGuard() {
+  const auth = await verifyAdminPermission('achievers');
+  if (!auth.authorized) {
     return NextResponse.json(
-      { success: false, message: 'Unauthorized: Admin access required.' },
-      { status: 401 }
+      { success: false, message: auth.message },
+      { status: auth.status }
     );
   }
   return null;
@@ -25,8 +25,7 @@ export async function GET(req: NextRequest) {
     const isPublic = searchParams.get('public') === '1';
 
     if (!isPublic) {
-      const session = await getServerSession(authOptions);
-      const guard   = adminGuard(session);
+      const guard = await achieverGuard();
       if (guard) return guard;
     }
 
@@ -70,8 +69,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const guard   = adminGuard(session);
+    const guard = await achieverGuard();
     if (guard) return guard;
 
     await connectDB();
@@ -111,8 +109,7 @@ export async function POST(req: NextRequest) {
 
 export async function PUT(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const guard   = adminGuard(session);
+    const guard = await achieverGuard();
     if (guard) return guard;
 
     await connectDB();
@@ -161,8 +158,7 @@ export async function PUT(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const guard   = adminGuard(session);
+    const guard = await achieverGuard();
     if (guard) return guard;
     await connectDB();
     const id = new URL(req.url).searchParams.get('id');
@@ -189,8 +185,7 @@ export async function PATCH(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    const guard   = adminGuard(session);
+    const guard = await achieverGuard();
     if (guard) return guard;
     await connectDB();
     const id = new URL(req.url).searchParams.get('id');

@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import { escapeRegex } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,10 +21,11 @@ export async function POST(req: NextRequest) {
     // Query for the user by username/userId or email address
     let query: any = {};
     if (userId) {
-      const uId = userId.trim();
+      const uId = escapeRegex(userId.trim());
       query = { $or: [{ username: { $regex: new RegExp(`^${uId}$`, "i") } }, { userId: { $regex: new RegExp(`^${uId}$`, "i") } }] };
     } else if (email) {
-      query = { email: { $regex: new RegExp(`^${email.trim()}$`, "i") } };
+      const cleanEmail = escapeRegex(email.trim());
+      query = { email: { $regex: new RegExp(`^${cleanEmail}$`, "i") } };
     }
 
     const user = await User.findOne(query);

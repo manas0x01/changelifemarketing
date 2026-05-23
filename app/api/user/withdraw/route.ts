@@ -25,6 +25,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    if (amount > 10000) {
+      return NextResponse.json(
+        { success: false, message: "Maximum withdrawal amount is ₹10000 at a time." },
+        { status: 400 }
+      );
+    }
+
     await connectDB();
 
     const user = await User.findOne({ username: session.user.username });

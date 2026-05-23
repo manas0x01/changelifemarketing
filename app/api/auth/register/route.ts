@@ -6,13 +6,19 @@ import mongoose from "mongoose";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 import { updateTeamCounts } from "@/lib/teamUtils";
+import { escapeRegex } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
   const dbSession = await mongoose.startSession();
   console.log('[DEBUG] register: DB session started');
 
   try {
-    const session = await getServerSession(authOptions);
+    let session: any;
+    if (process.env.NODE_ENV === "test" && (global as any).mockSession) {
+      session = (global as any).mockSession;
+    } else {
+      session = await getServerSession(authOptions);
+    }
 
     console.log('[DEBUG] register: session', { sessionUser: session?.user?.username });
 
@@ -32,7 +38,7 @@ export async function POST(req: NextRequest) {
         { success: false, message: "Registration is frozen during session transition (12:00 - 12:10). Please try again after 12:10." },
         { status: 403 }
       );
-    }    const body = await req.json();
+    }    const body = await req.json();
 
     //////////////////////////////////////////////////////////////
     // 🔹 GENERATE UNIQUE CREDENTIALS
@@ -65,9 +71,13 @@ export async function POST(req: NextRequest) {
 
     const fullName = body.fullName;
     const mobileNo = body.mobileNo;
-    const sponsorId = (body.sponsorId || "").trim().toUpperCase();
-    const uplineId = (body.uplineId || body.sponsorId || "").trim().toUpperCase();
+    const sponsorId = escapeRegex((body.sponsorId || "").trim().toUpperCase());
+    const uplineId = escapeRegex((body.uplineId || body.sponsorId || "").trim().toUpperCase());
     const epin = body.epin;
+    const upiId = (body.upiId || "").trim();
+
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
+    const userAgent = req.headers.get("user-agent") || "unknown";
 
     let placementPosition: "left" | "right" | undefined = body.placementPosition;
 
@@ -112,6 +122,49 @@ export async function POST(req: NextRequest) {
         { success: false, message: "User not found" },
         { status: 404 }
       );
+    }
+
+    // 🔹 DUPLICATE ACCOUNT DETECTION
+    // 1. Bank Account Check
+    const registrationAccountNo = (body.accountNo || "").trim();
+    if (registrationAccountNo) {
+      const duplicateBank = await User.findOne({
+        $or: [
+          { accountNo: registrationAccountNo },
+          { "pendingBankAccountDetails.accountNumber": registrationAccountNo }
+        ]
+      });
+      if (duplicateBank) {
+        return NextResponse.json(
+          { success: false, message: "An account with this bank account number already exists." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 2. UPI ID Check
+    if (upiId) {
+      const duplicateUpi = await User.findOne({ upiId });
+      if (duplicateUpi) {
+        return NextResponse.json(
+          { success: false, message: "An account with this UPI ID already exists." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // 3. IP & Device Check
+    if (ip !== "unknown" && userAgent !== "unknown") {
+      const duplicateIpDevice = await User.findOne({
+        registrationIp: ip,
+        registrationDevice: userAgent
+      });
+      if (duplicateIpDevice) {
+        return NextResponse.json(
+          { success: false, message: "An account has already been registered from this device and network." },
+          { status: 400 }
+        );
+      }
     }
     console.log('[DEBUG] register: loggedInUser', { username: loggedInUser.username, userId: loggedInUser.userId, ePinsCount: Array.isArray(loggedInUser.ePins) ? loggedInUser.ePins.length : 0 });
 
@@ -230,6 +283,9 @@ export async function POST(req: NextRequest) {
       plainPassword: rawPassword,
       plainTransactionPassword: rawTransactionPassword,
       mobileNo,
+      upiId: upiId || undefined,
+      registrationIp: ip,
+      registrationDevice: userAgent,
       email: body.email,
       gender: body.gender,
       dateOfBirth: body.dateOfBirth,

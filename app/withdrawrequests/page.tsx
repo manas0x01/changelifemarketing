@@ -524,7 +524,7 @@ export default function AdminWithdrawRequests() {
             <div className="ar-nav-badge">Withdraw Manager</div>
           </div>
           <div className="ar-header-right">
-            <Link href="/admin/dashboard" className="ar-back-btn">
+            <Link href="/clm-portal/dashboard" className="ar-back-btn">
               ← Dashboard
             </Link>
           </div>

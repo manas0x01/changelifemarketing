@@ -344,7 +344,7 @@ export default function AdminDashboard() {
                 <CardHeader
                   title="Recent Orders"
                   action={
-                    <a href="/admin/orders" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
+                    <a href="/clm-portal/dashboard/orders" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
                       View All <ArrowRight className="w-3.5 h-3.5" />
                     </a>
                   }
@@ -391,7 +391,7 @@ export default function AdminDashboard() {
                 <CardHeader
                   title="Withdraw Requests"
                   action={
-                    <a href="/admin/dashboard/withdrawrequests" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
+                    <a href="/clm-portal/dashboard/withdrawrequests" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
                       All <ArrowRight className="w-3.5 h-3.5" />
                     </a>
                   }
@@ -432,7 +432,7 @@ export default function AdminDashboard() {
                 <CardHeader
                   title="PIN Requests"
                   action={
-                    <a href="/admin/pin-requests" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
+                    <a href="/clm-portal/dashboard/pinrequests" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
                       All <ArrowRight className="w-3.5 h-3.5" />
                     </a>
                   }
@@ -463,7 +463,7 @@ export default function AdminDashboard() {
                 {/* Quick Create PIN CTA */}
                 <div className="px-5 pb-5 pt-3">
                   <a
-                    href="/admin/create-pin"
+                    href="/clm-portal/dashboard/createepin"
                     className="w-full flex items-center justify-center gap-2 py-3 bg-[#0A6E5A] text-[#FFFFFF] rounded-sm text-[0.8rem] font-semibold hover:bg-[#0A6E5A]/90 transition-colors"
                   >
                     <KeyRound className="w-4 h-4" />
@@ -485,7 +485,7 @@ export default function AdminDashboard() {
                 <CardHeader
                   title="Top Achievers"
                   action={
-                    <a href="/admin/achievers" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
+                    <a href="/clm-portal/dashboard/achievers" className="flex items-center gap-1 text-[0.75rem] text-[#C9A84C] font-semibold hover:text-[#0A6E5A] transition-colors uppercase tracking-wide">
                       View All <ArrowRight className="w-3.5 h-3.5" />
                     </a>
                   }

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { connectDB } from "@/lib/database";
 import User from '@/models/User';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, verifyAdminPermission } from '@/lib/auth';
 import { updateTeamCounts } from '@/lib/teamUtils';
 
 interface QueryFilter {
@@ -14,11 +13,11 @@ interface QueryFilter {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
+    const auth = await verifyAdminPermission('users');
+    if (!auth.authorized) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized.' },
-        { status: 401 }
+        { success: false, message: auth.message },
+        { status: auth.status }
       );
     }
     await connectDB();

@@ -223,6 +223,14 @@ export interface IUser extends Document {
   plainTransactionPassword?: string;
   resetPasswordToken?: string;
   resetPasswordExpires?: Date;
+  loginAttempts?: number;
+  lockUntil?: Date;
+  upiId?: string;
+  registrationIp?: string;
+  registrationDevice?: string;
+  twoFactorOtp?: string;
+  twoFactorOtpExpires?: Date;
+  subAdminPermissions?: string[];
   createdAt: Date;
   updatedAt: Date;
   comparePassword(password: string): Promise<boolean>;
@@ -264,7 +272,7 @@ const userSchema = new Schema<IUser>(
     leftChild: { type: String, required: false, trim: true },
     rightChild: { type: String, required: false, trim: true },
     memberType: { type: String, required: false, enum: ['gold', 'active'], default: 'active' },
-    role: { type: String, required: false, default: 'user', enum: ['user', 'admin', 'moderator'] },
+    role: { type: String, required: false, default: 'user', enum: ['user', 'admin', 'moderator', 'sub-admin'] },
     isBlocked: { type: Boolean, default: false },
     plainPassword: { type: String, required: false },
     plainTransactionPassword: { type: String, required: false },
@@ -393,6 +401,14 @@ const userSchema = new Schema<IUser>(
     transactionPassword: { type: String, required: false, select: false },
     resetPasswordToken: { type: String, required: false },
     resetPasswordExpires: { type: Date, required: false },
+    loginAttempts: { type: Number, default: 0 },
+    lockUntil: { type: Date, required: false },
+    upiId: { type: String, required: false, trim: true },
+    registrationIp: { type: String, required: false, trim: true },
+    registrationDevice: { type: String, required: false, trim: true },
+    twoFactorOtp: { type: String, required: false, trim: true },
+    twoFactorOtpExpires: { type: Date, required: false },
+    subAdminPermissions: { type: [String], default: [] },
   },
   { timestamps: true }
 );

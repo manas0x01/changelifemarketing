@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { verifyAdminPermission } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const auth = await verifyAdminPermission('bank-approvals');
 
-    if (!session || session.user?.role !== "admin") {
+    if (!auth.authorized) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized: Admin access required." },
-        { status: 401 }
+        { success: false, message: auth.message },
+        { status: auth.status }
       );
     }
 
@@ -39,12 +38,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const auth = await verifyAdminPermission('bank-approvals');
 
-    if (!session || session.user?.role !== "admin") {
+    if (!auth.authorized) {
       return NextResponse.json(
-        { success: false, message: "Unauthorized: Admin access required." },
-        { status: 401 }
+        { success: false, message: auth.message },
+        { status: auth.status }
       );
     }
 

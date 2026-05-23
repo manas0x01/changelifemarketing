@@ -48,7 +48,7 @@ export default function Header() {
       // Logged in, check role
       const role = session.user?.role;
       if (role === 'admin') {
-        router.push('/admin/dashboard');
+        router.push('/clm-portal/dashboard');
       } else {
         router.push('/dashboard');
       }

@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { verifyAdminPermission } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== "admin") {
-      return NextResponse.json({ success: false, message: "Unauthorized." }, { status: 401 });
+    const auth = await verifyAdminPermission('pintransfers');
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, message: auth.message }, { status: auth.status });
     }
 
     await connectDB();

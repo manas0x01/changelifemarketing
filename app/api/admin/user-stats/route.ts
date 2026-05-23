@@ -1,11 +1,18 @@
 import { connectDB } from "@/lib/database";
-import { authOptions } from "@/lib/auth";
+import { authOptions, verifyAdminPermission } from "@/lib/auth";
 import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
+import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const auth = await verifyAdminPermission('users');
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { success: false, error: auth.message },
+        { status: auth.status }
+      );
+    }
     await connectDB();
     const totalUsers = await User.countDocuments();
     const usersWithEmail = await User.countDocuments({ email: { $exists: true, $ne: null } });

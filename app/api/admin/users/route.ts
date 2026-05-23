@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import mongoose from 'mongoose';
 import { connectDB } from "@/lib/database";
 import User from '@/models/User';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { authOptions, verifyAdminPermission } from '@/lib/auth';
 import { updateTeamCounts } from '@/lib/teamUtils';
 
 interface QueryFilter {
@@ -13,11 +12,11 @@ interface QueryFilter {
 }
 export async function DELETE(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
+    const auth = await verifyAdminPermission('users');
+    if (!auth.authorized) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized.' },
-        { status: 401 }
+        { success: false, message: auth.message },
+        { status: auth.status }
       );
     }
 
@@ -80,11 +79,11 @@ export async function DELETE(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
+    const auth = await verifyAdminPermission('users');
+    if (!auth.authorized) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized: Admin access required.' },
-        { status: 401 }
+        { success: false, message: auth.message },
+        { status: auth.status }
       );
     }
     await connectDB();
@@ -126,7 +125,7 @@ export async function GET(req: NextRequest) {
     const [users, total] = await Promise.all([
       User.find(filter)
         .select(
-          'username userId fullName email phone mobileNo role memberType ' +
+          'username userId fullName email phone mobileNo role memberType subAdminPermissions ' +
           'joiningDate sponsorId sponsorName placementId placementName ' +
           'placementPosition registeredPackage state district city ' +
           'basicIncome boosterIncome.amount boosterIncomeAmount totalTeam ' +
@@ -183,11 +182,11 @@ export async function GET(req: NextRequest) {
 
 export async function PATCH(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
+    const auth = await verifyAdminPermission('users');
+    if (!auth.authorized) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized.' },
-        { status: 401 }
+        { success: false, message: auth.message },
+        { status: auth.status }
       );
     }
     await connectDB();
@@ -195,7 +194,7 @@ export async function PATCH(req: NextRequest) {
     const {
       id, role, memberType, isBlocked, password, transactionPassword,
       bankName, branchName, accountNo, ifsc, accountType,
-      username, userId, fullName
+      username, userId, fullName, subAdminPermissions
     } = body;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -246,11 +245,14 @@ export async function PATCH(req: NextRequest) {
       user.fullName = fullName.trim();
     }
 
-    const allowedRoles = ['user', 'admin', 'moderator'];
+    const allowedRoles = ['user', 'admin', 'moderator', 'sub-admin'];
     const allowedMemberTypes = ['gold', 'active'];
 
     if (role && allowedRoles.includes(role)) {
       user.role = role;
+      if (role === 'sub-admin' && Array.isArray(subAdminPermissions)) {
+        user.subAdminPermissions = subAdminPermissions;
+      }
     }
     if (memberType && allowedMemberTypes.includes(memberType)) {
       user.memberType = memberType;
@@ -376,7 +378,7 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
-    const updated = await User.findById(id).select('username userId fullName role memberType isBlocked plainPassword plainTransactionPassword bankName branchName accountNo ifsc accountType bankDetailsStatus');
+    const updated = await User.findById(id).select('username userId fullName role memberType isBlocked plainPassword plainTransactionPassword bankName branchName accountNo ifsc accountType bankDetailsStatus subAdminPermissions');
 
     return NextResponse.json(
       { success: true, message: 'User updated successfully.', data: updated },

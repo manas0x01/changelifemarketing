@@ -29,6 +29,7 @@ const ALLOWED_UPDATE_FIELDS = [
   "accountNo",
   "ifsc",
   "accountType",
+  "upiId",
 ];
 
 export async function GET(req: NextRequest) {
@@ -46,10 +47,10 @@ export async function GET(req: NextRequest) {
 
     const user = userId
       ? await User.findById(userId).select(
-          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType bankDetailsStatus bankDetailsRejectReason pendingBankAccountDetails"
+          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType bankDetailsStatus bankDetailsRejectReason pendingBankAccountDetails upiId"
         )
       : await User.findOne({ username }).select(
-          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType bankDetailsStatus bankDetailsRejectReason pendingBankAccountDetails"
+          "fullName username userId email mobileNo phone role createdAt dateOfBirth panNo state district city address pincode nomineeName nomineeRelation joiningDate sponsorId sponsorName placementId placementName placementPosition bankName branchName accountNo ifsc accountType bankDetailsStatus bankDetailsRejectReason pendingBankAccountDetails upiId"
         );
 
     if (!user) {
@@ -109,6 +110,7 @@ export async function GET(req: NextRequest) {
         accountNo,
         ifsc,
         accountType,
+        upiId: user.upiId || "",
         bankDetailsStatus: status,
         bankDetailsRejectReason: (user as any).bankDetailsRejectReason || "",
       },
@@ -121,7 +123,12 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    let session: any;
+    if (process.env.NODE_ENV === "test" && (global as any).mockSession) {
+      session = (global as any).mockSession;
+    } else {
+      session = await getServerSession(authOptions);
+    }
 
     const userId = session?.user?.id ?? session?.user?.userId ?? null;
     const username = session?.user?.username ?? null;
@@ -146,6 +153,39 @@ export async function POST(req: NextRequest) {
     const hasBankFields = ["bankName", "branchName", "accountNo", "ifsc", "accountType"].some(
       (key) => Object.prototype.hasOwnProperty.call(body, key)
     );
+
+    // Duplicate Bank Account Check
+    const submittedAccountNo = (body.accountNo || "").trim();
+    if (submittedAccountNo) {
+      const duplicateBank = await User.findOne({
+        _id: { $ne: user._id },
+        $or: [
+          { accountNo: submittedAccountNo },
+          { "pendingBankAccountDetails.accountNumber": submittedAccountNo }
+        ]
+      });
+      if (duplicateBank) {
+        return NextResponse.json(
+          { success: false, message: "This bank account number is already in use by another user." },
+          { status: 400 }
+        );
+      }
+    }
+
+    // Duplicate UPI ID Check
+    const submittedUpi = (body.upiId || "").trim();
+    if (submittedUpi) {
+      const duplicateUpi = await User.findOne({
+        _id: { $ne: user._id },
+        upiId: submittedUpi
+      });
+      if (duplicateUpi) {
+        return NextResponse.json(
+          { success: false, message: "This UPI ID is already in use by another user." },
+          { status: 400 }
+        );
+      }
+    }
 
     const currentStatus = user.bankDetailsStatus || "none";
 

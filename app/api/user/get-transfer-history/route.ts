@@ -14,26 +14,34 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
 
-    const user = await User.findOne({ username: session.user.username }).select("transferHistory");
+    // Select transferredEpins — this holds the actual outgoing transfer details
+    // (date, time, ePin, transferredTo, etc.) that the Transfer History table displays
+    const user = await User.findOne({ username: session.user.username }).select("transferredEpins");
 
     if (!user) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
-    // Map transfer history to the format expected by the page
-    const transfers = (user.transferHistory || []).map((t: any, index: number) => ({
-      srNo: t.srNo || index + 1,
-      reqNo: t.reqNo || "N/A",
-      fromUser: t.fromUser || "N/A",
-      fromUserName: t.fromUserName || "N/A",
-      transferType: t.transferType || "N/A",
-      transferRejectDate: t.transferRejectDate ? new Date(t.transferRejectDate).toLocaleString("en-GB") : "N/A",
-      transferRejectDateISO: t.transferRejectDate,
-      package: t.package || "N/A",
-      quantity: t.quantity || 0,
-      amount: t.amount || "0",
-      status: t.status || "Pending"
-    }));
+    // Map transferredEpins to the Transfer interface expected by the frontend
+    const transfers = ((user as any).transferredEpins || [])
+      .slice()
+      .reverse() // Show most recent first
+      .map((t: any) => {
+        const dateObj = t.date ? new Date(t.date) : null;
+        return {
+          date: dateObj
+            ? dateObj.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })
+            : "N/A",
+          dateISO: t.date || null,
+          time: t.time || (dateObj ? dateObj.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "N/A"),
+          ePin: t.ePin || "N/A",
+          package: t.package || "N/A",
+          transferredTo: t.transferredTo || "N/A",
+          transferredToName: t.transferredToName || t.transferredTo || "N/A",
+          status: t.status || "Success",
+          remark: t.remark || "—",
+        };
+      });
 
     return NextResponse.json({
       success: true,

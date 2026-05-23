@@ -3,7 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -20,53 +20,63 @@ import {
   X,
   Landmark,
   ArrowRightLeft,
+  Lock,
 } from "lucide-react";
 
 const navItems = [
   {
     label: "Dashboard",
-    href: "/admin/dashboard",
+    href: "/clm-portal/dashboard",
     icon: LayoutDashboard,
+    permission: "dashboard",
   },
   {
     label: "Achievers",
-    href: "/admin/dashboard/achievers",
+    href: "/clm-portal/dashboard/achievers",
     icon: Trophy,
+    permission: "achievers",
   },
   {
     label: "Create PIN",
-    href: "/admin/dashboard/createepin",
+    href: "/clm-portal/dashboard/createepin",
     icon: KeyRound,
+    permission: "createepin",
   },
   {
     label: "PIN Requests",
-    href: "/admin/dashboard/pinrequests",
+    href: "/clm-portal/dashboard/pinrequests",
     icon: ClipboardList,
+    permission: "pinrequests",
   },
   {
     label: "PIN Transfers",
-    href: "/admin/dashboard/pintransfers",
+    href: "/clm-portal/dashboard/pintransfers",
     icon: ArrowRightLeft,
+    permission: "pintransfers",
   },
   {
     label: "Orders",
-    href: "/admin/dashboard/orders",
+    href: "/clm-portal/dashboard/orders",
     icon: ShoppingBag,
+    permission: "orders",
   },
   {
     label: "Users",
-    href: "/admin/dashboard/users",
+    href: "/clm-portal/dashboard/users",
     icon: Users,
+    permission: "users",
   },
   {
     label: "Bank Approvals",
-    href: "/admin/dashboard/bank-approvals",
+    href: "/clm-portal/dashboard/bank-approvals",
     icon: Landmark,
+    permission: "bank-approvals",
   },
   {
     label: "Withdraw Requests",
-    href: "/admin/dashboard/withdrawrequests",
+    href: "/clm-portal/dashboard/withdrawrequests",
     icon: Wallet,
+    permission: "withdrawrequests",
   },
 ];
 
@@ -74,6 +84,10 @@ export default function AdminSidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { data: session } = useSession();
+
+  const isSubAdmin = session?.user?.role === "sub-admin";
+  const permissions = (session?.user as any)?.subAdminPermissions || [];
 
   const SidebarContent = ({ mobile = false }: { mobile?: boolean }) => (
     <div className="flex flex-col h-full">
@@ -101,7 +115,7 @@ export default function AdminSidebar() {
                 Change Life
               </p>
               <p className="font-['Roboto'] text-[#C9A84C] text-[0.65rem] uppercase tracking-widest whitespace-nowrap">
-                Admin Panel
+                {isSubAdmin ? "Portal Staff" : "Admin Panel"}
               </p>
             </motion.div>
           )}
@@ -113,8 +127,34 @@ export default function AdminSidebar() {
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
-            (item.href !== "/admin/dashboard" && pathname?.startsWith(item.href));
+            (item.href !== "/clm-portal/dashboard" && pathname?.startsWith(item.href));
           const Icon = item.icon;
+          const isAllowed = !isSubAdmin || permissions.includes(item.permission);
+
+          if (!isAllowed) {
+            return (
+              <div
+                key={item.href}
+                title={collapsed && !mobile ? `${item.label} (Locked)` : "Locked section"}
+                className={`
+                  relative flex items-center gap-3 px-3 py-3 rounded-sm opacity-40 cursor-not-allowed text-[#FFFFFF]/50 select-none
+                  ${collapsed && !mobile ? "justify-center" : "justify-between"}
+                `}
+              >
+                <div className="flex items-center gap-3">
+                  <Icon className="w-5 h-5 shrink-0 text-[#FFFFFF]/40" />
+                  {(!collapsed || mobile) && (
+                    <span className="font-['Roboto'] text-[0.9rem] font-medium whitespace-nowrap overflow-hidden">
+                      {item.label}
+                    </span>
+                  )}
+                </div>
+                {(!collapsed || mobile) && (
+                  <Lock className="w-3.5 h-3.5 text-[#C9A84C] shrink-0" />
+                )}
+              </div>
+            );
+          }
 
           return (
             <Link

@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from "@/lib/database";
 import WithdrawRequest from '@/models/WithdrawRequest';
 import User from '@/models/User';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { verifyAdminPermission } from '@/lib/auth';
 
 export async function GET(
   req: NextRequest,
@@ -12,9 +11,9 @@ export async function GET(
   try {
     const { id } = await params;
     await connectDB();
-    const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    const auth = await verifyAdminPermission('withdrawrequests');
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
     const withdrawReq = await WithdrawRequest.findById(id).lean();
     if (!withdrawReq) {
@@ -43,10 +42,11 @@ export async function PATCH(
   try {
     const { id } = await params;
     await connectDB();
-    const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    const auth = await verifyAdminPermission('withdrawrequests');
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
+    const session = auth.session;
     const { status, adminRemark, utrNumber, paymentMode } = await req.json();
     if (!['Approved', 'Rejected'].includes(status)) {
       return NextResponse.json({ error: 'Invalid status. Must be Approved or Rejected.' }, { status: 400 });
@@ -70,7 +70,7 @@ export async function PATCH(
     const processedDate = new Date();
     withdrawReq.status        = status;
     withdrawReq.processedDate = processedDate;
-    withdrawReq.processedBy   = session.user?.username || session.user?.email || 'admin';
+    withdrawReq.processedBy   = session?.user?.username || session?.user?.email || 'admin';
     if (adminRemark) withdrawReq.adminRemark = adminRemark.trim();
     if (utrNumber)   withdrawReq.utrNumber   = utrNumber.trim();
     if (paymentMode) withdrawReq.paymentMode = paymentMode;

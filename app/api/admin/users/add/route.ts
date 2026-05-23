@@ -1,12 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from '@/lib/database';
 import User from '@/models/User';
+import { verifyAdminPermission } from '@/lib/auth';
 
 export async function POST(req: NextRequest) {
   try {
+    const auth = await verifyAdminPermission('users');
+    if (!auth.authorized) {
+      return NextResponse.json(
+        { success: false, message: auth.message },
+        { status: auth.status }
+      );
+    }
+
     await connectDB();
 
-    const { username, password, email, fullName, mobileNo, role = 'user', memberType = 'active', transactionPassword } = await req.json();
+    const { username, password, email, fullName, mobileNo, role = 'user', memberType = 'active', transactionPassword, subAdminPermissions = [] } = await req.json();
 
     if (!username || !password) {
       return NextResponse.json(
@@ -61,6 +70,7 @@ export async function POST(req: NextRequest) {
       memberType,
       transactionPassword: String(transactionPassword).trim(),
       joiningDate: "",
+      subAdminPermissions: role === 'sub-admin' ? subAdminPermissions : [],
     });
 
     try {

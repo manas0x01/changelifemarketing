@@ -203,6 +203,7 @@ export default function Dashboard() {
     const amt = Number(withdrawAmount);
     if (!withdrawAmount || isNaN(amt)) { setWithdrawError("Please enter a valid amount."); return; }
     if (amt < 1000) { setWithdrawError("Minimum withdrawal amount is ₹1000."); return; }
+    if (amt > 10000) { setWithdrawError("Maximum withdrawal amount is ₹10,000."); return; }
     if (amt > availableBalance) { setWithdrawError("Amount exceeds your available wallet balance."); return; }
     try {
       setWithdrawLoading(true);
@@ -1086,7 +1087,7 @@ export default function Dashboard() {
               💸 Withdraw
             </DialogTitle>
             <DialogDescription style={{ fontSize: 13, color: "rgba(245,197,24,0.5)", fontWeight: 600 }}>
-              Minimum withdrawal amount is ₹1,000
+              Minimum withdrawal amount is ₹1,000, and maximum is ₹10,000.
             </DialogDescription>
           </DialogHeader>
 
@@ -1163,14 +1164,14 @@ export default function Dashboard() {
               }}>
                 Amount{" "}
                 <span style={{ color: "rgba(245,197,24,0.35)", fontWeight: 400, textTransform: "none" }}>
-                  (Min ₹1,000)
+                  (Min ₹1,000, Max ₹10,000)
                 </span>
               </Label>
               <Input
                 id="withdrawAmount"
                 type="number"
                 min={1000}
-                max={totalIncome}
+                max={10000}
                 placeholder="e.g. 1000"
                 value={withdrawAmount}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => {

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { verifyAdminPermission } from "@/lib/auth";
 import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 import Order from "@/models/Order";
@@ -9,12 +8,12 @@ import Achiever from "@/models/Achiever";
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
+    const auth = await verifyAdminPermission('dashboard');
 
-    if (!session || session.user?.role !== "admin") {
+    if (!auth.authorized) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized: Admin access required" },
-        { status: 401 }
+        { success: false, error: auth.message },
+        { status: auth.status }
       );
     }
 

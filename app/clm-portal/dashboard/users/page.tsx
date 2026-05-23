@@ -49,6 +49,7 @@ interface UserRecord {
   ifsc?: string;
   accountType?: string;
   bankDetailsStatus?: string;
+  subAdminPermissions?: string[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -72,6 +73,18 @@ interface Summary {
 type SortField = 'createdAt' | 'updatedAt' | 'username' | 'fullName' | 'joiningDate' | 'basicIncome' | 'boosterIncomeAmount';
 type SortOrder = 'asc' | 'desc';
 
+const AVAILABLE_PERMISSIONS = [
+  { id: 'dashboard', label: 'Dashboard' },
+  { id: 'achievers', label: 'Achievers' },
+  { id: 'createepin', label: 'Create PIN' },
+  { id: 'pinrequests', label: 'PIN Requests' },
+  { id: 'pintransfers', label: 'PIN Transfers' },
+  { id: 'orders', label: 'Orders' },
+  { id: 'users', label: 'Users' },
+  { id: 'bank-approvals', label: 'Bank Approvals' },
+  { id: 'withdrawrequests', label: 'Withdraw Requests' },
+];
+
 const AddUserModal = ({ onClose, onSuccess }: {
   onClose: () => void;
   onSuccess: () => void;
@@ -87,6 +100,7 @@ const AddUserModal = ({ onClose, onSuccess }: {
     role: 'user',
     memberType: 'active',
   });
+  const [subAdminPermissions, setSubAdminPermissions] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [createdCreds, setCreatedCreds] = useState<null | { username: string; password: string; transactionPassword: string }>(null);
 
@@ -135,6 +149,7 @@ const AddUserModal = ({ onClose, onSuccess }: {
         role: formData.role,
         memberType: formData.memberType,
         transactionPassword: formData.transactionPassword,
+        subAdminPermissions: formData.role === 'sub-admin' ? subAdminPermissions : [],
       };
 
       const res = await fetch('/api/admin/users/add', {
@@ -230,9 +245,37 @@ const AddUserModal = ({ onClose, onSuccess }: {
             <select name="role" value={formData.role} onChange={handleChange} className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true}>
               <option value="user">User</option>
               <option value="moderator">Moderator</option>
+              <option value="sub-admin">Sub-Admin</option>
               <option value="admin">Admin</option>
             </select>
           </div>
+          {formData.role === 'sub-admin' && (
+            <div className="border border-[#0A6E5A]/15 p-4 bg-[#F8FAF9] space-y-3">
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#C9A84C] font-bold mb-1">Sub-Admin Section Permissions</label>
+              <div className="grid grid-cols-2 gap-2.5">
+                {AVAILABLE_PERMISSIONS.map((perm) => {
+                  const checked = subAdminPermissions.includes(perm.id);
+                  return (
+                    <label key={perm.id} className="flex items-center gap-2 text-[0.8rem] text-[#333333] cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          if (checked) {
+                            setSubAdminPermissions(subAdminPermissions.filter(p => p !== perm.id));
+                          } else {
+                            setSubAdminPermissions([...subAdminPermissions, perm.id]);
+                          }
+                        }}
+                        className="accent-[#0A6E5A]"
+                      />
+                      {perm.label}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Member Type</label>
             <select name="memberType" value={formData.memberType} onChange={handleChange} className="w-full px-3 py-2.5 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true}>
@@ -384,7 +427,8 @@ const EditModal = ({
     accountType?: string,
     username?: string,
     userId?: string,
-    fullName?: string
+    fullName?: string,
+    subAdminPermissions?: string[]
   ) => Promise<void>;
 }) => {
   const [role, setRole] = useState(user.role ?? 'user');
@@ -400,6 +444,7 @@ const EditModal = ({
   const [username, setUsername] = useState(user.username ?? '');
   const [userId, setUserId] = useState(user.userId ?? '');
   const [fullName, setFullName] = useState(user.fullName ?? '');
+  const [subAdminPermissions, setSubAdminPermissions] = useState<string[]>(user.subAdminPermissions || []);
   const [saving, setSaving] = useState(false);
 
   const handleSave = async () => {
@@ -426,7 +471,8 @@ const EditModal = ({
       accountType,
       username.trim(),
       userId.trim(),
-      fullName.trim()
+      fullName.trim(),
+      role === 'sub-admin' ? subAdminPermissions : []
     );
     setSaving(false);
   };
@@ -446,14 +492,41 @@ const EditModal = ({
         <div className="px-6 py-6 space-y-5 max-h-[60vh] overflow-y-auto">
           <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-2">Role</label>
-            <div className="grid grid-cols-3 gap-2">
-              {['user', 'moderator', 'admin'].map((r) => (
-                <button key={r} onClick={() => setRole(r)} suppressHydrationWarning={true} className={`py-2 text-[0.8rem] font-['Roboto'] font-medium uppercase tracking-wider transition-all ${role === r ? 'bg-[#0A6E5A] text-[#FFFFFF]' : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}>
+            <div className="grid grid-cols-4 gap-2">
+              {['user', 'moderator', 'sub-admin', 'admin'].map((r) => (
+                <button key={r} onClick={() => setRole(r)} suppressHydrationWarning={true} className={`py-2 text-[0.75rem] font-['Roboto'] font-medium uppercase tracking-wider transition-all ${role === r ? 'bg-[#0A6E5A] text-[#FFFFFF]' : 'border border-[#0A6E5A]/20 text-[#0A6E5A] hover:bg-[#0A6E5A]/5'}`}>
                   {r}
                 </button>
               ))}
             </div>
           </div>
+          {role === 'sub-admin' && (
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#C9A84C] font-bold mb-2">Sub-Admin Section Permissions</label>
+              <div className="grid grid-cols-2 gap-2.5 border border-[#0A6E5A]/15 p-4 bg-[#F8FAF9]">
+                {AVAILABLE_PERMISSIONS.map((perm) => {
+                  const checked = subAdminPermissions.includes(perm.id);
+                  return (
+                    <label key={perm.id} className="flex items-center gap-2 text-[0.8rem] text-[#333333] cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => {
+                          if (checked) {
+                            setSubAdminPermissions(subAdminPermissions.filter(p => p !== perm.id));
+                          } else {
+                            setSubAdminPermissions([...subAdminPermissions, perm.id]);
+                          }
+                        }}
+                        className="accent-[#0A6E5A]"
+                      />
+                      {perm.label}
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <div>
             <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-2">Member Type</label>
             <div className="grid grid-cols-2 gap-2">
@@ -618,6 +691,23 @@ const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }
             <Badge type="member" value={user.memberType ?? 'active'} />
             <Badge type="status" isBlocked={user.isBlocked} />
           </div>
+          {user.role === 'sub-admin' && (
+            <div>
+              <h4 className="font-['Roboto'] text-[0.7rem] uppercase tracking-widest text-[#C9A84C] mb-3 flex items-center gap-2">
+                <span className="w-8 h-px bg-[#C9A84C]" />Permissions
+              </h4>
+              <div className="flex flex-wrap gap-1.5">
+                {(user.subAdminPermissions || []).map((perm) => (
+                  <span key={perm} className="px-2.5 py-1 bg-[#0A6E5A]/8 text-[#0A6E5A] text-[0.72rem] font-medium font-['Roboto'] rounded-sm border border-[#0A6E5A]/15 uppercase tracking-wider">
+                    {AVAILABLE_PERMISSIONS.find(p => p.id === perm)?.label ?? perm}
+                  </span>
+                ))}
+                {(!user.subAdminPermissions || user.subAdminPermissions.length === 0) && (
+                  <span className="text-[0.8rem] text-[#333333]/45 italic">No permissions assigned</span>
+                )}
+              </div>
+            </div>
+          )}
           <div className="grid grid-cols-2 gap-3">
             {[
               { label: 'Total Income', value: `₹${income.toLocaleString('en-IN')}`, icon: IndianRupee },
@@ -776,7 +866,8 @@ export default function AdminDashboardUsersPage() {
     accountType?: string,
     username?: string,
     userId?: string,
-    fullName?: string
+    fullName?: string,
+    subAdminPermissions?: string[]
   ) => {
     try {
       const res = await fetch('/api/admin/users', {
@@ -785,7 +876,7 @@ export default function AdminDashboardUsersPage() {
         body: JSON.stringify({
           id, role, memberType, isBlocked, password, transactionPassword,
           bankName, branchName, accountNo, ifsc, accountType,
-          username, userId, fullName
+          username, userId, fullName, subAdminPermissions
         })
       });
       const json = await res.json();
@@ -805,7 +896,8 @@ export default function AdminDashboardUsersPage() {
         accountNo: json.data?.accountNo ?? accountNo ?? u.accountNo,
         ifsc: json.data?.ifsc ?? ifsc ?? u.ifsc,
         accountType: json.data?.accountType ?? accountType ?? u.accountType,
-        bankDetailsStatus: json.data?.bankDetailsStatus ?? u.bankDetailsStatus
+        bankDetailsStatus: json.data?.bankDetailsStatus ?? u.bankDetailsStatus,
+        subAdminPermissions: json.data?.subAdminPermissions ?? subAdminPermissions ?? u.subAdminPermissions
       } : u));
       setEditUser(null);
       toast.success('User updated successfully.');

@@ -2,15 +2,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectDB } from "@/lib/database";
 import WithdrawRequest from '@/models/WithdrawRequest';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { verifyAdminPermission } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
   try {
     await connectDB();
-    const session = await getServerSession(authOptions);
-    if (!session?.user || session.user.role !== 'admin') {
-      return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
+    const auth = await verifyAdminPermission('withdrawrequests');
+    if (!auth.authorized) {
+      return NextResponse.json({ error: auth.message }, { status: auth.status });
     }
     const { searchParams } = new URL(req.url);
     const status   = searchParams.get('status') || 'all';

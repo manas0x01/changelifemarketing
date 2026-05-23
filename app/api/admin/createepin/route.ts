@@ -1,17 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
 import { connectDB } from "@/lib/database";
-import { authOptions } from "@/lib/auth";
+import { verifyAdminPermission } from "@/lib/auth";
 import User from '@/models/User';
 
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
+    const auth = await verifyAdminPermission('createepin');
+    if (!auth.authorized) {
       return NextResponse.json(
-        { success: false, message: 'Unauthorized: Admin access required.' },
-        { status: 401 }
+        { success: false, message: auth.message },
+        { status: auth.status }
       );
     }
     await connectDB();
@@ -149,9 +148,9 @@ export async function POST(req: NextRequest) {
 }
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || session.user?.role !== 'admin') {
-      return NextResponse.json({ success: false, message: 'Unauthorized.' }, { status: 401 });
+    const auth = await verifyAdminPermission('createepin');
+    if (!auth.authorized) {
+      return NextResponse.json({ success: false, message: auth.message }, { status: auth.status });
     }
 
     await connectDB();

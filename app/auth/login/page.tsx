@@ -31,6 +31,8 @@ export default function Login() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [stars, setStars] = useState<Star[]>([]);
+  const [showOtp, setShowOtp] = useState(false);
+  const [otp, setOtp] = useState("");
 
   const generateStars = () => {
     const newStars: Star[] = Array.from({ length: 60 }, (_, i) => {
@@ -71,18 +73,26 @@ export default function Login() {
     e.preventDefault();
     setError("");
     if (!username || !password) { setError("Please enter username and password."); return; }
-    if (!captchaValid) { setError("Incorrect captcha answer. Please try again."); generateCaptcha(); return; }
+    if (showOtp && !otp) { setError("Please enter the 2FA code."); return; }
+    if (!showOtp && !captchaValid) { setError("Incorrect captcha answer. Please try again."); generateCaptcha(); return; }
     setLoading(true);
     
     try {
       const result = await signIn("credentials", {
         username,
         password,
+        otp: showOtp ? otp : undefined,
         redirect: false,
       });
       if (!result?.ok) {
+        if (result?.error === "2FA_REQUIRED") {
+          setShowOtp(true);
+          setError("");
+          setLoading(false);
+          return;
+        }
         setError(result?.error || "Login failed. Please try again.");
-        generateCaptcha();
+        if (!showOtp) generateCaptcha();
         setLoading(false);
         return;
       }
@@ -93,7 +103,7 @@ export default function Login() {
       }, 100);
     } catch (err) {
       setError("An error occurred. Please try again.");
-      generateCaptcha();
+      if (!showOtp) generateCaptcha();
       setLoading(false);
     }
   };
@@ -445,85 +455,136 @@ export default function Login() {
 
         {/* Card */}
         <div className="card">
-          <h2 className="card-title">Sign In</h2>
+          <h2 className="card-title">{showOtp ? "Two-Factor Auth" : "Sign In"}</h2>
 
-          {/* Username */}
-          <div className="field">
-            <span className="field-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-                <circle cx="12" cy="7" r="4"/>
-              </svg>
-            </span>
-            <input type="text" placeholder="Username / Member ID" value={username} onChange={e => setUsername(e.target.value)} suppressHydrationWarning={true}/>
-          </div>
+          {showOtp ? (
+            <>
+              <p style={{ fontSize: "13px", color: "#556", marginBottom: "16px", lineHeight: "1.4" }}>
+                A 6-digit verification code has been sent to your administrative email. Please enter it below to complete your login.
+              </p>
+              {/* OTP Code */}
+              <div className="field">
+                <span className="field-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input type="text" placeholder="6-digit OTP Code" value={otp} onChange={e => setOtp(e.target.value)} suppressHydrationWarning={true}/>
+              </div>
+            </>
+          ) : (
+            <>
+              {/* Username */}
+              <div className="field">
+                <span className="field-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                    <circle cx="12" cy="7" r="4"/>
+                  </svg>
+                </span>
+                <input type="text" placeholder="Username / Member ID" value={username} onChange={e => setUsername(e.target.value)} suppressHydrationWarning={true}/>
+              </div>
 
-          {/* Password */}
-          <div className="field">
-            <span className="field-icon">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-              </svg>
-            </span>
-            <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} suppressHydrationWarning={true}/>
-          </div>
+              {/* Password */}
+              <div className="field">
+                <span className="field-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </span>
+                <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} suppressHydrationWarning={true}/>
+              </div>
 
-          {/* Captcha */}
-          <div className="captcha-eq">
-            <span className="cap-num">{captcha.num1}</span>
-            <span className="cap-op"> + </span>
-            <span className="cap-num">{captcha.num2}</span>
-            <span className="cap-op"> = </span>
-            <span className="cap-result">{captchaValid ? captcha.num1 + captcha.num2 : "?"}</span>
-          </div>
-          <div className={`captcha-field${captchaValid ? " valid" : ""}`}>
-            <input
-              type="number"
-              placeholder="Enter Correct Answer"
-              value={captchaAnswer}
-              onChange={e => handleCaptchaChange(e.target.value)}
-              suppressHydrationWarning={true}
-            />
-            {captchaValid && <span className="cap-check">✓</span>}
-          </div>
+              {/* Captcha */}
+              <div className="captcha-eq">
+                <span className="cap-num">{captcha.num1}</span>
+                <span className="cap-op"> + </span>
+                <span className="cap-num">{captcha.num2}</span>
+                <span className="cap-op"> = </span>
+                <span className="cap-result">{captchaValid ? captcha.num1 + captcha.num2 : "?"}</span>
+              </div>
+              <div className={`captcha-field${captchaValid ? " valid" : ""}`}>
+                <input
+                  type="number"
+                  placeholder="Enter Correct Answer"
+                  value={captchaAnswer}
+                  onChange={e => handleCaptchaChange(e.target.value)}
+                  suppressHydrationWarning={true}
+                />
+                {captchaValid && <span className="cap-check">✓</span>}
+              </div>
+            </>
+          )}
 
           {error && <div className="error-msg">{error}</div>}
 
           {/* Forgot */}
-          <Link href="/auth/forgotpassword" className="forgot">Forgot password?</Link>
+          {!showOtp && (
+            <Link href="/auth/forgotpassword" className="forgot">Forgot password?</Link>
+          )}
+
+          {showOtp && (
+            <button
+              type="button"
+              style={{
+                background: "none",
+                border: "none",
+                color: "#1565c0",
+                textDecoration: "underline",
+                fontSize: "13px",
+                fontWeight: "600",
+                cursor: "pointer",
+                marginBottom: "16px",
+                display: "block",
+                textAlign: "center",
+                width: "100%"
+              }}
+              onClick={() => {
+                setShowOtp(false);
+                setOtp("");
+                setError("");
+                generateCaptcha();
+              }}
+            >
+              Back to Login
+            </button>
+          )}
 
           {/* Login */}
           <button className="login-btn" onClick={handleLogin} disabled={loading} suppressHydrationWarning>
-            {loading ? "Logging in..." : "Login"}
+            {loading ? (showOtp ? "Verifying..." : "Logging in...") : (showOtp ? "Verify & Login" : "Login")}
           </button>
 
           {/* Social */}
-          <div className="social-row">
-            <a href="https://www.instagram.com/changelifemarketing?igsh=dzYxYWsza29qZHhm" className="social-icon" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
-              <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  <radialGradient id="ig2" cx="30%" cy="107%" r="150%">
-                    <stop offset="0%" stopColor="#fdf497"/>
-                    <stop offset="5%" stopColor="#fdf497"/>
-                    <stop offset="45%" stopColor="#fd5949"/>
-                    <stop offset="60%" stopColor="#d6249f"/>
-                    <stop offset="90%" stopColor="#285aeb"/>
-                  </radialGradient>
-                </defs>
-                <rect width="44" height="44" rx="11" fill="url(#ig2)"/>
-                <rect x="12" y="12" width="20" height="20" rx="5.5" stroke="white" strokeWidth="2.2" fill="none"/>
-                <circle cx="22" cy="22" r="5.5" stroke="white" strokeWidth="2.2" fill="none"/>
-                <circle cx="29" cy="15" r="1.5" fill="white"/>
-              </svg>
-            </a>
-            <a href="https://www.facebook.com/share/183CFq7YEz/" className="social-icon" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
-              <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
-                <rect width="44" height="44" rx="11" fill="#1877F2"/>
-                <path d="M26 14h-3a2 2 0 0 0-2 2v3h-3v4h3v10h4V23h3l.5-4H24v-2.5A.5.5 0 0 1 24.5 16H26v-2z" fill="white"/>
-              </svg>
-            </a>
-          </div>
+          {!showOtp && (
+            <div className="social-row">
+              <a href="https://www.instagram.com/changelifemarketing?igsh=dzYxYWsza29qZHhm" className="social-icon" aria-label="Instagram" target="_blank" rel="noopener noreferrer">
+                <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <radialGradient id="ig2" cx="30%" cy="107%" r="150%">
+                      <stop offset="0%" stopColor="#fdf497"/>
+                      <stop offset="5%" stopColor="#fdf497"/>
+                      <stop offset="45%" stopColor="#fd5949"/>
+                      <stop offset="60%" stopColor="#d6249f"/>
+                      <stop offset="90%" stopColor="#285aeb"/>
+                    </radialGradient>
+                  </defs>
+                  <rect width="44" height="44" rx="11" fill="url(#ig2)"/>
+                  <rect x="12" y="12" width="20" height="20" rx="5.5" stroke="white" strokeWidth="2.2" fill="none"/>
+                  <circle cx="22" cy="22" r="5.5" stroke="white" strokeWidth="2.2" fill="none"/>
+                  <circle cx="29" cy="15" r="1.5" fill="white"/>
+                </svg>
+              </a>
+              <a href="https://www.facebook.com/share/183CFq7YEz/" className="social-icon" aria-label="Facebook" target="_blank" rel="noopener noreferrer">
+                <svg width="44" height="44" viewBox="0 0 44 44" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="44" height="44" rx="11" fill="#1877F2"/>
+                  <path d="M26 14h-3a2 2 0 0 0-2 2v3h-3v4h3v10h4V23h3l.5-4H24v-2.5A.5.5 0 0 1 24.5 16H26v-2z" fill="white"/>
+                </svg>
+              </a>
+            </div>
+          )}
 
           <p className="footer-text">
             © 2026 <a href="#" className="footer-link">Change Life Marketing</a>

@@ -154,38 +154,7 @@ export async function POST(req: NextRequest) {
       (key) => Object.prototype.hasOwnProperty.call(body, key)
     );
 
-    // Duplicate Bank Account Check
-    const submittedAccountNo = (body.accountNo || "").trim();
-    if (submittedAccountNo) {
-      const duplicateBank = await User.findOne({
-        _id: { $ne: user._id },
-        $or: [
-          { accountNo: submittedAccountNo },
-          { "pendingBankAccountDetails.accountNumber": submittedAccountNo }
-        ]
-      });
-      if (duplicateBank) {
-        return NextResponse.json(
-          { success: false, message: "This bank account number is already in use by another user." },
-          { status: 400 }
-        );
-      }
-    }
-
-    // Duplicate UPI ID Check
-    const submittedUpi = (body.upiId || "").trim();
-    if (submittedUpi) {
-      const duplicateUpi = await User.findOne({
-        _id: { $ne: user._id },
-        upiId: submittedUpi
-      });
-      if (duplicateUpi) {
-        return NextResponse.json(
-          { success: false, message: "This UPI ID is already in use by another user." },
-          { status: 400 }
-        );
-      }
-    }
+    // 🔹 DUPLICATE ACCOUNT DETECTION REMOVED
 
     const currentStatus = user.bankDetailsStatus || "none";
 
@@ -234,7 +203,7 @@ export async function POST(req: NextRequest) {
     if (update.panNo) {
       update.panNo = String(update.panNo).toUpperCase().trim();
       if (!/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(update.panNo)) {
-        return NextResponse.json({ success: false, message: "Invalid PAN number format" }, { status: 400 });
+        return NextResponse.json({ success: false, message: "Invalid PAN number format (e.g., ABCDE1234F)" }, { status: 400 });
       }
     }
 

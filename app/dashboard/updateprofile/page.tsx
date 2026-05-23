@@ -233,7 +233,7 @@ export default function EditProfilePage() {
       }
       // Validate PAN number format
       if (formData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(formData.panNo)) {
-        setError("Invalid PAN number format");
+        setError("Invalid PAN number format (e.g., ABCDE1234F)");
         setSaving(false);
         return;
       }

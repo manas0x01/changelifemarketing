@@ -124,50 +124,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔹 DUPLICATE ACCOUNT DETECTION (Max 3 accounts per identifier)
-    const MAX_ACCOUNTS_PER_IDENTIFIER = 3;
-
-    // 1. Bank Account Check
-    const registrationAccountNo = (body.accountNo || "").trim();
-    if (registrationAccountNo) {
-      const bankAccountCount = await User.countDocuments({
-        $or: [
-          { accountNo: registrationAccountNo },
-          { "pendingBankAccountDetails.accountNumber": registrationAccountNo }
-        ]
-      });
-      if (bankAccountCount >= MAX_ACCOUNTS_PER_IDENTIFIER) {
-        return NextResponse.json(
-          { success: false, message: `Maximum ${MAX_ACCOUNTS_PER_IDENTIFIER} accounts are allowed per bank account number. Limit reached.` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // 2. UPI ID Check
-    if (upiId) {
-      const upiCount = await User.countDocuments({ upiId });
-      if (upiCount >= MAX_ACCOUNTS_PER_IDENTIFIER) {
-        return NextResponse.json(
-          { success: false, message: `Maximum ${MAX_ACCOUNTS_PER_IDENTIFIER} accounts are allowed per UPI ID. Limit reached.` },
-          { status: 400 }
-        );
-      }
-    }
-
-    // 3. IP & Device Check
-    if (ip !== "unknown" && userAgent !== "unknown") {
-      const ipDeviceCount = await User.countDocuments({
-        registrationIp: ip,
-        registrationDevice: userAgent
-      });
-      if (ipDeviceCount >= MAX_ACCOUNTS_PER_IDENTIFIER) {
-        return NextResponse.json(
-          { success: false, message: `Maximum ${MAX_ACCOUNTS_PER_IDENTIFIER} accounts are allowed per device and network. Limit reached.` },
-          { status: 400 }
-        );
-      }
-    }
+    // 🔹 DUPLICATE ACCOUNT DETECTION REMOVED
     console.log('[DEBUG] register: loggedInUser', { username: loggedInUser.username, userId: loggedInUser.userId, ePinsCount: Array.isArray(loggedInUser.ePins) ? loggedInUser.ePins.length : 0 });
 
     //////////////////////////////////////////////////////////////

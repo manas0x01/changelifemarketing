@@ -124,19 +124,21 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔹 DUPLICATE ACCOUNT DETECTION
+    // 🔹 DUPLICATE ACCOUNT DETECTION (Max 3 accounts per identifier)
+    const MAX_ACCOUNTS_PER_IDENTIFIER = 3;
+
     // 1. Bank Account Check
     const registrationAccountNo = (body.accountNo || "").trim();
     if (registrationAccountNo) {
-      const duplicateBank = await User.findOne({
+      const bankAccountCount = await User.countDocuments({
         $or: [
           { accountNo: registrationAccountNo },
           { "pendingBankAccountDetails.accountNumber": registrationAccountNo }
         ]
       });
-      if (duplicateBank) {
+      if (bankAccountCount >= MAX_ACCOUNTS_PER_IDENTIFIER) {
         return NextResponse.json(
-          { success: false, message: "An account with this bank account number already exists." },
+          { success: false, message: `Maximum ${MAX_ACCOUNTS_PER_IDENTIFIER} accounts are allowed per bank account number. Limit reached.` },
           { status: 400 }
         );
       }
@@ -144,10 +146,10 @@ export async function POST(req: NextRequest) {
 
     // 2. UPI ID Check
     if (upiId) {
-      const duplicateUpi = await User.findOne({ upiId });
-      if (duplicateUpi) {
+      const upiCount = await User.countDocuments({ upiId });
+      if (upiCount >= MAX_ACCOUNTS_PER_IDENTIFIER) {
         return NextResponse.json(
-          { success: false, message: "An account with this UPI ID already exists." },
+          { success: false, message: `Maximum ${MAX_ACCOUNTS_PER_IDENTIFIER} accounts are allowed per UPI ID. Limit reached.` },
           { status: 400 }
         );
       }
@@ -155,13 +157,13 @@ export async function POST(req: NextRequest) {
 
     // 3. IP & Device Check
     if (ip !== "unknown" && userAgent !== "unknown") {
-      const duplicateIpDevice = await User.findOne({
+      const ipDeviceCount = await User.countDocuments({
         registrationIp: ip,
         registrationDevice: userAgent
       });
-      if (duplicateIpDevice) {
+      if (ipDeviceCount >= MAX_ACCOUNTS_PER_IDENTIFIER) {
         return NextResponse.json(
-          { success: false, message: "An account has already been registered from this device and network." },
+          { success: false, message: `Maximum ${MAX_ACCOUNTS_PER_IDENTIFIER} accounts are allowed per device and network. Limit reached.` },
           { status: 400 }
         );
       }

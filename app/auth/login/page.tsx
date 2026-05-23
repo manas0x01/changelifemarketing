@@ -73,7 +73,7 @@ export default function Login() {
     e.preventDefault();
     setError("");
     if (!username || !password) { setError("Please enter username and password."); return; }
-    if (showOtp && !otp) { setError("Please enter the 2FA code."); return; }
+    if (showOtp && !otp.trim()) { setError("Please enter the 2FA code."); return; }
     if (!showOtp && !captchaValid) { setError("Incorrect captcha answer. Please try again."); generateCaptcha(); return; }
     setLoading(true);
     
@@ -81,7 +81,11 @@ export default function Login() {
       const result = await signIn("credentials", {
         username,
         password,
-        otp: showOtp ? otp : undefined,
+        // Always pass otp as a string — NextAuth drops undefined values before
+        // they reach the authorize callback, so passing undefined when the user
+        // hasn't entered an OTP would make the server think no OTP was supplied
+        // even on the second (verify) step.
+        otp: showOtp ? otp.trim() : "",
         redirect: false,
       });
       if (!result?.ok) {
@@ -98,8 +102,16 @@ export default function Login() {
       }
       setLoading(false);
       sessionStorage.setItem("reloadDashboard", "true");
+      // Fetch the session to check role and redirect accordingly
+      const { getSession } = await import("next-auth/react");
+      const session = await getSession();
+      const role = (session?.user as any)?.role;
       setTimeout(() => {
-        router.push("/dashboard");
+        if (role === "admin" || role === "sub-admin") {
+          router.push("/clm-portal/dashboard");
+        } else {
+          router.push("/dashboard");
+        }
       }, 100);
     } catch (err) {
       setError("An error occurred. Please try again.");

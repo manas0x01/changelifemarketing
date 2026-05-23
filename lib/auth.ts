@@ -177,7 +177,7 @@ export const authOptions: NextAuthOptions = {
           // If admin or sub-admin, enforce 2FA
           const isAdminOrSubAdmin = user.role === 'admin' || user.role === 'sub-admin';
           if (isAdminOrSubAdmin) {
-            if (!credentials.otp) {
+            if (!credentials.otp?.trim()) {
               const code = Math.floor(100000 + Math.random() * 900000).toString();
               const twoFactorOtpExpires = new Date(Date.now() + 5 * 60 * 1000);
               await User.updateOne(

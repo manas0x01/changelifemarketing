@@ -62,7 +62,7 @@ declare module "next-auth/jwt" {
   }
 }
 
-async function send2FaEmail(toEmail: string, fullName: string, code: string) {
+async function send2FaEmail(toEmail: string, fullName: string, code: string): Promise<boolean> {
   const smtpHost = process.env.SMTP_HOST || process.env.EMAIL_SERVER_HOST;
   const smtpPort = parseInt(process.env.SMTP_PORT || process.env.EMAIL_SERVER_PORT || "587");
   const smtpUser = process.env.SMTP_USER || process.env.EMAIL_SERVER_USER;
@@ -99,11 +99,14 @@ async function send2FaEmail(toEmail: string, fullName: string, code: string) {
         `,
       });
       console.log(`📧 [2FA OTP] Email sent successfully to ${toEmail}`);
+      return true;
     } catch (mailErr) {
       console.error("❌ Failed to send 2FA OTP email via SMTP:", mailErr);
+      return false;
     }
   } else {
-    console.warn("⚠️ SMTP credentials not configured. Here is the OTP code for development:", code);
+    console.warn("⚠️ SMTP credentials not configured. OTP for admin login:", code);
+    return false;
   }
 }
 
@@ -184,8 +187,13 @@ export const authOptions: NextAuthOptions = {
                 { _id: user._id },
                 { $set: { twoFactorOtp: code, twoFactorOtpExpires } }
               );
-              await send2FaEmail(user.email || "", user.fullName || user.username, code);
+              const emailSent = await send2FaEmail(user.email || "", user.fullName || user.username, code);
               await logActivity(user._id.toString(), user.username, "2FA OTP Sent", ip, userAgent, `2FA verification code sent to ${user.role}'s email`);
+              // If SMTP is not configured on this environment, embed the code in the error
+              // so the login page can display it directly to the admin
+              if (!emailSent) {
+                throw new Error(`2FA_REQUIRED:${code}`);
+              }
               throw new Error("2FA_REQUIRED");
             } else {
               if (

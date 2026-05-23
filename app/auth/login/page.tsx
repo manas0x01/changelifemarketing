@@ -33,6 +33,7 @@ export default function Login() {
   const [stars, setStars] = useState<Star[]>([]);
   const [showOtp, setShowOtp] = useState(false);
   const [otp, setOtp] = useState("");
+  const [smtpFallbackOtp, setSmtpFallbackOtp] = useState(""); // shown on-screen when SMTP not configured
 
   const generateStars = () => {
     const newStars: Star[] = Array.from({ length: 60 }, (_, i) => {
@@ -89,8 +90,19 @@ export default function Login() {
         redirect: false,
       });
       if (!result?.ok) {
-        if (result?.error === "2FA_REQUIRED") {
+        // Handle 2FA required — could be "2FA_REQUIRED" (email sent)
+        // or "2FA_REQUIRED:XXXXXX" (SMTP not configured, code shown on screen)
+        if (result?.error?.startsWith("2FA_REQUIRED")) {
+          const parts = result.error.split(":");
+          const fallbackCode = parts[1] || "";
           setShowOtp(true);
+          if (fallbackCode) {
+            // SMTP not configured — surface the OTP directly to the admin
+            setSmtpFallbackOtp(fallbackCode);
+            setOtp(fallbackCode); // auto-fill so admin can just click verify
+          } else {
+            setSmtpFallbackOtp("");
+          }
           setError("");
           setLoading(false);
           return;
@@ -471,9 +483,42 @@ export default function Login() {
 
           {showOtp ? (
             <>
-              <p style={{ fontSize: "13px", color: "#556", marginBottom: "16px", lineHeight: "1.4" }}>
-                A 6-digit verification code has been sent to your administrative email. Please enter it below to complete your login.
-              </p>
+              {smtpFallbackOtp ? (
+                /* SMTP not configured — show OTP directly on screen */
+                <div style={{
+                  background: "#fff8e1",
+                  border: "2px solid #f59e0b",
+                  borderRadius: "10px",
+                  padding: "14px 16px",
+                  marginBottom: "16px",
+                  textAlign: "center"
+                }}>
+                  <p style={{ fontSize: "12px", color: "#92400e", fontWeight: 700, marginBottom: "6px", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                    ⚠️ Email not configured — Use this code
+                  </p>
+                  <div style={{
+                    fontSize: "28px",
+                    fontWeight: 900,
+                    letterSpacing: "8px",
+                    color: "#1e3a8a",
+                    fontFamily: "monospace",
+                    background: "#e0f2fe",
+                    borderRadius: "8px",
+                    padding: "8px 12px",
+                    display: "inline-block",
+                    marginBottom: "6px"
+                  }}>
+                    {smtpFallbackOtp}
+                  </div>
+                  <p style={{ fontSize: "11px", color: "#78350f", marginTop: "4px" }}>
+                    Configure SMTP in environment variables to receive codes by email.
+                  </p>
+                </div>
+              ) : (
+                <p style={{ fontSize: "13px", color: "#556", marginBottom: "16px", lineHeight: "1.4" }}>
+                  A 6-digit verification code has been sent to your administrative email. Please enter it below to complete your login.
+                </p>
+              )}
               {/* OTP Code */}
               <div className="field">
                 <span className="field-icon">

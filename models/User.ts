@@ -522,12 +522,16 @@ userSchema.pre('save', async function (this: IUser) {
     }
 
     // 3. AGGREGATE & TREE SYNC
+    // 3. AGGREGATE & TREE SYNC
     if (Array.isArray(this.sessionBasedIncome) && (totalLeft > 0 || totalRight > 0)) {
       console.log(`🔍 [SYNC] Checking Basic Income for ${this.username}. Tree: ${totalLeft}L | ${totalRight}R`);
 
-      // Step A: Fix missing fields and Enforce Cuts retroactively
-      let cumulativePairs = 0;
-      this.sessionBasedIncome.forEach((rec: any) => {
+      // Step A: Fix missing fields and Enforce Cuts/Capping retroactively
+      this.sessionBasedIncome.forEach((rec: any, idx: number) => {
+        const sessionIndex = idx + 1;
+        const cutLevels = [3, 6, 9, 12];
+        const isCutSession = this.username !== 'CLMPP' && cutLevels.includes(sessionIndex);
+
         // Fallback for missing 'pairs' field (due to previous schema bug)
         if (!rec.pairs || rec.pairs === 0) {
           if ((Number(rec.netIncome) || 0) >= 1000 || (Number(rec.grossIncome) || 0) >= 1000 || (Number(rec.income) || 0) >= 1000) {
@@ -537,20 +541,23 @@ userSchema.pre('save', async function (this: IUser) {
           }
         }
 
-        // CAPPING FIX: Ensure no single session record exceeds 1000
-        if (Number(rec.netIncome) > 1000) {
-          console.log(`⚠️ [SYNC] Capping inflated income for ${this.username}: ${rec.netIncome} -> 1000`);
-          rec.netIncome = 1000;
-        }
-
-        cumulativePairs += (Number(rec.pairs) || 0);
-
-        // Enforce strict cuts for Basic users (3rd, 6th, 9th, 12th)
-        const cutLevels = [3, 6, 9, 12];
-        if (this.username !== 'CLMPP' && cutLevels.includes(cumulativePairs) && Number(rec.netIncome) > 0) {
-          console.log(`✂️ [SELF-HEALING] Retro-enforcing cut for pair #${cumulativePairs} of ${this.username}`);
-          rec.netIncome = 0;
-          rec.description = `Pair #${cumulativePairs} Cut (Fixed)`;
+        if (isCutSession) {
+          // Cut session: income must be 0, pairs count is NOT capped
+          if (Number(rec.netIncome) !== 0) {
+            console.log(`✂️ [SELF-HEALING] Retro-enforcing cut for session #${sessionIndex} of ${this.username}`);
+            rec.netIncome = 0;
+            rec.description = `Basic Session #${sessionIndex} Cut (Fixed)`;
+          }
+        } else {
+          // Normal session: capped at 1 pair / 1000 income
+          if (Number(rec.pairs) > 1) {
+            console.log(`⚠️ [SYNC] Capping inflated pairs for ${this.username} in session #${sessionIndex}: ${rec.pairs} -> 1`);
+            rec.pairs = 1;
+          }
+          if (Number(rec.netIncome) > 1000) {
+            console.log(`⚠️ [SYNC] Capping inflated income for ${this.username} in session #${sessionIndex}: ${rec.netIncome} -> 1000`);
+            rec.netIncome = 1000;
+          }
         }
       });
 
@@ -594,7 +601,7 @@ userSchema.pre('save', async function (this: IUser) {
         amount: Number(s.netIncome) || 0,
         pairCount: Number(s.pairs) || 0,
         date: s.date || s.sessionDate,
-        description: s.description || (Number(s.netIncome) === 0 && Number(s.pairs) > 0 ? "3rd Pair Cut" : "Binary Income"),
+        description: s.description || (Number(s.netIncome) === 0 && Number(s.pairs) > 0 ? `Basic Session #${i + 1} Cut` : "Binary Income"),
         status: 'Completed'
       }));
     } else if (totalLeft === 0 && totalRight === 0) {

@@ -57,6 +57,7 @@ export async function GET() {
 
     // Convert map to sorted array and calculate derived fields
     const payments = Array.from(sessionsMap.values())
+      .filter(sess => (sess.basicIncome + sess.boosterIncome) > 0)
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .map((sess, index, arr) => {
         const total = sess.basicIncome + sess.boosterIncome;

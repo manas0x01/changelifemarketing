@@ -33,29 +33,42 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       return { success: true, income: 0, pairs: 0 };
     }
 
-    // ALWAYS max 1 pair paid per session for Basic Income
-    let paidPairs = 1;
+    // 4. Update session history / records
+    if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
+
+    const todayStr = sessionDate.toDateString();
+    
+    let recordIndex = user.sessionBasedIncome.findIndex((s: any) => {
+      const recDate = new Date(s.date || s.sessionDate);
+      return recDate.toDateString() === todayStr && s.sessionType === sessionType;
+    });
+
+    const isExisting = recordIndex !== -1;
+    const sessionIndex = isExisting ? (recordIndex + 1) : (user.sessionBasedIncome.length + 1);
+
+    const cutLevels = [3, 6, 9, 12];
+    const isCutSession = !user.isBooster && cutLevels.includes(sessionIndex);
+
+    let paidPairs = 0;
     let newIncome = 0;
     let description = "";
 
-    if (!user.isBooster) {
-      // BASIC PHASE (Up to 12th pair) - Apply Cuts
-      const currentLifetimePairs = user.basicPairs || 0;
-      const pairSequenceNumber = currentLifetimePairs + 1;
-      const cutLevels = [3, 6, 9, 12];
-      const isCutPair = cutLevels.includes(pairSequenceNumber);
-
-      newIncome = isCutPair ? 0 : 1000;
-      description = isCutPair ? `Basic Pair #${pairSequenceNumber} Cut (${sessionType})` : `Basic Income (${sessionType})`;
-
-      if (isCutPair) {
-        console.log(`✂️ [BASIC CUT] ${user.username}: Pair #${pairSequenceNumber} cut.`);
-      }
+    if (isCutSession) {
+      // 3rd, 6th, 9th, 12th session: income is 0, pairs is whatever is in the session (no cap)
+      paidPairs = pairsInSession;
+      newIncome = 0;
+      description = `Basic Session #${sessionIndex} Cut (${sessionType})`;
+      console.log(`✂️ [BASIC CUT] ${user.username}: Session #${sessionIndex} is cut.`);
     } else {
-      // BOOSTER PHASE - No more cuts for basic pairs, but still 1 pair cap
+      // Normal session or Booster user: capped at 1 pair, ₹1000 income
+      paidPairs = 1;
       newIncome = 1000;
       description = `Basic Income (${sessionType})`;
-      console.log(`🚀 [BOOSTER USER BASIC] ${user.username}: 1 basic pair matched.`);
+      if (user.isBooster) {
+        console.log(`🚀 [BOOSTER USER BASIC] ${user.username}: 1 basic pair matched.`);
+      } else {
+        console.log(`💵 [BASIC MATCH] ${user.username}: Session #${sessionIndex} matched.`);
+      }
     }
 
     // FLASH OUT: In Basic logic, any matching triggers a full flash-out of that session's units
@@ -65,30 +78,33 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       user.sessionTeam.right = 0;
     }
 
-    // 4. Update session history / records
-    if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
+    let addedPairs = 0;
+    let addedIncome = 0;
 
-    const todayStr = sessionDate.toDateString();
-    
-    let sessionRecord = user.sessionBasedIncome.find((s: any) => {
-      const recDate = new Date(s.date || s.sessionDate);
-      return recDate.toDateString() === todayStr && s.sessionType === sessionType;
-    });
+    if (isExisting) {
+      const sessionRecord = user.sessionBasedIncome[recordIndex];
 
-    if (sessionRecord) {
-      if (sessionRecord.netIncome >= 1000) {
-        console.log(`🚫 [BASIC CAP] ${user.username} already received ₹${sessionRecord.netIncome} for ${sessionType}. Skipping.`);
-        return { success: true, income: 0, pairs: 0 };
+      if (isCutSession) {
+        // Cut session: add to pairs, income remains 0
+        sessionRecord.pairs = (sessionRecord.pairs || 0) + paidPairs;
+        sessionRecord.netIncome = 0;
+        sessionRecord.description = description;
+        addedPairs = paidPairs;
+        addedIncome = 0;
+      } else {
+        // Normal session: capped at 1 pair, ₹1000 income
+        if ((sessionRecord.pairs || 0) >= 1) {
+          console.log(`🚫 [BASIC CAP] ${user.username} already processed 1 pair for ${sessionType}. Skipping.`);
+          return { success: true, income: 0, pairs: 0 };
+        }
+        sessionRecord.pairs = 1;
+        sessionRecord.netIncome = 1000;
+        sessionRecord.description = description;
+        addedPairs = 1;
+        addedIncome = 1000;
       }
-      
-      // Update existing record with the income (capped at 1000)
-      sessionRecord.netIncome = newIncome;
-      sessionRecord.pairs = (sessionRecord.pairs || 0) + paidPairs;
       sessionRecord.processed = true;
       sessionRecord.date = sessionDate;
-      
-      user.basicIncome = (user.basicIncome || 0) + newIncome;
-      user.basicPairs = (user.basicPairs || 0) + paidPairs;
     } else {
       user.sessionBasedIncome.push({
         date: sessionDate,
@@ -98,9 +114,13 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
         description: description,
         processed: true
       });
-      user.basicIncome = (user.basicIncome || 0) + newIncome;
-      user.basicPairs = (user.basicPairs || 0) + paidPairs;
+      addedPairs = paidPairs;
+      addedIncome = newIncome;
     }
+
+    // Recalculate totals from the history list to prevent drift
+    user.basicIncome = user.sessionBasedIncome.reduce((sum: number, r: any) => sum + (Number(r.netIncome) || 0), 0);
+    user.basicPairs = user.sessionBasedIncome.reduce((sum: number, r: any) => sum + (Number(r.pairs) || 0), 0);
 
     // Update basicIncomeRecords for display
     user.basicIncomeRecords = user.sessionBasedIncome.map((s: any, i: number) => ({
@@ -108,7 +128,7 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       amount: s.netIncome || 0,
       pairCount: s.pairs || 0,
       date: s.date || s.sessionDate,
-      description: s.description || (s.netIncome === 0 && s.pairs > 0 ? `Basic Pair Cut` : description),
+      description: s.description || (Number(s.netIncome) === 0 && Number(s.pairs) > 0 ? `Basic Session #${i + 1} Cut` : `Binary Income`),
       status: 'Completed'
     }));
 
@@ -127,8 +147,8 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
 
     return {
       success: true,
-      income: newIncome,
-      pairs: paidPairs
+      income: addedIncome,
+      pairs: addedPairs
     };
 
   } catch (error) {

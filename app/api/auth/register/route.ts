@@ -66,6 +66,7 @@ export async function POST(req: NextRequest) {
     const fullName = body.fullName;
     const mobileNo = body.mobileNo;
     const sponsorId = (body.sponsorId || "").trim().toUpperCase();
+    const uplineId = (body.uplineId || body.sponsorId || "").trim().toUpperCase();
     const epin = body.epin;
 
     let placementPosition: "left" | "right" | undefined = body.placementPosition;
@@ -159,12 +160,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    //////////////////////////////////////////////////////////////
+    // 🔹 UPLINE CHECK
+    //////////////////////////////////////////////////////////////
+
+    const upline = await User.findOne({
+      $or: [
+        { userId: { $regex: new RegExp(`^${uplineId}$`, 'i') } },
+        { username: { $regex: new RegExp(`^${uplineId}$`, 'i') } }
+      ],
+    });
+
+    if (!upline) {
+      console.log('[DEBUG] register: upline not found', { uplineId });
+      return NextResponse.json(
+        { success: false, message: "Invalid Upline ID" },
+        { status: 400 }
+      );
+    }
+
     const positionField =
       placementPosition === "left" ? "leftChild" : "rightChild";
 
-    if (sponsor[positionField]) {
-      const childUserId = sponsor[positionField];
-      console.log('[DEBUG] register: checking if child exists', { positionField, childUserId });
+    if (upline[positionField]) {
+      const childUserId = upline[positionField];
+      console.log('[DEBUG] register: checking if child exists under upline', { positionField, childUserId });
 
       // Verify the child user actually exists in database
       const childExists = await User.findOne({
@@ -175,16 +195,16 @@ export async function POST(req: NextRequest) {
       });
 
       if (childExists) {
-        console.log('[DEBUG] register: sponsor position already filled', { positionField, filledBy: childUserId });
+        console.log('[DEBUG] register: upline position already filled', { positionField, filledBy: childUserId });
         return NextResponse.json(
-          { success: false, message: `${placementPosition} already filled` },
+          { success: false, message: `${placementPosition} already filled under upline` },
           { status: 400 }
         );
       } else {
         // Child reference exists but user doesn't - clear it
-        console.log('[DEBUG] register: child reference exists but user deleted, clearing position', { positionField, childUserId });
-        sponsor.set(positionField, undefined);
-        await sponsor.save();
+        console.log('[DEBUG] register: child reference exists under upline but user deleted, clearing position', { positionField, childUserId });
+        upline.set(positionField, undefined);
+        await upline.save();
       }
     }
 
@@ -231,8 +251,8 @@ export async function POST(req: NextRequest) {
       sponsorId: sponsor.userId || sponsor.username,
       sponsorName: sponsor.fullName || sponsor.username,
 
-      placementId: sponsor.userId || sponsor.username,
-      placementName: sponsor.fullName || sponsor.username,
+      placementId: upline.userId || upline.username,
+      placementName: upline.fullName || upline.username,
       placementPosition,
 
       registeredEPIN: epin,
@@ -264,10 +284,15 @@ export async function POST(req: NextRequest) {
     //////////////////////////////////////////////////////////////
 
     // Push to directMembers array and update totalDirect count
-    await User.findByIdAndUpdate(sponsor._id, {
+    // 1. Update upline child field
+    await User.findByIdAndUpdate(upline._id, {
       $set: {
         [positionField]: newUser.username
-      },
+      }
+    }, { session: dbSession });
+
+    // 2. Update sponsor direct count & direct members list
+    await User.findByIdAndUpdate(sponsor._id, {
       $inc: { totalDirect: 1 },
       $push: {
         directMembers: {
@@ -279,10 +304,11 @@ export async function POST(req: NextRequest) {
       }
     }, { session: dbSession });
 
-    // Recursive update for all ancestors
-    await updateTeamCounts(sponsor.userId || sponsor.username, placementPosition, 1, dbSession);
+    // Recursive update for all ancestors starting from upline
+    await updateTeamCounts(upline.userId || upline.username, placementPosition, 1, dbSession);
 
-    console.log('[DEBUG] register: sponsor updated', {
+    console.log('[DEBUG] register: upline and sponsor updated', {
+      uplineId: upline.userId || upline.username,
       sponsorId: sponsor.userId || sponsor.username,
       positionField
     });
@@ -315,7 +341,7 @@ export async function POST(req: NextRequest) {
     );
 
     // Update team count for the placement position 
-    if (sponsor.username !== session.user.username) {
+    if (upline.username !== session.user.username) {
       if (!upToDateLoggedInUser.totalTeam) upToDateLoggedInUser.totalTeam = { left: 0, right: 0 };
       upToDateLoggedInUser.totalTeam[placementPosition] = (upToDateLoggedInUser.totalTeam[placementPosition] || 0) + 1;
       console.log('[REGISTER] Team count updated for logged-in user:', { left: upToDateLoggedInUser.totalTeam.left, right: upToDateLoggedInUser.totalTeam.right });

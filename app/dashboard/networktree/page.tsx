@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
+import { toast } from "sonner";
 
 // Premium Visual constants
 let AR = 38;   // Larger Avatar Radius
@@ -674,6 +675,8 @@ function MemberPopup({
     const [ddOpen, setDdOpen] = useState(false);
     const [memberId, setMemberId] = useState("");
     const [treeRoot, setTreeRoot] = useState<MNode | null>(null);
+    const [lastLeftId, setLastLeftId] = useState("");
+    const [lastRightId, setLastRightId] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [autoLoaded, setAutoLoaded] = useState(false);
@@ -762,6 +765,8 @@ function MemberPopup({
         if (data.success) {
           // The searched user becomes the root of the tree
           setTreeRoot(data.tree);
+          setLastLeftId(data.lastLeftId || "");
+          setLastRightId(data.lastRightId || "");
           // Track current session
           const sess = data.currentSessionType || getCurrentSession();
           setCurrentSession(sess);
@@ -776,10 +781,14 @@ function MemberPopup({
         } else {
           setError(data.error || "Failed to load placement tree");
           setTreeRoot(null);
+          setLastLeftId("");
+          setLastRightId("");
         }
       } catch (e) {
         setError(e instanceof Error ? e.message : "Something went wrong");
         setTreeRoot(null);
+        setLastLeftId("");
+        setLastRightId("");
       } finally {
         setLoading(false);
       }
@@ -852,9 +861,10 @@ function MemberPopup({
       e.stopPropagation();
       if (n.type === "open") {
         const parentId = n.id.replace(/^v[lr]-/, "");
+        const pos = n.position === "left" ? "Left" : "Right";
         // Store current memberId so we can refresh when we return
         sessionStorage.setItem('networkTreeLastViewed', memberId);
-        router.push(`/dashboard/registration?placementId=${parentId}`);
+        router.push(`/dashboard/registration?sponsorId=${session?.user?.username || ""}&uplineId=${parentId}&position=${pos}`);
       }
     };
 
@@ -1210,6 +1220,149 @@ function MemberPopup({
                     fontSize: "13px"
                   }}>
                     ⚠️ {flushMsg}
+                  </div>
+                )}
+                {treeRoot && (lastLeftId || lastRightId) && (
+                  <div style={{
+                    marginTop: "20px",
+                    padding: "20px",
+                    background: "linear-gradient(135deg, rgba(29, 3, 58, 0.5) 0%, rgba(17, 1, 34, 0.5) 100%)",
+                    backdropFilter: "blur(16px)",
+                    borderRadius: "14px",
+                    border: "1.5px solid rgba(255, 233, 124, 0.2)",
+                    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: "16px"
+                  }}>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      fontSize: "12px",
+                      fontWeight: "700",
+                      color: "#ffe97c",
+                      textTransform: "uppercase",
+                      letterSpacing: "1px",
+                      textShadow: "0 0 8px rgba(255, 233, 124, 0.3)"
+                    }}>
+                      <span style={{ fontSize: "16px" }}>⛓️</span> Downline Endpoints Reference
+                    </div>
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))",
+                      gap: "16px"
+                    }}>
+                      {/* Left Downline Reference */}
+                      <div style={{
+                        background: "rgba(0, 0, 0, 0.25)",
+                        border: "1.2px solid rgba(255, 233, 124, 0.12)",
+                        borderRadius: "10px",
+                        padding: "14px 18px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        transition: "all 0.2s ease-in-out"
+                      }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <span style={{ fontSize: "10px", color: "rgba(255, 233, 124, 0.6)", fontWeight: "700", letterSpacing: "0.8px" }}>
+                            LEFT EXTREME DOWNLINE
+                          </span>
+                          <span style={{ fontSize: "15px", color: "#ffffff", fontWeight: "800", fontFamily: "monospace" }}>
+                            {lastLeftId || "—"}
+                          </span>
+                        </div>
+                        {lastLeftId && (
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(lastLeftId);
+                              toast.success(`Copied Left Downline ID: ${lastLeftId}`);
+                            }}
+                            title="Copy ID"
+                            style={{
+                              background: "rgba(255, 233, 124, 0.08)",
+                              color: "#ffe97c",
+                              border: "1.2px solid rgba(255, 233, 124, 0.25)",
+                              padding: "6px 12px",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              transition: "all 0.15s ease",
+                              fontFamily: "Poppins, sans-serif"
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.background = "rgba(255, 233, 124, 0.18)";
+                              e.currentTarget.style.borderColor = "rgba(255, 233, 124, 0.5)";
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.background = "rgba(255, 233, 124, 0.08)";
+                              e.currentTarget.style.borderColor = "rgba(255, 233, 124, 0.25)";
+                            }}
+                          >
+                            📋 Copy ID
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Right Downline Reference */}
+                      <div style={{
+                        background: "rgba(0, 0, 0, 0.25)",
+                        border: "1.2px solid rgba(255, 233, 124, 0.12)",
+                        borderRadius: "10px",
+                        padding: "14px 18px",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        transition: "all 0.2s ease-in-out"
+                      }}>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                          <span style={{ fontSize: "10px", color: "rgba(255, 233, 124, 0.6)", fontWeight: "700", letterSpacing: "0.8px" }}>
+                            RIGHT EXTREME DOWNLINE
+                          </span>
+                          <span style={{ fontSize: "15px", color: "#ffffff", fontWeight: "800", fontFamily: "monospace" }}>
+                            {lastRightId || "—"}
+                          </span>
+                        </div>
+                        {lastRightId && (
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(lastRightId);
+                              toast.success(`Copied Right Downline ID: ${lastRightId}`);
+                            }}
+                            title="Copy ID"
+                            style={{
+                              background: "rgba(255, 233, 124, 0.08)",
+                              color: "#ffe97c",
+                              border: "1.2px solid rgba(255, 233, 124, 0.25)",
+                              padding: "6px 12px",
+                              borderRadius: "6px",
+                              fontSize: "11px",
+                              fontWeight: "700",
+                              cursor: "pointer",
+                              display: "flex",
+                              alignItems: "center",
+                              gap: "6px",
+                              transition: "all 0.15s ease",
+                              fontFamily: "Poppins, sans-serif"
+                            }}
+                            onMouseEnter={e => {
+                              e.currentTarget.style.background = "rgba(255, 233, 124, 0.18)";
+                              e.currentTarget.style.borderColor = "rgba(255, 233, 124, 0.5)";
+                            }}
+                            onMouseLeave={e => {
+                              e.currentTarget.style.background = "rgba(255, 233, 124, 0.08)";
+                              e.currentTarget.style.borderColor = "rgba(255, 233, 124, 0.25)";
+                            }}
+                          >
+                            📋 Copy ID
+                          </button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>

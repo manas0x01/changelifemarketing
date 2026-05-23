@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
 
@@ -32,7 +33,8 @@ interface NewUserData {
   regDate: Date;
 }
 
-export default function NewRegisterPage() {
+function NewRegisterForm() {
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<Step>("validateTxn");
   const [hasPins, setHasPins] = useState<boolean | null>(null);
   const [pinError, setPinError] = useState("");
@@ -82,6 +84,132 @@ export default function NewRegisterPage() {
   const [accountNo, setAccountNo] = useState("");
   const [ifscCode, setIfscCode] = useState("");
   const [accountType, setAccountType] = useState("-- Select --");
+
+  useEffect(() => {
+    const autoValidate = async () => {
+      const spSponsorId = searchParams.get("sponsorId");
+      const spUplineId = searchParams.get("uplineId");
+      const spPosition = searchParams.get("position");
+
+      let currentSponsorId = "";
+      let currentUplineId = "";
+
+      if (spSponsorId) {
+        setSponsorId(spSponsorId);
+        currentSponsorId = spSponsorId;
+      }
+      if (spUplineId) {
+        setUplineId(spUplineId);
+        currentUplineId = spUplineId;
+      }
+      if (spPosition) {
+        const formattedPos = spPosition.charAt(0).toUpperCase() + spPosition.slice(1).toLowerCase();
+        if (formattedPos === "Left" || formattedPos === "Right") {
+          setPosition(formattedPos);
+        }
+      }
+
+      // If sponsor ID is provided, auto-validate it
+      if (currentSponsorId) {
+        setSponsorError("");
+        try {
+          const nameResponse = await fetch('/api/user/getname', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: currentSponsorId.trim() }),
+            credentials: 'include',
+          });
+          const nameData = await nameResponse.json();
+
+          if (nameResponse.ok && nameData) {
+            const sponsorDisplayName = nameData?.data?.name ?? nameData?.name ?? "";
+            setSponsorName(sponsorDisplayName);
+            setSponsorValidated(true);
+
+            // Fetch EPINs
+            try {
+              const pinsResponse = await fetch('/api/user/get-epins', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({}),
+                credentials: 'include',
+              });
+
+              if (pinsResponse.ok) {
+                const pinsData = await pinsResponse.json();
+                const pinStrings = pinsData.availableEPins?.map((ePin: any) => {
+                  if (typeof ePin === 'string') return ePin;
+                  else if (typeof ePin === 'object' && ePin.pin) return ePin.pin;
+                  return ePin;
+                }) || [];
+                setAvailableEPins(pinStrings);
+                setSelectedEPin(pinStrings[0] || "");
+              }
+            } catch (pinsError) {
+              console.error("EPIN fetch error:", pinsError);
+            }
+          } else {
+            setSponsorError("Sponsor ID not found");
+          }
+        } catch (err) {
+          console.error("Auto sponsor validation failed:", err);
+        }
+      }
+
+      // If upline ID is provided, auto-validate it
+      const targetUplineId = currentUplineId || currentSponsorId;
+      if (targetUplineId) {
+        setUplineError("");
+        try {
+          const nameResponse = await fetch('/api/user/getname', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: targetUplineId.trim() }),
+            credentials: 'include',
+          });
+          const nameData = await nameResponse.json();
+
+          if (nameResponse.ok && nameData) {
+            const uplineDisplayName = nameData?.data?.name ?? nameData?.name ?? "";
+            setUplineName(uplineDisplayName);
+
+            // Check positions
+            const positionsResponse = await fetch('/api/user/check-positions', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ sponsorId: targetUplineId.trim() }),
+              credentials: 'include',
+            });
+
+            if (positionsResponse.ok) {
+              const positionsData = await positionsResponse.json();
+              if (positionsData.success) {
+                const { availablePositions } = positionsData;
+                let positionsToShow = ["-- Select --"];
+                availablePositions.forEach((pos: string) => {
+                  positionsToShow.push(pos.charAt(0).toUpperCase() + pos.slice(1));
+                });
+                setAvailablePositions(positionsToShow);
+
+                if (spPosition) {
+                  const formattedPos = spPosition.charAt(0).toUpperCase() + spPosition.slice(1).toLowerCase();
+                  if (availablePositions.includes(spPosition.toLowerCase())) {
+                    setPosition(formattedPos);
+                  }
+                }
+              }
+            }
+          } else {
+            setUplineError("Upline ID not found");
+          }
+        } catch (err) {
+          console.error("Auto upline validation failed:", err);
+        }
+      }
+    };
+
+    autoValidate();
+  }, [searchParams]);
 
   useEffect(() => {
     const checkPinAvailability = async () => {
@@ -1535,5 +1663,17 @@ export default function NewRegisterPage() {
         </div>
       )}
     </>
+  );
+}
+
+export default function NewRegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="nr-root" style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
+        <div className="loading-circle" style={{ width: "60px", height: "60px", border: "4px solid rgba(255,233,124,0.15)", borderTop: "4px solid #ffe97c", borderRadius: "50%", animation: "spin 1s linear infinite", marginBottom: "20px" }}></div>
+      </div>
+    }>
+      <NewRegisterForm />
+    </Suspense>
   );
 }

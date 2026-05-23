@@ -73,6 +73,28 @@ async function countTotalDescendants(user: any): Promise<number> {
   }
 }
 
+// Helper to recursively find the last left or right child down the line
+async function findLastDownlineId(startUser: any, position: "left" | "right"): Promise<string> {
+  if (!startUser) return "";
+  let current = startUser;
+  let nextChildId = position === "left" ? current.leftChild : current.rightChild;
+  
+  while (nextChildId && nextChildId.trim() !== "") {
+    const nextUser = await User.findOne({
+      $or: [
+        { username: nextChildId.trim() },
+        { userId: nextChildId.trim() }
+      ]
+    }, 'username userId leftChild rightChild');
+    
+    if (!nextUser) break;
+    current = nextUser;
+    nextChildId = position === "left" ? current.leftChild : current.rightChild;
+  }
+  
+  return current.userId || current.username;
+}
+
 // Helper function to check and process session change with flash out
 async function processSessionChange(user: any, currentSessionType: "morning" | "evening") {
   const lastSessionType = user.lastSessionType;
@@ -421,6 +443,10 @@ export async function POST(req: NextRequest) {
     // Build the placement tree starting from this user as root (Limit to 3 levels: 0, 1, 2)
     const tree = await buildPlacementTree(updatedUser || user, 0, 2, true, selectedPosition, currentSessionType);
 
+    // Find the last left and right downline member IDs
+    const lastLeftId = await findLastDownlineId(updatedUser || user, "left");
+    const lastRightId = await findLastDownlineId(updatedUser || user, "right");
+
     return NextResponse.json({
       success: true,
       tree: tree,
@@ -428,6 +454,8 @@ export async function POST(req: NextRequest) {
       flushMessage,
       incomeMessage,
       currentSessionType,
+      lastLeftId,
+      lastRightId,
       rootUser: {
         id: user.userId || user.username,
         name: user.fullName || user.username,

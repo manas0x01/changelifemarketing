@@ -8,10 +8,10 @@ import User from '../models/User';
 
 async function updateStats() {
   await connectDB();
-  const user = await User.findOne({ username: 'CLM671299' });
+  const user = await User.findOne({ username: 'CLM423643' });
   
   if (!user) {
-    console.log("❌ User CLM671299 not found.");
+    console.log("❌ User CLM423643 not found.");
     process.exit(1);
   }
 
@@ -25,13 +25,13 @@ async function updateStats() {
 
   // 1. Maintain totalTeam as is (L: 12, R: 12) which is already >= 11
   // 2. Generate exactly 11 sessionBasedIncome records
-  // We'll preserve the existing 2 records (index 0, 1)
+  // We'll preserve and clean the existing 3 records (index 0, 1, 2)
   const sessions: any[] = [];
   
   // Existing session 1
   sessions.push({
-    date: new Date("2026-05-23T16:26:04.668Z"),
-    sessionType: "evening",
+    date: new Date("2026-05-18T05:45:56.918Z"),
+    sessionType: "morning",
     pairs: 1,
     netIncome: 1000,
     processed: true
@@ -39,18 +39,28 @@ async function updateStats() {
   
   // Existing session 2
   sessions.push({
-    date: new Date("2026-05-24T14:35:05.110Z"),
+    date: new Date("2026-05-22T20:23:38.295Z"),
     sessionType: "evening",
     pairs: 1,
     netIncome: 1000,
     processed: true
   });
 
-  // Generate sessions 3 to 11
-  const cutLevels = [3, 6, 9, 12];
-  let currentDate = new Date("2026-05-24T14:35:05.110Z");
+  // Existing session 3 (Cut)
+  sessions.push({
+    date: new Date("2026-05-23T16:55:43.836Z"),
+    sessionType: "evening",
+    pairs: 1,
+    netIncome: 0,
+    description: "Basic Session #3 Cut",
+    processed: true
+  });
 
-  for (let i = 2; i < 11; i++) {
+  // Generate sessions 4 to 11
+  const cutLevels = [3, 6, 9, 12];
+  let currentDate = new Date("2026-05-23T16:55:43.836Z");
+
+  for (let i = 3; i < 11; i++) {
     const sessionIndex = i + 1;
     const isCut = cutLevels.includes(sessionIndex);
     
@@ -80,7 +90,7 @@ async function updateStats() {
   await user.save();
 
   // Fetch from DB again to verify
-  const updatedUser = await User.findOne({ username: 'CLM671299' });
+  const updatedUser = await User.findOne({ username: 'CLM423643' });
   if (updatedUser) {
     console.log("\n✅ User successfully updated!");
     console.log(`- Username: ${updatedUser.username}`);

@@ -23,13 +23,8 @@ async function updateStats() {
   console.log(`- Current totalIncome: ${user.totalIncome}`);
   console.log(`- Current totalTeam: L:${user.totalTeam?.left}, R:${user.totalTeam?.right}`);
 
-  // 1. Ensure the tree size left is at least 45 to support 41 sessions (37 paid + 4 cut)
-  user.totalTeam = {
-    left: 45,
-    right: 52
-  };
-
-  // 2. Generate exactly 41 sessionBasedIncome records
+  // 1. Maintain totalTeam at L:45, R:52
+  // 2. Generate exactly 37 sessionBasedIncome records
   // We'll preserve the existing 3 records (index 0, 1, 2)
   const sessions: any[] = [];
   
@@ -61,11 +56,11 @@ async function updateStats() {
     processed: true
   });
 
-  // Generate sessions 4 to 41
+  // Generate sessions 4 to 37
   const cutLevels = [3, 6, 9, 12];
   let currentDate = new Date("2026-05-24T16:28:35.177Z");
 
-  for (let i = 3; i < 41; i++) {
+  for (let i = 3; i < 37; i++) {
     const sessionIndex = i + 1;
     const isCut = cutLevels.includes(sessionIndex);
     
@@ -85,15 +80,13 @@ async function updateStats() {
   // Set the modified sessions to the user doc
   user.sessionBasedIncome = sessions;
 
-  // Let's force basicPairs to 41
-  user.basicPairs = 41;
+  // Let's force basicPairs to 37
+  user.basicPairs = 37;
 
-  // 3. Keep boosterMatchingRecords as they are (1 record of 1000)
-  // Ensure the fields are marked modified
-  user.markModified('totalTeam');
+  // Mark modified
   user.markModified('sessionBasedIncome');
 
-  console.log("\nSaving user with updated sessionBasedIncome and totalTeam...");
+  console.log("\nSaving user with updated sessionBasedIncome...");
   await user.save();
 
   // Fetch from DB again to verify

@@ -8,10 +8,10 @@ import User from '../models/User';
 
 async function findDownline() {
   await connectDB();
-  const user = await User.findOne({ username: 'CLM510248' });
+  const user = await User.findOne({ username: 'CLM972562' });
   
   if (!user) {
-    console.log("❌ User CLM510248 not found.");
+    console.log("❌ User CLM972562 not found.");
     process.exit(1);
   }
 
@@ -44,14 +44,10 @@ async function findDownline() {
       for (const d of root.descendants) {
         console.log(`- ${d.username} (${d.fullName}), isBooster: ${d.isBooster}, placementId: ${d.placementId}, placementPosition: ${d.placementPosition}`);
       }
-    } else {
-      console.log("Left root not found in DB.");
     }
-  } else {
-    console.log("No left child placed yet.");
   }
 
-  // Let's check descendants on the right side as well for comparison
+  // Let's check descendants on the right side as well
   if (user.rightChild) {
     console.log(`\n--- Descendants on Right Side (under placement ${user.rightChild}) ---`);
     const rightDescendants = await User.aggregate([

@@ -1,0 +1,120 @@
+import dotenv from 'dotenv';
+import path from 'path';
+
+dotenv.config({ path: 'c:/Users/Manas/Desktop/changelifemarketing/.env.local' });
+
+import { connectDB } from '../lib/database';
+import User from '../models/User';
+
+async function updateStats() {
+  await connectDB();
+  const user = await User.findOne({ username: 'CLM334978' });
+  
+  if (!user) {
+    console.log("❌ User CLM334978 not found.");
+    process.exit(1);
+  }
+
+  console.log("Current user details:");
+  console.log(`- Username: ${user.username}`);
+  console.log(`- FullName: ${user.fullName}`);
+  console.log(`- Current basicIncome: ${user.basicIncome}`);
+  console.log(`- Current boosterMatchingIncome: ${user.boosterMatchingIncome}`);
+  console.log(`- Current totalIncome: ${user.totalIncome}`);
+  console.log(`- Current totalTeam: L:${user.totalTeam?.left}, R:${user.totalTeam?.right}`);
+
+  // 1. Ensure the tree size left is at least 45 to support 41 sessions (37 paid + 4 cut)
+  user.totalTeam = {
+    left: 45,
+    right: 52
+  };
+
+  // 2. Generate exactly 41 sessionBasedIncome records
+  // We'll preserve the existing 3 records (index 0, 1, 2)
+  const sessions: any[] = [];
+  
+  // Existing session 1
+  sessions.push({
+    date: new Date("2026-05-16T17:51:07.740Z"),
+    sessionType: "evening",
+    pairs: 1,
+    netIncome: 1000,
+    processed: true
+  });
+  
+  // Existing session 2
+  sessions.push({
+    date: new Date("2026-05-23T16:41:01.019Z"),
+    sessionType: "evening",
+    pairs: 1,
+    netIncome: 1000,
+    processed: true
+  });
+
+  // Existing session 3 (Cut)
+  sessions.push({
+    date: new Date("2026-05-24T16:28:35.177Z"),
+    sessionType: "evening",
+    pairs: 1,
+    netIncome: 0,
+    description: "Basic Session #3 Cut",
+    processed: true
+  });
+
+  // Generate sessions 4 to 41
+  const cutLevels = [3, 6, 9, 12];
+  let currentDate = new Date("2026-05-24T16:28:35.177Z");
+
+  for (let i = 3; i < 41; i++) {
+    const sessionIndex = i + 1;
+    const isCut = cutLevels.includes(sessionIndex);
+    
+    // Increment date by 12 hours for each session
+    currentDate = new Date(currentDate.getTime() + 12 * 60 * 60 * 1000);
+    
+    sessions.push({
+      date: new Date(currentDate),
+      sessionType: sessionIndex % 2 === 0 ? "evening" : "morning",
+      pairs: 1,
+      netIncome: isCut ? 0 : 1000,
+      description: isCut ? `Basic Session #${sessionIndex} Cut` : "Binary Income",
+      processed: true
+    });
+  }
+
+  // Set the modified sessions to the user doc
+  user.sessionBasedIncome = sessions;
+
+  // Let's force basicPairs to 41
+  user.basicPairs = 41;
+
+  // 3. Keep boosterMatchingRecords as they are (1 record of 1000)
+  // Ensure the fields are marked modified
+  user.markModified('totalTeam');
+  user.markModified('sessionBasedIncome');
+
+  console.log("\nSaving user with updated sessionBasedIncome and totalTeam...");
+  await user.save();
+
+  // Fetch from DB again to verify
+  const updatedUser = await User.findOne({ username: 'CLM334978' });
+  if (updatedUser) {
+    console.log("\n✅ User successfully updated!");
+    console.log(`- Username: ${updatedUser.username}`);
+    console.log(`- FullName: ${updatedUser.fullName}`);
+    console.log(`- New basicIncome: ${updatedUser.basicIncome}`);
+    console.log(`- New boosterMatchingIncome: ${updatedUser.boosterMatchingIncome}`);
+    console.log(`- New totalIncome: ${updatedUser.totalIncome}`);
+    console.log(`- New basicPairs count: ${updatedUser.basicPairs}`);
+    console.log(`- New sessionBasedIncome length: ${updatedUser.sessionBasedIncome?.length}`);
+    console.log(`- New basicIncomeRecords length: ${updatedUser.basicIncomeRecords?.length}`);
+    console.log(`- New totalTeam: L:${updatedUser.totalTeam?.left}, R:${updatedUser.totalTeam?.right}`);
+  }
+
+  process.exit(0);
+}
+
+updateStats().catch(err => {
+  console.error(err);
+  process.exit(1);
+});

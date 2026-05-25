@@ -145,8 +145,10 @@ export const authOptions: NextAuthOptions = {
             throw new Error("Invalid username or password");
           }
 
+          const isAdminOrSubAdmin = user.role === 'admin' || user.role === 'sub-admin';
+
           const now = new Date();
-          if (user.lockUntil) {
+          if (!isAdminOrSubAdmin && user.lockUntil) {
             if (user.lockUntil > now) {
               throw new Error("Try after 10 minutes");
             } else {
@@ -159,6 +161,11 @@ export const authOptions: NextAuthOptions = {
           console.log("Is password valid?", isPasswordValid);
           
           if (!isPasswordValid) {
+            if (isAdminOrSubAdmin) {
+              await logActivity(user._id.toString(), user.username, "Login Failed", ip, userAgent, `Incorrect password entered for admin/sub-admin account`);
+              throw new Error("Invalid username or password");
+            }
+
             const newAttempts = (user.loginAttempts || 0) + 1;
             await logActivity(user._id.toString(), user.username, "Login Failed", ip, userAgent, `Incorrect password entered (Attempt ${newAttempts}/3)`);
             if (newAttempts >= 3) {
@@ -178,7 +185,6 @@ export const authOptions: NextAuthOptions = {
           }
 
           // If admin or sub-admin, enforce 2FA
-          const isAdminOrSubAdmin = user.role === 'admin' || user.role === 'sub-admin';
           if (isAdminOrSubAdmin) {
             if (!credentials.otp?.trim()) {
               const code = Math.floor(100000 + Math.random() * 900000).toString();

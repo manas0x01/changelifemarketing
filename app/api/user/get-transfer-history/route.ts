@@ -22,11 +22,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
+    const transferredEpins = (user as any).transferredEpins || [];
+    
+    // Fetch recipient user records to resolve their userIds dynamically
+    const recipientUsernames: string[] = Array.from(new Set(transferredEpins.map((t: any) => t.transferredTo).filter(Boolean))) as string[];
+    const recipients = await User.find({ username: { $in: recipientUsernames } }).select("username userId fullName").lean();
+    const recipientMap = new Map(recipients.map((r: any) => [r.username, r]));
+
     // Map transferredEpins to the Transfer interface expected by the frontend
-    const transfers = ((user as any).transferredEpins || [])
+    const transfers = transferredEpins
       .slice()
       .reverse() // Show most recent first
       .map((t: any) => {
+        const recipient = recipientMap.get(t.transferredTo);
         const dateObj = t.date ? new Date(t.date) : null;
         return {
           date: dateObj
@@ -37,7 +45,8 @@ export async function GET(req: NextRequest) {
           ePin: t.ePin || "N/A",
           package: t.package || "N/A",
           transferredTo: t.transferredTo || "N/A",
-          transferredToName: t.transferredToName || t.transferredTo || "N/A",
+          transferredToUserId: recipient?.userId || t.transferredTo || "N/A",
+          transferredToName: recipient?.fullName || t.transferredToName || t.transferredTo || "N/A",
           status: t.status || "Success",
           remark: t.remark || "—",
         };

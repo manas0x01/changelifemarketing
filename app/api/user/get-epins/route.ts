@@ -53,7 +53,14 @@ async function handleRequest(req: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const availableEPins = (user.ePins || [])
+    const ePinsRaw = user.ePins || [];
+
+    // Fetch recipient user records to resolve their userIds dynamically
+    const recipientUsernames: string[] = Array.from(new Set(ePinsRaw.map((p: any) => p.transferredTo).filter(Boolean))) as string[];
+    const recipients = await User.find({ username: { $in: recipientUsernames } }).select("username userId fullName").lean();
+    const recipientMap = new Map(recipients.map((r: any) => [r.username, r]));
+
+    const availableEPins = ePinsRaw
       .filter((pin: any) => pin.status === 'Active' || !pin.status)
       .map((pin: any) => {
         if (typeof pin === 'string') return pin;
@@ -61,16 +68,19 @@ async function handleRequest(req: NextRequest) {
         return pin;
       });
 
-    const allEPins = (user.ePins || []).map((pin: any, index: number) => ({
-      srNo: index + 1,
-      ePin: pin.pin,
-      package: pin.packageName || 'EPIN',
-      status: pin.status || 'Active',
-      transferredTo: pin.transferredTo || 'N/A',
-      transferredToName: pin.transferredToName || 'N/A',
-      transferredDate: pin.transferDate ? new Date(pin.transferDate).toLocaleDateString('en-GB') : 'N/A',
-      usedDate: pin.usedDate ? new Date(pin.usedDate).toLocaleDateString('en-GB') : undefined,
-    }));
+    const allEPins = ePinsRaw.map((pin: any, index: number) => {
+      const recipient = recipientMap.get(pin.transferredTo);
+      return {
+        srNo: index + 1,
+        ePin: pin.pin,
+        package: pin.packageName || 'EPIN',
+        status: pin.status || 'Active',
+        transferredTo: recipient?.userId || pin.transferredTo || 'N/A',
+        transferredToName: recipient?.fullName || pin.transferredToName || 'N/A',
+        transferredDate: pin.transferDate ? new Date(pin.transferDate).toLocaleDateString('en-GB') : 'N/A',
+        usedDate: pin.usedDate ? new Date(pin.usedDate).toLocaleDateString('en-GB') : undefined,
+      };
+    });
 
     console.log('📌 [GET-EPINS] All PINs count:', user.ePins?.length ?? 0);
     console.log('📌 [GET-EPINS] Available E-PINs:', availableEPins);

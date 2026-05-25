@@ -15,6 +15,7 @@ interface Transfer {
   ePin: string;
   package: string;
   transferredTo: string;
+  transferredToUserId?: string;
   transferredToName: string;
   status: "Success" | "Failed" | "Pending";
   remark: string;
@@ -688,7 +689,14 @@ export default function TransferEPinPage() {
                           <td>{t.time}</td>
                           <td>{t.ePin}</td>
                           <td>{t.package}</td>
-                          <td>{t.transferredToName}</td>
+                          <td>
+                            <div style={{ display: "flex", flexDirection: "column" }}>
+                              <span style={{ fontWeight: 600 }}>{t.transferredToName}</span>
+                              <span style={{ fontSize: "11px", color: "rgba(255, 233, 124, 0.6)", marginTop: "2px" }}>
+                                ID: {t.transferredToUserId || t.transferredTo}
+                              </span>
+                            </div>
+                          </td>
                           <td>
                             <span className={`status-${t.status.toLowerCase()}`}>
                               {t.status}

@@ -482,7 +482,7 @@ export default function Login() {
         /* ── Captcha ── */
         .captcha-label {
           font-size: 12px;
-          font-weight: 600;
+          font-weight: 800;
           color: #e53935;
           margin-bottom: 6px;
           display: flex;

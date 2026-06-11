@@ -401,8 +401,8 @@ export default function ProductsPage() {
                     delay: 0.1,
                   },
                   {
-                    name: 'Nari Suraksha Ultra Thin Sanitary Pads',
-                    desc: 'Premium comfort and protection for active women',
+                    name: 'Immunity Booster Drops',
+                    desc: 'Strengthens immune system and enhances overall health',
                     delay: 0.2,
                   },
                 ].map((item) => (

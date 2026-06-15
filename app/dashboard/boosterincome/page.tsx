@@ -13,7 +13,7 @@ interface IncomeRow {
   pairCount: number;
   date: string;
   description: string;
-  status: "Paid" | "Pending" | "Hold";
+  status: "Paid" | "Pending" | "Hold" | "Released";
 }
 
 const statusColor: Record<string, string> = {

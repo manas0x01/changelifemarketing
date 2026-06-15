@@ -32,19 +32,28 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Get basic income records
-    const incomeRecords = user.basicIncomeRecords || [];
+    // Get basic income records from sessionBasedIncome (more accurate)
+    const sessionRecords = user.sessionBasedIncome || [];
 
-    // Format records for frontend
-    const formattedRecords = incomeRecords.map((record: any, index: number) => ({
-      srNo: record.srNo || index + 1,
-      amount: `₹${record.amount || 0}`,
-      rawAmount: record.amount || 0,
-      pairCount: record.pairCount || 1,
-      date: record.date ? new Date(record.date).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB'),
-      description: record.description || "Pair completed",
-      status: (record.status as "Paid" | "Pending" | "Hold") || "Paid",
-    }));
+    // Format records for frontend - show actual income only
+    const formattedRecords = sessionRecords.map((session: any, index: number) => {
+      const dateStr = session.date ? new Date(session.date).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
+      const sessionNum = index + 1;
+      
+      // Check if this is a cut session (0 income but has pairs)
+      const isCut = session.netIncome === 0 && session.pairs > 0;
+      const description = isCut ? `Binary Income (Cut #${sessionNum})` : "Binary Income";
+      
+      return {
+        srNo: index + 1,
+        amount: `₹${session.netIncome || 0}`,
+        rawAmount: session.netIncome || 0,
+        pairCount: session.pairs || 0,
+        date: dateStr,
+        description: description,
+        status: "Paid"
+      };
+    });
 
     return NextResponse.json({
       success: true,

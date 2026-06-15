@@ -14,26 +14,36 @@ export async function GET(req: NextRequest) {
 
     await connectDB();
 
-    const user = await User.findOne({ username: session.user.username }).select("boosterIncomeRecords");
+    const user = await User.findOne({ username: session.user.username });
 
     if (!user) {
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
-    const formattedData = (user.boosterIncomeRecords || []).map((record: any, index: number) => {
+    // Get booster matching records (actual data source)
+    const matchingRecords = user.boosterMatchingRecords || [];
+
+    const formattedData = matchingRecords.map((record: any, index: number) => {
       let dateStr = "N/A";
       if (record.date) {
         const d = new Date(record.date);
         dateStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
       }
 
+      const paidPairs = record.paidPairs || 0;
+      const totalPairs = record.pairsMatched || 0;
+
+      // Check if cap was applied (more pairs matched than paid)
+      const isCapped = totalPairs > paidPairs;
+      const description = isCapped ? `Booster Matching Income (Capped)` : `Booster Matching Income`;
+
       return {
-        srNo: record.srNo || index + 1,
-        amount: `₹${(record.amount || 0).toLocaleString("en-IN")}`,
-        rawAmount: record.amount || 0,
-        pairCount: record.pairCount || 0,
+        srNo: index + 1,
+        amount: `₹${(paidPairs * 1000).toLocaleString("en-IN")}`,
+        rawAmount: paidPairs * 1000,
+        pairCount: paidPairs,
         date: dateStr,
-        description: record.description || "Booster Matching Income",
+        description: description,
         status: record.status || "Paid"
       };
     });

@@ -42,6 +42,8 @@ export default function BoosterCountingReportPage() {
         const result = await res.json();
         if (result.success && result.data) {
           setAllData(result.data);
+          setFiltered(result.data.slice(0, 20));
+          setHasFiltered(true);
         } else {
           setError(result.error || result.message || 'Failed to fetch records');
         }

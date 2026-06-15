@@ -46,9 +46,13 @@ export default function BoosterIncomePage() {
         const result = await response.json();
         if (result.success && result.data) {
           setAllIncomeRecords(result.data);
+          setFiltered(result.data.slice(0, 20));
+          setHasFiltered(true);
         } else if (result.data) {
           // Support both old and new API format
           setAllIncomeRecords(result.data);
+          setFiltered(result.data.slice(0, 20));
+          setHasFiltered(true);
         } else {
           setError(result.error || result.message || "Failed to fetch income data");
         }

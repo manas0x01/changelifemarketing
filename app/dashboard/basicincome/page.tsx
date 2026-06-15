@@ -54,6 +54,10 @@ export default function BasicIncomePage() {
           console.log(`  ✅ Income records found: ${result.data.length} records`);
           console.log(`    📊 Sample record:`, result.data[0]);
           setAllIncomeRecords(result.data);
+          setFiltered(result.data.slice(0, 20));
+          setHasFiltered(true);
+          const total = result.data.slice(0, 20).reduce((sum: number, r: any) => sum + (r.rawAmount || 0), 0);
+          setTotalAmount(total);
           console.log('  💾 State updated with income data');
         } else {
           const errorMsg = result.error || "Failed to fetch income data";

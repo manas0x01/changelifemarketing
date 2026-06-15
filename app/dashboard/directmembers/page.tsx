@@ -39,7 +39,10 @@ export default function DirectMembersPage() {
         const result = await response.json();
         
         if (result.success) {
-          setAllMembers(result.data || []);
+          const members = result.data || [];
+          setAllMembers(members);
+          setFiltered(members.slice(0, 20));
+          setHasFiltered(true);
         } else {
           setError(result.error || 'Failed to fetch members');
         }

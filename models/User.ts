@@ -632,14 +632,80 @@ userSchema.pre('save', async function (this: IUser) {
     // 2.5 RETROACTIVE SYNC FOR BROKEN ACCOUNTS (Jumpstart)
     // If user has NO income records but has a tree, attempt to match the first pair.
     if ((this.basicIncome === 0 || !this.sessionBasedIncome || this.sessionBasedIncome.length === 0) && Math.min(totalLeft, totalRight) > 0) {
-      console.log(`[SELF-HEALING] User ${this.username} has potential pairs but no income. Attempting retroactive match.`);
-      const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
-      // Force sessionTeam to have at least 1,1 to trigger the match if it's currently empty
-      if (!this.sessionTeam) this.sessionTeam = { left: 0, right: 0 };
-      if (this.sessionTeam.left === 0) this.sessionTeam.left = 1;
-      if (this.sessionTeam.right === 0) this.sessionTeam.right = 1;
+      console.log(`[SELF-HEALING] User ${this.username} has potential pairs but no income. Checking if there is a valid same-session pair.`);
+      
+      const leftChild = this.leftChild;
+      const rightChild = this.rightChild;
+      let hasValidPair = false;
+      
+      if (leftChild && rightChild) {
+        // Fetch all descendants in the left branch
+        const leftBranch = await (this.constructor as any).aggregate([
+          { $match: { username: leftChild } },
+          {
+            $graphLookup: {
+              from: "users",
+              startWith: "$username",
+              connectFromField: "username",
+              connectToField: "placementId",
+              as: "descendants"
+            }
+          }
+        ]);
+        
+        // Fetch all descendants in the right branch
+        const rightBranch = await (this.constructor as any).aggregate([
+          { $match: { username: rightChild } },
+          {
+            $graphLookup: {
+              from: "users",
+              startWith: "$username",
+              connectFromField: "username",
+              connectToField: "placementId",
+              as: "descendants"
+            }
+          }
+        ]);
+        
+        const leftMembers = leftBranch.length > 0 ? [leftBranch[0], ...leftBranch[0].descendants] : [];
+        const rightMembers = rightBranch.length > 0 ? [rightBranch[0], ...rightBranch[0].descendants] : [];
+        
+        if (leftMembers.length > 0 && rightMembers.length > 0) {
+          const getSessionKey = (m: any) => {
+            const dateStr = m.joiningDate ? m.joiningDate : (m.createdAt ? new Date(m.createdAt).toISOString().split('T')[0] : '');
+            let sessionType = m.lastSessionType;
+            if (!sessionType && m.createdAt) {
+              const hour = new Date(m.createdAt).getHours();
+              sessionType = hour < 12 ? 'morning' : 'evening';
+            }
+            sessionType = (sessionType || 'morning').toLowerCase();
+            return `${dateStr}_${sessionType}`;
+          };
+          
+          const leftSessionKeys = new Set(leftMembers.map(getSessionKey));
+          for (const rMember of rightMembers) {
+            const rKey = getSessionKey(rMember);
+            if (leftSessionKeys.has(rKey)) {
+              console.log(`[SELF-HEALING] Found matching retroactive session key: ${rKey} (Left: ${leftMembers.find(l => getSessionKey(l) === rKey)?.username}, Right: ${rMember.username})`);
+              hasValidPair = true;
+              break;
+            }
+          }
+        }
+      }
+      
+      if (hasValidPair) {
+        console.log(`[SELF-HEALING] Valid retroactive pair found for ${this.username}. Attempting retroactive match.`);
+        const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
+        // Force sessionTeam to have at least 1,1 to trigger the match if it's currently empty
+        if (!this.sessionTeam) this.sessionTeam = { left: 0, right: 0 };
+        if (this.sessionTeam.left === 0) this.sessionTeam.left = 1;
+        if (this.sessionTeam.right === 0) this.sessionTeam.right = 1;
 
-      await calculateBasicIncome(this, this.lastSessionType || (new Date().getHours() < 12 ? "morning" : "evening"), this.lastSessionDate || new Date());
+        await calculateBasicIncome(this, this.lastSessionType || (new Date().getHours() < 12 ? "morning" : "evening"), this.lastSessionDate || new Date());
+      } else {
+        console.log(`[SELF-HEALING] No same-day, same-session downline pairs found for ${this.username}. Bypassing retroactive match.`);
+      }
     }
 
     // 3. SESSION TRANSITION HEALING (Real-time clock based)

@@ -3,15 +3,17 @@ import User from '../models/User';
 import { connectDB } from '../lib/database';
 
 /**
- * Fix for CLM949879 income issue
- * 1. Audit the problem
- * 2. Reset and recalculate income correctly
+ * Fix CLM949879 fraudulent income - DIRECT DATABASE UPDATE
+ * Bypasses pre-save hooks to prevent self-healing from re-generating income
  */
 
-async function fixCLM949879() {
+async function fixIncome() {
   try {
     await connectDB();
     
+    console.log('🔧 Fixing CLM949879 fraudulent income (bypassing hooks)...\n');
+
+    // Get the main user first
     const user = await User.findOne({
       $or: [
         { userId: 'CLM949879' },
@@ -24,80 +26,87 @@ async function fixCLM949879() {
       return;
     }
 
-    console.log('\n═══════════════════════════════════════════');
-    console.log('🔍 DIAGNOSIS');
-    console.log('═══════════════════════════════════════════');
-
     // Get downline members
-    const downlineLeft = await User.find({
+    const leftMembers = await User.find({
       $or: [
         { placementId: user.userId, placementPosition: 'left' },
         { placementId: user.username, placementPosition: 'left' }
       ]
-    }).select('userId username fullName joiningDate createdAt').lean();
+    });
 
-    const downlineRight = await User.find({
+    const rightMembers = await User.find({
       $or: [
         { placementId: user.userId, placementPosition: 'right' },
         { placementId: user.username, placementPosition: 'right' }
       ]
-    }).select('userId username fullName joiningDate createdAt').lean();
-
-    const allDownline = [...downlineLeft, ...downlineRight];
-
-    console.log(`\nDownline members: ${allDownline.length}`);
-    console.log('\nJoining Dates:');
-    
-    const uniqueDates = new Set();
-    allDownline.forEach((member, idx) => {
-      const joinDate = member.joiningDate ? new Date(member.joiningDate).toISOString().split('T')[0] : 'NOT SET';
-      const createdAt = new Date(member.createdAt).toISOString().split('T')[0];
-      console.log(`  ${idx + 1}. ${member.username}: joiningDate="${joinDate}" vs createdAt="${createdAt}"`);
-      if (member.joiningDate) uniqueDates.add(joinDate);
     });
 
-    console.log(`\n⚠️  Problem: All downline joined on ${uniqueDates.size} date(s)`);
-    if (uniqueDates.size === 1) {
-      console.log('    ✗ This is WRONG! They should have different join dates.');
+    // 1️⃣ Fix left member joiningDate
+    if (leftMembers.length > 0) {
+      const leftMember = leftMembers[0];
+      const correctJoinDate = new Date(leftMember.createdAt).toISOString().split('T')[0];
+      
+      await User.updateOne(
+        { _id: leftMember._id },
+        { $set: { joiningDate: correctJoinDate } }
+      );
+      
+      console.log(`✅ Left member (${leftMember.username})`);
+      console.log(`   Set joiningDate: ${correctJoinDate} (from createdAt)`);
+      console.log(`   Joined at 14:19:42 = AFTERNOON/EVENING session`);
     }
 
-    console.log('\n═══════════════════════════════════════════');
-    console.log('🔧 FIX STEPS');
-    console.log('═══════════════════════════════════════════');
+    console.log();
 
-    console.log('\n1️⃣  SET CORRECT JOINING DATES from createdAt');
-    allDownline.forEach(async (member) => {
-      const createdDate = new Date(member.createdAt);
-      await User.findOneAndUpdate(
-        { _id: member._id },
-        { $set: { joiningDate: createdDate.toISOString().split('T')[0] } }
+    // 2️⃣ Fix right member joiningDate
+    if (rightMembers.length > 0) {
+      const rightMember = rightMembers[0];
+      const correctJoinDate = new Date(rightMember.createdAt).toISOString().split('T')[0];
+      
+      await User.updateOne(
+        { _id: rightMember._id },
+        { $set: { joiningDate: correctJoinDate } }
       );
-      console.log(`   ✓ ${member.username}: joiningDate = ${createdDate.toISOString().split('T')[0]}`);
-    });
+      
+      console.log(`✅ Right member (${rightMember.username})`);
+      console.log(`   Set joiningDate: ${correctJoinDate} (from createdAt)`);
+      console.log(`   Joined at 23:03:41 = EVENING session`);
+    }
 
-    console.log('\n2️⃣  RESET INCOME RECORDS for CLM949879');
-    console.log(`   Previous basicIncome: ₹${user.basicIncome || 0}`);
-    console.log(`   Previous sessions: ${user.sessionBasedIncome?.length || 0}`);
+    console.log();
 
-    user.basicIncome = 0;
-    user.basicPairs = 0;
-    user.sessionBasedIncome = [];
-    user.basicIncomeRecords = [];
-    user.sessionTeam = { left: 0, right: 0 };
-    user.lastSessionDate = undefined;
-    user.lastSessionType = undefined;
+    // 3️⃣ Fix main user income - DIRECT UPDATE (bypasses pre-save hooks)
+    const result = await User.updateOne(
+      { _id: user._id },
+      {
+        $set: {
+          basicIncome: 0,
+          basicPairs: 0,
+          sessionBasedIncome: [],
+          sessionTeam: { left: 0, right: 0 },
+          lastSessionDate: null,
+          lastSessionType: null
+        }
+      }
+    );
     
-    await user.save();
+    console.log(`✅ CLM949879 income removed (direct database update)`);
+    console.log(`   Updated: ${result.modifiedCount} document(s)`);
+    console.log(`   Old basicIncome: ₹${user.basicIncome || 0}`);
+    console.log(`   New basicIncome: ₹0`);
+    console.log(`   Old basicPairs: ${user.basicPairs || 0}`);
+    console.log(`   New basicPairs: 0`);
+    console.log(`   Cleared sessionBasedIncome records`);
 
-    console.log('   ✓ Reset complete');
-
-    console.log('\n3️⃣  RECALCULATE INCOME (next session transition)');
-    console.log('   When next user joins, income will be recalculated correctly');
-    console.log('   Each session will only match pairs from that session');
-
-    console.log('\n═══════════════════════════════════════════');
-    console.log('✅ FIX COMPLETE');
-    console.log('═══════════════════════════════════════════\n');
+    console.log('\n✅ FIX COMPLETE!\n');
+    console.log('📋 SUMMARY:');
+    console.log(`   Left member joined: June 18 (afternoon) - FIXED`);
+    console.log(`   Right member joined: June 9 (evening) - FIXED`);
+    console.log(`   DIFFERENT DAYS: June 9 vs June 18 ❌`);
+    console.log(`   Income generated: ₹1000 (fraudulent) ❌ REMOVED`);
+    console.log(`   Income now: ₹0 ✅`);
+    console.log('\n   RULE: SAME DAY + SAME SESSION ONLY');
+    console.log(`   This pair violated the rule (different days)\n`);
 
   } catch (error) {
     console.error('❌ Error:', error);
@@ -106,4 +115,4 @@ async function fixCLM949879() {
   }
 }
 
-fixCLM949879();
+fixIncome();

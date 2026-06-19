@@ -496,6 +496,20 @@ userSchema.pre('save', async function (this: IUser) {
     console.error('❌ [PRE-SAVE] Error ensuring userId fallback:', err);
   }
 
+  // 🔹 ENSURE joiningDate is always set (fixes session tracking bug)
+  try {
+    if (!this.joiningDate || this.joiningDate.trim() === '') {
+      const joinDate = new Date().toISOString().split('T')[0];
+      console.log(`📅 [PRE-SAVE] joiningDate missing for ${this.username} — setting to ${joinDate}`);
+      this.joiningDate = joinDate;
+      if (typeof (this as any).markModified === 'function') {
+        try { (this as any).markModified('joiningDate'); } catch (e) { }
+      }
+    }
+  } catch (err) {
+    console.error('❌ [PRE-SAVE] Error ensuring joiningDate:', err);
+  }
+
   // 🔹 SELF-HEALING BOOSTER & INCOME SYNC
   try {
     const totalLeft = this.totalTeam?.left || 0;

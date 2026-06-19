@@ -271,12 +271,13 @@ export async function POST(req: NextRequest) {
       placementPosition,
 
       registeredEPIN: epin,
-      joiningDate: "",
+      joiningDate: new Date().toISOString().split('T')[0], // 🔧 FIX: Always set joining date to today
 
       leftChild: "",
       rightChild: "",
 
       totalTeam: { left: 0, right: 0 },
+      sessionTeam: { left: 0, right: 0 }, // 🔧 FIX: Initialize sessionTeam to ensure proper session tracking
 
       basicIncome: 0,
       boosterMatchingIncome: 0,

@@ -1,7 +1,16 @@
 import User from "../models/User";
 import { checkBoosterQualification } from "./checkBoosterQualification";
+import { validateSessionBeforeIncome } from "./sessionValidation";
 
 /**
+ * 🔐 CRITICAL RULE: Income ONLY when SAME DAY + SAME SESSION
+ * 
+ * Examples:
+ * ✅ Day 1 Morning + Day 1 Morning = INCOME POSSIBLE
+ * ✅ Day 2 Evening + Day 2 Evening = INCOME POSSIBLE
+ * ❌ Day 1 Morning + Day 2 Morning = NO INCOME (different days)
+ * ❌ Day 1 Morning + Day 1 Evening = NO INCOME (different sessions)
+ * 
  * Calculates basic income based on session matching with flush-out rules.
  * 1 User = 1000 BV
  * 1 Pair (1000L + 1000R) = 1000 Rupees
@@ -32,6 +41,30 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     if (pairsInSession === 0) {
       return { success: true, income: 0, pairs: 0 };
     }
+
+    // � CRITICAL VALIDATION: Ensure same day + same session before generating income
+    const validationResult = validateSessionBeforeIncome(
+      user.username,
+      sessionLeft,
+      sessionRight,
+      user.joiningDate,
+      user.lastSessionDate,
+      user.lastSessionType
+    );
+
+    if (!validationResult.valid) {
+      console.error(`❌ [INCOME BLOCKED] ${user.username}: ${validationResult.reason}`);
+      return {
+        success: false,
+        income: 0,
+        pairs: 0,
+        reason: `Income calculation blocked: ${validationResult.reason}. Rule: SAME DAY + SAME SESSION ONLY.`
+      };
+    }
+
+    // �🔧 AUDIT LOG: Log when pairs are being matched
+    console.log(`[BASIC INCOME] ${user.username}: Matching ${pairsInSession} pairs from sessionTeam (L:${sessionLeft}, R:${sessionRight}) on ${sessionDate.toISOString().split('T')[0]} ${sessionType}`);
+    console.log(`[BASIC INCOME] User history: Total pairs=${user.basicPairs || 0}, Total income=₹${user.basicIncome || 0}`);
 
     // 4. Update session history / records
     if (!user.sessionBasedIncome) user.sessionBasedIncome = [];

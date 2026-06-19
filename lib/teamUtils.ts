@@ -4,6 +4,7 @@ import { calculateBoosterIncome } from "./calculateBoosterIncome";
 import { calculateBoosterMatching } from "./calculateBoosterMatching";
 import { checkBoosterQualification } from "./checkBoosterQualification";
 import { checkAwardRank } from "./checkAwardRank";
+import { auditDownlineSessionSpread } from "./sessionValidation";
 
 /**
  * Recursively updates team counts for all ancestors up the tree.
@@ -55,6 +56,13 @@ export async function updateTeamCounts(
     if (!user.totalTeam) user.totalTeam = { left: 0, right: 0 };
     if (!user.sessionTeam) user.sessionTeam = { left: 0, right: 0 };
 
+    // 🔐 CRITICAL: Ensure joiningDate is always set (prevents session tracking bugs)
+    if (!user.joiningDate || user.joiningDate.trim() === '') {
+      const joinDate = new Date().toISOString().split('T')[0];
+      console.warn(`⚠️  [TEAM UTILS] ${user.username}: joiningDate was missing, setting to ${joinDate}`);
+      user.joiningDate = joinDate;
+    }
+
     const now = new Date();
     const currentHour = now.getHours();
     // IMPORTANT: Respect the user's manually set session type (from the 🔄 button).
@@ -67,6 +75,7 @@ export async function updateTeamCounts(
 
     if (sessionChanged) {
       console.log(`[TEAM UTILS] Session changed for ${user.username} (${user.lastSessionType} -> ${currentSessionType}). Finalizing old session counts.`);
+      console.log(`[TEAM UTILS] 📅 Last session: ${lastDateStr} ${user.lastSessionType}, Current: ${nowDateStr} ${currentSessionType}`);
       
       // Determine what session we are closing
       const previousSessionType = (user.lastSessionType || (currentHour < 12 ? "evening" : "morning")) as "morning" | "evening";
@@ -77,9 +86,17 @@ export async function updateTeamCounts(
 
       // FLASH OUT: Resetting sessionTeam effectively flashes out any unpaired BV for Basic users.
       // For Booster users, unpaired BV is already in boosterPairsCarryForward.
+      console.log(`[TEAM UTILS] 🔄 Flushing sessionTeam for ${user.username}: L:${user.sessionTeam?.left}, R:${user.sessionTeam?.right} → 0,0`);
+      console.log(`[TEAM UTILS] 🔐 SAME DAY + SAME SESSION RULE: New session started. sessionTeam reset for fresh pairing.`);
       user.sessionTeam = { left: 0, right: 0 };
       user.lastSessionType = currentSessionType as any;
       user.lastSessionDate = now;
+    } else {
+      // 🔧 SAFETY CHECK: Ensure sessionTeam is always initialized even if session didn't change
+      if (!user.sessionTeam) {
+        console.log(`[TEAM UTILS] ⚠️  sessionTeam was missing for ${user.username}, initializing`);
+        user.sessionTeam = { left: 0, right: 0 };
+      }
     }
 
     // Update the counts for the specific side (Basic Binary)

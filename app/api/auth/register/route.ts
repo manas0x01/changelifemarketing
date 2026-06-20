@@ -29,11 +29,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // 🔹 REGISTRATION FREEZE (12:00 - 12:10 AM/PM)
+    // 🔹 REGISTRATION FREEZE (12:00 - 12:10 AM/PM IST)
     const now = new Date();
-    const hour = now.getHours();
-    const min = now.getMinutes();
-    if ((hour === 12 && min >= 0 && min < 10) || (hour === 0 && min >= 0 && min < 10)) {
+    const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    const istHour = istDate.getUTCHours();
+    const istMin = istDate.getUTCMinutes();
+    if ((istHour === 12 && istMin >= 0 && istMin < 10) || (istHour === 0 && istMin >= 0 && istMin < 10)) {
       return NextResponse.json(
         { success: false, message: "Registration is frozen during session transition (12:00 - 12:10). Please try again after 12:10." },
         { status: 403 }

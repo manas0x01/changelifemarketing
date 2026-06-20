@@ -41,10 +41,10 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine current session type based on current time
+    // Determine current session type based on IST (UTC+5:30)
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentSessionType = currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
+    const istHour = new Date(now.getTime() + 5.5 * 60 * 60 * 1000).getUTCHours();
+    const currentSessionType = istHour >= 0 && istHour < 12 ? "morning" : "evening";
 
 
     // Check if sponsor has any children - verify they actually exist in DB

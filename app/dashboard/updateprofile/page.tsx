@@ -171,8 +171,9 @@ export default function EditProfilePage() {
             memberId: data.data.userId || data.data.username || "",
             joiningDate: data.data.joiningDate || (data.data.createdAt ? (() => {
               const d = new Date(data.data.createdAt);
-              const formatted = d.toLocaleString('en-GB', { hour12: false });
-              const session = d.getHours() < 12 ? "Morning" : "Evening";
+              const formatted = d.toLocaleString('en-GB', { timeZone: 'Asia/Kolkata', hour12: false });
+              const istHour = Number(d.toLocaleString('en-US', { timeZone: 'Asia/Kolkata', hour: 'numeric', hour12: false }));
+              const session = istHour < 12 ? "Morning" : "Evening";
               return `${formatted} (${session})`;
             })() : ""),
             sponsorId: data.data.sponsorId || "",

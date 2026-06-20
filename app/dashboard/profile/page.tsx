@@ -57,20 +57,34 @@ export default function ProfilePage() {
         const apiResponse = await response.json();
         const user = apiResponse.user;
         
-        // Format joining date to DD/MM/YYYY HH:MM:SS
+
         const formatDate = (dateString: string) => {
           if (!dateString) return "N/A";
+
+          // If it's a plain date string like "2026-06-20" (no time component), display as-is
+          if (typeof dateString === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+            const [y, m, d] = dateString.split('-');
+            return `${d}/${m}/${y}`;
+          }
+
           const date = new Date(dateString);
           if (isNaN(date.getTime())) return dateString;
-          const day = String(date.getDate()).padStart(2, '0');
-          const month = String(date.getMonth() + 1).padStart(2, '0');
-          const year = date.getFullYear();
-          const hours = String(date.getHours()).padStart(2, '0');
-          const minutes = String(date.getMinutes()).padStart(2, '0');
-          const seconds = String(date.getSeconds()).padStart(2, '0');
-          return `${day}/${month}/${year} ${hours}:${minutes}:${seconds}`;
+
+          // Convert to IST (UTC+5:30) and format in 12-hour AM/PM
+          const istDate = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+          const d = String(istDate.getUTCDate()).padStart(2, '0');
+          const m = String(istDate.getUTCMonth() + 1).padStart(2, '0');
+          const y = istDate.getUTCFullYear();
+          const rawH = istDate.getUTCHours();
+          const min = String(istDate.getUTCMinutes()).padStart(2, '0');
+          const s = String(istDate.getUTCSeconds()).padStart(2, '0');
+          const ampm = rawH >= 12 ? 'PM' : 'AM';
+          const h12 = rawH % 12 === 0 ? 12 : rawH % 12;
+          const h = String(h12).padStart(2, '0');
+
+          return `${d}/${m}/${y} ${h}:${min}:${s} ${ampm}`;
         };
-        
+
         const transformedData: ProfileData = {
           username: user.username || "N/A",
           userId: user.userId || user._id || "N/A",

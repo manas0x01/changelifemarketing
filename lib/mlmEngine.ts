@@ -3,7 +3,9 @@ import { calculateBasicIncome } from "./calculateBasicIncome";
 import { calculateBoosterMatching } from "./calculateBoosterMatching";
 import { checkBoosterQualification } from "./checkBoosterQualification";
 function getSessionType(date: Date) {
-  const hour = date.getHours();
+  // Use IST (UTC+5:30) for session determination
+  const istDate = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+  const hour = istDate.getUTCHours();
   return hour < 12 ? "morning" : "evening";
 }
 
@@ -48,9 +50,10 @@ export async function handleBinaryAndIncome(userId: any, position: "left" | "rig
   console.log('[MLM] handleBinaryAndIncome: user found', { username: user.username, userId: user._id });
   console.log('[MLM] handleBinaryAndIncome: before - basicIncome, basicPairs, isBooster, boosterMatchingIncome', { basicIncome: user.basicIncome, basicPairs: user.basicPairs, isBooster: user.isBooster, boosterMatchingIncome: user.boosterMatchingIncome });
 
-  // Get current time and session
+  // Get current time and session using IST (UTC+5:30)
   const now = new Date();
-  const currentSessionType = manualSessionType || (now.getHours() < 12 ? "morning" : "evening");
+  const istHour = new Date(now.getTime() + 5.5 * 60 * 60 * 1000).getUTCHours();
+  const currentSessionType = manualSessionType || (istHour < 12 ? "morning" : "evening");
 
   // Session flushing and tracking is now handled entirely within teamUtils.ts (updateTeamCounts)
 

@@ -17,13 +17,14 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Check if current time is during transition period (12:00 - 12:10)
+    // Check if current time is during transition period (12:00 - 12:10 IST)
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentMinute = now.getMinutes();
+    const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    const istHour = istDate.getUTCHours();
+    const istMinute = istDate.getUTCMinutes();
     
-    const isTransitionPeriod = (currentHour === 12 && currentMinute >= 0 && currentMinute < 10) || 
-                                (currentHour === 0 && currentMinute >= 0 && currentMinute < 10);
+    const isTransitionPeriod = (istHour === 12 && istMinute >= 0 && istMinute < 10) || 
+                                (istHour === 0 && istMinute >= 0 && istMinute < 10);
     
     const force = req.nextUrl.searchParams.get("force") === "true";
 
@@ -37,14 +38,14 @@ export async function POST(req: NextRequest) {
     await connectDB();
 
     // Determine session type to process: 
-    // If it's 12 PM (hour 12), we process the session that just finished: "morning"
-    // If it's 12 AM (hour 0), we process the session that just finished: "evening"
+    // If it's 12 PM (hour 12 IST), we process the session that just finished: "morning"
+    // If it's 12 AM (hour 0 IST), we process the session that just finished: "evening"
     // For anything between 1 AM and 11 AM, we assume it's a delayed "evening" transition for YESTERDAY
     // For anything between 1 PM and 11 PM, we assume it's a delayed "morning" transition for TODAY
-    const sessionToProcess: "morning" | "evening" = (currentHour >= 0 && currentHour < 12) ? "evening" : "morning";
+    const sessionToProcess: "morning" | "evening" = (istHour >= 0 && istHour < 12) ? "evening" : "morning";
     const nextSessionType: "morning" | "evening" = sessionToProcess === "morning" ? "evening" : "morning";
 
-    console.log(`[SESSION TRANSITION] Processing ${sessionToProcess} session (Time: ${currentHour}:${currentMinute})`);
+    console.log(`[SESSION TRANSITION] Processing ${sessionToProcess} session (Time IST: ${istHour}:${istMinute})`);
 
     // Get all users
     const users = await User.find({});
@@ -54,8 +55,8 @@ export async function POST(req: NextRequest) {
     let totalPairsFlushed = 0;
 
     const sessionDate = new Date();
-    // If we are processing "evening" session during early morning hours (0-11 AM), it belongs to YESTERDAY
-    if (sessionToProcess === "evening" && currentHour < 12) {
+    // If we are processing "evening" session during early morning hours (0-11 AM IST), it belongs to YESTERDAY
+    if (sessionToProcess === "evening" && istHour < 12) {
       sessionDate.setDate(sessionDate.getDate() - 1);
     }
 

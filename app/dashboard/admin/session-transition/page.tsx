@@ -18,22 +18,28 @@ export default function SessionTransitionPage() {
 
     const getCurrentTime = () => {
         const now = new Date();
-        return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+        const hh = String(istDate.getUTCHours() % 12 || 12).padStart(2, '0');
+        const mm = String(istDate.getUTCMinutes()).padStart(2, '0');
+        const ampm = istDate.getUTCHours() >= 12 ? "PM" : "AM";
+        return `${hh}:${mm} ${ampm} IST`;
     };
 
     const getCurrentSession = () => {
         const now = new Date();
-        const currentHour = now.getHours();
+        const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+        const currentHour = istDate.getUTCHours();
         return currentHour >= 0 && currentHour < 12 ? "Morning (12 AM - 12 PM)" : "Evening (12 PM - 12 AM)";
     };
 
     const isTransitionPeriod = () => {
         const now = new Date();
-        const currentHour = now.getHours();
-        const currentMinute = now.getMinutes();
+        const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+        const currentHour = istDate.getUTCHours();
+        const currentMinute = istDate.getUTCMinutes();
 
-        return (currentHour === 11 && currentMinute >= 50) ||
-            (currentHour === 23 && currentMinute >= 50);
+        return (currentHour === 12 && currentMinute >= 0 && currentMinute < 10) ||
+            (currentHour === 0 && currentMinute >= 0 && currentMinute < 10);
     };
 
     return (
@@ -243,7 +249,7 @@ export default function SessionTransitionPage() {
                                 <div className="info-card">
                                     <div className="info-label">Transition Period</div>
                                     <div className={`info-value ${isTransitionPeriod() ? 'status-active' : 'status-inactive'}`}>
-                                        {isTransitionPeriod() ? 'ACTIVE (11:50-12:00)' : 'INACTIVE'}
+                                        {isTransitionPeriod() ? 'ACTIVE (12:00 - 12:10 IST)' : 'INACTIVE'}
                                     </div>
                                 </div>
                             </div>

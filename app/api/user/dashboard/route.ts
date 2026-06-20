@@ -128,7 +128,7 @@ export async function GET(req: NextRequest) {
       username: user.username || "N/A",
       mobileNo: user.mobileNo || "N/A",
       email: user.email || "N/A",
-      joiningDate: user.joiningDate || user.createdAt || "N/A",
+      joiningDate: user.createdAt || user.joiningDate || "N/A",
     };
     const bankDetails = {
       accountHolderName: user.bankAccountDetails?.accountHolderName || user.fullName || "",

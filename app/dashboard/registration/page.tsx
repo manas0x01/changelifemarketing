@@ -234,13 +234,14 @@ function NewRegisterForm() {
   useEffect(() => {
     const checkFreeze = () => {
       const now = new Date();
-      const hour = now.getHours();
-      const min = now.getMinutes();
+      const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+      const hour = istDate.getUTCHours();
+      const min = istDate.getUTCMinutes();
 
-      // PM Freeze: 12:00 PM to 12:10 PM (hour 12)
+      // PM Freeze: 12:00 PM to 12:10 PM (hour 12 IST)
       const isPmFreeze = (hour === 12 && min >= 0 && min < 10);
 
-      // AM Freeze: 12:00 AM to 12:10 AM (hour 0)
+      // AM Freeze: 12:00 AM to 12:10 AM (hour 0 IST)
       const isAmFreeze = (hour === 0 && min >= 0 && min < 10);
 
       setRegistrationFrozen(isPmFreeze || isAmFreeze);
@@ -1621,7 +1622,16 @@ function NewRegisterForm() {
                 <div className="detail-row" style={{ borderTop: "1px solid rgba(255,233,124,0.15)", marginTop: "8px", paddingTop: "8px" }}>
                   <span className="detail-label" style={{ fontWeight: 700, color: "#ffe97c" }}>Registration Time</span>
                   <span className="detail-value" style={{ fontWeight: 700, color: "#ffe97c" }}>
-                    {newUserData.regDate ? `${String(newUserData.regDate.getDate()).padStart(2, '0')}/${String(newUserData.regDate.getMonth() + 1).padStart(2, '0')}/${newUserData.regDate.getFullYear()} ${String(newUserData.regDate.getHours()).padStart(2, '0')}:${String(newUserData.regDate.getMinutes()).padStart(2, '0')}:${String(newUserData.regDate.getSeconds()).padStart(2, '0')}` : "-"}
+                    {newUserData.regDate ? (() => {
+                      const d = new Date(newUserData.regDate);
+                      const istDate = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+                      const dateStr = `${String(istDate.getUTCDate()).padStart(2, '0')}/${String(istDate.getUTCMonth() + 1).padStart(2, '0')}/${istDate.getUTCFullYear()}`;
+                      const rawH = istDate.getUTCHours();
+                      const h12 = rawH % 12 === 0 ? 12 : rawH % 12;
+                      const ampm = rawH >= 12 ? 'PM' : 'AM';
+                      const timeStr = `${String(h12).padStart(2, '0')}:${String(istDate.getUTCMinutes()).padStart(2, '0')}:${String(istDate.getUTCSeconds()).padStart(2, '0')} ${ampm}`;
+                      return `${dateStr} ${timeStr} (IST)`;
+                    })() : "-"}
                   </span>
                 </div>
               </div>

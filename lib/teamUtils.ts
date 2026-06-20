@@ -64,10 +64,12 @@ export async function updateTeamCounts(
     }
 
     const now = new Date();
-    const currentHour = now.getHours();
+    // Use IST (UTC+5:30) for session determination
+    const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    const istHour = istNow.getUTCHours();
     // IMPORTANT: Respect the user's manually set session type (from the 🔄 button).
     // Only fall back to clock-based detection if the user has never set a session type.
-    const currentSessionType = (currentHour < 12 ? "morning" : "evening");
+    const currentSessionType = (istHour < 12 ? "morning" : "evening");
     const nowDateStr = now.toDateString();
     const lastDateStr = user.lastSessionDate ? new Date(user.lastSessionDate).toDateString() : "";
 
@@ -78,7 +80,7 @@ export async function updateTeamCounts(
       console.log(`[TEAM UTILS] 📅 Last session: ${lastDateStr} ${user.lastSessionType}, Current: ${nowDateStr} ${currentSessionType}`);
       
       // Determine what session we are closing
-      const previousSessionType = (user.lastSessionType || (currentHour < 12 ? "evening" : "morning")) as "morning" | "evening";
+      const previousSessionType = (user.lastSessionType || (istHour < 12 ? "evening" : "morning")) as "morning" | "evening";
 
       // Match for the session that just ended
       // This now handles both 1-pair (basic) and 10-pair (booster) binary logic

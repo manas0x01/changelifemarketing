@@ -21,13 +21,16 @@ import { validateSessionBeforeIncome } from "./sessionValidation";
  */
 export async function calculateBasicIncome(user: any, manualSessionType?: string, manualDate?: Date) {
   try {
-    const now = new Date();
-    const currentHour = now.getHours();
-    
-    // Determine the session type for the operation:
-    // If manualSessionType is provided, use it.
-    // Otherwise, use the current hour: 0-11 = morning, 12-23 = evening.
-    const sessionType: "morning" | "evening" = manualSessionType ? (manualSessionType as any) : (currentHour < 12 ? "morning" : "evening");
+    // Determine the session type based on Indian Standard Time (UTC+05:30)
+const now = new Date();
+const istOffsetMinutes = 5.5 * 60;
+const istDate = new Date(now.getTime() + istOffsetMinutes * 60 * 1000);
+const currentHour = istDate.getUTCHours(); // hour in IST
+const sessionType: "morning" | "evening" = manualSessionType
+  ? (manualSessionType as any)
+  : currentHour < 12
+  ? "morning"
+  : "evening";
 
     // Define the date for the session record
     const sessionDate = manualDate || new Date();

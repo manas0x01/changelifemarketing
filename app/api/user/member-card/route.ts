@@ -86,7 +86,7 @@ export async function POST(req: NextRequest) {
 
     const card = {
       sponsorId: user.sponsorId || "—",
-      joiningDate: user.joiningDate || user.createdAt || "",
+      joiningDate: user.createdAt || user.joiningDate || "",
       package: user.registeredPackage || "Standard",
       leftId: leftChild?.userId || leftChild?.username || "",
       rightId: rightChild?.userId || rightChild?.username || "",

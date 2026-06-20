@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
         email: user.email || "",
         mobileNo: user.mobileNo || "",
         role: user.role || "user",
-        joiningDate: user.joiningDate || user.createdAt,
+        joiningDate: user.createdAt || user.joiningDate,
         createdAt: user.createdAt,
         registeredPackage: user.registeredPackage || "",
         address: user.address || "",

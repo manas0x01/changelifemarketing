@@ -99,7 +99,7 @@ export async function GET(req: NextRequest) {
         pincode: user.pincode || "",
         nomineeName: user.nomineeName || "",
         nomineeRelation: user.nomineeRelation || "",
-        joiningDate: user.joiningDate || user.createdAt || "",
+        joiningDate: user.createdAt || user.joiningDate || "",
         sponsorId: user.sponsorId || "",
         sponsorName: user.sponsorName || "",
         placementId: user.placementId || "",

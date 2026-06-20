@@ -208,7 +208,7 @@ async function buildPlacementTree(
     userId: currentUser.userId || currentUser.username,
     type: isBooster ? "booster" : "active",
     sponsorId: currentUser.sponsorId,
-    joiningDate: currentUser.joiningDate || currentUser.createdAt || "",
+    joiningDate: currentUser.createdAt || currentUser.joiningDate || "",
     package: currentUser.registeredPackage || undefined,
     leftId: currentUser.leftChild || "",
     rightId: currentUser.rightChild || "",
@@ -418,10 +418,11 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine current session type
+    // Determine current session type using IST
     const now = new Date();
-    const currentHour = now.getHours();
-    const realSessionType = currentHour < 12 ? "morning" : "evening";
+    const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+    const istHour = istDate.getUTCHours();
+    const realSessionType = istHour < 12 ? "morning" : "evening";
     const currentSessionType: "morning" | "evening" = 
       (forceSessionType === "morning" || forceSessionType === "evening")
         ? forceSessionType

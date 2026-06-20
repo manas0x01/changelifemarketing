@@ -519,20 +519,32 @@ function MemberPopup({
     const { node: n, left, top } = state;
     const booster = n.type === "booster";
 
-    // Helper to format date with seconds
+    // Helper to format date (12-hour IST format for full timestamps, date-only for plain dates)
     const formatDate = (dateVal: any) => {
       if (!dateVal) return "—";
+
+      // If it's a plain date string like "2026-06-20" (no time component), display as-is
+      if (typeof dateVal === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+        const [y, m, d] = dateVal.split('-');
+        return `${d}/${m}/${y}`;
+      }
+
       const date = new Date(dateVal);
-      if (isNaN(date.getTime())) return dateVal;
+      if (isNaN(date.getTime())) return String(dateVal);
 
-      const d = String(date.getDate()).padStart(2, '0');
-      const m = String(date.getMonth() + 1).padStart(2, '0');
-      const y = date.getFullYear();
-      const h = String(date.getHours()).padStart(2, '0');
-      const min = String(date.getMinutes()).padStart(2, '0');
-      const s = String(date.getSeconds()).padStart(2, '0');
+      // Convert full timestamps to IST (UTC+5:30) and display in 12-hour format
+      const istDate = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+      const d = String(istDate.getUTCDate()).padStart(2, '0');
+      const m = String(istDate.getUTCMonth() + 1).padStart(2, '0');
+      const y = istDate.getUTCFullYear();
+      const rawH = istDate.getUTCHours();
+      const min = String(istDate.getUTCMinutes()).padStart(2, '0');
+      const s = String(istDate.getUTCSeconds()).padStart(2, '0');
+      const ampm = rawH >= 12 ? 'PM' : 'AM';
+      const h12 = rawH % 12 === 0 ? 12 : rawH % 12;
+      const h = String(h12).padStart(2, '0');
 
-      return `${d}/${m}/${y} ${h}:${min}:${s}`;
+      return `${d}/${m}/${y} ${h}:${min}:${s} ${ampm}`;
     };
 
     const infoRows = [
@@ -737,8 +749,10 @@ function MemberPopup({
     MAXD = dimensions.maxd;
 
     const getCurrentSession = (): "morning" | "evening" => {
-      const currentHour = new Date().getHours();
-      return currentHour >= 0 && currentHour < 12 ? "morning" : "evening";
+      // Use IST (UTC+5:30) for session determination
+      const now = new Date();
+      const istHour = new Date(now.getTime() + 5.5 * 60 * 60 * 1000).getUTCHours();
+      return istHour >= 0 && istHour < 12 ? "morning" : "evening";
     };
 
     const checkSessionChangeAndRefresh = () => {

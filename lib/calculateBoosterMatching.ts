@@ -1,5 +1,7 @@
 function getSessionType(date: Date): "morning" | "evening" {
-  const hour = date.getHours();
+  // Use IST (UTC+5:30) for session determination
+  const istDate = new Date(date.getTime() + 5.5 * 60 * 60 * 1000);
+  const hour = istDate.getUTCHours();
   return hour < 12 ? "morning" : "evening";
 }
 

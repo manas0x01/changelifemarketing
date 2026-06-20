@@ -675,8 +675,10 @@ userSchema.pre('save', async function (this: IUser) {
             const dateStr = m.joiningDate ? m.joiningDate : (m.createdAt ? new Date(m.createdAt).toISOString().split('T')[0] : '');
             let sessionType = m.lastSessionType;
             if (!sessionType && m.createdAt) {
-              const hour = new Date(m.createdAt).getHours();
-              sessionType = hour < 12 ? 'morning' : 'evening';
+              // Use IST (UTC+5:30) for session determination
+              const createdAt = new Date(m.createdAt);
+              const istHour = new Date(createdAt.getTime() + 5.5 * 60 * 60 * 1000).getUTCHours();
+              sessionType = istHour < 12 ? 'morning' : 'evening';
             }
             sessionType = (sessionType || 'morning').toLowerCase();
             return `${dateStr}_${sessionType}`;
@@ -702,16 +704,16 @@ userSchema.pre('save', async function (this: IUser) {
         if (this.sessionTeam.left === 0) this.sessionTeam.left = 1;
         if (this.sessionTeam.right === 0) this.sessionTeam.right = 1;
 
-        await calculateBasicIncome(this, this.lastSessionType || (new Date().getHours() < 12 ? "morning" : "evening"), this.lastSessionDate || new Date());
+        await calculateBasicIncome(this, this.lastSessionType || (new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000).getUTCHours() < 12 ? "morning" : "evening"), this.lastSessionDate || new Date());
       } else {
         console.log(`[SELF-HEALING] No same-day, same-session downline pairs found for ${this.username}. Bypassing retroactive match.`);
       }
     }
 
-    // 3. SESSION TRANSITION HEALING (Real-time clock based)
+    // 3. SESSION TRANSITION HEALING (IST-based clock)
     const now = new Date();
-    const currentHour = now.getHours();
-    const currentSessionType = (currentHour < 12 ? "morning" : "evening");
+    const istHour = new Date(now.getTime() + 5.5 * 60 * 60 * 1000).getUTCHours();
+    const currentSessionType = (istHour < 12 ? "morning" : "evening");
     const nowDateStr = now.toDateString();
     const lastDateStr = this.lastSessionDate ? new Date(this.lastSessionDate).toDateString() : "";
 

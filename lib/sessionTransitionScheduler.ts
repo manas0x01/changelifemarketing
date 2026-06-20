@@ -33,9 +33,10 @@ export async function triggerSessionTransition(baseUrl?: string) {
  */
 export function isTransitionPeriod(): boolean {
   const now = new Date();
-  const currentHour = now.getHours();
-  const currentMinute = now.getMinutes();
+  const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
+  const istHour = istDate.getUTCHours();
+  const istMinute = istDate.getUTCMinutes();
   
-  return (currentHour === 12 && currentMinute >= 0 && currentMinute < 10) || 
-         (currentHour === 0 && currentMinute >= 0 && currentMinute < 10);
+  return (istHour === 12 && istMinute >= 0 && istMinute < 10) || 
+         (istHour === 0 && istMinute >= 0 && istMinute < 10);
 }

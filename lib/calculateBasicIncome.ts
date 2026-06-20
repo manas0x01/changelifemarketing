@@ -159,14 +159,17 @@ const sessionType: "morning" | "evening" = manualSessionType
     user.basicPairs = user.sessionBasedIncome.reduce((sum: number, r: any) => sum + (Number(r.pairs) || 0), 0);
 
     // Update basicIncomeRecords for display
-    user.basicIncomeRecords = user.sessionBasedIncome.map((s: any, i: number) => ({
-      srNo: i + 1,
-      amount: s.netIncome || 0,
-      pairCount: s.pairs || 0,
-      date: s.date || s.sessionDate,
-      description: s.description || (Number(s.netIncome) === 0 && Number(s.pairs) > 0 ? `Basic Session #${i + 1} Cut` : `Binary Income`),
-      status: 'Completed'
-    }));
+    user.basicIncomeRecords = user.sessionBasedIncome.map((s: any, i: number) => {
+      const isCutRecord = Number(s.netIncome) === 0 && Number(s.pairs) > 0;
+      return {
+        srNo: i + 1,
+        amount: s.netIncome || 0,
+        pairCount: s.pairs || 0,
+        date: s.date || s.sessionDate,
+        description: s.description || (isCutRecord ? `Basic Session #${i + 1} Cut` : `Binary Income`),
+        status: isCutRecord ? 'Hold' : 'Completed',
+      };
+    });
 
     user.totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);
 

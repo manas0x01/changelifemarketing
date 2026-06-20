@@ -42,7 +42,17 @@ export async function GET(req: NextRequest) {
       
       // Check if this is a cut session (0 income but has pairs)
       const isCut = session.netIncome === 0 && session.pairs > 0;
-      const description = isCut ? `Binary Income (Cut #${sessionNum})` : "Binary Income";
+
+      // Use the stored description if available, otherwise fall back to a sensible default
+      const storedDesc = session.description || "";
+      const description = storedDesc.trim()
+        ? storedDesc
+        : isCut
+          ? `Basic Session #${sessionNum} Cut`
+          : `Binary Income`;
+
+      // Show correct status: Cut sessions are "Hold" (income withheld), paid sessions are "Paid"
+      const status = isCut ? "Hold" : "Paid";
       
       return {
         srNo: index + 1,
@@ -50,8 +60,8 @@ export async function GET(req: NextRequest) {
         rawAmount: session.netIncome || 0,
         pairCount: session.pairs || 0,
         date: dateStr,
-        description: description,
-        status: "Paid"
+        description,
+        status,
       };
     });
 

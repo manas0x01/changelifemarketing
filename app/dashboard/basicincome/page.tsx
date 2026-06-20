@@ -481,6 +481,7 @@ export default function BasicIncomePage() {
                     <th>Pair Count</th>
                     <th>Date</th>
                     <th>Description</th>
+                    <th>Status</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -494,13 +495,14 @@ export default function BasicIncomePage() {
                           <td><div className="skeleton-cell" /></td>
                           <td><div className="skeleton-cell" /></td>
                           <td><div className="skeleton-cell" /></td>
+                          <td><div className="skeleton-cell" /></td>
                         </tr>
                       ))}
                     </>
                   ) : error ? (
                     // Error state
                     <tr>
-                      <td colSpan={5}>
+                      <td colSpan={6}>
                         <div className="error-state">
                           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                             <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
@@ -519,6 +521,18 @@ export default function BasicIncomePage() {
                           <td><span className="pair-badge">{row.pairCount}</span></td>
                           <td>{row.date}</td>
                           <td>{row.description}</td>
+                          <td>
+                            <span style={{
+                              display: 'inline-block',
+                              padding: '3px 10px',
+                              borderRadius: '12px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              background: row.status === 'Paid' ? 'rgba(34,197,94,0.12)' : row.status === 'Hold' ? 'rgba(239,68,68,0.12)' : 'rgba(255,233,124,0.12)',
+                              color: row.status === 'Paid' ? '#4ade80' : row.status === 'Hold' ? '#f87171' : '#ffe97c',
+                              border: `1px solid ${row.status === 'Paid' ? 'rgba(34,197,94,0.3)' : row.status === 'Hold' ? 'rgba(239,68,68,0.3)' : 'rgba(255,233,124,0.3)'}`,
+                            }}>{row.status}</span>
+                          </td>
                         </tr>
                       ))}
                       {/* Total row */}
@@ -530,13 +544,13 @@ export default function BasicIncomePage() {
                             {filtered.reduce((s, r) => s + r.pairCount, 0)}
                           </span>
                         </td>
-                        <td colSpan={2}></td>
+                        <td colSpan={3}></td>
                       </tr>
                     </>
                   ) : (
                     // Empty state
                     <tr>
-                      <td colSpan={5}>
+                      <td colSpan={6}>
                         <div className="empty-state">
                           <svg width="42" height="42" viewBox="0 0 24 24" fill="#ffe97c">
                             <path d="M11.8 10.9c-2.27-.59-3-1.2-3-2.15 0-1.09 1.01-1.85 2.7-1.85 1.78 0 2.44.85 2.5 2.1h2.21c-.07-1.72-1.12-3.3-3.21-3.81V3h-3v2.16c-1.94.42-3.5 1.68-3.5 3.61 0 2.31 1.91 3.46 4.7 4.13 2.5.6 3 1.48 3 2.41 0 .69-.49 1.79-2.7 1.79-2.06 0-2.87-.92-2.98-2.1h-2.2c.12 2.19 1.76 3.42 3.68 3.83V21h3v-2.15c1.95-.37 3.5-1.5 3.5-3.55 0-2.84-2.43-3.81-4.7-4.4z"/>

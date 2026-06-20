@@ -5,6 +5,7 @@ import { calculateBoosterMatching } from "./calculateBoosterMatching";
 import { checkBoosterQualification } from "./checkBoosterQualification";
 import { checkAwardRank } from "./checkAwardRank";
 import { auditDownlineSessionSpread } from "./sessionValidation";
+import { istDateISO, istHour as getISTHour } from "./istUtils";
 
 /**
  * Recursively updates team counts for all ancestors up the tree.
@@ -65,13 +66,11 @@ export async function updateTeamCounts(
 
     const now = new Date();
     // Use IST (UTC+5:30) for session determination
-    const istNow = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
-    const istHour = istNow.getUTCHours();
-    // IMPORTANT: Respect the user's manually set session type (from the 🔄 button).
-    // Only fall back to clock-based detection if the user has never set a session type.
-    const currentSessionType = (istHour < 12 ? "morning" : "evening");
-    const nowDateStr = now.toDateString();
-    const lastDateStr = user.lastSessionDate ? new Date(user.lastSessionDate).toDateString() : "";
+    const currentISTHour = getISTHour(now);
+    const currentSessionType = (currentISTHour < 12 ? "morning" : "evening");
+    // 🔐 Use IST date string for day comparison (NOT toDateString() which uses UTC on Vercel)
+    const nowDateStr = istDateISO(now);
+    const lastDateStr = user.lastSessionDate ? istDateISO(new Date(user.lastSessionDate)) : "";
 
     const sessionChanged = (lastDateStr !== nowDateStr) || (user.lastSessionType !== currentSessionType);
 

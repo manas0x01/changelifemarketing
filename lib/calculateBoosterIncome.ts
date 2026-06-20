@@ -1,4 +1,5 @@
 import User from "../models/User";
+import { istDateISO } from "./istUtils";
 
 /**
  * Calculates Booster Level income for a specific session.
@@ -9,7 +10,7 @@ export async function calculateBoosterIncome(user: any, sessionType: 'morning' |
     if (!user.isBooster) return { success: false, message: "User is not a booster" };
 
     const targetDate = manualDate || new Date();
-    const today = targetDate.toDateString();
+    const today = istDateISO(targetDate);
 
     if (!user.boosterPairsCarryForward) {
       user.boosterPairsCarryForward = { left: 0, right: 0 };
@@ -29,7 +30,7 @@ export async function calculateBoosterIncome(user: any, sessionType: 'morning' |
     const lastTransition = user.lastSessionDate ? new Date(user.lastSessionDate) : new Date(0);
     let sessionRecord = user.boosterMatchingRecords.find((r: any) => {
       const recDate = new Date(r.date);
-      return recDate.toDateString() === today && 
+      return istDateISO(new Date(r.date)) === today && 
              r.sessionType === sessionType &&
              recDate >= lastTransition;
     });

@@ -5,11 +5,13 @@ function getSessionType(date: Date): "morning" | "evening" {
   return hour < 12 ? "morning" : "evening";
 }
 
+import { istDateISO } from "./istUtils";
+
 export async function calculateBoosterMatching(user: any, manualDate?: Date) {
   console.log('[DEBUG] calculateBoosterMatching: entry', { userId: user?.userId, isBooster: user?.isBooster });
   
   const targetDate = manualDate || new Date();
-  const today = targetDate.toDateString();
+  const today = istDateISO(targetDate);
   const sessionType = getSessionType(targetDate);
 
   if (!user.boosterMatchingRecords) user.boosterMatchingRecords = [];
@@ -31,7 +33,7 @@ export async function calculateBoosterMatching(user: any, manualDate?: Date) {
   // 3. Check session cap (10 pairs per session)
   // Find if we already have a record for this specific session
   const existingIndex = user.boosterMatchingRecords.findIndex(
-    (r: any) => r.sessionType === sessionType && new Date(r.date).toDateString() === today
+    (r: any) => r.sessionType === sessionType && istDateISO(new Date(r.date)) === today
   );
 
   let paidSoFar = 0;

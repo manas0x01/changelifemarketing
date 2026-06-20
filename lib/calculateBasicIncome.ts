@@ -1,6 +1,7 @@
 import User from "../models/User";
 import { checkBoosterQualification } from "./checkBoosterQualification";
 import { validateSessionBeforeIncome } from "./sessionValidation";
+import { istDateISO, istHour as getISTHour } from "./istUtils";
 
 /**
  * 🔐 CRITICAL RULE: Income ONLY when SAME DAY + SAME SESSION
@@ -22,15 +23,13 @@ import { validateSessionBeforeIncome } from "./sessionValidation";
 export async function calculateBasicIncome(user: any, manualSessionType?: string, manualDate?: Date) {
   try {
     // Determine the session type based on Indian Standard Time (UTC+05:30)
-const now = new Date();
-const istOffsetMinutes = 5.5 * 60;
-const istDate = new Date(now.getTime() + istOffsetMinutes * 60 * 1000);
-const currentHour = istDate.getUTCHours(); // hour in IST
-const sessionType: "morning" | "evening" = manualSessionType
-  ? (manualSessionType as any)
-  : currentHour < 12
-  ? "morning"
-  : "evening";
+    const now = new Date();
+    const currentHour = getISTHour(now);
+    const sessionType: "morning" | "evening" = manualSessionType
+      ? (manualSessionType as any)
+      : currentHour < 12
+      ? "morning"
+      : "evening";
 
     // Define the date for the session record
     const sessionDate = manualDate || new Date();
@@ -72,11 +71,12 @@ const sessionType: "morning" | "evening" = manualSessionType
     // 4. Update session history / records
     if (!user.sessionBasedIncome) user.sessionBasedIncome = [];
 
-    const todayStr = sessionDate.toDateString();
+    // 🔐 Use IST date string for record lookup (NOT toDateString() which uses UTC on Vercel)
+    const todayStr = istDateISO(sessionDate);
     
     let recordIndex = user.sessionBasedIncome.findIndex((s: any) => {
       const recDate = new Date(s.date || s.sessionDate);
-      return recDate.toDateString() === todayStr && s.sessionType === sessionType;
+      return istDateISO(recDate) === todayStr && s.sessionType === sessionType;
     });
 
     const isExisting = recordIndex !== -1;
@@ -90,11 +90,11 @@ const sessionType: "morning" | "evening" = manualSessionType
     let description = "";
 
     if (isCutSession) {
-      // 3rd, 6th, 9th, 12th session: income is 0, pairs is whatever is in the session (no cap)
+      // 3rd, 6th, 9th, 12th session: ALL pairs are recorded, but ALL income is cut (₹0)
       paidPairs = pairsInSession;
       newIncome = 0;
       description = `Basic Session #${sessionIndex} Cut (${sessionType})`;
-      console.log(`✂️ [BASIC CUT] ${user.username}: Session #${sessionIndex} is cut.`);
+      console.log(`✂️ [BASIC CUT] ${user.username}: Session #${sessionIndex} is cut. ${pairsInSession} pair(s), ₹0 income.`);
     } else {
       // Normal session or Booster user: capped at 1 pair, ₹1000 income
       paidPairs = 1;
@@ -107,40 +107,39 @@ const sessionType: "morning" | "evening" = manualSessionType
       }
     }
 
-    // FLASH OUT: In Basic logic, any matching triggers a full flash-out of that session's units
-    if (user.sessionTeam) {
-      console.log(`💥 [FLASH OUT] ${user.username}: Matching occurred, flashing session team (L:${user.sessionTeam.left}, R:${user.sessionTeam.right} -> 0,0)`);
-      user.sessionTeam.left = 0;
-      user.sessionTeam.right = 0;
-    }
+    // NOTE: Do NOT reset sessionTeam here; it will be cleared only when the session changes (handled in teamUtils).
+    // Keeping sessionTeam intact allows left and right members added later in the same session to form a pair.
 
     let addedPairs = 0;
     let addedIncome = 0;
 
     if (isExisting) {
       const sessionRecord = user.sessionBasedIncome[recordIndex];
+      const previousPairs = sessionRecord.pairs || 0;
 
-      if (isCutSession) {
-        // Cut session: add to pairs, income remains 0
-        sessionRecord.pairs = (sessionRecord.pairs || 0) + paidPairs;
-        sessionRecord.netIncome = 0;
-        sessionRecord.description = description;
-        addedPairs = paidPairs;
-        addedIncome = 0;
-      } else {
-        // Normal session: capped at 1 pair, ₹1000 income
-        if ((sessionRecord.pairs || 0) >= 1) {
-          console.log(`🚫 [BASIC CAP] ${user.username} already processed 1 pair for ${sessionType}. Skipping.`);
-          return { success: true, income: 0, pairs: 0 };
-        }
-        sessionRecord.pairs = 1;
-        sessionRecord.netIncome = 1000;
-        sessionRecord.description = description;
-        addedPairs = 1;
-        addedIncome = 1000;
+      // OVERWRITE pairs with current min(L, R) to prevent double-counting
+      // when calculateBasicIncome is called multiple times in the same session.
+      if (pairsInSession <= previousPairs) {
+        // No new pairs since last call — nothing to update
+        console.log(`🚫 [BASIC CAP] ${user.username}: No new pairs (${pairsInSession} <= ${previousPairs}). Skipping.`);
+        return { success: true, income: 0, pairs: 0 };
       }
+
+      sessionRecord.pairs = pairsInSession;
+      sessionRecord.description = description;
       sessionRecord.processed = true;
       sessionRecord.date = sessionDate;
+      addedPairs = pairsInSession - previousPairs;
+
+      if (isCutSession) {
+        // Cut session: ALL income is ₹0 regardless of how many pairs
+        sessionRecord.netIncome = 0;
+        addedIncome = 0;
+      } else {
+        // Normal session: ₹1000 for the 1st pair only, rest are cut
+        sessionRecord.netIncome = 1000;
+        addedIncome = previousPairs === 0 ? 1000 : 0; // only first time earns ₹1000
+      }
     } else {
       user.sessionBasedIncome.push({
         date: sessionDate,

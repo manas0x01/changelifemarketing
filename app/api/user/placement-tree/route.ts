@@ -6,6 +6,7 @@ import User from "@/models/User";
 import { calculateBasicIncome } from "@/lib/calculateBasicIncome";
 import { calculateBoosterIncome } from "@/lib/calculateBoosterIncome";
 import { calculateBoosterMatching } from "@/lib/calculateBoosterMatching";
+import { istDateISO } from "@/lib/istUtils";
 
 
 
@@ -106,8 +107,8 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
   // Robust session check: differs if type is different OR if it's a different day
   let isSessionChange = false;
   if (lastSessionDate && lastSessionType) {
-    const lastDateStr = lastSessionDate.toDateString();
-    const nowDateStr = now.toDateString();
+    const lastDateStr = istDateISO(lastSessionDate);
+    const nowDateStr = istDateISO(now);
     isSessionChange = (lastDateStr !== nowDateStr) || (lastSessionType !== currentSessionType);
   }
   

@@ -281,24 +281,34 @@ export async function PATCH(req: NextRequest) {
 
     // Direct bank details editing by Admin
     let updatedBank = false;
-    if (Object.prototype.hasOwnProperty.call(body, 'bankName')) {
-      (user as any).bankName = bankName || '';
-      user.bankDetailsStatus = 'approved'; // Mark as approved directly
+    
+    if (Object.prototype.hasOwnProperty.call(body, 'bankName') && (body.bankName || '') !== ((user as any).bankName || '')) {
+      (user as any).bankName = body.bankName || '';
       updatedBank = true;
     }
-    if (Object.prototype.hasOwnProperty.call(body, 'branchName')) {
-      (user as any).branchName = branchName || '';
-    }
-    if (Object.prototype.hasOwnProperty.call(body, 'accountNo')) {
-      (user as any).accountNo = accountNo || '';
+    if (Object.prototype.hasOwnProperty.call(body, 'branchName') && (body.branchName || '') !== ((user as any).branchName || '')) {
+      (user as any).branchName = body.branchName || '';
       updatedBank = true;
     }
-    if (Object.prototype.hasOwnProperty.call(body, 'ifsc')) {
-      (user as any).ifsc = ifsc || '';
+    if (Object.prototype.hasOwnProperty.call(body, 'accountNo') && (body.accountNo || '') !== ((user as any).accountNo || '')) {
+      (user as any).accountNo = body.accountNo || '';
       updatedBank = true;
     }
-    if (Object.prototype.hasOwnProperty.call(body, 'accountType')) {
-      (user as any).accountType = accountType || '';
+    if (Object.prototype.hasOwnProperty.call(body, 'ifsc') && (body.ifsc || '') !== ((user as any).ifsc || '')) {
+      (user as any).ifsc = body.ifsc || '';
+      updatedBank = true;
+    }
+    if (Object.prototype.hasOwnProperty.call(body, 'accountType') && (body.accountType || '') !== ((user as any).accountType || '')) {
+      (user as any).accountType = body.accountType || '';
+      updatedBank = true;
+    }
+
+    if (updatedBank) {
+      if ((user as any).accountNo || (user as any).bankName) {
+        user.bankDetailsStatus = 'approved';
+      } else {
+        user.bankDetailsStatus = 'none';
+      }
     }
 
     // Synchronize nested bankAccountDetails if bank credentials changed

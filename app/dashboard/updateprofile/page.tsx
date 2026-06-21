@@ -745,6 +745,7 @@ export default function EditProfilePage() {
                         suppressHydrationWarning
                         value={formData.fullName}
                         onChange={(e) => handleInputChange("fullName", e.target.value)}
+                        disabled
                       />
                     </div>
                     <div className="form-group">

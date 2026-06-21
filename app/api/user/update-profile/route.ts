@@ -5,7 +5,6 @@ import { connectDB } from "@/lib/database";
 import User from "@/models/User";
 
 const ALLOWED_UPDATE_FIELDS = [
-  "fullName",
   "gender",
   "email",
   "mobileNo",

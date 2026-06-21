@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import dotenv from "dotenv";
-import User from "../models/User.ts";
-import { connectDB } from "../lib/database.ts";
+import User from "../models/User";
+import { connectDB } from "../lib/database";
 
 dotenv.config({ path: ".env.local" });
 

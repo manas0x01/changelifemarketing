@@ -19,6 +19,7 @@ const routePermissions: Record<string, string> = {
   "/clm-portal/dashboard/users": "users",
   "/clm-portal/dashboard/bank-approvals": "bank-approvals",
   "/clm-portal/dashboard/withdrawrequests": "withdrawrequests",
+  "/clm-portal/dashboard/daily-payouts": "withdrawrequests",
 };
 
 export default function AdminLayout({ children }: AdminLayoutProps) {

@@ -21,6 +21,7 @@ import {
   Landmark,
   ArrowRightLeft,
   Lock,
+  CalendarCheck,
 } from "lucide-react";
 
 const navItems = [
@@ -76,6 +77,12 @@ const navItems = [
     label: "Withdraw Requests",
     href: "/clm-portal/dashboard/withdrawrequests",
     icon: Wallet,
+    permission: "withdrawrequests",
+  },
+  {
+    label: "Daily Payouts",
+    href: "/clm-portal/dashboard/daily-payouts",
+    icon: CalendarCheck,
     permission: "withdrawrequests",
   },
 ];

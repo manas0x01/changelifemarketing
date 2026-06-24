@@ -48,15 +48,27 @@ const MOCK_PRODUCTS: Products[] = [
     usageInstructions: 'Take 1 capsule daily in the morning after meals with warm water',
   },
   {
-    _id: '4',
-    itemName: 'Giloy Drops',
-    productNameHindi: 'गिलोय ड्रॉप्स',
+    _id: '5',
+    itemName: 'Nari Shakti Capsule',
+    productNameHindi: 'नारी शक्ति कैप्सूल',
     itemPrice: 0,
-    itemImage: '/images/giloydrops.png',
+    itemImage: '/images/narishakticapsule.jpeg',
+    bvValue: 700,
+    pvValue: 700,
+    keyBenefits:
+      'Natural wellness formula for women\'s health and vitality\nSupports hormonal balance\nEnhances energy and stamina',
+    usageInstructions: 'Take 1 capsule daily in the morning after meals with warm water',
+  },
+  {
+    _id: '6',
+    itemName: 'Immunity Booster Drops',
+    productNameHindi: 'इम्युनिटी बूस्टर ड्रॉप्स',
+    itemPrice: 0,
+    itemImage: '/images/immunityboosterdrops.jpeg',
     bvValue: 300,
     pvValue: 300,
     keyBenefits:
-      'Acts as a blood purifier\nImproves digestion and helps relieve gas and constipation\nBeneficial in fever management\nSupports blood sugar control\nHelps reduce inflammation and body pain\nDetoxifies the body',
+      'Strengthens immune system\nEnhances overall health\nRich in antioxidants',
     usageInstructions: 'Take 5 drops on an empty stomach in the morning and evening with a glass of warm water',
   },
 ];
@@ -75,12 +87,36 @@ const MOCK_STARTER_PACKS: StarterPacks[] = [
       '1 Pair (700 BV + 300 BV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
   },
   {
-    _id: '2',
-    itemName: 'Starter Product Pack No.02',
+    _id: '3',
+    itemName: 'Package - C',
     itemPrice: 1299,
-    itemImage: '/images/pack 2.jpeg',
+    itemImage: '/images/womenpack coming soon banner.jpeg',
     itemDescription:
-      'Advanced starter pack for better earning\nNo joining fee required\nIncome based on product sales only\nSimple and scalable earning model',
+      'Immunity booster drops (300 BV)\nNari shakti capsule (700 BV)\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
+    totalBV: 1000,
+    totalPV: 1000,
+    binaryIncomeInfo:
+      '1 Pair (700 BV + 300 BV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
+  },
+  {
+    _id: '4',
+    itemName: 'Healthcare PACK-A',
+    itemPrice: 1299,
+    itemImage: '/images/starterpack1.png',
+    itemDescription:
+      'Essential healthcare supplements\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
+    totalBV: 1000,
+    totalPV: 1000,
+    binaryIncomeInfo:
+      '1 Pair (700 BV + 300 BV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
+  },
+  {
+    _id: '5',
+    itemName: 'Healthcare PACK-B',
+    itemPrice: 1299,
+    itemImage: '/images/starterpack2.png',
+    itemDescription:
+      'Advanced healthcare pack\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
     totalBV: 1000,
     totalPV: 1000,
     binaryIncomeInfo:
@@ -340,105 +376,6 @@ export default function ProductsPage() {
                 ))}
               </motion.div>
             ) : null}
-          </div>
-        </div>
-      </section>
-
-      {/* Coming Soon Products Section */}
-      <section className="py-20 bg-[#FFFFFF]">
-        <div className="max-w-400 mx-auto px-6">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="text-center mb-12"
-          >
-            <h2 className="font-['Fraunces'] text-[2.25rem] md:text-[3rem] text-[#0A6E5A] mb-2">Coming Soon</h2>
-            <p className="font-['Roboto'] text-[1.125rem] text-[#333333]/70">Exciting new products launching soon</p>
-          </motion.div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="relative overflow-hidden rounded-lg shadow-lg"
-            >
-              <Image
-                src="/images/productcomingsoon.jpeg"
-                alt="Coming Soon Products"
-                className="w-full h-auto object-cover rounded-lg"
-                width={600}
-                height={500}
-              />
-              <div className="absolute inset-0 bg-linear-to-t from-[#0A6E5A]/40 to-transparent rounded-lg"></div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, x: 40 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.6 }}
-              className="flex flex-col gap-6"
-            >
-              <div>
-                <h3 className="font-['Fraunces'] text-[2rem] md:text-[2.5rem] text-[#0A6E5A] mb-4">
-                  New Products Launching
-                </h3>
-                <p className="font-['Roboto'] text-[1rem] text-[#333333]/70 mb-6">
-                  We're excited to announce the arrival of premium wellness products designed specifically for your
-                  health and well-being. Stay tuned for an exclusive launch event!
-                </p>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {[
-                  {
-                    name: 'Nari Shakti Capsule',
-                    desc: "Natural wellness formula for women's health and vitality",
-                    delay: 0.1,
-                  },
-                  {
-                    name: 'Immunity Booster Drops',
-                    desc: 'Strengthens immune system and enhances overall health',
-                    delay: 0.2,
-                  },
-                ].map((item) => (
-                  <motion.div
-                    key={item.name}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: item.delay }}
-                    className="bg-[#0A6E5A]/5 border-2 border-[#C9A84C] rounded-lg p-6 hover:bg-[#C9A84C]/10 transition-colors"
-                  >
-                    <div className="flex items-start gap-3 mb-2">
-                      <span className="bg-[#C9A84C] text-[#FFFFFF] px-3 py-1 rounded-full text-[0.75rem] font-['Roboto'] font-bold whitespace-nowrap mt-1">
-                        Coming Soon
-                      </span>
-                    </div>
-                    <h4 className="font-['Fraunces'] text-[1.125rem] text-[#0A6E5A]">{item.name}</h4>
-                    <p className="font-['Roboto'] text-[0.875rem] text-[#333333]/60 mt-2">{item.desc}</p>
-                  </motion.div>
-                ))}
-              </div>
-
-              <motion.button
-                initial={{ opacity: 0 }}
-                whileInView={{ opacity: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.3 }}
-                className="bg-[#C9A84C] hover:bg-[#B8952F] text-[#FFFFFF] px-8 py-4 rounded-lg font-['Roboto'] font-semibold text-[1.125rem] transition-colors w-full md:w-auto"
-              >
-                Notify Me When Available
-              </motion.button>
-
-              <p className="font-['Roboto'] text-[0.875rem] text-[#333333]/50 italic">
-                * Products will be available for pre-order soon. Subscribe to our newsletter for updates.
-              </p>
-            </motion.div>
           </div>
         </div>
       </section>

@@ -6,10 +6,11 @@ import Navbar from "@/components/Navbar";
 import { Upload, Check, AlertCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-const PIN_COST = 1299;
-
 const packages = [
-  { id: "basic", name: "Basic Package", icon: "📦" },
+  { id: "starterPack1", name: "Starter Product Pack No.01", icon: "📦", price: 1299 },
+  { id: "packA", name: "Healthcare PACK-A", icon: "💊", price: 1299 },
+  { id: "packB", name: "Healthcare PACK-B", icon: "⚕️", price: 1299 },
+  { id: "packageC", name: "Package - C", icon: "💎", price: 1299 },
 ];
 
 export default function BuyEPinPage() {
@@ -67,8 +68,9 @@ export default function BuyEPinPage() {
     return () => console.debug('[buypins] unmount');
   }, []);
 
+  const pkg = packages.find((p) => p.id === selectedPkg) || packages[0];
+  const PIN_COST = pkg.price;
   const totalAmount = numPins * PIN_COST;
-  const pkg = packages.find((p) => p.id === selectedPkg)!;
 
   const handlePinChange = (val: number) => {
     if (val < 1) val = 1;
@@ -531,6 +533,23 @@ export default function BuyEPinPage() {
                 <div className="form-group">
                   <label className="form-label">Phone Number :</label>
                   <input type="tel" className="form-input" value={userData.phone} disabled />
+                </div>
+
+                {/* Package Selection */}
+                <div className="form-group">
+                  <label className="form-label"><span className="req">*</span>Select Package :</label>
+                  <select
+                    className="form-input"
+                    value={selectedPkg}
+                    onChange={(e) => setSelectedPkg(e.target.value)}
+                    style={{ cursor: "pointer", appearance: "auto" }}
+                  >
+                    {packages.map((p) => (
+                      <option key={p.id} value={p.id} style={{ color: "#000" }}>
+                        {p.icon} {p.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Transaction ID */}

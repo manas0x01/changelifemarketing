@@ -115,7 +115,8 @@ export async function GET(req: NextRequest) {
         }
       });
     }
-    const availableBalance = totalIncome - totalWithdrawn;
+    // SAFETY: availableBalance must never be negative — income cannot go below 0
+    const availableBalance = Math.max(0, totalIncome - totalWithdrawn);
 
     const totalPins = {
       active: user.activePins || 0,

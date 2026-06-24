@@ -619,8 +619,12 @@ userSchema.pre('save', async function (this: IUser) {
         status: 'Completed'
       }));
     } else if (totalLeft === 0 && totalRight === 0) {
-      // Hard reset if tree is truly empty
-      if (this.basicIncome !== 0 || (this.sessionBasedIncome && this.sessionBasedIncome.length > 0)) {
+      // Hard reset if tree is truly empty — BUT only if user has no approved withdrawals
+      // (if they've been paid out, we preserve their income history)
+      const approvedWithdrawalsExist = (this.withdrawRequests || []).some(
+        (w: any) => w.status === 'Approved' || w.status === 'Pending'
+      );
+      if (!approvedWithdrawalsExist && (this.basicIncome !== 0 || (this.sessionBasedIncome && this.sessionBasedIncome.length > 0))) {
         console.log(`[SELF-HEALING] Tree is empty for ${this.username}. Resetting wallet and history to 0.`);
         this.basicIncome = 0;
         this.basicPairs = 0;
@@ -893,8 +897,31 @@ userSchema.pre('save', async function (this: IUser) {
       }
     }
 
+    // 7. WITHDRAWAL FLOOR PROTECTION
+    // If a user has approved/pending withdrawals, their totalIncome MUST be at least
+    // as large as those withdrawals to prevent a negative available balance.
+    // This guards against edge cases where income records are wiped but withdrawals remain.
+    const totalApprovedWithdrawals = (this.withdrawRequests || []).reduce((sum: number, w: any) => {
+      if (w.status === 'Approved' || w.status === 'Pending') {
+        return sum + (Number(w.amount) || 0);
+      }
+      return sum;
+    }, 0);
+
     // Ensure totalIncome is the sum of all income sources
-    const computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);
+    let computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);
+
+    // CRITICAL: Never let totalIncome drop below the sum of approved/pending withdrawals
+    if (computedTotal < totalApprovedWithdrawals) {
+      console.log(`🛡️  [WITHDRAWAL FLOOR] ${this.username}: computedTotal=₹${computedTotal} < withdrawals=₹${totalApprovedWithdrawals}. Lifting totalIncome to floor.`);
+      const incomeShortfall = totalApprovedWithdrawals - (this.basicIncome || 0) - (this.boosterMatchingIncome || 0) - (this.awardIncome || 0) - (this.repurchaseIncome || 0);
+      if (incomeShortfall > 0) {
+        // Restore basicIncome by the shortfall amount
+        this.basicIncome = Math.max(this.basicIncome || 0, totalApprovedWithdrawals - (this.boosterMatchingIncome || 0) - (this.awardIncome || 0) - (this.repurchaseIncome || 0));
+        computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);
+      }
+    }
+
     this.totalIncome = computedTotal as any;
 
     if (typeof (this as any).markModified === 'function') {

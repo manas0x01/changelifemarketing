@@ -84,7 +84,8 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const availableBalance = totalEarned - totalWithdrawn;
+    // SAFETY: availableBalance must never be negative
+    const availableBalance = Math.max(0, totalEarned - totalWithdrawn);
 
     if (amount > availableBalance) {
       return NextResponse.json(
@@ -130,7 +131,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       message: "Withdrawal request submitted successfully!",
-      remainingBalance: availableBalance - amount
+      remainingBalance: Math.max(0, availableBalance - amount)
     });
   } catch (error: any) {
     console.error("❌ Withdraw POST Error:", error);

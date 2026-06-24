@@ -191,7 +191,7 @@ export async function handleBoosterUpgrade(
     console.log(`🚀 [BOOSTER PROPAGATION] Updating ${user.username}: New Booster from ${currentPosition} (${boosterId})`);
 
     // 1. Calculate matching income for this ancestor
-    await calculateBoosterMatching(user);
+    await calculateBoosterMatching(user, undefined, currentPosition === 'left' ? 'Left' : 'Right');
     
     if (user.isBooster) {
       await checkAwardRank(user);

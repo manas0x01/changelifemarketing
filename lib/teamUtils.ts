@@ -79,7 +79,7 @@ export async function updateTeamCounts(
       console.log(`[TEAM UTILS] 📅 Last session: ${lastDateStr} ${user.lastSessionType}, Current: ${nowDateStr} ${currentSessionType}`);
       
       // Determine what session we are closing
-      const previousSessionType = (user.lastSessionType || (istHour < 12 ? "evening" : "morning")) as "morning" | "evening";
+      const previousSessionType = (user.lastSessionType || (currentISTHour < 12 ? "evening" : "morning")) as "morning" | "evening";
 
       // Match for the session that just ended
       // This now handles both 1-pair (basic) and 10-pair (booster) binary logic

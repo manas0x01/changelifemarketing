@@ -895,11 +895,11 @@ export default function Login() {
               {Array.from({ length: 40 }, (_, i) => {
                 const s = i * 73;
                 return (
-                  <div key={i} className="bstar" style={{
-                    width: `${seededRandom(s) * 2 + 1}px`,
-                    height: `${seededRandom(s) * 2 + 1}px`,
-                    top: `${seededRandom(s + 2) * 100}%`,
-                    left: `${seededRandom(s + 3) * 100}%`,
+                  <div key={i} className="bstar" suppressHydrationWarning style={{
+                    width: `${(seededRandom(s) * 2 + 1).toFixed(5)}px`,
+                    height: `${(seededRandom(s) * 2 + 1).toFixed(5)}px`,
+                    top: `${(seededRandom(s + 2) * 100).toFixed(5)}%`,
+                    left: `${(seededRandom(s + 3) * 100).toFixed(5)}%`,
                     ['--dur' as string]: `${(seededRandom(s + 4) * 3 + 2).toFixed(1)}s`,
                     ['--delay' as string]: `${(seededRandom(s + 5) * 4).toFixed(1)}s`,
                     ['--op' as string]: `${(seededRandom(s + 6) * 0.5 + 0.4).toFixed(2)}`,

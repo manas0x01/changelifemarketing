@@ -897,25 +897,8 @@ userSchema.pre('save', async function (this: IUser) {
       }
     }
 
-    // 7. WITHDRAWAL FLOOR PROTECTION
-    // If a user has approved/pending withdrawals, their totalIncome MUST be at least
-    // as large as those withdrawals to prevent a negative available balance.
-    // This guards against edge cases where income records are wiped but withdrawals remain.
-    const totalApprovedWithdrawals = (this.withdrawRequests || []).reduce((sum: number, w: any) => {
-      if (w.status === 'Approved' || w.status === 'Pending') {
-        return sum + (Number(w.amount) || 0);
-      }
-      return sum;
-    }, 0);
-
     // Ensure totalIncome is the sum of all income sources
     let computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);
-
-    // CRITICAL: Never let totalIncome drop below the sum of approved/pending withdrawals
-    if (computedTotal < totalApprovedWithdrawals) {
-      console.log(`🛡️  [WITHDRAWAL FLOOR] ${this.username}: computedTotal=₹${computedTotal} < withdrawals=₹${totalApprovedWithdrawals}. Lifting totalIncome to floor.`);
-      computedTotal = totalApprovedWithdrawals;
-    }
 
     this.totalIncome = computedTotal as any;
 

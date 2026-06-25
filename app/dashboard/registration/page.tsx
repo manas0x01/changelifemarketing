@@ -19,7 +19,7 @@ const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
 const years = Array.from({ length: 60 }, (_, i) => String(2005 - i));
 
-const packages = ["-- Select Package --", "Healthcare PACK-A", "Healthcare PACK-B"];
+const packages = ["-- Select Package --", "Healthcare PACK-A", "Healthcare PACK-B", "Healthcare PACK-C"];
 const positions = ["-- Select --", "Left", "Right"];
 const nomineeRels = ["-- Select --", "Son", "Daughter", "Wife", "Husband", "Father", "Mother", "Brother", "Sister", "Other"];
 const accountTypes = ["-- Select --", "Saving", "Current", "Salary", "NRI", "Joint"];

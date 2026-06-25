@@ -88,7 +88,7 @@ const MOCK_STARTER_PACKS: StarterPacks[] = [
   },
   {
     _id: '3',
-    itemName: 'Package - C',
+    itemName: 'Healthcare PACK-C',
     itemPrice: 1299,
     itemImage: '/images/womenpack coming soon banner.jpeg',
     itemDescription:

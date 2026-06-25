@@ -105,7 +105,10 @@ export async function GET(req: NextRequest) {
       RG: user.boosterCount?.right || 0,
     };
 
-    const totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);
+    const totalIncome = Math.max(
+      user.totalIncome || 0,
+      (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0)
+    );
 
     let totalWithdrawn = 0;
     if (user.withdrawRequests && user.withdrawRequests.length > 0) {

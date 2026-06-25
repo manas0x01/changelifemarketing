@@ -914,12 +914,7 @@ userSchema.pre('save', async function (this: IUser) {
     // CRITICAL: Never let totalIncome drop below the sum of approved/pending withdrawals
     if (computedTotal < totalApprovedWithdrawals) {
       console.log(`🛡️  [WITHDRAWAL FLOOR] ${this.username}: computedTotal=₹${computedTotal} < withdrawals=₹${totalApprovedWithdrawals}. Lifting totalIncome to floor.`);
-      const incomeShortfall = totalApprovedWithdrawals - (this.basicIncome || 0) - (this.boosterMatchingIncome || 0) - (this.awardIncome || 0) - (this.repurchaseIncome || 0);
-      if (incomeShortfall > 0) {
-        // Restore basicIncome by the shortfall amount
-        this.basicIncome = Math.max(this.basicIncome || 0, totalApprovedWithdrawals - (this.boosterMatchingIncome || 0) - (this.awardIncome || 0) - (this.repurchaseIncome || 0));
-        computedTotal = (this.basicIncome || 0) + (this.boosterMatchingIncome || 0) + (this.awardIncome || 0) + (this.repurchaseIncome || 0);
-      }
+      computedTotal = totalApprovedWithdrawals;
     }
 
     this.totalIncome = computedTotal as any;

@@ -254,7 +254,7 @@ export default function AdminProcessingPage() {
                     <th>Sr.No.</th>
                     <th>Payout Date</th>
                     <th>Total Amount</th>
-                    <th>Admin and Processing (15%)</th>
+                    <th>Admin and Processing (18%)</th>
                   </tr>
                 </thead>
                 <tbody>

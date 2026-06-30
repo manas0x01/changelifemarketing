@@ -1093,12 +1093,12 @@ export default function TaxInvoicePage() {
                     <td>₹1,000.00</td>
                   </tr>
                   <tr>
-                    <td>Admin &amp; Processing (15%)</td>
-                    <td>₹150.00</td>
+                    <td>Admin &amp; Processing (18%)</td>
+                    <td>₹180.00</td>
                   </tr>
                   <tr>
-                    <td>TDS (5%)</td>
-                    <td>₹50.00</td>
+                    <td>TDS (2%)</td>
+                    <td>₹20.00</td>
                   </tr>
                   <tr className="net-pay-row">
                     <td><strong>Net Pay</strong></td>

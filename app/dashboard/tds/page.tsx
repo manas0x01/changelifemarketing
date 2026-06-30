@@ -254,7 +254,7 @@ export default function TDSReportPage() {
                     <th>Sr.No.</th>
                     <th>Payout Date</th>
                     <th>Total Amount</th>
-                    <th>TDS (5%)</th>
+                    <th>TDS (2%)</th>
                   </tr>
                 </thead>
                 <tbody>

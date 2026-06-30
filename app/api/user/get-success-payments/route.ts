@@ -63,11 +63,11 @@ export async function GET() {
         const total = sess.basicIncome + sess.boosterIncome;
         
         // Logical Calculations as per Invoice standard:
-        // Admin & Processing = 15%
-        // TDS = 5%
+        // Admin & Processing = 18%
+        // TDS = 2%
         // Netpay = 80%
-        const adminProcessing = Math.round(total * 0.15);
-        const tds = Math.round(total * 0.05);
+        const adminProcessing = Math.round(total * 0.18);
+        const tds = Math.round(total * 0.02);
         const netpay = total - adminProcessing - tds;
         const reimbursement = 0; // Legacy field, setting to 0
 

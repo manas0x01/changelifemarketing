@@ -54,7 +54,7 @@ export default function AdminProcessingPage() {
   const totalAdmin = data.reduce((s, r) => s + r.adminProcessing, 0);
 
   const handleExportCSV = () => {
-    const header = "Sr.No.,Payout Date,Total,Admin and Processing";
+    const header = "Sr.No.,Payout Date,Total,Admin Processing & Delivery Charges";
     const rows   = data.map(r =>
       `${r.srNo},"${r.fromDate.split(' ')[0]}",${r.total},${r.adminProcessing}`
     ).join("\n");
@@ -216,13 +216,13 @@ export default function AdminProcessingPage() {
           <span className="sep">/</span>
           <span>Daily Payout</span>
           <span className="sep">/</span>
-          <span className="current">Admin & Processing</span>
+          <span className="current">Admin Processing & Delivery Charges</span>
         </div>
 
         <div className="page-body">
           <div className="main-card">
             <div className="section-header">
-              <span className="section-title">Admin & Processing Report</span>
+              <span className="section-title">Admin Processing & Delivery Charges Report</span>
               <div className="header-actions">
                 <button className="icon-btn" title="Print" onClick={() => window.print()}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="#ffe97c"><path d="M19 8H5c-1.66 0-3 1.34-3 3v6h4v4h12v-4h4v-6c0-1.66-1.34-3-3-3zm-3 11H8v-5h8v5zm3-7c-.55 0-1-.45-1-1s.45-1 1-1 1 .45 1 1-.45 1-1 1zm-1-9H6v4h12V3z"/></svg>
@@ -254,7 +254,7 @@ export default function AdminProcessingPage() {
                     <th>Sr.No.</th>
                     <th>Payout Date</th>
                     <th>Total Amount</th>
-                    <th>Admin and Processing (18%)</th>
+                    <th>Admin Processing & Delivery Charges (18%)</th>
                   </tr>
                 </thead>
                 <tbody>

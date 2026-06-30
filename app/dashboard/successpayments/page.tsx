@@ -87,7 +87,7 @@ export default function SuccessPaymentsPage() {
   const totalNetPay = Array.isArray(data) ? data.reduce((s, r) => s + r.netpay, 0) : 0;
 
   const handleExportCSV = () => {
-    const header = "Sr.No.,From Date,To Date,Basic,Booster,Total,Admin & Processing,TDS,Netpay";
+    const header = "Sr.No.,From Date,To Date,Basic,Booster,Total,Admin Processing & Delivery Charges,TDS,Netpay";
     const rows   = data.map(r =>
       `${r.srNo},"${r.fromDate}","${r.toDate}",${r.basicIncome},${r.boosterIncome},${r.total},${r.adminProcessing},${r.tds},${r.netpay}`
     ).join("\n");
@@ -347,7 +347,7 @@ export default function SuccessPaymentsPage() {
                     <th>Basic</th>
                     <th>Booster</th>
                     <th>Total</th>
-                    <th>Admin and Processing</th>
+                    <th>Admin Processing & Delivery Charges</th>
                     <th>TDS</th>
                     <th>Netpay</th>
                   </tr>

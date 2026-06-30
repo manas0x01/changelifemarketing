@@ -63,7 +63,7 @@ export async function GET() {
         const total = sess.basicIncome + sess.boosterIncome;
         
         // Logical Calculations as per Invoice standard:
-        // Admin & Processing = 18%
+        // Admin Processing & Delivery Charges = 18%
         // TDS = 2%
         // Netpay = 80%
         const adminProcessing = Math.round(total * 0.18);

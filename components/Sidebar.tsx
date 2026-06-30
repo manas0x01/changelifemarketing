@@ -111,7 +111,7 @@ const menuItems: MenuItem[] = [
         <line x1="2" y1="10" x2="22" y2="10" />
       </svg>
     ),
-    children: [{ label: "Success Payments" }, { label: "Admin & Processing" }, { label: "TDS" }, { label: "Withdrawal History" }],
+    children: [{ label: "Success Payments" }, { label: "Admin Processing & Delivery Charges" }, { label: "TDS" }, { label: "Withdrawal History" }],
   },
   {
     id: "chat-support",
@@ -190,7 +190,7 @@ export default function Sidebar() {
       { pattern: "/dashboard/changepassword", activeId: "settings", submenuId: "settings-Change Password", menuToOpen: "settings" },
       { pattern: "/dashboard/changetransactionpassword", activeId: "settings", submenuId: "settings-Change Transaction Password", menuToOpen: "settings" },
       { pattern: "/dashboard/successpayments", activeId: "daily-payout", submenuId: "daily-payout-Success Payments", menuToOpen: "daily-payout" },
-      { pattern: "/dashboard/adminprocessing", activeId: "daily-payout", submenuId: "daily-payout-Admin & Processing", menuToOpen: "daily-payout" },
+      { pattern: "/dashboard/adminprocessing", activeId: "daily-payout", submenuId: "daily-payout-Admin Processing & Delivery Charges", menuToOpen: "daily-payout" },
       { pattern: "/dashboard/tds", activeId: "daily-payout", submenuId: "daily-payout-TDS", menuToOpen: "daily-payout" },
       { pattern: "/dashboard/withdrawals", activeId: "daily-payout", submenuId: "daily-payout-Withdrawal History", menuToOpen: "daily-payout" },
       { pattern: "/dashboard/registration", activeId: "registration", submenuId: null },
@@ -256,7 +256,7 @@ export default function Sidebar() {
       "settings-Change Password": "/dashboard/changepassword",
       "settings-Change Transaction Password": "/dashboard/changetransactionpassword",
       "daily-payout-Success Payments": "/dashboard/successpayments",
-      "daily-payout-Admin & Processing": "/dashboard/adminprocessing",
+      "daily-payout-Admin Processing & Delivery Charges": "/dashboard/adminprocessing",
       "daily-payout-TDS": "/dashboard/tds",
       "daily-payout-Withdrawal History": "/dashboard/withdrawals",
     };

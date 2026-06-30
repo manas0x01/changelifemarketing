@@ -1093,7 +1093,7 @@ export default function TaxInvoicePage() {
                     <td>₹1,000.00</td>
                   </tr>
                   <tr>
-                    <td>Admin &amp; Processing (18%)</td>
+                    <td>Admin Processing &amp; Delivery Charges (18%)</td>
                     <td>₹180.00</td>
                   </tr>
                   <tr>

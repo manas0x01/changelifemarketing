@@ -8,12 +8,12 @@ import User from '@/models/User';
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user?.email) {
+    if (!session?.user?.username) {
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
     await connectDB();
-    const user = await User.findOne({ email: session.user.email });
+    const user = await User.findOne({ username: session.user.username });
 
     if (!user) {
       return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
@@ -28,30 +28,40 @@ export async function GET() {
     }>();
 
     // Process Basic/Silver Income
-    if (user.sessionBasedIncome) {
+    if (Array.isArray(user.sessionBasedIncome)) {
       user.sessionBasedIncome.forEach((record: any) => {
-        const d = new Date(record.date);
-        const key = `${d.toISOString().split('T')[0]}_${record.sessionType}`;
-        if (!sessionsMap.has(key)) {
-          sessionsMap.set(key, { date: d, sessionType: record.sessionType, basicIncome: 0, boosterIncome: 0 });
+        try {
+          const d = new Date(record.date);
+          if (isNaN(d.getTime())) return; // skip records with invalid dates
+          const sessionType = record.sessionType === 'morning' ? 'morning' : 'evening';
+          const key = `${d.toISOString().split('T')[0]}_${sessionType}`;
+          if (!sessionsMap.has(key)) {
+            sessionsMap.set(key, { date: d, sessionType, basicIncome: 0, boosterIncome: 0 });
+          }
+          const entry = sessionsMap.get(key)!;
+          entry.basicIncome += Number(record.netIncome) || 0;
+        } catch (e) {
+          console.warn('[GET_SUCCESS_PAYMENTS] Skipping bad sessionBasedIncome record:', e);
         }
-        const entry = sessionsMap.get(key)!;
-        entry.basicIncome += record.netIncome || 0;
       });
     }
 
     // Process Booster/Gold Income
-    if (user.boosterMatchingRecords) {
+    if (Array.isArray(user.boosterMatchingRecords)) {
       user.boosterMatchingRecords.forEach((record: any) => {
-        const d = new Date(record.date);
-        const key = `${d.toISOString().split('T')[0]}_${record.sessionType}`;
-        if (!sessionsMap.has(key)) {
-          sessionsMap.set(key, { date: d, sessionType: record.sessionType, basicIncome: 0, boosterIncome: 0 });
+        try {
+          const d = new Date(record.date);
+          if (isNaN(d.getTime())) return; // skip records with invalid dates
+          const sessionType = record.sessionType === 'morning' ? 'morning' : 'evening';
+          const key = `${d.toISOString().split('T')[0]}_${sessionType}`;
+          if (!sessionsMap.has(key)) {
+            sessionsMap.set(key, { date: d, sessionType, basicIncome: 0, boosterIncome: 0 });
+          }
+          const entry = sessionsMap.get(key)!;
+          entry.boosterIncome += Number(record.netIncome) || Number(record.income) || 0;
+        } catch (e) {
+          console.warn('[GET_SUCCESS_PAYMENTS] Skipping bad boosterMatchingRecords record:', e);
         }
-        const entry = sessionsMap.get(key)!;
-        // Some records use 'income', others 'netIncome' or 'grossIncome'. 
-        // Based on models/User.ts, boosterMatchingRecords has 'netIncome'.
-        entry.boosterIncome += record.netIncome || record.income || 0;
       });
     }
 
@@ -61,7 +71,7 @@ export async function GET() {
       .sort((a, b) => b.date.getTime() - a.date.getTime())
       .map((sess, index, arr) => {
         const total = sess.basicIncome + sess.boosterIncome;
-        
+
         // Logical Calculations as per Invoice standard:
         // Admin Processing & Delivery Charges = 18%
         // TDS = 2%
@@ -76,9 +86,9 @@ export async function GET() {
         // Evening: 12:00:00 PM to 11:59:59 PM
         const d = sess.date;
         const dateStr = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
-        
-        let fromTime = sess.sessionType === 'morning' ? "12:00:00 AM" : "12:00:00 PM";
-        let toTime = sess.sessionType === 'morning' ? "11:59:59 AM" : "11:59:59 PM";
+
+        const fromTime = sess.sessionType === 'morning' ? "12:00:00 AM" : "12:00:00 PM";
+        const toTime   = sess.sessionType === 'morning' ? "11:59:59 AM" : "11:59:59 PM";
 
         return {
           srNo: arr.length - index,
@@ -98,7 +108,8 @@ export async function GET() {
 
     return NextResponse.json({ success: true, payments });
   } catch (error) {
-    console.error('[GET_SUCCESS_PAYMENTS_API]', error);
+    console.error('[GET_SUCCESS_PAYMENTS_API] Unexpected error:', error);
     return NextResponse.json({ success: false, error: 'Internal Server Error' }, { status: 500 });
   }
 }
+

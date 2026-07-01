@@ -41,7 +41,8 @@ export default function SuccessPaymentsPage() {
         setError(null);
         const response = await fetch("/api/user/get-success-payments");
         if (!response.ok) {
-          throw new Error("Failed to fetch success payments");
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData?.error || `Server error: ${response.status}`);
         }
         const result = await response.json();
         let payments = [];

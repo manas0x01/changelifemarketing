@@ -22,6 +22,7 @@ import {
   ArrowRightLeft,
   Lock,
   CalendarCheck,
+  BarChart2,
 } from "lucide-react";
 
 const navItems = [
@@ -59,6 +60,12 @@ const navItems = [
     label: "Orders",
     href: "/clm-portal/dashboard/orders",
     icon: ShoppingBag,
+    permission: "orders",
+  },
+  {
+    label: "Sales Report",
+    href: "/clm-portal/dashboard/sales-report",
+    icon: BarChart2,
     permission: "orders",
   },
   {

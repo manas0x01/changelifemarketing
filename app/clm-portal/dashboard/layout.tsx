@@ -16,6 +16,7 @@ const routePermissions: Record<string, string> = {
   "/clm-portal/dashboard/pinrequests": "pinrequests",
   "/clm-portal/dashboard/pintransfers": "pintransfers",
   "/clm-portal/dashboard/orders": "orders",
+  "/clm-portal/dashboard/sales-report": "orders",
   "/clm-portal/dashboard/users": "users",
   "/clm-portal/dashboard/bank-approvals": "bank-approvals",
   "/clm-portal/dashboard/withdrawrequests": "withdrawrequests",

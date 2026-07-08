@@ -419,7 +419,7 @@ export default function DailyPayoutsPage() {
         transition={{ duration: 0.5 }}
         className="sticky top-0 z-20 bg-white/95 backdrop-blur border-b border-[#0A6E5A]/10 px-6 md:px-8 py-5"
       >
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <p className="font-['Roboto'] text-[0.7rem] uppercase tracking-widest text-[#C9A84C] mb-0.5">Admin Panel</p>
             <h1 className="font-['Fraunces'] text-[1.75rem] md:text-[2.25rem] text-[#0A6E5A] leading-tight">
@@ -429,17 +429,17 @@ export default function DailyPayoutsPage() {
               All payouts approved and processed within the selected date range
             </p>
           </div>
-          <div className="hidden md:flex items-center gap-3">
+          <div className="flex items-center gap-3">
             <button
               onClick={exportCSV}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#C9A84C] hover:bg-[#B8963B] text-white font-['Roboto'] font-semibold text-[0.85rem] rounded-lg transition-colors"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[#C9A84C] hover:bg-[#B8963B] text-white font-['Roboto'] font-semibold text-[0.85rem] rounded-lg transition-colors"
             >
               <Download className="w-4 h-4" /> Export CSV
             </button>
             <button
               onClick={fetchData}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2.5 bg-[#0A6E5A] hover:bg-[#0A6E5A]/90 text-white font-['Roboto'] font-semibold text-[0.85rem] rounded-lg transition-colors disabled:opacity-50"
+              className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2.5 bg-[#0A6E5A] hover:bg-[#0A6E5A]/90 text-white font-['Roboto'] font-semibold text-[0.85rem] rounded-lg transition-colors disabled:opacity-50"
             >
               <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
               Refresh

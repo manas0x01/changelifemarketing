@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
+import Link from "next/link";
 import Navbar from "@/components/Navbar";
 
 type Step = "validateTxn" | "sponsor" | "register";
@@ -1554,6 +1555,19 @@ function NewRegisterForm() {
                 {/* Password fields removed as they are now auto-generated */}
 
 
+                {/* Compliance Notice */}
+                <div style={{
+                  padding: '12px 16px',
+                  backgroundColor: '#F9F7F4',
+                  borderLeft: '4px solid #C9A84C',
+                  borderRadius: '4px',
+                  marginBottom: '20px',
+                  fontSize: '0.85rem',
+                  lineHeight: '1.5',
+                  color: '#333'
+                }}>
+                  <strong>Important Notice:</strong> Before joining or purchasing any product, every customer/distributor is advised to read the Company's <Link href="/terms" target="_blank" className="font-semibold text-[#C9A84C] hover:underline">Terms &amp; Conditions, Policies and Compensation Plan</Link> carefully.
+                </div>
 
                 {/* Submit */}
                 <div className="submit-wrap">

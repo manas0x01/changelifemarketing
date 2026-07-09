@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
-import { FileText, ChevronRight, CheckCircle, Shield, X, ExternalLink, ArrowLeft, Landmark, Award } from 'lucide-react';
+import { FileText, ChevronRight, CheckCircle, Shield, X, ExternalLink, ArrowLeft, Landmark, Award, BookOpen, AlertCircle, IndianRupee, ScrollText } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -356,6 +356,160 @@ export default function LegalPage() {
                 </span>
               </div>
             ))}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ── DIRECT SELLING COMPLIANCE NOTICE ── */}
+      <section className="py-20 md:py-28 bg-[#FFFFFF] relative overflow-hidden">
+        {/* subtle background pattern */}
+        <div
+          className="absolute inset-0 opacity-[0.025] pointer-events-none"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, #0A6E5A 1px, transparent 1px), linear-gradient(to bottom, #0A6E5A 1px, transparent 1px)',
+            backgroundSize: '5rem 5rem',
+          }}
+        />
+        <div className="absolute -top-40 -right-40 w-[28rem] h-[28rem] bg-[#C9A84C]/5 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-40 -left-40 w-[28rem] h-[28rem] bg-[#0A6E5A]/5 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
+          {/* Section header */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <div className="h-px flex-1 max-w-16 bg-[#C9A84C]/40" />
+              <span className="font-['Roboto'] text-[0.75rem] text-[#C9A84C] uppercase tracking-[0.3em] font-semibold">
+                Regulatory Notice
+              </span>
+              <div className="h-px flex-1 max-w-16 bg-[#C9A84C]/40" />
+            </div>
+            <h2 className="font-['Fraunces'] text-[2rem] md:text-[3rem] text-[#0A6E5A] leading-tight mb-4">
+              Direct Selling{' '}
+              <span className="text-[#C9A84C] italic">Compliance Notice</span>
+            </h2>
+            <p className="font-['Roboto'] text-[#333333]/60 text-[1rem] md:text-[1.125rem] max-w-2xl mx-auto leading-relaxed">
+              In accordance with the Consumer Protection (Direct Selling) Rules, 2021, we are committed to full transparency and ethical business conduct.
+            </p>
+          </motion.div>
+
+          {/* Compliance banner */}
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.1 }}
+            className="relative bg-[#0A6E5A] p-8 md:p-10 mb-12 overflow-hidden"
+          >
+            <div
+              className="absolute inset-0 opacity-[0.06] pointer-events-none"
+              style={{
+                backgroundImage:
+                  'linear-gradient(to right, #ffffff 1px, transparent 1px), linear-gradient(to bottom, #ffffff 1px, transparent 1px)',
+                backgroundSize: '3rem 3rem',
+              }}
+            />
+            {/* gold left accent */}
+            <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#C9A84C]" />
+            <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center gap-6">
+              <div className="w-16 h-16 rounded-full bg-[#C9A84C]/20 flex items-center justify-center shrink-0">
+                <BookOpen className="w-8 h-8 text-[#C9A84C]" />
+              </div>
+              <div>
+                <h3 className="font-['Fraunces'] text-[1.375rem] md:text-[1.75rem] text-[#FFFFFF] mb-2">
+                  Change Life Marketing — Proprietorship Firm, India
+                </h3>
+                <p className="font-['Roboto'] text-[0.9rem] text-[#FFFFFF]/75 leading-relaxed">
+                  This business is conducted in accordance with all applicable laws of India and follows the{' '}
+                  <span className="text-[#C9A84C] font-semibold">Consumer Protection (Direct Selling) Rules, 2021</span>.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Notice cards grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+            {[
+              {
+                icon: <CheckCircle className="w-6 h-6 text-[#C9A84C]" />,
+                title: 'Genuine Products Only',
+                desc: 'The Company promotes the sale of genuine products and does not promote or operate any pyramid scheme or money circulation scheme prohibited under Indian law.',
+              },
+              {
+                icon: <IndianRupee className="w-6 h-6 text-[#C9A84C]" />,
+                title: 'Performance-Based Income',
+                desc: `Income, incentives and rewards, if any, are based on the Company's compensation plan, product sales and business performance, and may vary from person to person. No income or success is guaranteed.`,
+              },
+              {
+                icon: <ScrollText className="w-6 h-6 text-[#C9A84C]" />,
+                title: 'All Registrations Available',
+                desc: 'All applicable registrations, licences and legal documents of the Firm are available for verification on this Legal Documents page above.',
+              },
+              {
+                icon: <AlertCircle className="w-6 h-6 text-[#C9A84C]" />,
+                title: 'Read Before You Join',
+                desc: <>Before joining or purchasing any product, every customer/distributor is advised to read the Company's <Link href="/terms" target="_blank" className="font-semibold text-[#C9A84C] hover:underline">Terms &amp; Conditions, Policies and Compensation Plan</Link> carefully.</>,
+              },
+            ].map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.65, delay: i * 0.1, ease: [0.16, 1, 0.3, 1] }}
+                className="group relative bg-[#F9F7F4] border border-[#0A6E5A]/10 hover:border-[#C9A84C]/50 p-7 md:p-8 transition-all duration-300 overflow-hidden"
+              >
+                {/* corner accent */}
+                <div className="absolute top-0 right-0 w-8 h-8 border-t-[3px] border-r-[3px] border-[#C9A84C]/40 group-hover:border-[#C9A84C] transition-colors duration-300 pointer-events-none" />
+                <div className="flex items-start gap-5">
+                  <div className="w-12 h-12 rounded-full bg-[#0A6E5A]/8 flex items-center justify-center shrink-0 mt-0.5 group-hover:bg-[#C9A84C]/15 transition-colors duration-300">
+                    {item.icon}
+                  </div>
+                  <div>
+                    <h4 className="font-['Fraunces'] text-[1.125rem] text-[#0A6E5A] mb-2">{item.title}</h4>
+                    <p className="font-['Roboto'] text-[#333333]/65 text-[0.875rem] leading-relaxed">{item.desc}</p>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {/* Full compliance text box */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.7, delay: 0.2 }}
+            className="border border-[#0A6E5A]/15 bg-[#F9F7F4] p-8 md:p-10 relative"
+          >
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-[#0A6E5A] via-[#C9A84C] to-[#0A6E5A]" />
+            <div className="flex items-center gap-3 mb-6">
+              <Shield className="w-5 h-5 text-[#0A6E5A]" />
+              <h3 className="font-['Fraunces'] text-[1.25rem] text-[#0A6E5A]">Full Compliance Statement</h3>
+            </div>
+            <div className="space-y-4 font-['Roboto'] text-[0.875rem] text-[#333333]/70 leading-relaxed">
+              <p>
+                <span className="font-semibold text-[#0A6E5A]">Change Life Marketing</span> is a Proprietorship Firm operating in India. The business is conducted in accordance with applicable laws of India and follows the <span className="font-semibold text-[#C9A84C]">Consumer Protection (Direct Selling) Rules, 2021</span>.
+              </p>
+              <p>
+                The Company promotes the sale of genuine products and does not promote or operate any pyramid scheme or money circulation scheme prohibited under Indian law.
+              </p>
+              <p>
+                Income, incentives and rewards, if any, are based on the Company's compensation plan, product sales and business performance, and may vary from person to person. <span className="font-semibold text-[#0A6E5A]">No income or success is guaranteed.</span>
+              </p>
+              <p>
+                All applicable registrations, licences and legal documents of the Firm are available for verification on this Legal Documents page.
+              </p>
+              <p>
+                Before joining or purchasing any product, every customer/distributor is advised to read the Company's <Link href="/terms" target="_blank" className="font-semibold text-[#C9A84C] hover:underline">Terms &amp; Conditions, Policies and Compensation Plan</Link> carefully.
+              </p>
+            </div>
           </motion.div>
         </div>
       </section>

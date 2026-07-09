@@ -313,64 +313,64 @@ export default function HomePage() {
 
       {/* STATISTICS STRIP */}
       {/* STATISTICS STRIP */}
-<section className="bg-[#0A6E5A] py-20 sm:py-24 md:py-28 relative overflow-hidden">
+      <section className="bg-[#0A6E5A] py-20 sm:py-24 md:py-28 relative overflow-hidden">
 
-  {/* ── Decorative Background Layers ── */}
-  <div className="absolute inset-0 pointer-events-none overflow-hidden">
-    {/* Soft radial glow — top left */}
-    <div className="absolute -top-1/2 -left-[10%] w-[70%] h-[200%] bg-[#FFFFFF]/5 rotate-12 blur-3xl" />
-    {/* Soft radial glow — bottom right */}
-    <div className="absolute -bottom-1/2 -right-[10%] w-[70%] h-[200%] bg-[#C9A84C]/5 -rotate-12 blur-3xl" />
-    {/* Subtle dot-grid texture */}
-    <div
-      className="absolute inset-0 opacity-[0.04]"
-      style={{
-        backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
-        backgroundSize: '28px 28px',
-      }}
-    />
-  </div>
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 relative z-10">
-    {/* Optional Section Label */}
-    <motion.p
-      initial={{ opacity: 0, y: 10 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-      className="text-center font-['Roboto'] text-xs sm:text-sm uppercase tracking-[0.2em] text-[#C9A84C]/80 mb-10 sm:mb-14"
-    >
-      Our Impact in Numbers
-    </motion.p>
-
-    {/* Stats Grid */}
-    <div
-      id="stats-trigger"
-      className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4 sm:gap-x-6 md:gap-x-8"
-    >
-      {isLoadingStats ? (
-        <div className="col-span-full text-center text-[#FFFFFF]/50 py-12 font-['Roboto']">
-          Loading statistics...
+        {/* ── Decorative Background Layers ── */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {/* Soft radial glow — top left */}
+          <div className="absolute -top-1/2 -left-[10%] w-[70%] h-[200%] bg-[#FFFFFF]/5 rotate-12 blur-3xl" />
+          {/* Soft radial glow — bottom right */}
+          <div className="absolute -bottom-1/2 -right-[10%] w-[70%] h-[200%] bg-[#C9A84C]/5 -rotate-12 blur-3xl" />
+          {/* Subtle dot-grid texture */}
+          <div
+            className="absolute inset-0 opacity-[0.04]"
+            style={{
+              backgroundImage: 'radial-gradient(circle, #ffffff 1px, transparent 1px)',
+              backgroundSize: '28px 28px',
+            }}
+          />
         </div>
-      ) : statistics.length > 0 ? (
-        statistics.map((stat, index) => {
-          const icons = [Users, Package, Building2, TrendingUp];
-          const Icon = icons[index % icons.length];
-          const isLast = index === statistics.length - 1;
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-12 relative z-10">
+          {/* Optional Section Label */}
+          <motion.p
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="text-center font-['Roboto'] text-xs sm:text-sm uppercase tracking-[0.2em] text-[#C9A84C]/80 mb-10 sm:mb-14"
+          >
+            Our Impact in Numbers
+          </motion.p>
 
-          return (
-            <motion.div
-              key={stat._id}
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: '-60px' }}
-              transition={{ duration: 0.7, delay: index * 0.12, ease: [0.16, 1, 0.3, 1] }}
-              className={`
+          {/* Stats Grid */}
+          <div
+            id="stats-trigger"
+            className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4 sm:gap-x-6 md:gap-x-8"
+          >
+            {isLoadingStats ? (
+              <div className="col-span-full text-center text-[#FFFFFF]/50 py-12 font-['Roboto']">
+                Loading statistics...
+              </div>
+            ) : statistics.length > 0 ? (
+              statistics.map((stat, index) => {
+                const icons = [Users, Package, Building2, TrendingUp];
+                const Icon = icons[index % icons.length];
+                const isLast = index === statistics.length - 1;
+
+                return (
+                  <motion.div
+                    key={stat._id}
+                    initial={{ opacity: 0, y: 30 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    viewport={{ once: true, margin: '-60px' }}
+                    transition={{ duration: 0.7, delay: index * 0.12, ease: [0.16, 1, 0.3, 1] }}
+                    className={`
                 relative flex flex-col items-center text-center px-2 sm:px-4 py-6 sm:py-8
                 ${!isLast ? 'lg:border-r lg:border-[#FFFFFF]/10' : ''}
               `}
-            >
-              {/* Icon bubble */}
-              <div className="
+                  >
+                    {/* Icon bubble */}
+                    <div className="
                 inline-flex items-center justify-center
                 w-12 h-12 sm:w-14 sm:h-14 md:w-16 md:h-16
                 rounded-full
@@ -378,48 +378,48 @@ export default function HomePage() {
                 mb-5 sm:mb-6
                 shadow-[0_0_24px_rgba(201,168,76,0.12)]
               ">
-                <Icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[#C9A84C]" />
-              </div>
+                      <Icon className="w-5 h-5 sm:w-6 sm:h-6 md:w-7 md:h-7 text-[#C9A84C]" />
+                    </div>
 
-              {/* Animated Number */}
-              <div className="
+                    {/* Animated Number */}
+                    <div className="
                 font-['Fraunces']
                 text-4xl sm:text-5xl md:text-[3.25rem] lg:text-[3.75rem]
                 text-[#FFFFFF] leading-none mb-1
                 flex items-baseline justify-center gap-0.5 flex-wrap
               ">
-                <span>{(counts[stat._id] || 0).toLocaleString('en-IN')}</span>
-                {stat.unit && (
-                  <span className="text-xl sm:text-2xl md:text-[1.875rem] text-[#C9A84C] ml-0.5">
-                    {stat.unit}
-                  </span>
-                )}
-              </div>
+                      <span>{(counts[stat._id] || 0).toLocaleString('en-IN')}</span>
+                      {stat.unit && (
+                        <span className="text-xl sm:text-2xl md:text-[1.875rem] text-[#C9A84C] ml-0.5">
+                          {stat.unit}
+                        </span>
+                      )}
+                    </div>
 
-              {/* Divider accent */}
-              <div className="w-8 h-px bg-[#C9A84C]/40 my-3 sm:my-4" />
+                    {/* Divider accent */}
+                    <div className="w-8 h-px bg-[#C9A84C]/40 my-3 sm:my-4" />
 
-              {/* Label */}
-              <p className="
+                    {/* Label */}
+                    <p className="
                 font-['Roboto'] font-medium
                 text-[0.65rem] xs:text-[0.7rem] sm:text-xs md:text-sm
                 text-[#FFFFFF]/60
                 uppercase tracking-[0.15em] sm:tracking-widest
                 leading-relaxed
               ">
-                {stat.statisticName}
-              </p>
-            </motion.div>
-          );
-        })
-      ) : (
-        <div className="col-span-full text-center text-[#FFFFFF]/50 py-12 font-['Roboto']">
-          Statistics data unavailable.
+                      {stat.statisticName}
+                    </p>
+                  </motion.div>
+                );
+              })
+            ) : (
+              <div className="col-span-full text-center text-[#FFFFFF]/50 py-12 font-['Roboto']">
+                Statistics data unavailable.
+              </div>
+            )}
+          </div>
         </div>
-      )}
-    </div>
-  </div>
-</section>
+      </section>
 
 
 

@@ -8,6 +8,7 @@ export default function Footer() {
     { name: 'Products', path: '/products' },
     { name: 'Business Plan', path: '/business-plan' },
     { name: 'Achievers', path: '/achievers' },
+    { name: 'Legal Documents', path: '/legal' },
     { name: 'Terms & Conditions', path: '/terms' },
     { name: 'Contact', path: '/contact' },
   ];
@@ -119,8 +120,12 @@ export default function Footer() {
 
         {/* Legal Disclaimer */}
         <div className="border-t border-[#1B7A6B] pt-8 mb-8">
-          <p className="font-['Roboto'] text-[0.875rem] text-center max-w-4xl mx-auto">
-            <strong className="text-[#C9A84C]">Legal Disclaimer:</strong> Income and earnings depend on individual effort, team performance, and product sales. Results may vary. Change Life Marketing does not guarantee specific income levels. All business opportunities are subject to terms and conditions.
+          <p className="font-['Roboto'] text-[0.875rem] text-center max-w-4xl mx-auto mb-3">
+            <strong className="text-[#C9A84C]">Direct Selling Compliance Notice:</strong> Change Life Marketing is a Proprietorship Firm operating under the <strong className="text-[#C9A84C]">Consumer Protection (Direct Selling) Rules, 2021</strong>. We do not operate any pyramid or money circulation scheme. Income and earnings depend on individual effort and product sales. Results may vary. No income is guaranteed.
+          </p>
+          <p className="font-['Roboto'] text-[0.75rem] text-center text-[#FFFFFF]/50">
+            All registrations & legal documents are available on the{' '}
+            <Link href="/legal" className="text-[#C9A84C] hover:underline">Legal Documents page</Link>.
           </p>
         </div>
 

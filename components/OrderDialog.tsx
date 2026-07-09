@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
 
 interface OrderDialogProps {
   isOpen: boolean;
@@ -296,6 +297,13 @@ export default function OrderDialog({
                 disabled={isLoading || isFetchingUser}
                 required
               />
+            </div>
+
+            {/* Compliance Notice */}
+            <div className="pt-2">
+              <div className="px-4 py-3 bg-[#F9F7F4] border-l-4 border-[#C9A84C] rounded-md text-[0.8rem] leading-relaxed text-[#333333]">
+                <strong>Important Notice:</strong> Before joining or purchasing any product, every customer/distributor is advised to read the Company's <Link href="/terms" target="_blank" className="font-semibold text-[#C9A84C] hover:underline">Terms &amp; Conditions, Policies and Compensation Plan</Link> carefully.
+              </div>
             </div>
 
             {/* Submit Button */}

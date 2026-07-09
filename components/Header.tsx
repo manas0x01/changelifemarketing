@@ -18,6 +18,7 @@ export default function Header() {
     { name: 'Business Plan', path: '/businessplans' },
     { name: 'Achievers', path: '/achievers' },
     { name: 'Legal Documents', path: '/legal' },
+    { name: 'Terms & Conditions', path: '/terms' },
     { name: 'Contact', path: '/contact' },
   ];
 

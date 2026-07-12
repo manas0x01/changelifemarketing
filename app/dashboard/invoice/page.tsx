@@ -594,7 +594,7 @@ export default function TaxInvoicePage() {
           font-size: 13.5px;
           font-weight: 700;
           color: #111;
-          border-bottom: 1px solid #1a4a2e;
+          border-bottom: 1px solid #dce8dc;
         }
 
         .totals-section .grand-total-row {
@@ -621,6 +621,86 @@ export default function TaxInvoicePage() {
         .bv-center {
           text-align: center !important;
           font-weight: 700;
+        }
+
+        /* GST Details Section */
+        .gst-section {
+          margin: 0 20px;
+          border: 1.5px solid #1a4a2e;
+          border-radius: 6px;
+          overflow: hidden;
+          margin-bottom: 14px;
+        }
+
+        .gst-section table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+
+        .gst-section .gst-header-row {
+          background: #1a4a2e;
+        }
+
+        .gst-section .gst-header-row td {
+          padding: 7px 12px;
+          font-size: 13px;
+          font-weight: 700;
+          letter-spacing: 1px;
+          text-transform: uppercase;
+          color: white;
+        }
+
+        .gst-section .gst-row {
+          border-bottom: 1px solid #dce8dc;
+        }
+
+        .gst-section .gst-row td {
+          padding: 7px 12px;
+          font-size: 13px;
+          color: #222;
+        }
+
+        .gst-section .gst-row td:last-child {
+          text-align: right;
+          font-weight: 700;
+        }
+
+        .gst-section .gst-note-row td {
+          padding: 5px 12px;
+          font-size: 11px;
+          color: #777;
+          font-style: italic;
+          border-bottom: 1px solid #dce8dc;
+        }
+
+        .gst-section .gst-grand-row {
+          background: #1a4a2e;
+        }
+
+        .gst-section .gst-grand-row td {
+          padding: 10px 12px;
+          color: white;
+          font-size: 15px;
+          font-weight: 900;
+        }
+
+        .gst-section .gst-grand-row td:last-child {
+          text-align: right;
+          font-size: 18px;
+        }
+
+        .gst-badge {
+          display: inline-block;
+          background: #c8943a;
+          color: white;
+          font-size: 10px;
+          font-weight: 700;
+          padding: 1px 6px;
+          border-radius: 3px;
+          letter-spacing: 0.5px;
+          margin-left: 6px;
+          text-transform: uppercase;
+          vertical-align: middle;
         }
 
         /* Bottom two-column section */
@@ -975,11 +1055,13 @@ export default function TaxInvoicePage() {
           <table>
             <thead>
               <tr>
-                <th style={{ width: "48px" }}>S.No.</th>
+                <th style={{ width: "40px" }}>S.No.</th>
                 <th>Description</th>
-                <th style={{ width: "80px" }}>HSN/SAC</th>
-                <th style={{ width: "50px" }}>Qty</th>
-                <th style={{ width: "120px" }}>BV</th>
+                <th style={{ width: "70px" }}>HSN/SAC</th>
+                <th style={{ width: "40px" }}>Qty</th>
+                <th style={{ width: "90px" }}>Unit Price</th>
+                <th style={{ width: "90px" }}>Amount</th>
+                <th style={{ width: "90px" }}>BV</th>
               </tr>
             </thead>
             <tbody>
@@ -989,8 +1071,10 @@ export default function TaxInvoicePage() {
                   <div className="product-name">Sea Buckthorn Capsule</div>
                   <div className="product-sub">(1 Box)</div>
                 </td>
-                <td>3004</td>
+                <td>300490</td>
                 <td>1</td>
+                <td>₹800.00</td>
+                <td>₹800.00</td>
                 <td><span className="bv-value">700 BV</span></td>
               </tr>
               <tr>
@@ -999,8 +1083,10 @@ export default function TaxInvoicePage() {
                   <div className="product-name">Acidity Support Drop</div>
                   <div className="product-sub">(1 Bottle)</div>
                 </td>
-                <td>3004</td>
+                <td>300490</td>
                 <td>1</td>
+                <td>₹499.00</td>
+                <td>₹499.00</td>
                 <td><span className="bv-value">300 BV</span></td>
               </tr>
             </tbody>
@@ -1012,12 +1098,73 @@ export default function TaxInvoicePage() {
           <table>
             <tbody>
               <tr className="subtotal-row">
-                <td><strong>Total BV</strong></td>
-                <td className="bv-center">1000 BV</td>
+                <td><strong>Subtotal</strong></td>
+                <td className="text-right" style={{ fontWeight: 700 }}>₹1,299.00</td>
+                <td className="bv-center" style={{ width: "100px" }}>1000 BV</td>
               </tr>
             </tbody>
           </table>
         </div>
+
+        {/* GST DETAILS */}
+        {(() => {
+          const isBihar = (userData?.state || "").toLowerCase().includes("bihar");
+          const taxableValue = "₹1,237.14";
+          const cgst = "₹30.93";
+          const sgst = "₹30.93";
+          const igst = "₹61.86";
+          const grandTotal = "₹1,299.00";
+          return (
+            <div className="gst-section">
+              <table>
+                <tbody>
+                  <tr className="gst-header-row">
+                    <td colSpan={2}>
+                      GST Details
+                      {isBihar
+                        ? <span className="gst-badge">Bihar — Intra-State</span>
+                        : <span className="gst-badge">Inter-State</span>
+                      }
+                    </td>
+                  </tr>
+                  <tr className="gst-row">
+                    <td>Taxable Value (Base Price excl. GST)</td>
+                    <td>{taxableValue}</td>
+                  </tr>
+                  {isBihar ? (
+                    <>
+                      <tr className="gst-row">
+                        <td>CGST @2.5%</td>
+                        <td>{cgst}</td>
+                      </tr>
+                      <tr className="gst-row">
+                        <td>SGST @2.5%</td>
+                        <td>{sgst}</td>
+                      </tr>
+                    </>
+                  ) : (
+                    <tr className="gst-row">
+                      <td>IGST @5%</td>
+                      <td>{igst}</td>
+                    </tr>
+                  )}
+                  <tr className="gst-note-row">
+                    <td colSpan={2}>
+                      {isBihar
+                        ? "* CGST & SGST applicable — supply within Bihar (Intra-State)"
+                        : `* IGST applicable — supply outside Bihar (Inter-State) to ${userData?.state || "your state"}`
+                      }
+                    </td>
+                  </tr>
+                  <tr className="gst-grand-row">
+                    <td>GRAND TOTAL (Incl. GST)</td>
+                    <td>{grandTotal}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          );
+        })()}
 
         {/* BOTTOM SECTION */}
         <div className="bottom-section">

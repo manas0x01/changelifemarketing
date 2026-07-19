@@ -272,7 +272,7 @@ export async function POST(req: NextRequest) {
       placementPosition,
 
       registeredEPIN: epin,
-      joiningDate: new Date().toISOString().split('T')[0], // 🔧 FIX: Always set joining date to today
+      joiningDate: (() => { const ist = new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000); return ist.toISOString().split('T')[0]; })(), // 🔧 FIX: IST date (not UTC) — avoids wrong date for joins between 12AM-5:30AM IST
 
       leftChild: "",
       rightChild: "",

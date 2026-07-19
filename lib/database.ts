@@ -26,7 +26,10 @@ export async function connectDB() {
 
     const opts = {
       bufferCommands: false,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 15000,
+      socketTimeoutMS: 45000,
+      connectTimeoutMS: 15000,
+      family: 4,
     };
 
     cached.promise = mongoose
@@ -36,7 +39,8 @@ export async function connectDB() {
         return mongoose;
       })
       .catch((error) => {
-        console.error("❌ MongoDB Error:", error);
+        console.error("❌ MongoDB Connection Error:", error);
+        cached.promise = null; // Allow retry on next call
         throw error;
       });
   }
@@ -45,6 +49,7 @@ export async function connectDB() {
     cached.conn = await cached.promise;
   } catch (e) {
     cached.promise = null;
+    cached.conn = null;
     throw e;
   }
 

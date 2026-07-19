@@ -59,7 +59,7 @@ export async function updateTeamCounts(
 
     // 🔐 CRITICAL: Ensure joiningDate is always set (prevents session tracking bugs)
     if (!user.joiningDate || user.joiningDate.trim() === '') {
-      const joinDate = new Date().toISOString().split('T')[0];
+      const joinDate = (() => { const ist = new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000); return ist.toISOString().split('T')[0]; })(); // IST date
       console.warn(`⚠️  [TEAM UTILS] ${user.username}: joiningDate was missing, setting to ${joinDate}`);
       user.joiningDate = joinDate;
     }

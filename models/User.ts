@@ -496,11 +496,12 @@ userSchema.pre('save', async function (this: IUser) {
     console.error('❌ [PRE-SAVE] Error ensuring userId fallback:', err);
   }
 
-  // 🔹 ENSURE joiningDate is always set (fixes session tracking bug)
+  // 🔹 ENSURE joiningDate is always set — using IST date (not UTC)
   try {
     if (!this.joiningDate || this.joiningDate.trim() === '') {
-      const joinDate = new Date().toISOString().split('T')[0];
-      console.log(`📅 [PRE-SAVE] joiningDate missing for ${this.username} — setting to ${joinDate}`);
+      const istNow = new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000);
+      const joinDate = istNow.toISOString().split('T')[0]; // 🔧 IST date fix
+      console.log(`📅 [PRE-SAVE] joiningDate missing for ${this.username} — setting to ${joinDate} (IST)`);
       this.joiningDate = joinDate;
       if (typeof (this as any).markModified === 'function') {
         try { (this as any).markModified('joiningDate'); } catch (e) { }
@@ -703,12 +704,19 @@ userSchema.pre('save', async function (this: IUser) {
       if (hasValidPair) {
         console.log(`[SELF-HEALING] Valid retroactive pair found for ${this.username}. Attempting retroactive match.`);
         const { calculateBasicIncome } = require('../lib/calculateBasicIncome');
-        // Force sessionTeam to have at least 1,1 to trigger the match if it's currently empty
+        // 🔧 BUG FIX: Save original sessionTeam state and restore after income calc
+        // to prevent corrupting the live session state
         if (!this.sessionTeam) this.sessionTeam = { left: 0, right: 0 };
+        const savedLeft = this.sessionTeam.left;
+        const savedRight = this.sessionTeam.right;
         if (this.sessionTeam.left === 0) this.sessionTeam.left = 1;
         if (this.sessionTeam.right === 0) this.sessionTeam.right = 1;
 
         await calculateBasicIncome(this, this.lastSessionType || (new Date(new Date().getTime() + 5.5 * 60 * 60 * 1000).getUTCHours() < 12 ? "morning" : "evening"), this.lastSessionDate || new Date());
+
+        // 🔧 Restore original sessionTeam — only the income record should change
+        this.sessionTeam.left = savedLeft;
+        this.sessionTeam.right = savedRight;
       } else {
         console.log(`[SELF-HEALING] No same-day, same-session downline pairs found for ${this.username}. Bypassing retroactive match.`);
       }
@@ -716,10 +724,12 @@ userSchema.pre('save', async function (this: IUser) {
 
     // 3. SESSION TRANSITION HEALING (IST-based clock)
     const now = new Date();
-    const istHour = new Date(now.getTime() + 5.5 * 60 * 60 * 1000).getUTCHours();
+    const IST_MS = 5.5 * 60 * 60 * 1000;
+    const istHour = new Date(now.getTime() + IST_MS).getUTCHours();
     const currentSessionType = (istHour < 12 ? "morning" : "evening");
-    const nowDateStr = now.toDateString();
-    const lastDateStr = this.lastSessionDate ? new Date(this.lastSessionDate).toDateString() : "";
+    // 🔧 BUG FIX: Use IST date string (not UTC toDateString()) for day comparison
+    const nowDateStr = new Date(now.getTime() + IST_MS).toISOString().split('T')[0];
+    const lastDateStr = this.lastSessionDate ? new Date(new Date(this.lastSessionDate).getTime() + IST_MS).toISOString().split('T')[0] : "";
 
     const sessionChanged = (lastDateStr !== nowDateStr) || (this.lastSessionType !== currentSessionType);
 

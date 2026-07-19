@@ -85,7 +85,8 @@ export async function GET() {
         // Morning: 12:00:00 AM to 11:59:59 AM
         // Evening: 12:00:00 PM to 11:59:59 PM
         const d = sess.date;
-        const dateStr = `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+        const istDate = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+        const dateStr = `${istDate.getUTCMonth() + 1}/${istDate.getUTCDate()}/${istDate.getUTCFullYear()}`;
 
         const fromTime = sess.sessionType === 'morning' ? "12:00:00 AM" : "12:00:00 PM";
         const toTime   = sess.sessionType === 'morning' ? "11:59:59 AM" : "11:59:59 PM";

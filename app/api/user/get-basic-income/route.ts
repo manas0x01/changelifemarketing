@@ -37,7 +37,10 @@ export async function GET(req: NextRequest) {
 
     // Format records for frontend - show actual income only
     const formattedRecords = sessionRecords.map((session: any, index: number) => {
-      const dateStr = session.date ? new Date(session.date).toLocaleDateString('en-GB') : new Date().toLocaleDateString('en-GB');
+      const d = session.date ? new Date(session.date) : new Date();
+      // Convert to IST (+5:30)
+      const istDate = new Date(d.getTime() + 5.5 * 60 * 60 * 1000);
+      const dateStr = `${String(istDate.getUTCDate()).padStart(2, '0')}/${String(istDate.getUTCMonth() + 1).padStart(2, '0')}/${istDate.getUTCFullYear()}`;
       const sessionNum = index + 1;
       
       // Check if this is a cut session (0 income but has pairs)

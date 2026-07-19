@@ -117,19 +117,23 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       const sessionRecord = user.sessionBasedIncome[recordIndex];
       const previousPairs = sessionRecord.pairs || 0;
 
-      // OVERWRITE pairs with current min(L, R) to prevent double-counting
-      // when calculateBasicIncome is called multiple times in the same session.
-      if (pairsInSession <= previousPairs) {
+      // 🔐 CRITICAL: For normal sessions, income is capped at 1 pair (₹1000).
+      // We compare against paidPairs (capped) not raw pairsInSession to prevent
+      // the "2 pairs shown" bug where multiple joiners in same session inflate the count.
+      const effectivePairs = isCutSession ? pairsInSession : paidPairs;
+
+      if (effectivePairs <= previousPairs) {
         // No new pairs since last call — nothing to update
-        console.log(`🚫 [BASIC CAP] ${user.username}: No new pairs (${pairsInSession} <= ${previousPairs}). Skipping.`);
+        console.log(`🚫 [BASIC CAP] ${user.username}: No new pairs (${effectivePairs} <= ${previousPairs}). Skipping.`);
         return { success: true, income: 0, pairs: 0 };
       }
 
-      sessionRecord.pairs = pairsInSession;
+      // 🔧 FIX: Use paidPairs (capped at 1 for normal sessions) NOT raw pairsInSession
+      sessionRecord.pairs = effectivePairs;
       sessionRecord.description = description;
       sessionRecord.processed = true;
       sessionRecord.date = sessionDate;
-      addedPairs = pairsInSession - previousPairs;
+      addedPairs = effectivePairs - previousPairs;
 
       if (isCutSession) {
         // Cut session: ALL income is ₹0 regardless of how many pairs

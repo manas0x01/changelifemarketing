@@ -1270,6 +1270,31 @@ export default function TaxInvoicePage() {
           </div>
           <div className="footer-signatory">Authorized Signatory</div>
           <div className="footer-company">Change Life Marketing</div>
+          <div style={{
+            marginTop: '12px',
+            paddingTop: '10px',
+            borderTop: '1px solid #e0e0e0',
+            fontSize: '11px',
+            color: '#777',
+            lineHeight: '1.6',
+          }}>
+            <a
+              href="/terms"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                color: '#1a4a2e',
+                textDecoration: 'underline',
+                fontWeight: 700,
+                fontSize: '11.5px',
+              }}
+            >
+              📄 Terms & Conditions / नियम और शर्तें
+            </a>
+            <div style={{ marginTop: '4px', fontSize: '10.5px', color: '#999' }}>
+              By registration, you acknowledge that you have read, understood and agreed to the Company&apos;s Policies & Terms.
+            </div>
+          </div>
         </div>
 
       </div>

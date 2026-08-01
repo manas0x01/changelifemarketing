@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSidebar } from "@/context/SidebarContext";
 import Navbar from "@/components/Navbar";
 import Link from "next/link";
+import TermsConditionsModal from "@/components/TermsConditionsModal";
 import {
   Dialog,
   DialogContent,
@@ -252,6 +253,9 @@ export default function Dashboard() {
 
   return (
     <>
+      {/* Terms & Conditions Alert */}
+      <TermsConditionsModal storageKey="tandc_accepted_dashboard" variant="dashboard" />
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Nunito:wght@400;500;600;700;800&display=swap');
 

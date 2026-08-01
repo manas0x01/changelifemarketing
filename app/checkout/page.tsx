@@ -23,6 +23,7 @@ import {
 import Link from 'next/link';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
+import TermsConditionsModal from '@/components/TermsConditionsModal';
 
 interface UserDetails {
   username: string;
@@ -372,6 +373,9 @@ function CheckoutContent() {
 
   return (
     <div className="min-h-screen bg-[#F8FAF9]">
+      {/* Terms & Conditions Alert */}
+      <TermsConditionsModal storageKey="tandc_accepted_checkout" variant="checkout" />
+
       <Header />
 
       {/* Top Banner */}

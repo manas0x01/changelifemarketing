@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
+import TermsConditionsModal from "@/components/TermsConditionsModal";
 
 type Step = "validateTxn" | "sponsor" | "register";
 
@@ -625,6 +626,9 @@ function NewRegisterForm() {
 
   return (
     <>
+      {/* Terms & Conditions Alert */}
+      <TermsConditionsModal storageKey="tandc_accepted_registration" variant="registration" />
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
 

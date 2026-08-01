@@ -19,6 +19,7 @@ import {
 interface SalesRow {
   date: string;
   name: string;
+  userId: string;
   location: string;
   amount: number;
   status: string;
@@ -104,7 +105,7 @@ export default function SalesReportPage() {
     if (!data?.rows || data.rows.length === 0) return;
     
     // Create CSV headers
-    const headers = ["Date", "Name", "Location", "Amount", "Status", "Type"];
+    const headers = ["Date", "Name", "Client User ID", "Location", "Amount", "Status", "Type"];
     
     // Create CSV rows
     const csvRows = data.rows.map(row => {
@@ -113,6 +114,7 @@ export default function SalesReportPage() {
       return [
         escape(row.date),
         escape(row.name),
+        escape(row.userId),
         escape(row.location),
         escape(row.amount),
         escape(row.status),
@@ -136,6 +138,7 @@ export default function SalesReportPage() {
 
   const filteredRows = data?.rows.filter((r) =>
     r.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    r.userId.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
     r.type.toLowerCase().includes(searchTerm.toLowerCase())
   ) || [];
@@ -292,7 +295,7 @@ export default function SalesReportPage() {
             <table className="w-full text-[0.85rem] min-w-[700px]">
               <thead className="bg-[#F9FAFA] sticky top-0 z-0">
                 <tr className="border-b border-[#0A6E5A]/10">
-                  {["Date", "Name", "Location", "Type", "Amount", "Status"].map((h) => (
+                  {["Date", "Name", "Client User ID", "Location", "Type", "Amount", "Status"].map((h) => (
                     <th key={h} className="px-5 py-4 text-left font-semibold text-[0.75rem] uppercase tracking-wider text-[#333333]/60">
                       {h}
                     </th>
@@ -302,7 +305,7 @@ export default function SalesReportPage() {
               <tbody className="divide-y divide-[#0A6E5A]/5">
                 {!loading && filteredRows.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-5 py-12 text-center text-[#333]/50">
+                    <td colSpan={7} className="px-5 py-12 text-center text-[#333]/50">
                       No sales found for this date range.
                     </td>
                   </tr>
@@ -311,6 +314,7 @@ export default function SalesReportPage() {
                     <tr key={i} className="hover:bg-[#0A6E5A]/[0.02] transition-colors">
                       <td className="px-5 py-3.5 text-[#333]/80 whitespace-nowrap">{row.date}</td>
                       <td className="px-5 py-3.5 font-medium text-[#0A6E5A] whitespace-nowrap">{row.name}</td>
+                      <td className="px-5 py-3.5 text-[#333]/70 font-mono text-[0.8rem] whitespace-nowrap">{row.userId}</td>
                       <td className="px-5 py-3.5 text-[#333]/70">{row.location}</td>
                       <td className="px-5 py-3.5 text-[#333]/60 text-[0.8rem] whitespace-nowrap">{row.type}</td>
                       <td className="px-5 py-3.5 font-semibold text-[#333]">₹{row.amount.toLocaleString("en-IN")}</td>

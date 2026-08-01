@@ -4,6 +4,7 @@ import React from "react";
 import { useState, useRef, useEffect, useCallback } from "react";
 import Navbar from "@/components/Navbar";
 import { useRouter } from "next/navigation";
+import TermsConditionsModal from "@/components/TermsConditionsModal";
 
 export default function WelcomeKitPage() {
   const router = useRouter();
@@ -94,6 +95,9 @@ export default function WelcomeKitPage() {
 
   return (
     <>
+      {/* Terms & Conditions Alert */}
+      <TermsConditionsModal storageKey="tandc_accepted_welcomekit" variant="welcomekit" />
+
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@700&display=swap');
 

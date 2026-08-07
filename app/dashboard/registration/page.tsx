@@ -588,13 +588,6 @@ function NewRegisterForm() {
       });
       const data = await response.json();
 
-      // Ensure at least 3 seconds have passed
-      const elapsedTime = Date.now() - startTime;
-      const remainingTime = Math.max(0, 3000 - elapsedTime);
-      if (remainingTime > 0) {
-        await new Promise(r => setTimeout(r, remainingTime));
-      }
-
       if (!response.ok) {
         setIsRegistering(false);
         setIsSubmitting(false);

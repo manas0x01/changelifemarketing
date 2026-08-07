@@ -155,15 +155,36 @@ export async function POST(req: NextRequest) {
     }
 
     //////////////////////////////////////////////////////////////
-    // 🔹 SPONSOR CHECK
+    // 🔹 SPONSOR & UPLINE CHECK (PARALLEL & INDEXED LOOKUP)
     //////////////////////////////////////////////////////////////
 
-    const sponsor = await User.findOne({
-      $or: [
-        { userId: { $regex: new RegExp(`^${sponsorId}$`, 'i') } },
-        { username: { $regex: new RegExp(`^${sponsorId}$`, 'i') } }
-      ],
-    });
+    const fetchSponsor = async () => {
+      let s = await User.findOne({ $or: [{ userId: sponsorId }, { username: sponsorId }] });
+      if (!s) {
+        s = await User.findOne({
+          $or: [
+            { userId: { $regex: new RegExp(`^${sponsorId}$`, 'i') } },
+            { username: { $regex: new RegExp(`^${sponsorId}$`, 'i') } }
+          ]
+        });
+      }
+      return s;
+    };
+
+    const fetchUpline = async () => {
+      let u = await User.findOne({ $or: [{ userId: uplineId }, { username: uplineId }] });
+      if (!u) {
+        u = await User.findOne({
+          $or: [
+            { userId: { $regex: new RegExp(`^${uplineId}$`, 'i') } },
+            { username: { $regex: new RegExp(`^${uplineId}$`, 'i') } }
+          ]
+        });
+      }
+      return u;
+    };
+
+    const [sponsor, upline] = await Promise.all([fetchSponsor(), fetchUpline()]);
 
     if (!sponsor) {
       console.log('[DEBUG] register: sponsor not found', { sponsorId });
@@ -172,17 +193,6 @@ export async function POST(req: NextRequest) {
         { status: 400 }
       );
     }
-
-    //////////////////////////////////////////////////////////////
-    // 🔹 UPLINE CHECK
-    //////////////////////////////////////////////////////////////
-
-    const upline = await User.findOne({
-      $or: [
-        { userId: { $regex: new RegExp(`^${uplineId}$`, 'i') } },
-        { username: { $regex: new RegExp(`^${uplineId}$`, 'i') } }
-      ],
-    });
 
     if (!upline) {
       console.log('[DEBUG] register: upline not found', { uplineId });
@@ -199,13 +209,18 @@ export async function POST(req: NextRequest) {
       const childUserId = upline[positionField];
       console.log('[DEBUG] register: checking if child exists under upline', { positionField, childUserId });
 
-      // Verify the child user actually exists in database
-      const childExists = await User.findOne({
-        $or: [
-          { userId: { $regex: new RegExp(`^${childUserId}$`, 'i') } },
-          { username: { $regex: new RegExp(`^${childUserId}$`, 'i') } }
-        ]
+      let childExists = await User.findOne({
+        $or: [{ userId: childUserId }, { username: childUserId }]
       });
+
+      if (!childExists) {
+        childExists = await User.findOne({
+          $or: [
+            { userId: { $regex: new RegExp(`^${childUserId}$`, 'i') } },
+            { username: { $regex: new RegExp(`^${childUserId}$`, 'i') } }
+          ]
+        });
+      }
 
       if (childExists) {
         console.log('[DEBUG] register: upline position already filled', { positionField, filledBy: childUserId });
@@ -214,7 +229,6 @@ export async function POST(req: NextRequest) {
           { status: 400 }
         );
       } else {
-        // Child reference exists but user doesn't - clear it
         console.log('[DEBUG] register: child reference exists under upline but user deleted, clearing position', { positionField, childUserId });
         upline.set(positionField, undefined);
         await upline.save();
@@ -222,16 +236,17 @@ export async function POST(req: NextRequest) {
     }
 
     //////////////////////////////////////////////////////////////
-    // 🔹 START TRANSACTION
+    // 🔹 START TRANSACTION & PARALLEL PASSWORD HASHING
     //////////////////////////////////////////////////////////////
 
-    console.log('[DEBUG] register: starting DB transaction');
+    console.log('[DEBUG] register: starting DB transaction & parallel password hashing');
     dbSession.startTransaction();
 
-    // Hash the password and transaction password explicitly before saving
-    const salt = await bcrypt.genSalt(12);
-    const hashedPassword = await bcrypt.hash(rawPassword, salt);
-    const hashedTransactionPassword = await bcrypt.hash(rawTransactionPassword, salt);
+    // Fast parallel hashing (cost factor 10)
+    const [hashedPassword, hashedTransactionPassword] = await Promise.all([
+      bcrypt.hash(rawPassword, 10),
+      bcrypt.hash(rawTransactionPassword, 10)
+    ]);
 
     const newUser = new User({
       userId: username,

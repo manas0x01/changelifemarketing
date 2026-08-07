@@ -19,6 +19,12 @@ export async function DELETE(req: NextRequest) {
         { status: auth.status }
       );
     }
+    if (auth.session?.user?.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, message: 'Only admins can manage user records.' },
+        { status: 403 }
+      );
+    }
 
     await connectDB();
 
@@ -189,12 +195,18 @@ export async function PATCH(req: NextRequest) {
         { status: auth.status }
       );
     }
+    if (auth.session?.user?.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, message: 'Only admins can edit user details.' },
+        { status: 403 }
+      );
+    }
     await connectDB();
     const body = await req.json();
     const {
       id, role, memberType, isBlocked, password, transactionPassword,
       bankName, branchName, accountNo, ifsc, accountType,
-      username, userId, fullName, subAdminPermissions
+      username, userId, fullName, mobileNo, subAdminPermissions
     } = body;
     if (!id || !mongoose.Types.ObjectId.isValid(id)) {
       return NextResponse.json(
@@ -243,6 +255,19 @@ export async function PATCH(req: NextRequest) {
     // Update fullName
     if (fullName && fullName.trim()) {
       user.fullName = fullName.trim();
+    }
+
+    // Update mobile number
+    if (Object.prototype.hasOwnProperty.call(body, 'mobileNo')) {
+      const nextMobileNo = (mobileNo ?? '').toString().trim();
+      if (nextMobileNo && !/^\d{10}$/.test(nextMobileNo)) {
+        return NextResponse.json(
+          { success: false, message: 'Mobile number must be 10 digits.' },
+          { status: 400 }
+        );
+      }
+      user.mobileNo = nextMobileNo;
+      user.phone = nextMobileNo;
     }
 
     const allowedRoles = ['user', 'admin', 'moderator', 'sub-admin'];

@@ -12,6 +12,12 @@ export async function POST(req: NextRequest) {
         { status: auth.status }
       );
     }
+    if (auth.session?.user?.role !== 'admin') {
+      return NextResponse.json(
+        { success: false, message: 'Only admins can create users.' },
+        { status: 403 }
+      );
+    }
 
     await connectDB();
 

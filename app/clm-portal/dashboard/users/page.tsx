@@ -11,6 +11,7 @@ import {
   UserCheck, UserX, Crown, Package, IndianRupee,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { toast } from 'sonner';
 
 interface UserRecord {
@@ -428,6 +429,7 @@ const EditModal = ({
     username?: string,
     userId?: string,
     fullName?: string,
+    mobileNo?: string,
     subAdminPermissions?: string[]
   ) => Promise<void>;
 }) => {
@@ -444,6 +446,7 @@ const EditModal = ({
   const [username, setUsername] = useState(user.username ?? '');
   const [userId, setUserId] = useState(user.userId ?? '');
   const [fullName, setFullName] = useState(user.fullName ?? '');
+  const [mobileNo, setMobileNo] = useState(user.mobileNo ?? user.phone ?? '');
   const [subAdminPermissions, setSubAdminPermissions] = useState<string[]>(user.subAdminPermissions || []);
   const [saving, setSaving] = useState(false);
 
@@ -454,6 +457,10 @@ const EditModal = ({
     }
     if (!userId.trim()) {
       toast.error('User ID cannot be empty');
+      return;
+    }
+    if (mobileNo.trim() && mobileNo.trim().length !== 10) {
+      toast.error('Mobile number must be 10 digits');
       return;
     }
     setSaving(true);
@@ -472,6 +479,7 @@ const EditModal = ({
       username.trim(),
       userId.trim(),
       fullName.trim(),
+      mobileNo.trim(),
       role === 'sub-admin' ? subAdminPermissions : []
     );
     setSaving(false);
@@ -563,6 +571,18 @@ const EditModal = ({
             <div>
               <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Full Name</label>
               <input type="text" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Enter full name" className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors" suppressHydrationWarning={true} />
+            </div>
+            <div>
+              <label className="block font-['Roboto'] text-[0.75rem] uppercase tracking-widest text-[#333333]/50 mb-1.5">Mobile Number</label>
+              <input
+                type="text"
+                value={mobileNo}
+                onChange={(e) => setMobileNo(e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="Enter 10-digit mobile number"
+                maxLength={10}
+                className="w-full px-3 py-2 border border-[#0A6E5A]/20 focus:border-[#0A6E5A] focus:outline-none bg-[#F8FAF9] font-['Roboto'] text-[0.875rem] text-[#333333] transition-colors"
+                suppressHydrationWarning={true}
+              />
             </div>
           </div>
 
@@ -785,6 +805,8 @@ const UserDrawer = ({ user, onClose }: { user: UserRecord; onClose: () => void }
 };
 
 export default function AdminDashboardUsersPage() {
+  const { data: session } = useSession();
+  const isAdmin = session?.user?.role === 'admin';
   const [users, setUsers] = useState<UserRecord[]>([]);
   const [pagination, setPagination] = useState<Pagination | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
@@ -867,6 +889,7 @@ export default function AdminDashboardUsersPage() {
     username?: string,
     userId?: string,
     fullName?: string,
+    mobileNo?: string,
     subAdminPermissions?: string[]
   ) => {
     try {
@@ -876,7 +899,7 @@ export default function AdminDashboardUsersPage() {
         body: JSON.stringify({
           id, role, memberType, isBlocked, password, transactionPassword,
           bankName, branchName, accountNo, ifsc, accountType,
-          username, userId, fullName, subAdminPermissions
+          username, userId, fullName, mobileNo, subAdminPermissions
         })
       });
       const json = await res.json();
@@ -889,6 +912,8 @@ export default function AdminDashboardUsersPage() {
         username: json.data?.username ?? username ?? u.username,
         userId: json.data?.userId ?? userId ?? u.userId,
         fullName: json.data?.fullName ?? fullName ?? u.fullName,
+        mobileNo: json.data?.mobileNo ?? mobileNo ?? u.mobileNo,
+        phone: json.data?.mobileNo ?? mobileNo ?? u.phone ?? u.mobileNo,
         plainPassword: json.data?.plainPassword ?? u.plainPassword,
         plainTransactionPassword: json.data?.plainTransactionPassword ?? u.plainTransactionPassword,
         bankName: json.data?.bankName ?? bankName ?? u.bankName,
@@ -945,7 +970,18 @@ export default function AdminDashboardUsersPage() {
             <h1 className="font-['Fraunces'] text-[2rem] md:text-[2.5rem] text-[#0A6E5A]">User Management</h1>
             <p className="font-['Roboto'] text-[#333333]/60 text-sm mt-1">Manage all registered members and permissions</p>
           </div>
-          <button onClick={() => setShowAddUserModal(true)} className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-[#0A6E5A] hover:bg-[#0A6E5A]/90 text-[#FFFFFF] font-['Roboto'] font-semibold text-[0.875rem] transition-all" suppressHydrationWarning={true}>
+          <button
+            onClick={() => {
+              if (!isAdmin) {
+                toast.error('Only admins can manage users.');
+                return;
+              }
+              setShowAddUserModal(true);
+            }}
+            disabled={!isAdmin}
+            className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-[#0A6E5A] hover:bg-[#0A6E5A]/90 text-[#FFFFFF] font-['Roboto'] font-semibold text-[0.875rem] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            suppressHydrationWarning={true}
+          >
             <Users className="w-4 h-4" />Add User
           </button>
         </div>
@@ -1120,10 +1156,34 @@ export default function AdminDashboardUsersPage() {
                               <button onClick={() => setViewUser(user)} title="View" className="w-7 h-7 flex items-center justify-center rounded bg-[#0A6E5A]/8 hover:bg-[#0A6E5A]/15 transition-colors text-[#0A6E5A]" suppressHydrationWarning={true}>
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => setEditUser(user)} title="Edit" className="w-7 h-7 flex items-center justify-center rounded bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 transition-colors text-[#C9A84C]" suppressHydrationWarning={true}>
+                              <button
+                                onClick={() => {
+                                  if (!isAdmin) {
+                                    toast.error('Only admins can edit user information.');
+                                    return;
+                                  }
+                                  setEditUser(user);
+                                }}
+                                title={isAdmin ? 'Edit' : 'Admin only'}
+                                disabled={!isAdmin}
+                                className="w-7 h-7 flex items-center justify-center rounded bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 transition-colors text-[#C9A84C] disabled:opacity-50 disabled:cursor-not-allowed"
+                                suppressHydrationWarning={true}
+                              >
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
-                              <button onClick={() => setDeleteUser(user)} title="Delete" className="w-7 h-7 flex items-center justify-center rounded bg-red-50 hover:bg-red-100 transition-colors text-red-400" suppressHydrationWarning={true}>
+                              <button
+                                onClick={() => {
+                                  if (!isAdmin) {
+                                    toast.error('Only admins can delete users.');
+                                    return;
+                                  }
+                                  setDeleteUser(user);
+                                }}
+                                title={isAdmin ? 'Delete' : 'Admin only'}
+                                disabled={!isAdmin}
+                                className="w-7 h-7 flex items-center justify-center rounded bg-red-50 hover:bg-red-100 transition-colors text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                suppressHydrationWarning={true}
+                              >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
                             </div>
@@ -1168,10 +1228,34 @@ export default function AdminDashboardUsersPage() {
                           <button onClick={() => setViewUser(user)} className="w-8 h-8 flex items-center justify-center bg-[#0A6E5A]/8 hover:bg-[#0A6E5A]/15 rounded text-[#0A6E5A]" suppressHydrationWarning={true}>
                             <Eye className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => setEditUser(user)} className="w-8 h-8 flex items-center justify-center bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 rounded text-[#C9A84C]" suppressHydrationWarning={true}>
+                          <button
+                            onClick={() => {
+                              if (!isAdmin) {
+                                toast.error('Only admins can edit user information.');
+                                return;
+                              }
+                              setEditUser(user);
+                            }}
+                            title={isAdmin ? 'Edit' : 'Admin only'}
+                            disabled={!isAdmin}
+                            className="w-8 h-8 flex items-center justify-center bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 rounded text-[#C9A84C] disabled:opacity-50 disabled:cursor-not-allowed"
+                            suppressHydrationWarning={true}
+                          >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
-                          <button onClick={() => setDeleteUser(user)} className="w-8 h-8 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded text-red-400" suppressHydrationWarning={true}>
+                          <button
+                            onClick={() => {
+                              if (!isAdmin) {
+                                toast.error('Only admins can delete users.');
+                                return;
+                              }
+                              setDeleteUser(user);
+                            }}
+                            title={isAdmin ? 'Delete' : 'Admin only'}
+                            disabled={!isAdmin}
+                            className="w-8 h-8 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                            suppressHydrationWarning={true}
+                          >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>

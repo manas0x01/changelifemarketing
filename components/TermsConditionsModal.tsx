@@ -30,11 +30,15 @@ export default function TermsConditionsModal({
     };
   }, [storageKey]);
 
-  const handleProceed = () => {
-    if (!isChecked) return;
+  const handleClose = () => {
     localStorage.setItem(storageKey, "true");
     setIsVisible(false);
     document.body.style.overflow = "";
+  };
+
+  const handleProceed = () => {
+    if (!isChecked) return;
+    handleClose();
   };
 
   if (!isVisible) return null;
@@ -106,6 +110,7 @@ export default function TermsConditionsModal({
           overflow-y: auto;
           box-shadow: 0 25px 60px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(0, 0, 0, 0.05);
           animation: tandc-slideUp 0.35s ease-out;
+          position: relative;
         }
 
         /* Header */
@@ -117,6 +122,33 @@ export default function TermsConditionsModal({
           position: relative;
           overflow: hidden;
         }
+
+        .tandc-close-btn {
+          position: absolute;
+          top: 14px;
+          right: 14px;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          background: rgba(255, 255, 255, 0.2);
+          border: 1.5px solid rgba(255, 255, 255, 0.4);
+          color: #ffffff;
+          font-size: 16px;
+          font-weight: 700;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          cursor: pointer;
+          transition: all 0.2s ease;
+          z-index: 20;
+          line-height: 1;
+        }
+
+        .tandc-close-btn:hover {
+          background: rgba(255, 255, 255, 0.35);
+          transform: scale(1.08);
+        }
+
 
         .tandc-header::before {
           content: '';
@@ -351,54 +383,121 @@ export default function TermsConditionsModal({
           cursor: not-allowed;
         }
 
-        /* Responsive */
+        /* Desktop vs Mobile notice toggles */
+        .tandc-notice-mobile {
+          display: none;
+        }
+
+        .tandc-notice-desktop {
+          display: block;
+        }
+
+        /* Responsive Mobile Layout */
         @media (max-width: 640px) {
+          .tandc-overlay {
+            padding: 10px;
+          }
+
           .tandc-modal {
-            max-height: 95vh;
-            border-radius: 12px;
+            max-height: 94vh;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
           }
 
           .tandc-header {
-            padding: 16px 18px;
-            border-radius: 12px 12px 0 0;
+            padding: 12px 14px;
+            border-radius: 14px 14px 0 0;
           }
 
           .tandc-header h2 {
-            font-size: 17px;
+            font-size: 15px;
           }
 
           .tandc-header p {
-            font-size: 12px;
-          }
-
-          .tandc-body {
-            padding: 16px 18px;
+            font-size: 11px;
+            margin-top: 2px;
           }
 
           .tandc-header-icon {
-            width: 40px;
-            height: 40px;
+            width: 32px;
+            height: 32px;
+            margin-bottom: 4px;
+          }
+
+          .tandc-body {
+            padding: 12px 14px;
+            overflow-y: visible;
+          }
+
+          /* Hide large banner image and context message on mobile to avoid vertical scrolling */
+          .tandc-image-wrap,
+          .tandc-context {
+            display: none !important;
+          }
+
+          .tandc-notice-desktop {
+            display: none !important;
+          }
+
+          .tandc-notice-mobile {
+            display: block !important;
           }
 
           .tandc-notice {
-            padding: 12px;
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            border-radius: 8px;
           }
 
           .tandc-notice-title {
-            font-size: 13px;
+            font-size: 12px;
+            margin-bottom: 4px;
           }
 
-          .tandc-notice-text {
-            font-size: 12px;
+          .tandc-link {
+            margin-bottom: 10px;
+          }
+
+          .tandc-link a {
+            font-size: 11px;
+          }
+
+          .tandc-checkbox-wrap {
+            padding: 10px 12px;
+            margin-bottom: 10px;
+            gap: 8px;
+            border-radius: 8px;
+          }
+
+          .tandc-checkbox {
+            width: 18px;
+            height: 18px;
+            margin-top: 1px;
           }
 
           .tandc-checkbox-label {
-            font-size: 12px;
+            font-size: 11px;
+            line-height: 1.35;
+          }
+
+          .tandc-checkbox-label span {
+            font-size: 10px;
+            margin-top: 1px;
+          }
+
+          .tandc-close-btn {
+            top: 10px;
+            right: 10px;
+            width: 28px;
+            height: 28px;
+            font-size: 14px;
           }
 
           .tandc-proceed-btn {
-            font-size: 14px;
-            padding: 12px 20px;
+            font-size: 13.5px;
+            padding: 10px 16px;
+            border-radius: 8px;
           }
         }
       `}</style>
@@ -407,6 +506,14 @@ export default function TermsConditionsModal({
         <div className="tandc-modal">
           {/* Header */}
           <div className="tandc-header">
+            <button
+              className="tandc-close-btn"
+              onClick={handleClose}
+              aria-label="Close Notice"
+              title="Close Notice"
+            >
+              ✕
+            </button>
             <div className="tandc-header-icon">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
@@ -437,7 +544,7 @@ export default function TermsConditionsModal({
               />
             </div>
 
-            {/* Formal Notice */}
+            {/* Notice */}
             <div className="tandc-notice">
               <div className="tandc-notice-title">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#E65100" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -447,12 +554,26 @@ export default function TermsConditionsModal({
                 </svg>
                 Formal Notice / औपचारिक सूचना
               </div>
-              <p className="tandc-notice-text">
-                <strong>English:</strong> The company only charges <strong>₹1,299 per ID</strong> for a health product pack along with 1000 BV. Do not make any payment more than ₹1,299 per ID. If anyone asks for ₹5,000, ₹10,000, ₹20,000, ₹50,000 or any other additional amount, <strong>do not pay</strong>. Change Life Marketing is not responsible for any private transactions. By registration, you are considered to have read, understood and agreed to the company&apos;s policies and terms.
-              </p>
-              <p className="tandc-notice-text">
-                <strong>हिंदी:</strong> कंपनी एक हेल्थ प्रोडक्ट पैक के लिए प्रति ID केवल <strong>₹1,299</strong> लेती है, साथ में 1000 BV मिलता है। प्रति ID ₹1,299 से अधिक कोई भी भुगतान न करें। यदि कोई व्यक्ति ₹5,000, ₹10,000, ₹20,000, ₹50,000 या कोई अन्य अतिरिक्त राशि मांगता है, तो <strong>भुगतान न करें</strong>। Change Life Marketing किसी भी निजी लेनदेन के लिए जिम्मेदार नहीं है। पंजीकरण करने पर, यह माना जाएगा कि आपने कंपनी की नीतियों और शर्तों को पढ़, समझ और स्वीकार कर लिया है।
-              </p>
+
+              {/* Desktop Notice */}
+              <div className="tandc-notice-desktop">
+                <p className="tandc-notice-text">
+                  <strong>English:</strong> The company only charges <strong>₹1,299 per ID</strong> for a health product pack along with 1000 BV. Do not make any payment more than ₹1,299 per ID. If anyone asks for ₹5,000, ₹10,000, ₹20,000, ₹50,000 or any other additional amount, <strong>do not pay</strong>. Change Life Marketing is not responsible for any private transactions. By registration, you are considered to have read, understood and agreed to the company&apos;s policies and terms.
+                </p>
+                <p className="tandc-notice-text">
+                  <strong>हिंदी:</strong> कंपनी एक हेल्थ प्रोडक्ट पैक के लिए प्रति ID केवल <strong>₹1,299</strong> लेती है, साथ में 1000 BV मिलता है। प्रति ID ₹1,299 से अधिक कोई भी भुगतान न करें। यदि कोई व्यक्ति ₹5,000, ₹10,000, ₹20,000, ₹50,000 या कोई अन्य अतिरिक्त राशि मांगता है, तो <strong>भुगतान न करें</strong>। Change Life Marketing किसी भी निजी लेनदेन के लिए जिम्मेदार नहीं है। पंजीकरण करने पर, यह माना जाएगा कि आपने कंपनी की नीतियों और शर्तों को पढ़, समझ और स्वीकार कर लिया है।
+                </p>
+              </div>
+
+              {/* Mobile Short Notice */}
+              <div className="tandc-notice-mobile">
+                <p style={{ margin: 0, fontWeight: 600 }}>
+                  📌 <strong>English:</strong> Company fee is strictly <strong>₹1,299 per ID</strong> (1000 BV). Do not pay more to anyone.
+                </p>
+                <p style={{ margin: "4px 0 0", fontWeight: 600, color: "#5D4037" }}>
+                  📌 <strong>हिंदी:</strong> प्रति ID शुल्क केवल <strong>₹1,299</strong> (1000 BV) है। किसी को भी इससे अधिक न दें।
+                </p>
+              </div>
             </div>
 
             {/* T&C Link */}
@@ -503,3 +624,4 @@ export default function TermsConditionsModal({
     </>
   );
 }
+

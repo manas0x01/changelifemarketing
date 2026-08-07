@@ -74,26 +74,65 @@ async function countTotalDescendants(user: any): Promise<number> {
   }
 }
 
-// Helper to recursively find the last left or right child down the line
+// Optimized helper to find the last left or right child down the line using a single $graphLookup
 async function findLastDownlineId(startUser: any, position: "left" | "right"): Promise<string> {
   if (!startUser) return "";
-  let current = startUser;
-  let nextChildId = position === "left" ? current.leftChild : current.rightChild;
-  
-  while (nextChildId && nextChildId.trim() !== "") {
-    const nextUser = await User.findOne({
-      $or: [
-        { username: nextChildId.trim() },
-        { userId: nextChildId.trim() }
-      ]
-    }, 'username userId leftChild rightChild');
+  const firstChildId = position === "left" ? startUser.leftChild : startUser.rightChild;
+  if (!firstChildId || !firstChildId.trim()) return startUser.userId || startUser.username || "";
+
+  const trimmedId = firstChildId.trim();
+
+  try {
+    const targetField = position === "left" ? "leftChild" : "rightChild";
     
-    if (!nextUser) break;
-    current = nextUser;
-    nextChildId = position === "left" ? current.leftChild : current.rightChild;
+    const result = await User.aggregate([
+      {
+        $match: {
+          $or: [
+            { username: trimmedId },
+            { userId: trimmedId }
+          ]
+        }
+      },
+      {
+        $graphLookup: {
+          from: "users",
+          startWith: `$${targetField}`,
+          connectFromField: targetField,
+          connectToField: "username",
+          as: "downlineChain",
+          depthField: "depth"
+        }
+      },
+      {
+        $project: {
+          username: 1,
+          userId: 1,
+          [targetField]: 1,
+          downlineChain: {
+            username: 1,
+            userId: 1,
+            [targetField]: 1,
+            depth: 1
+          }
+        }
+      }
+    ]);
+
+    if (!result || result.length === 0) return trimmedId;
+
+    const first = result[0];
+    const chain = first.downlineChain || [];
+    if (chain.length === 0) {
+      return first.userId || first.username || trimmedId;
+    }
+
+    chain.sort((a: any, b: any) => b.depth - a.depth);
+    return chain[0].userId || chain[0].username || trimmedId;
+  } catch (err) {
+    console.error(`[PLACEMENT TREE] Error in findLastDownlineId for ${position}:`, err);
+    return trimmedId;
   }
-  
-  return current.userId || current.username;
 }
 
 // Helper function to check and process session change with flash out
@@ -104,7 +143,6 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
 
   const isFirstTime = !lastSessionType;
   
-  // Robust session check: differs if type is different OR if it's a different day
   let isSessionChange = false;
   if (lastSessionDate && lastSessionType) {
     const lastDateStr = istDateISO(lastSessionDate);
@@ -115,34 +153,20 @@ async function processSessionChange(user: any, currentSessionType: "morning" | "
   let flushedOut = false;
   let flushMessage = "";
   
-  // Get ACTUAL counts from tree structure (not totalTeam which may be capped)
-  const actualCounts = await countActualChildren(user);
-  let leftPairs = actualCounts.left;
-  let rightPairs = actualCounts.right;
-  
-  console.log(`[PLACEMENT TREE SESSION CHANGE] User ${user.userId}: ${lastSessionType} -> ${currentSessionType}, ACTUAL Left: ${leftPairs}, Right: ${rightPairs} (isSessionChange: ${isSessionChange})`);
-
-  // Only flush/reset on session change 
+  // Only process reset/income calculation if session actually changed or first time
   if (isFirstTime || isSessionChange) {
     console.log(`[PLACEMENT TREE] Processing ${isFirstTime ? 'FIRST TIME' : 'SESSION CHANGE'} for user ${user.userId}`);
     
-    // Visual Tree members stay forever. No flushing.
-    const flushedOut = false;
-    const flushMessage = "";
-    
-    // 108: CALCULATE INCOME: Match members from the session that just ended BEFORE resetting
     const previousSessionType = lastSessionType as "morning" | "evening";
-    await calculateBasicIncome(user, previousSessionType);
-    await calculateBoosterIncome(user, previousSessionType);
+    if (lastSessionType) {
+      await calculateBasicIncome(user, previousSessionType);
+      await calculateBoosterIncome(user, previousSessionType);
+    }
 
-    // 108: RESET SESSION COUNTS: We reset the session counts so that the new session starts fresh.
     user.sessionTeam = { left: 0, right: 0 };
-    
-    // Update last session info
     user.lastSessionType = currentSessionType;
     user.lastSessionDate = now;
     
-    // Perform update atomically
     await User.findByIdAndUpdate(user._id, {
       $set: {
         sessionTeam: user.sessionTeam,
@@ -182,120 +206,117 @@ interface TreeNode {
   children?: TreeNode[];
 }
 
-// Helper to recursively build tree with open/closed positions
-// Tree view shows only 1 pair (1 left + 1 right) per node - rest are filtered out
+// Helper to recursively build tree with open/closed positions (Optimized parallel fetching)
 async function buildPlacementTree(
   rootUser: any,
   depth: number = 0,
-  maxDepth: number = 3,
+  maxDepth: number = 2,
   parentIsActive: boolean = true,
   selectedPosition?: "left" | "right",
   currentSessionType?: "morning" | "evening"
 ): Promise<TreeNode | null> {
   if (!rootUser || depth > maxDepth) return null;
 
-  let currentUser = rootUser;
+  const isBooster = rootUser.isBooster || false;
 
-  const isBooster = currentUser.isBooster || false;
-
-  // Compute ACTUAL descendant counts from the live tree structure
-  const actualCounts = await countActualChildren(currentUser);
-  let actualLeftCount = actualCounts.left;
-  let actualRightCount = actualCounts.right;
+  // Compute actual descendant counts ONLY for root node (depth === 0) for sidebar display
+  let actualLeftCount = 0;
+  let actualRightCount = 0;
+  if (depth === 0) {
+    const actualCounts = await countActualChildren(rootUser);
+    actualLeftCount = actualCounts.left;
+    actualRightCount = actualCounts.right;
+  }
 
   const node: TreeNode = {
-    id: currentUser.userId || currentUser.username,
-    name: currentUser.fullName || currentUser.username,
-    userId: currentUser.userId || currentUser.username,
+    id: rootUser.userId || rootUser.username,
+    name: rootUser.fullName || rootUser.username,
+    userId: rootUser.userId || rootUser.username,
     type: isBooster ? "booster" : "active",
-    sponsorId: currentUser.sponsorId,
-    joiningDate: currentUser.createdAt || currentUser.joiningDate || "",
-    package: currentUser.registeredPackage || undefined,
-    leftId: currentUser.leftChild || "",
-    rightId: currentUser.rightChild || "",
+    sponsorId: rootUser.sponsorId,
+    joiningDate: rootUser.createdAt || rootUser.joiningDate || "",
+    package: rootUser.registeredPackage || undefined,
+    leftId: rootUser.leftChild || "",
+    rightId: rootUser.rightChild || "",
     leftCount: actualLeftCount,
     rightCount: actualRightCount,
     totalCount: actualLeftCount + actualRightCount,
-    totalLeftBoosterUser: currentUser.boosterCount?.left || 0,
-    totalRightBoosterUser: currentUser.boosterCount?.right || 0,
+    totalLeftBoosterUser: rootUser.boosterCount?.left || 0,
+    totalRightBoosterUser: rootUser.boosterCount?.right || 0,
     totalDirect: {
-      left: currentUser.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === "left").length || 0,
-      right: currentUser.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === "right").length || 0,
+      left: rootUser.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === "left").length || 0,
+      right: rootUser.directMembers?.filter((m: any) => (m.position || '').toLowerCase() === "right").length || 0,
     },
-    awardRankStatus: currentUser.awardRankStatus ? {
-      rank: currentUser.awardRankStatus.rank || 0,
-      rankName: currentUser.awardRankStatus.rankName || "Member",
-      achievementDate: currentUser.awardRankStatus.achievementDate || undefined
+    awardRankStatus: rootUser.awardRankStatus ? {
+      rank: rootUser.awardRankStatus.rank || 0,
+      rankName: rootUser.awardRankStatus.rankName || "Member",
+      achievementDate: rootUser.awardRankStatus.achievementDate || undefined
     } : { rank: 0, rankName: "Member" },
-    totalActiveDirect: await (async () => {
-       if (Array.isArray(currentUser.directMembers) && currentUser.directMembers.length > 0) {
-         const directIds = currentUser.directMembers.map((m: any) => m.memberId);
-         const directDocs = await User.find({ $or: [{ userId: { $in: directIds } }, { username: { $in: directIds } }] });
-         let left = 0; let right = 0;
-         currentUser.directMembers.forEach((m: any) => {
-           const doc = directDocs.find(d => d.username === m.memberId || d.userId === m.memberId);
-           if (doc && (doc.registeredPackage || doc.joiningDate)) {
-             if ((m.position || '').toLowerCase() === 'left') left++;
-             else if ((m.position || '').toLowerCase() === 'right') right++;
-           }
-         });
-         return { left, right };
-       }
-       return { left: 0, right: 0 };
-    })(),
+    totalActiveDirect: { left: 0, right: 0 },
     children: [],
   };
 
-  // Show children based on the leftChild/rightChild DB references.
-  // After a session flush those references are explicitly set to null,
-  // so checking the reference alone is the correct gate — we no longer
-  // rely on totalTeam counts which can be stale for newly placed users.
+  if (depth < maxDepth) {
+    const fetchPromises: Promise<any>[] = [];
 
-  // Get left child
-  if (currentUser.leftChild) {
-    const leftChild = await User.findOne({
-      $or: [
-        { username: currentUser.leftChild },
-        { userId: currentUser.leftChild }
-      ]
-    });
-    if (leftChild) {
-      const leftNode = await buildPlacementTree(leftChild, depth + 1, maxDepth, true, undefined, currentSessionType);
+    if (rootUser.leftChild) {
+      fetchPromises.push(
+        User.findOne({
+          $or: [
+            { username: rootUser.leftChild },
+            { userId: rootUser.leftChild }
+          ]
+        }).lean()
+      );
+    } else {
+      fetchPromises.push(Promise.resolve(null));
+    }
+
+    if (rootUser.rightChild) {
+      fetchPromises.push(
+        User.findOne({
+          $or: [
+            { username: rootUser.rightChild },
+            { userId: rootUser.rightChild }
+          ]
+        }).lean()
+      );
+    } else {
+      fetchPromises.push(Promise.resolve(null));
+    }
+
+    const [leftChildDoc, rightChildDoc] = await Promise.all(fetchPromises);
+
+    const childBuildPromises: Promise<TreeNode | null>[] = [];
+    if (leftChildDoc) {
+      childBuildPromises.push(buildPlacementTree(leftChildDoc, depth + 1, maxDepth, true, undefined, currentSessionType));
+    }
+    if (rightChildDoc) {
+      childBuildPromises.push(buildPlacementTree(rightChildDoc, depth + 1, maxDepth, true, undefined, currentSessionType));
+    }
+
+    const builtChildren = await Promise.all(childBuildPromises);
+
+    if (leftChildDoc) {
+      const leftNode = builtChildren.shift() || null;
       if (leftNode) {
         leftNode.position = "left";
         node.children!.push(leftNode);
       }
     }
-  }
-
-  // Get right child
-  if (currentUser.rightChild) {
-    const rightChild = await User.findOne({
-      $or: [
-        { username: currentUser.rightChild },
-        { userId: currentUser.rightChild }
-      ]
-    });
-    if (rightChild) {
-      const rightNode = await buildPlacementTree(rightChild, depth + 1, maxDepth, true, undefined, currentSessionType);
+    if (rightChildDoc) {
+      const rightNode = builtChildren.shift() || null;
       if (rightNode) {
         rightNode.position = "right";
         node.children!.push(rightNode);
       }
     }
-  }
 
-  // Add open/closed positions for direct children
-  if (depth < maxDepth) {
-    // Check if left position is filled
     const hasLeftChild = node.children!.some(child => child.position === "left");
     if (!hasLeftChild) {
-      // Position is OPEN if this node is an active or booster member
-      // This allows positions under any filled node to be clickable for registration
       const isOpen = (node.type === "active" || node.type === "booster");
-      
       const slotNode: TreeNode = {
-        id: `slot-left-${rootUser._id}`,
+        id: `slot-left-${rootUser._id || rootUser.userId}`,
         name: isOpen ? "Open" : "Close",
         userId: "",
         type: isOpen ? "open" : "close",
@@ -303,41 +324,20 @@ async function buildPlacementTree(
         children: [],
       };
 
-      // Add children below slots - all closed since parent is not filled
       if (depth + 1 < maxDepth) {
-        const childLeftNode: TreeNode = {
-          id: `slot-left-left-${rootUser._id}`,
-          name: "Close",
-          userId: "",
-          type: "close",
-          position: "left",
-          children: [],
-        };
-        
-        const childRightNode: TreeNode = {
-          id: `slot-left-right-${rootUser._id}`,
-          name: "Close",
-          userId: "",
-          type: "close",
-          position: "right",
-          children: [],
-        };
-        
-        slotNode.children!.push(childLeftNode, childRightNode);
+        slotNode.children!.push(
+          { id: `slot-left-left-${rootUser._id || rootUser.userId}`, name: "Close", userId: "", type: "close", position: "left", children: [] },
+          { id: `slot-left-right-${rootUser._id || rootUser.userId}`, name: "Close", userId: "", type: "close", position: "right", children: [] }
+        );
       }
-
       node.children!.push(slotNode);
     }
 
-    // Check if right position is filled
     const hasRightChild = node.children!.some(child => child.position === "right");
     if (!hasRightChild) {
-      // Position is OPEN if this node is an active or booster member
-      // This allows positions under any filled node to be clickable for registration
       const isOpen = (node.type === "active" || node.type === "booster");
-      
       const slotNode: TreeNode = {
-        id: `slot-right-${rootUser._id}`,
+        id: `slot-right-${rootUser._id || rootUser.userId}`,
         name: isOpen ? "Open" : "Close",
         userId: "",
         type: isOpen ? "open" : "close",
@@ -345,41 +345,17 @@ async function buildPlacementTree(
         children: [],
       };
 
-      // Add children below slots - all closed since parent is not filled
       if (depth + 1 < maxDepth) {
-        const childLeftNode: TreeNode = {
-          id: `slot-right-left-${rootUser._id}`,
-          name: "Close",
-          userId: "",
-          type: "close",
-          position: "left",
-          children: [],
-        };
-        
-        const childRightNode: TreeNode = {
-          id: `slot-right-right-${rootUser._id}`,
-          name: "Close",
-          userId: "",
-          type: "close",
-          position: "right",
-          children: [],
-        };
-        
-        slotNode.children!.push(childLeftNode, childRightNode);
+        slotNode.children!.push(
+          { id: `slot-right-left-${rootUser._id || rootUser.userId}`, name: "Close", userId: "", type: "close", position: "left", children: [] },
+          { id: `slot-right-right-${rootUser._id || rootUser.userId}`, name: "Close", userId: "", type: "close", position: "right", children: [] }
+        );
       }
-
       node.children!.push(slotNode);
     }
   }
 
   return node;
-}
-
-// Check if a position is open for placement
-async function checkPositionOpen(parentId: string, position: "left" | "right"): Promise<boolean> {
-  // For now, assume all empty positions are open
-  // In a real MLM system, you might have additional rules
-  return true;
 }
 
 export async function POST(req: NextRequest) {
@@ -404,13 +380,24 @@ export async function POST(req: NextRequest) {
 
     await connectDB();
 
-    // Find the user - search by userId or username (case insensitive)
-    const user = await User.findOne({
+    const trimmedUserId = userId.trim();
+
+    // Fast indexed match first, fallback to regex
+    let user = await User.findOne({
       $or: [
-        { userId: { $regex: new RegExp(`^${userId}$`, 'i') } },
-        { username: { $regex: new RegExp(`^${userId}$`, 'i') } }
+        { userId: trimmedUserId },
+        { username: trimmedUserId }
       ]
-    });
+    }).lean();
+
+    if (!user) {
+      user = await User.findOne({
+        $or: [
+          { userId: { $regex: new RegExp(`^${trimmedUserId}$`, 'i') } },
+          { username: { $regex: new RegExp(`^${trimmedUserId}$`, 'i') } }
+        ]
+      }).lean();
+    }
 
     if (!user) {
       return NextResponse.json(
@@ -419,7 +406,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Determine current session type using IST
     const now = new Date();
     const istDate = new Date(now.getTime() + 5.5 * 60 * 60 * 1000);
     const istHour = istDate.getUTCHours();
@@ -429,25 +415,18 @@ export async function POST(req: NextRequest) {
         ? forceSessionType
         : (user.lastSessionType || realSessionType);
 
-    // Process session change to flush out unpaired users BEFORE building tree
-    // We pass forceSessionType to detect the manual change
     const { flushedOut, flushMessage, incomeMessage, leftPairs, rightPairs } = await processSessionChange(user, currentSessionType);
     
-    // If a manual override was provided and it successfully changed the session, make it STICKY now
     if (forceSessionType && forceSessionType !== user.lastSessionType) {
-      console.log(`[PLACEMENT TREE] Saving sticky session override: ${forceSessionType} for ${user.userId}`);
       await User.findByIdAndUpdate(user._id, { $set: { lastSessionType: forceSessionType } });
     }
 
-    // IMPORTANT: Re-sync the user object from the database
-    const updatedUser = await User.findById(user._id);
-
-    // Build the placement tree starting from this user as root (Limit to 3 levels: 0, 1, 2)
-    const tree = await buildPlacementTree(updatedUser || user, 0, 2, true, selectedPosition, currentSessionType);
-
-    // Find the last left and right downline member IDs
-    const lastLeftId = await findLastDownlineId(updatedUser || user, "left");
-    const lastRightId = await findLastDownlineId(updatedUser || user, "right");
+    // Run tree building and extreme downline queries in PARALLEL
+    const [tree, lastLeftId, lastRightId] = await Promise.all([
+      buildPlacementTree(user, 0, 2, true, selectedPosition, currentSessionType),
+      findLastDownlineId(user, "left"),
+      findLastDownlineId(user, "right")
+    ]);
 
     return NextResponse.json({
       success: true,
@@ -475,3 +454,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

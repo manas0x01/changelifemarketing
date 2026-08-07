@@ -748,25 +748,43 @@ function MemberPopup({
     VS = dimensions.vs;
     MAXD = dimensions.maxd;
 
+    const treeCache = useRef<Record<string, { tree: MNode; lastLeftId: string; lastRightId: string; currentSession: any }>>({});
+
     const getCurrentSession = (): "morning" | "evening" => {
-      // Use IST (UTC+5:30) for session determination
       const now = new Date();
       const istHour = new Date(now.getTime() + 5.5 * 60 * 60 * 1000).getUTCHours();
       return istHour >= 0 && istHour < 12 ? "morning" : "evening";
     };
 
     const checkSessionChangeAndRefresh = () => {
-      // Session logic is now server-authoritative and sticky in the database.
-      // We only refresh the tree to keep it up to date.
       if (memberId && treeRoot) {
-        fetchTree(memberId);
+        fetchTree(memberId, undefined, undefined, true);
       }
     };
 
-    const fetchTree = async (uid: string, selectedPosition?: "left" | "right", forceSessionType?: "morning" | "evening") => {
+    const fetchTree = async (
+      uid: string,
+      selectedPosition?: "left" | "right",
+      forceSessionType?: "morning" | "evening",
+      isBackground: boolean = false
+    ) => {
       const trimmed = uid.trim();
       if (!trimmed) { setError("Please enter a Username"); return; }
-      setLoading(true); setError(""); setPopup(null); setFlushMsg("");
+      
+      setError(""); setPopup(null); setFlushMsg("");
+
+      // Serve from cache immediately for instant open/navigation
+      const cached = treeCache.current[trimmed];
+      if (cached) {
+        setTreeRoot(cached.tree);
+        setLastLeftId(cached.lastLeftId);
+        setLastRightId(cached.lastRightId);
+        if (cached.currentSession) setCurrentSession(cached.currentSession);
+        setLoading(false);
+      } else if (!isBackground && !treeRoot) {
+        setLoading(true);
+      }
+
       try {
         const body: any = { userId: trimmed, selectedPosition };
         if (forceSessionType) body.forceSessionType = forceSessionType;
@@ -777,62 +795,64 @@ function MemberPopup({
         });
         const data = await res.json();
         if (data.success) {
-          // The searched user becomes the root of the tree
           setTreeRoot(data.tree);
           setLastLeftId(data.lastLeftId || "");
           setLastRightId(data.lastRightId || "");
-          // Track current session
           const sess = data.currentSessionType || getCurrentSession();
           setCurrentSession(sess);
           lastSessionRef.current = sess;
 
-          // Show flush message if any
+          // Save to memory cache for instant future loads
+          treeCache.current[trimmed] = {
+            tree: data.tree,
+            lastLeftId: data.lastLeftId || "",
+            lastRightId: data.lastRightId || "",
+            currentSession: sess,
+          };
+
           if (data.flushMessage) {
             setFlushMsg(data.flushMessage);
-            // Auto-clear after 5 seconds
             setTimeout(() => setFlushMsg(""), 5000);
           }
         } else {
-          setError(data.error || "Failed to load placement tree");
+          if (!cached) {
+            setError(data.error || "Failed to load placement tree");
+            setTreeRoot(null);
+            setLastLeftId("");
+            setLastRightId("");
+          }
+        }
+      } catch (e) {
+        if (!cached) {
+          setError(e instanceof Error ? e.message : "Something went wrong");
           setTreeRoot(null);
           setLastLeftId("");
           setLastRightId("");
         }
-      } catch (e) {
-        setError(e instanceof Error ? e.message : "Something went wrong");
-        setTreeRoot(null);
-        setLastLeftId("");
-        setLastRightId("");
       } finally {
         setLoading(false);
       }
     };
 
-
     // Restore last viewed member and refresh on mount
     useEffect(() => {
       const lastViewed = sessionStorage.getItem('networkTreeLastViewed');
       if (lastViewed) {
-        console.log('[NETWORK TREE] Restoring last viewed member:', lastViewed);
         setMemberId(lastViewed);
         fetchTree(lastViewed);
         sessionStorage.removeItem('networkTreeLastViewed');
       } else if (session?.user?.username && !autoLoaded) {
-        // Default to current user if no last viewed
         setAutoLoaded(true);
         setMemberId(session.user.username);
         fetchTree(session.user.username);
       }
 
-      // Initialize session tracking
       lastSessionRef.current = getCurrentSession();
 
-      // Set up session change monitoring - check every 30 seconds
       sessionCheckRef.current = setInterval(() => {
         checkSessionChangeAndRefresh();
-      }, 30000); // 30 seconds
+      }, 60000);
 
-      // Cleanup timer on unmount
       return () => {
         if (sessionCheckRef.current) {
           clearInterval(sessionCheckRef.current);
@@ -841,14 +861,11 @@ function MemberPopup({
       };
     }, [session?.user?.username]);
 
-    // Refresh tree when page becomes visible (after registration)
+    // Refresh tree silently when page becomes visible (after registration)
     useEffect(() => {
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'visible' && memberId && treeRoot) {
-          // Check for session change first
-          checkSessionChangeAndRefresh();
-          console.log('[NETWORK TREE] Page became visible, refreshing tree for:', memberId);
-          fetchTree(memberId);
+          fetchTree(memberId, undefined, undefined, true);
         }
       };
 
@@ -856,34 +873,18 @@ function MemberPopup({
       return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
     }, [memberId, treeRoot]);
 
-    // Also refresh when window gains focus
-    useEffect(() => {
-      const handleFocus = () => {
-        if (memberId && treeRoot) {
-          // Check for session change first
-          checkSessionChangeAndRefresh();
-          console.log('[NETWORK TREE] Window focused, refreshing tree for:', memberId);
-          fetchTree(memberId);
-        }
-      };
-
-      window.addEventListener('focus', handleFocus);
-      return () => window.removeEventListener('focus', handleFocus);
-    }, [memberId, treeRoot]);
-
     const handleSlotClick = (n: MNode, e: React.MouseEvent) => {
       e.stopPropagation();
       if (n.type === "open") {
         const parentId = n.id.replace(/^v[lr]-/, "");
         const pos = n.position === "left" ? "Left" : "Right";
-        // Store current memberId so we can refresh when we return
         sessionStorage.setItem('networkTreeLastViewed', memberId);
         router.push(`/dashboard/registration?sponsorId=${session?.user?.username || ""}&uplineId=${parentId}&position=${pos}`);
       }
     };
 
     /* ── Card opening logic (triggered by click) ── */
-    const fetchIdRef = useRef<string | null>(null);  // Track current fetch
+    const fetchIdRef = useRef<string | null>(null);
 
     const handleOpenCard = (n: MNode, e: React.MouseEvent) => {
       if (isSlot(n)) return;
@@ -904,6 +905,14 @@ function MemberPopup({
       if (top + ph > vh - 10) top = box.top - ph - 10;
       if (top < 10) top = 10;
 
+      // Render instant popup immediately with node basic data
+      setPopup({
+        node: n,
+        left: lft,
+        top,
+        isPersistent: true
+      });
+
       const fetchMemberCard = async () => {
         try {
           const res = await fetch("/api/user/member-card", {
@@ -913,12 +922,12 @@ function MemberPopup({
           });
           const data = await res.json();
 
-          // Only show if this is still the current fetch
           if (fetchIdRef.current === currentFetchId && data.success && data.card) {
             const card = data.card;
-            setPopup({
+            setPopup(prev => prev ? {
+              ...prev,
               node: {
-                ...n,
+                ...prev.node,
                 sponsorId: card.sponsorId,
                 joiningDate: card.joiningDate,
                 package: card.package,
@@ -933,11 +942,8 @@ function MemberPopup({
                 totalRightBasicUser: card.totalRightBasicUser,
                 totalLeftBoosterUser: card.totalLeftBoosterUser,
                 totalRightBoosterUser: card.totalRightBoosterUser,
-              },
-              left: lft,
-              top,
-              isPersistent: true
-            });
+              }
+            } : null);
           }
         } catch (err) {
           console.error("Failed to fetch member card:", err);
@@ -949,13 +955,10 @@ function MemberPopup({
     const handleNodeClick = (n: MNode, e: React.MouseEvent) => {
       e.stopPropagation();
       if (isSlot(n)) { handleSlotClick(n, e); return; }
-
-      // On click, we show the popup in persistent mode
       handleOpenCard(n, e);
     };
 
     const handleExploreDownline = (userId: string) => {
-      // Save current user to history before moving down
       if (memberId && memberId !== userId) {
         setHistory(prev => [...prev, memberId]);
       }
@@ -976,6 +979,7 @@ function MemberPopup({
         fetchTree(prevId);
       }
     };
+
 
     const handleRootClick = () => {
       if (ddOpen) setDdOpen(false);

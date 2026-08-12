@@ -971,15 +971,8 @@ export default function AdminDashboardUsersPage() {
             <p className="font-['Roboto'] text-[#333333]/60 text-sm mt-1">Manage all registered members and permissions</p>
           </div>
           <button
-            onClick={() => {
-              if (!isAdmin) {
-                toast.error('Only admins can manage users.');
-                return;
-              }
-              setShowAddUserModal(true);
-            }}
-            disabled={!isAdmin}
-            className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-[#0A6E5A] hover:bg-[#0A6E5A]/90 text-[#FFFFFF] font-['Roboto'] font-semibold text-[0.875rem] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            onClick={() => setShowAddUserModal(true)}
+            className="hidden md:flex items-center gap-2 px-5 py-2.5 bg-[#0A6E5A] hover:bg-[#0A6E5A]/90 text-[#FFFFFF] font-['Roboto'] font-semibold text-[0.875rem] transition-all"
             suppressHydrationWarning={true}
           >
             <Users className="w-4 h-4" />Add User
@@ -1157,31 +1150,17 @@ export default function AdminDashboardUsersPage() {
                                 <Eye className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => {
-                                  if (!isAdmin) {
-                                    toast.error('Only admins can edit user information.');
-                                    return;
-                                  }
-                                  setEditUser(user);
-                                }}
-                                title={isAdmin ? 'Edit' : 'Admin only'}
-                                disabled={!isAdmin}
-                                className="w-7 h-7 flex items-center justify-center rounded bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 transition-colors text-[#C9A84C] disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => setEditUser(user)}
+                                title="Edit"
+                                className="w-7 h-7 flex items-center justify-center rounded bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 transition-colors text-[#C9A84C]"
                                 suppressHydrationWarning={true}
                               >
                                 <Edit3 className="w-3.5 h-3.5" />
                               </button>
                               <button
-                                onClick={() => {
-                                  if (!isAdmin) {
-                                    toast.error('Only admins can delete users.');
-                                    return;
-                                  }
-                                  setDeleteUser(user);
-                                }}
-                                title={isAdmin ? 'Delete' : 'Admin only'}
-                                disabled={!isAdmin}
-                                className="w-7 h-7 flex items-center justify-center rounded bg-red-50 hover:bg-red-100 transition-colors text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                onClick={() => setDeleteUser(user)}
+                                title="Delete"
+                                className="w-7 h-7 flex items-center justify-center rounded bg-red-50 hover:bg-red-100 transition-colors text-red-400"
                                 suppressHydrationWarning={true}
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
@@ -1229,31 +1208,17 @@ export default function AdminDashboardUsersPage() {
                             <Eye className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => {
-                              if (!isAdmin) {
-                                toast.error('Only admins can edit user information.');
-                                return;
-                              }
-                              setEditUser(user);
-                            }}
-                            title={isAdmin ? 'Edit' : 'Admin only'}
-                            disabled={!isAdmin}
-                            className="w-8 h-8 flex items-center justify-center bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 rounded text-[#C9A84C] disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => setEditUser(user)}
+                            title="Edit"
+                            className="w-8 h-8 flex items-center justify-center bg-[#C9A84C]/10 hover:bg-[#C9A84C]/20 rounded text-[#C9A84C]"
                             suppressHydrationWarning={true}
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
-                            onClick={() => {
-                              if (!isAdmin) {
-                                toast.error('Only admins can delete users.');
-                                return;
-                              }
-                              setDeleteUser(user);
-                            }}
-                            title={isAdmin ? 'Delete' : 'Admin only'}
-                            disabled={!isAdmin}
-                            className="w-8 h-8 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded text-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                            onClick={() => setDeleteUser(user)}
+                            title="Delete"
+                            className="w-8 h-8 flex items-center justify-center bg-red-50 hover:bg-red-100 rounded text-red-400"
                             suppressHydrationWarning={true}
                           >
                             <Trash2 className="w-3.5 h-3.5" />

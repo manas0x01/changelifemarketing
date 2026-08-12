@@ -19,12 +19,6 @@ export async function DELETE(req: NextRequest) {
         { status: auth.status }
       );
     }
-    if (auth.session?.user?.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, message: 'Only admins can manage user records.' },
-        { status: 403 }
-      );
-    }
 
     await connectDB();
 
@@ -193,12 +187,6 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json(
         { success: false, message: auth.message },
         { status: auth.status }
-      );
-    }
-    if (auth.session?.user?.role !== 'admin') {
-      return NextResponse.json(
-        { success: false, message: 'Only admins can edit user details.' },
-        { status: 403 }
       );
     }
     await connectDB();

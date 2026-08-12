@@ -29,7 +29,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
 
     const isOwner =
       order.username === session.user?.name || order.userId === session.user?.name;
-    const isAdmin = (session.user as { role?: string })?.role === 'admin';
+    const userRole = (session.user as { role?: string })?.role;
+    const permissions = (session.user as { subAdminPermissions?: string[] })?.subAdminPermissions || [];
+    const isAdmin = userRole === 'admin' || (userRole === 'sub-admin' && permissions.includes('orders'));
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json({ error: 'Access denied.' }, { status: 403 });

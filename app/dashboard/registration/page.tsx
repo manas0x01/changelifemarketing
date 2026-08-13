@@ -54,7 +54,9 @@ function NewRegisterForm() {
   const [dobDay, setDobDay] = useState("1");
   const [dobMonth, setDobMonth] = useState("01");
   const [dobYear, setDobYear] = useState("1995");
-  const [state, setState] = useState("Bihar");
+  const [state, setState] = useState("");
+  const [pincodeLoading, setPincodeLoading] = useState(false);
+  const [pincodeError, setPincodeError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [sponsorId, setSponsorId] = useState("");
   const [sponsorName, setSponsorName] = useState("");
@@ -523,6 +525,29 @@ function NewRegisterForm() {
     setStep("register");
   };
 
+  const handlePincodeChange = async (value: string) => {
+    setPincode(value);
+    setPincodeError("");
+    if (value.length === 6 && /^\d{6}$/.test(value)) {
+      setPincodeLoading(true);
+      try {
+        const res = await fetch(`https://api.postalpincode.in/pincode/${value}`);
+        const data = await res.json();
+        if (data && data[0] && data[0].Status === "Success" && data[0].PostOffice && data[0].PostOffice.length > 0) {
+          const detectedState = data[0].PostOffice[0].State;
+          setState(detectedState);
+          setPincodeError("");
+        } else {
+          setPincodeError("Invalid pincode. Please select state manually.");
+        }
+      } catch (e) {
+        setPincodeError("Could not auto-detect state. Please select manually.");
+      } finally {
+        setPincodeLoading(false);
+      }
+    }
+  };
+
   const handleRegistrationSubmit = async () => {
     // Sessions: Morning = 12:00 AM to 12:00 PM, Evening = 12:00 PM to 12:00 AM
     // No freeze period - registration is always allowed
@@ -533,6 +558,22 @@ function NewRegisterForm() {
     }
     if (!mobileNo.trim()) {
       toast.error("Mobile number is required");
+      return;
+    }
+    if (!/^\d{10}$/.test(mobileNo.trim())) {
+      toast.error("Please enter a valid 10-digit mobile number");
+      return;
+    }
+    if (!pincode.trim()) {
+      toast.error("Pin Code is required");
+      return;
+    }
+    if (!/^\d{6}$/.test(pincode.trim())) {
+      toast.error("Please enter a valid 6-digit Pin Code");
+      return;
+    }
+    if (!state.trim()) {
+      toast.error("State is required");
       return;
     }
     if (email.trim()) {
@@ -1457,25 +1498,45 @@ function NewRegisterForm() {
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label"><span className="req">*</span>State :</label>
-                    <select className="form-select" value={state} onChange={e => setState(e.target.value)}>
-                      {indianStates.map(s => <option key={s}>{s}</option>)}
-                    </select>
+                    <label className="form-label"><span className="req">*</span>Pin Code :
+                      {pincodeLoading && <span style={{ marginLeft: 8, fontSize: 11, color: '#ffe97c', opacity: 0.75 }}>⏳ Detecting state...</span>}
+                    </label>
+                    <input
+                      className="form-input"
+                      type="text"
+                      placeholder="Enter 6-digit Pin Code"
+                      value={pincode}
+                      maxLength={6}
+                      onChange={(e) => handlePincodeChange(e.target.value.replace(/\D/g, ''))}
+                      suppressHydrationWarning
+                      style={pincodeError ? { borderColor: '#e53935' } : {}}
+                    />
+                    {pincodeError && <div className="txn-error">{pincodeError}</div>}
                   </div>
                   <div className="form-group">
-                    <label className="form-label">District :</label>
-                    <input className="form-input" type="text" placeholder="Enter District" value={district} onChange={(e) => setDistrict(e.target.value)} suppressHydrationWarning />
+                    <label className="form-label"><span className="req">*</span>State :
+                      {pincodeLoading && <span style={{ marginLeft: 6, fontSize: 11, color: '#ffe97c', opacity: 0.75 }}>Auto-detecting...</span>}
+                      {!pincodeLoading && state && !pincodeError && pincode.length === 6 && <span style={{ marginLeft: 6, fontSize: 11, color: '#4caf50' }}>✓ Auto-detected</span>}
+                    </label>
+                    <select
+                      className="form-select"
+                      value={state}
+                      onChange={e => { setState(e.target.value); setPincodeError(""); }}
+                    >
+                      <option value="">-- Select State --</option>
+                      {indianStates.map(s => <option key={s}>{s}</option>)}
+                    </select>
                   </div>
                 </div>
 
                 <div className="form-row">
                   <div className="form-group">
-                    <label className="form-label">City :</label>
-                    <input className="form-input" type="text" placeholder="Enter City" value={city} onChange={(e) => setCity(e.target.value)} suppressHydrationWarning />
+                    <label className="form-label">District :</label>
+                    <input className="form-input" type="text" placeholder="Enter District" value={district} onChange={(e) => setDistrict(e.target.value)} suppressHydrationWarning />
                   </div>
                   <div className="form-group">
-                    <label className="form-label">Pin Code :</label>
-                    <input className="form-input" type="text" placeholder="Enter Pin Code" value={pincode} onChange={(e) => setPincode(e.target.value)} suppressHydrationWarning />
+                    <label className="form-label">City :</label>
+                    <input className="form-input" type="text" placeholder="Enter City" value={city} onChange={(e) => setCity(e.target.value)} suppressHydrationWarning />
                   </div>
                 </div>
 

@@ -76,6 +76,8 @@ export async function POST(req: NextRequest) {
     const uplineId = escapeRegex((body.uplineId || body.sponsorId || "").trim().toUpperCase());
     const epin = body.epin;
     const upiId = (body.upiId || "").trim();
+    const pincode = (body.pincode || "").trim();
+    const state = (body.state || "").trim();
 
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || req.headers.get("x-real-ip") || "unknown";
     const userAgent = req.headers.get("user-agent") || "unknown";
@@ -106,6 +108,20 @@ export async function POST(req: NextRequest) {
       console.log('[DEBUG] register: validation failed - missing fields', { username, fullName, mobileNo, sponsorId, placementPosition, epin });
       return NextResponse.json(
         { success: false, message: "All fields are required" },
+        { status: 400 }
+      );
+    }
+
+    if (!pincode) {
+      return NextResponse.json(
+        { success: false, message: "Pin Code is required" },
+        { status: 400 }
+      );
+    }
+
+    if (!state) {
+      return NextResponse.json(
+        { success: false, message: "State is required" },
         { status: 400 }
       );
     }

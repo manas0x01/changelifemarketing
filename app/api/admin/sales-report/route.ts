@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
       createdAt: { $gte: fromDate, $lte: toDate },
       registeredPackage: { $exists: true, $nin: [null, ""] },
     })
-      .select("userId fullName username phone mobileNo city district state registeredPackage createdAt joiningDate")
+      .select("userId fullName username phone mobileNo city district state pincode registeredPackage createdAt joiningDate")
       .lean();
 
     // Build rows from orders
@@ -69,21 +69,27 @@ export async function GET(req: NextRequest) {
 
     // For orders that have a userId, fetch the user's location
     const userIds = [...new Set(orderRows.filter((r) => r.userId !== "—").map((r) => r.userId as string))];
-    let userLocationMap: Record<string, string> = {};
+    let userLocationMap: Record<string, { location: string; pincode: string; mobile: string }> = {};
     if (userIds.length > 0) {
       const usersForLocation = await User.find({ userId: { $in: userIds } })
-        .select("userId city district state")
+        .select("userId city district state pincode mobileNo phone")
         .lean();
       usersForLocation.forEach((u: any) => {
         const loc = [u.city, u.district, u.state].filter(Boolean).join(", ");
-        userLocationMap[u.userId] = loc || "—";
+        userLocationMap[u.userId] = {
+          location: loc || "—",
+          pincode: u.pincode || "—",
+          mobile: u.mobileNo || u.phone || "—",
+        };
       });
     }
 
-    // Enrich order rows with location
+    // Enrich order rows with location, pincode, mobile
     const enrichedOrderRows = orderRows.map((r) => ({
       ...r,
-      location: r.userId !== "—" ? userLocationMap[r.userId] || "—" : "—",
+      location: r.userId !== "—" ? userLocationMap[r.userId]?.location || "—" : "—",
+      pincode: r.userId !== "—" ? userLocationMap[r.userId]?.pincode || "—" : "—",
+      mobile: r.mobile !== "—" ? r.mobile : (r.userId !== "—" ? userLocationMap[r.userId]?.mobile || "—" : "—"),
     }));
 
     // Build rows from joining users (registeredPackage = joining sale)
@@ -102,6 +108,7 @@ export async function GET(req: NextRequest) {
         username: u.username || "—",
         userId: u.userId || "—",
         mobile: u.mobileNo || u.phone || "—",
+        pincode: u.pincode || "—",
         location: loc || "—",
         amount: 1299, // Joining amount
         status: "Confirmed",

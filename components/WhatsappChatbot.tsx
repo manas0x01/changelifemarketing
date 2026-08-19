@@ -44,6 +44,19 @@ const WELCOME_MESSAGE: Message = {
 };
 
 const BOT_RESPONSES: Record<string, { text: string; quickReplies?: QuickReply[] }> = {
+  greeting: {
+    text: `🙏 *Namaste! Kaise hain aap?*\n\nChange Life Marketing chatbot mein aapka swagat hai! Main aapki kya sahayata kar sakta hoon?\n\nAap niche diye gaye topics chun sakte hain ya koi bhi sawal type kar sakte hain! 😊`,
+    quickReplies: WELCOME_MESSAGE.quickReplies,
+  },
+  about: {
+    text: `🏛️ *About Change Life Marketing*\n\nChange Life Marketing is a 100% legal, GST registered & MSME certified direct selling organisation focused on natural health products & business opportunities.\n\n✨ *100% Legal & Govt Certified*\n✨ *Lab-Tested Health Products*\n✨ *High-Income Business Opportunity*\n\nHamara Lakshya: Health + Wealth for Everyone! 🌟`,
+    quickReplies: [
+      { label: '🚀 Join Kaise Kare', value: 'join' },
+      { label: '💰 Business Plan', value: 'business' },
+      { label: '👤 Talk to Team Leader', value: 'leader' },
+      { label: '🔙 Main Menu', value: 'menu' },
+    ],
+  },
   join: {
     text: `🚀 *Join Kaise Kare / Registration*\n\n✅ *No Joining Fee* — Bilkul Free!\n✅ Sirf ek product purchase se shuru karo\n✅ Turant ID milegi\n✅ Same day activation\n\n📋 *Required Documents:*\n• Aadhar Card\n• PAN Card\n• Bank Account Details\n• Passport Size Photo\n\n🏛️ GST Registered & MSME Certified company — 100% Legal & Transparent!\n\nAaj hi join karo aur apni journey shuru karo! 🌟`,
     quickReplies: [
@@ -100,10 +113,71 @@ const BOT_RESPONSES: Record<string, { text: string; quickReplies?: QuickReply[] 
     text: `WhatsApp pe connect ho rahe hain... 🚀\n\nHamari team 5 minutes mein reply karegi.\n\nChange Life Marketing mein aapka swagat hai! 🌟`,
   },
   default: {
-    text: `Samajh nahi aaya. Main aapko main options dikhata hoon 😊`,
-    quickReplies: WELCOME_MESSAGE.quickReplies,
+    text: `Aapka sawal samajhne mein thodi dikkat hui. 😊\n\nAap niche diye gaye main options chun sakte hain ya direct WhatsApp par team leader se baat kar sakte hain!`,
+    quickReplies: [
+      { label: '💬 Talk on WhatsApp', value: 'whatsapp' },
+      ...(WELCOME_MESSAGE.quickReplies || []),
+    ],
   },
 };
+
+function matchIntent(userText: string): string {
+  const text = userText.toLowerCase().trim();
+
+  // Greetings: hi, hello, helloe, hey, namaste, gm, etc.
+  if (
+    /^(hi+|hello+|helo+|helloe+|hey+|hye+|namaste+|namaskar+|hallo+|gm|gn|good\s*morning|good\s*evening|kaise\s*ho|kaise\s*h|kya\s*haal|who\s*are\s*you)/i.test(text) ||
+    text === 'hi' ||
+    text === 'hello' ||
+    text === 'hey' ||
+    text === 'namaste' ||
+    text === 'helloe'
+  ) {
+    return 'greeting';
+  }
+
+  // Join / Registration / Start
+  if (/(join|register|registration|id\b|sign\s*up|signup|kaise\s*start|start\s*kare|document|joining|account)/i.test(text)) {
+    return 'join';
+  }
+
+  // Business Plan / Income / Payout / Commission / Pair
+  if (/(business|plan|income|earning|payout|pair|capping|booster|basic|paisa|money|commission|rates|math)/i.test(text)) {
+    return 'business';
+  }
+
+  // Products / Supplements / Price / Delivery
+  if (/(product|item|supplement|herbal|health|dawa|dawai|medicine|price|catalogue|delivery|order|rate)/i.test(text)) {
+    return 'products';
+  }
+
+  // Ranks / Awards / Rewards / Laptop / Bike / Diamond
+  if (/(rank|award|reward|gift|bike|car|laptop|diamond|gold|star|trophy|prize)/i.test(text)) {
+    return 'ranks';
+  }
+
+  // Training / Support / Zoom / Learn
+  if (/(training|support|meeting|zoom|learn|seekho|guide|class|help|assist)/i.test(text)) {
+    return 'training';
+  }
+
+  // Leader / Contact / Call / Phone
+  if (/(leader|contact|talk|speak|call|phone|number|prem|human|owner|sir|baat|person|agent)/i.test(text)) {
+    return 'leader';
+  }
+
+  // About / Legal / Company / GST / Address
+  if (/(about|company|legal|gst|msme|real|fake|office|address|location|details)/i.test(text)) {
+    return 'about';
+  }
+
+  // WhatsApp
+  if (/(whatsapp|wa\b|chat\b)/i.test(text)) {
+    return 'whatsapp';
+  }
+
+  return 'default';
+}
 
 export default function ChangeLifeMarketingChatbot() {
   const [isOpen, setIsOpen] = useState(false);
@@ -132,38 +206,25 @@ export default function ChangeLifeMarketingChatbot() {
     setMessages(prev => [...prev, userMsg]);
     setIsTyping(true);
 
-    if (value === 'whatsapp') {
-      setTimeout(() => {
-        setIsTyping(false);
-        const botMsg: Message = {
-          id: makeId(),
-          from: 'bot',
-          text: BOT_RESPONSES.whatsapp.text,
-          time: getTime(),
-        };
-        setMessages(prev => [...prev, botMsg]);
-        window.open(
-          `https://wa.me/${WA_NUMBER}?text=Namaste! Main Change Life Marketing ke baare mein jaanna chahta hoon.`,
-          '_blank'
-        );
-      }, 800);
-      return;
-    }
-
-    const key = value || 'default';
-    const response = BOT_RESPONSES[key] || BOT_RESPONSES.default;
-
     setTimeout(() => {
       setIsTyping(false);
       const botMsg: Message = {
         id: makeId(),
         from: 'bot',
-        text: response.text,
+        text: BOT_RESPONSES.whatsapp.text,
         time: getTime(),
-        quickReplies: response.quickReplies,
       };
       setMessages(prev => [...prev, botMsg]);
-    }, 1200);
+
+      const waMsg = text
+        ? `Namaste! ${text}`
+        : 'Namaste! Main Change Life Marketing ke baare mein jaanna chahta hoon.';
+
+      window.open(
+        `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(waMsg)}`,
+        '_blank'
+      );
+    }, 600);
   }
 
   function handleSend() {

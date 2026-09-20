@@ -234,7 +234,7 @@ export default function HomePage() {
                 <div className="flex items-center gap-4 mb-4">
                   <div className="w-20 h-20 rounded-full overflow-hidden border-2 border-[#C9A84C]/30 shrink-0">
                     <Image
-                      src="/images/ajaykumar.png"
+                      src="/images/new-pfp.jpeg"
                       alt="Mr. Ajay Kumar"
                       className="w-full h-full object-cover"
                       width={80}

@@ -64,9 +64,9 @@ export default function TeamPromotersSection() {
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true, margin: '-100px' }}
             transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1] }}
-            className="relative group"
+            className="relative group flex justify-center lg:justify-start"
           >
-            <div className="relative aspect-3/4 w-full overflow-hidden bg-[#0A6E5A]/5">
+            <div className="relative aspect-square w-full max-w-[180px] md:max-w-[240px] lg:max-w-[300px] overflow-hidden bg-[#F9F7F4]">
               {/* Decorative corner */}
               <div className="absolute top-0 right-0 w-12 h-12 border-t-4 border-r-4 border-[#C9A84C] z-10" />
               <div className="absolute bottom-0 left-0 w-12 h-12 border-b-4 border-l-4 border-[#C9A84C] z-10" />
@@ -75,8 +75,8 @@ export default function TeamPromotersSection() {
                 src={member.image}
                 alt={member.name}
                 fill
-                className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out"
-                sizes="(max-width: 768px) 100vw, 50vw"
+                className="object-cover object-center group-hover:scale-105 transition-transform duration-700 ease-out mix-blend-multiply"
+                sizes="(max-width: 768px) 180px, (max-width: 1024px) 240px, 300px"
               />
 
               {/* Overlay on hover */}

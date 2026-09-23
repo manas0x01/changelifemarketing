@@ -23,6 +23,7 @@ import {
   Lock,
   CalendarCheck,
   BarChart2,
+  ReceiptText,
 } from "lucide-react";
 
 const navItems = [
@@ -90,6 +91,12 @@ const navItems = [
     label: "Daily Payouts",
     href: "/clm-portal/dashboard/daily-payouts",
     icon: CalendarCheck,
+    permission: "withdrawrequests",
+  },
+  {
+    label: "TDS Management",
+    href: "/clm-portal/dashboard/tds",
+    icon: ReceiptText,
     permission: "withdrawrequests",
   },
 ];

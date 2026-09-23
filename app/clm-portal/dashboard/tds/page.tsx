@@ -481,15 +481,15 @@ export default function AdminTDSManagementPage() {
             return;
           }
 
-          const opt = {
-            margin: [8, 8, 8, 8],
+          const opt: any = {
+            margin: [8, 8, 8, 8] as [number, number, number, number],
             filename: `TDS_Certificate_${leader.userId}_${leader.financialYear}.pdf`,
             image: { type: "jpeg", quality: 0.98 },
             html2canvas: { scale: 2, useCORS: true, logging: false },
             jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
           };
 
-          await html2pdf().set(opt).from(element).save();
+          await (html2pdf as any)().set(opt).from(element).save();
           toast.success("TDS Certificate PDF downloaded!");
         } catch (e: any) {
           console.error(e);

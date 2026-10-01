@@ -90,11 +90,11 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
     let description = "";
 
     if (isCutSession) {
-      // 3rd, 6th, 9th, 12th session: ALL pairs are recorded, but ALL income is cut (₹0)
-      paidPairs = pairsInSession;
+      // 3rd, 6th, 9th, 12th session: Strictly capped at 1 pair, ALL income is cut (₹0)
+      paidPairs = 1;
       newIncome = 0;
       description = `Basic Session #${sessionIndex} Cut (${sessionType})`;
-      console.log(`✂️ [BASIC CUT] ${user.username}: Session #${sessionIndex} is cut. ${pairsInSession} pair(s), ₹0 income.`);
+      console.log(`✂️ [BASIC CUT] ${user.username}: Session #${sessionIndex} is cut. 1 pair capped, ₹0 income.`);
     } else {
       // Normal session or Booster user: capped at 1 pair, ₹1000 income
       paidPairs = 1;
@@ -117,10 +117,9 @@ export async function calculateBasicIncome(user: any, manualSessionType?: string
       const sessionRecord = user.sessionBasedIncome[recordIndex];
       const previousPairs = sessionRecord.pairs || 0;
 
-      // 🔐 CRITICAL: For normal sessions, income is capped at 1 pair (₹1000).
-      // We compare against paidPairs (capped) not raw pairsInSession to prevent
-      // the "2 pairs shown" bug where multiple joiners in same session inflate the count.
-      const effectivePairs = isCutSession ? pairsInSession : paidPairs;
+      // 🔐 CRITICAL: In Basic phase, each session is strictly capped at 1 pair (₹1000 or Cut).
+      // Unpaired and extra pairs flash out. We use paidPairs (strictly 1).
+      const effectivePairs = paidPairs;
 
       if (effectivePairs <= previousPairs) {
         // No new pairs since last call — nothing to update

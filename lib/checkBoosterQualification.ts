@@ -35,8 +35,10 @@ export async function checkBoosterQualification(user: IUser) {
     }
   }
 
-  // Reach 12 basic pairs to upgrade to Booster status
-  if (user.boosterCuts.includes(12) && !user.isBooster) {
+  const completedSessions = Array.isArray(user.sessionBasedIncome) ? user.sessionBasedIncome.length : basicPairsMatched;
+
+  // Reach 12 basic pairs AND at least 12 completed sessions to upgrade to Booster status
+  if (user.boosterCuts.includes(12) && basicPairsMatched >= 12 && completedSessions >= 12 && !user.isBooster) {
     user.isBooster = true;
     user.basicRank = "Booster";
     user.boosterAchievedAt = new Date();

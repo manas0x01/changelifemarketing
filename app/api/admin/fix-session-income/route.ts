@@ -155,13 +155,14 @@ export async function POST(req: NextRequest) {
       const sessionIndex = idx + 1;
       const isCut = !user.isBooster && CUT_LEVELS.has(sessionIndex);
 
+      // In Basic phase, each session is strictly capped at 1 pair
+      rec.pairs = 1;
+
       if (isCut) {
         rec.netIncome = 0;
         rec.description = `Basic Session #${sessionIndex} Cut`;
       } else {
-        // Normal: ₹1000 per 1 pair (cap at 1 pair)
-        const effectivePairs = Math.min(rec.pairs || 1, 1);
-        rec.netIncome = effectivePairs * 1000;
+        rec.netIncome = 1000;
         rec.description = rec.description || `Basic Income (${rec.sessionType})`;
       }
     });

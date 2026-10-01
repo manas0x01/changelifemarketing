@@ -516,27 +516,6 @@ userSchema.pre('save', async function (this: IUser) {
     const totalLeft = this.totalTeam?.left || 0;
     const totalRight = this.totalTeam?.right || 0;
 
-    // 1. BOOSTER QUALIFICATION SYNC (Critical for existing users like CLMPP)
-    // If user has 12 pairs OR is the pioneer user CLMPP, ensure they are a Booster
-    const basicPairsCount = this.basicPairs || 0;
-    const isPioneer = this.username === 'CLMPP';
-    const shouldBeBooster = (basicPairsCount >= 12) || isPioneer;
-
-    if (shouldBeBooster && !this.isBooster) {
-      console.log(`🚀 [SELF-HEALING] Upgrading ${this.username} to Booster status (Requirement met or Pioneer).`);
-      this.isBooster = true;
-      this.basicRank = "Booster";
-      this.boosterAchievedAt = this.boosterAchievedAt || new Date();
-
-      // Release any existing 'Hold' records
-      if (Array.isArray(this.boosterMatchingRecords)) {
-        this.boosterMatchingRecords.forEach((record: any) => {
-          if (record.status === 'Hold') record.status = 'Released';
-        });
-      }
-    }
-
-    // 3. AGGREGATE & TREE SYNC
     // 3. AGGREGATE & TREE SYNC
     if (Array.isArray(this.sessionBasedIncome) && (totalLeft > 0 || totalRight > 0)) {
       console.log(`🔍 [SYNC] Checking Basic Income for ${this.username}. Tree: ${totalLeft}L | ${totalRight}R`);
@@ -557,7 +536,11 @@ userSchema.pre('save', async function (this: IUser) {
         }
 
         if (isCutSession) {
-          // Cut session: income must be 0, pairs count is NOT capped
+          // Cut session: income must be 0, pairs strictly capped at 1
+          if (Number(rec.pairs) > 1) {
+            console.log(`⚠️ [SYNC] Capping cut session pairs for ${this.username} in session #${sessionIndex}: ${rec.pairs} -> 1`);
+            rec.pairs = 1;
+          }
           if (Number(rec.netIncome) !== 0) {
             console.log(`✂️ [SELF-HEALING] Retro-enforcing cut for session #${sessionIndex} of ${this.username}`);
             rec.netIncome = 0;
@@ -619,6 +602,33 @@ userSchema.pre('save', async function (this: IUser) {
         description: s.description || (Number(s.netIncome) === 0 && Number(s.pairs) > 0 ? `Basic Session #${i + 1} Cut` : "Binary Income"),
         status: 'Completed'
       }));
+
+      // 1. BOOSTER QUALIFICATION SYNC (Evaluated after basicPairs is accurately calculated)
+      const isPioneer = this.username === 'CLMPP';
+      const sessionCount = this.sessionBasedIncome?.length || 0;
+      const shouldBeBooster = (this.basicPairs >= 12 && sessionCount >= 12) || isPioneer;
+
+      if (shouldBeBooster && !this.isBooster) {
+        console.log(`🚀 [SELF-HEALING] Upgrading ${this.username} to Booster status (Requirement met or Pioneer).`);
+        this.isBooster = true;
+        this.basicRank = "Booster";
+        this.boosterAchievedAt = this.boosterAchievedAt || new Date();
+
+        // Release any existing 'Hold' records
+        if (Array.isArray(this.boosterMatchingRecords)) {
+          this.boosterMatchingRecords.forEach((record: any) => {
+            if (record.status === 'Hold') record.status = 'Released';
+          });
+        }
+      } else if (!shouldBeBooster && this.isBooster && !isPioneer) {
+        console.log(`⚠️ [SELF-HEALING] User ${this.username} has only ${this.basicPairs} basic pairs (< 12). Reverting false Booster status.`);
+        this.isBooster = false;
+        this.basicRank = "Basic";
+        this.boosterAchievedAt = undefined;
+        if (Array.isArray(this.boosterCuts)) {
+          this.boosterCuts = this.boosterCuts.filter((c: number) => c < 12);
+        }
+      }
     } else if (totalLeft === 0 && totalRight === 0) {
       // Hard reset if tree is truly empty — BUT only if user has no approved withdrawals
       // (if they've been paid out, we preserve their income history)

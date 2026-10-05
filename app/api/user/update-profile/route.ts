@@ -157,6 +157,8 @@ export async function POST(req: NextRequest) {
 
     const currentStatus = user.bankDetailsStatus || "none";
 
+    const update: any = {};
+
     if (hasBankFields) {
       // If user has already submitted (pending or approved), they cannot edit
       if (currentStatus === "pending" || currentStatus === "approved") {
@@ -170,7 +172,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Save under pendingBankAccountDetails instead of updating direct bank fields
-      user.pendingBankAccountDetails = {
+      update.pendingBankAccountDetails = {
         accountHolderName: body.fullName || user.fullName || "",
         accountNumber: body.accountNo || "",
         ifscCode: body.ifsc || "",
@@ -178,12 +180,11 @@ export async function POST(req: NextRequest) {
         branchName: body.branchName || "",
         accountType: body.accountType || "",
       };
-      user.bankDetailsStatus = "pending";
-      (user as any).bankDetailsRejectReason = ""; // Clear previous reject reason
+      update.bankDetailsStatus = "pending";
+      update.bankDetailsRejectReason = ""; // Clear previous reject reason
     }
 
     // Build update object with allowed fields, excluding direct bank fields
-    const update: any = {};
     for (const key of ALLOWED_UPDATE_FIELDS) {
       // Skip direct updates to bank details for users (handled above via pending)
       if (["bankName", "branchName", "accountNo", "ifsc", "accountType"].includes(key)) {
@@ -215,9 +216,8 @@ export async function POST(req: NextRequest) {
       update.dateOfBirth = d;
     }
 
-    // Apply updates
-    (user as any).set(update);
-    await user.save();
+    // Apply updates directly via updateOne for lightning-fast save without MLM tree recalculation delays
+    await User.updateOne({ _id: user._id }, { $set: update });
 
     return NextResponse.json({
       success: true,

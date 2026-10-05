@@ -17,6 +17,26 @@ interface ProfileData {
   bankDetailsStatus?: string;
 }
 
+const parseServerErrorMessage = async (response: Response, defaultMessage: string): Promise<string> => {
+  try {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      return data.message || data.error || defaultMessage;
+    }
+    const text = await response.text();
+    if (text.includes("<!DOCTYPE") || text.includes("<html") || text.includes("<head")) {
+      if (response.status === 401) return "Session expired. Please log in again.";
+      if (response.status === 403) return "Access restricted or verification required. Please refresh and try again.";
+      if (response.status === 504 || response.status === 502) return "Server response timed out. Please try again in a moment.";
+      return defaultMessage;
+    }
+    return text?.substring(0, 150) || defaultMessage;
+  } catch {
+    return defaultMessage;
+  }
+};
+
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<Tab>("overview");
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -38,20 +58,12 @@ export default function ProfilePage() {
           credentials: "include",
         });
         if (!response.ok) {
-          let errorData;
-          const contentType = response.headers.get("content-type");
-          
-          try {
-            if (contentType?.includes("application/json")) {
-              errorData = await response.json();
-            } else {
-              const text = await response.text();
-              errorData = { error: text?.substring(0, 200) || "Unknown error" };
-            }
-          } catch (parseErr) {
-            errorData = { error: "Failed to parse server response" };
+          if (response.status === 401) {
+            router.push("/auth/login");
+            return;
           }
-          throw new Error(errorData.error || "Failed to fetch profile");
+          const errorMessage = await parseServerErrorMessage(response, "Failed to fetch profile");
+          throw new Error(errorMessage);
         }
         
         const apiResponse = await response.json();

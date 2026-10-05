@@ -513,10 +513,20 @@ userSchema.pre('save', async function (this: IUser) {
 
   // 🔹 SELF-HEALING BOOSTER & INCOME SYNC
   try {
-    const totalLeft = this.totalTeam?.left || 0;
-    const totalRight = this.totalTeam?.right || 0;
+    const modifiedPaths = typeof this.modifiedPaths === 'function' ? this.modifiedPaths() : [];
+    const treeSensitiveFields = [
+      'leftChild', 'rightChild', 'totalTeam', 'sessionTeam', 'sessionBasedIncome',
+      'isBooster', 'boosterCount', 'boosterMatchingRecords', 'placementPosition', 'placementId', 'sponsorId'
+    ];
+    const shouldRunTreeSync = this.isNew || modifiedPaths.length === 0 || modifiedPaths.some((p: string) => treeSensitiveFields.some(tf => p.startsWith(tf)));
 
-    // 3. AGGREGATE & TREE SYNC
+    if (!shouldRunTreeSync) {
+      console.log('⚡ [PRE-SAVE] Skipping tree self-healing — non-tree fields modified:', modifiedPaths);
+    } else {
+      const totalLeft = this.totalTeam?.left || 0;
+      const totalRight = this.totalTeam?.right || 0;
+
+      // 3. AGGREGATE & TREE SYNC
     if (Array.isArray(this.sessionBasedIncome) && (totalLeft > 0 || totalRight > 0)) {
       console.log(`🔍 [SYNC] Checking Basic Income for ${this.username}. Tree: ${totalLeft}L | ${totalRight}R`);
 
@@ -922,11 +932,12 @@ userSchema.pre('save', async function (this: IUser) {
 
     this.totalIncome = computedTotal as any;
 
-    if (typeof (this as any).markModified === 'function') {
-      this.markModified('basicIncome');
-      this.markModified('boosterMatchingIncome');
-      this.markModified('boosterIncome');
-      this.markModified('totalIncome');
+      if (typeof (this as any).markModified === 'function') {
+        this.markModified('basicIncome');
+        this.markModified('boosterMatchingIncome');
+        this.markModified('boosterIncome');
+        this.markModified('totalIncome');
+      }
     }
   } catch (err) {
     console.error('❌ [PRE-SAVE] Error in self-healing:', err);

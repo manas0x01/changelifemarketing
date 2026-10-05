@@ -7,6 +7,26 @@ import Link from "next/link";
 
 const accountTypes = ["-- Select --", "Saving", "Current", "Salary", "NRI", "Joint"];
 
+const parseServerErrorMessage = async (response: Response, defaultMessage: string): Promise<string> => {
+  try {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await response.json();
+      return data.message || data.error || defaultMessage;
+    }
+    const text = await response.text();
+    if (text.includes("<!DOCTYPE") || text.includes("<html") || text.includes("<head")) {
+      if (response.status === 401) return "Session expired. Please log in again.";
+      if (response.status === 403) return "Access restricted or verification required. Please refresh and try again.";
+      if (response.status === 504 || response.status === 502) return "Server response timed out. Please try again in a moment.";
+      return defaultMessage;
+    }
+    return text?.substring(0, 150) || defaultMessage;
+  } catch {
+    return defaultMessage;
+  }
+};
+
 export default function EditBankPage() {
   const router = useRouter();
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -38,25 +58,12 @@ export default function EditBankPage() {
           credentials: "include",
         });
         if (!response.ok) {
-          let errorData;
-          const contentType = response.headers.get("content-type");
-          
-          try {
-            if (contentType?.includes("application/json")) {
-              errorData = await response.json();
-            } else {
-              const text = await response.text();
-              errorData = { error: text?.substring(0, 200) || "Unknown error" };
-            }
-          } catch (parseErr) {
-            errorData = { error: "Failed to parse server response" };
-          }
           if (response.status === 401) {
             router.push("/auth/login");
             return;
           }
-          
-          throw new Error(errorData.error || "Failed to fetch bank details");
+          const errorMessage = await parseServerErrorMessage(response, "Failed to fetch bank details");
+          throw new Error(errorMessage);
         }
         const data = await response.json();
         if (data.data) {
@@ -93,28 +100,52 @@ export default function EditBankPage() {
       setSaving(true);
       setError(null);
       
+      const trimmedBankName = bankData.bankName.trim();
+      const trimmedIfsc = bankData.ifsc.trim().toUpperCase();
+      const trimmedAccountNo = bankData.accountNo.trim();
+      const trimmedBranch = bankData.branchName.trim();
+      const trimmedPan = bankData.panNo.trim().toUpperCase();
+
+      if (!trimmedBankName) {
+        setError("Bank name is required");
+        setSaving(false);
+        return;
+      }
+      if (!trimmedIfsc) {
+        setError("IFSC code is required");
+        setSaving(false);
+        return;
+      }
+      if (!trimmedAccountNo) {
+        setError("Account number is required");
+        setSaving(false);
+        return;
+      }
       // Validate account type is not default placeholder
-      if (bankData.accountType === "-- Select --") {
+      if (!bankData.accountType || bankData.accountType === "-- Select --") {
         setError("Please select an account type");
         setSaving(false);
         return;
       }
-      // Validate IFSC code if provided
-      if (bankData.ifsc && !/^[A-Z]{4}0[A-Z0-9]{6}$/.test(bankData.ifsc)) {
-        setError("Invalid IFSC code format (e.g., CBIN0284349)");
+      // Validate IFSC code format
+      if (!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(trimmedIfsc)) {
+        setError("Invalid IFSC code format (e.g., SBIN0006947)");
         setSaving(false);
         return;
       }
       // Validate PAN if provided
-      if (bankData.panNo && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(bankData.panNo)) {
+      if (trimmedPan && !/^[A-Z]{5}[0-9]{4}[A-Z]{1}$/.test(trimmedPan)) {
         setError("Invalid PAN number format (e.g., ABCDE1234F)");
         setSaving(false);
         return;
       }
-      // Convert "-- Select --" to empty string for accountType
       const submitData = {
-        ...bankData,
-        accountType: bankData.accountType === "-- Select --" ? "" : bankData.accountType
+        bankName: trimmedBankName,
+        ifsc: trimmedIfsc,
+        accountNo: trimmedAccountNo,
+        branchName: trimmedBranch,
+        accountType: bankData.accountType,
+        panNo: trimmedPan,
       };
       
       const response = await fetch("/api/user/update-profile", {
@@ -126,19 +157,12 @@ export default function EditBankPage() {
         credentials: "include",
       });
       if (!response.ok) {
-        let errorData;
-        const contentType = response.headers.get("content-type");
-        try {
-          if (contentType?.includes("application/json")) {
-            errorData = await response.json();
-          } else {
-            const text = await response.text();
-            errorData = { error: text?.substring(0, 200) || "Unknown error" };
-          }
-        } catch (parseErr) {
-          errorData = { error: "Failed to parse server response" };
+        if (response.status === 401) {
+          router.push("/auth/login");
+          return;
         }
-        throw new Error(errorData.error || "Failed to update bank details");
+        const errorMessage = await parseServerErrorMessage(response, "Failed to update bank details");
+        throw new Error(errorMessage);
       }
       
       setSuccess(true);

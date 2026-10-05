@@ -76,32 +76,31 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const updateDoc: any = {};
     if (action === "approve") {
       const pending = (user as any).pendingBankAccountDetails || {};
 
-      // Promote pending bank details to active fields
-      (user as any).bankName = pending.bankName || "";
-      (user as any).branchName = pending.branchName || "";
-      (user as any).accountNo = pending.accountNumber || "";
-      (user as any).ifsc = pending.ifscCode || "";
-      (user as any).accountType = pending.accountType || "";
+      updateDoc.bankName = pending.bankName || "";
+      updateDoc.branchName = pending.branchName || "";
+      updateDoc.accountNo = pending.accountNumber || "";
+      updateDoc.ifsc = pending.ifscCode || "";
+      updateDoc.accountType = pending.accountType || "";
 
-      // Sync bankAccountDetails nested object
-      user.bankAccountDetails = {
+      updateDoc.bankAccountDetails = {
         accountHolderName: pending.accountHolderName || user.fullName || "",
         accountNumber: pending.accountNumber || "",
         ifscCode: pending.ifscCode || "",
         bankName: pending.bankName || "",
       };
 
-      user.bankDetailsStatus = "approved";
-      (user as any).bankDetailsRejectReason = "";
+      updateDoc.bankDetailsStatus = "approved";
+      updateDoc.bankDetailsRejectReason = "";
     } else {
-      user.bankDetailsStatus = "rejected";
-      (user as any).bankDetailsRejectReason = rejectReason || "Rejected by Admin";
+      updateDoc.bankDetailsStatus = "rejected";
+      updateDoc.bankDetailsRejectReason = rejectReason || "Rejected by Admin";
     }
 
-    await user.save();
+    await User.updateOne({ _id: user._id }, { $set: updateDoc });
 
     return NextResponse.json({
       success: true,

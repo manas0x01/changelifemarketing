@@ -62,9 +62,20 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2">
                 <MapPin className="w-5 h-5 text-[#C9A84C] shrink-0 mt-1" />
-                <span className="font-['Roboto'] text-[0.875rem]">
-                  Ward No. 21, Holding No. 120, Dak Bangla Road, Masaurhi, Patna, Bihar - 804452
-                </span>
+                <div className="font-['Roboto'] text-[0.875rem] space-y-2">
+                  <div>
+                    <span className="font-semibold text-[#C9A84C] block">Registered Office:</span>
+                    <span className="text-[#FFFFFF]/90">
+                      Ward No. 21, Holding No. 120, Dak Bangla Road, Masaurhi, Patna, Bihar - 804452
+                    </span>
+                  </div>
+                  <div>
+                    <span className="font-semibold text-[#C9A84C] block">Corporate Office (Director Office):</span>
+                    <span className="text-[#FFFFFF]/90">
+                      Near Masaurhi Court, Railway Station, Masaurhi - 804452
+                    </span>
+                  </div>
+                </div>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="w-5 h-5 text-[#C9A84C]" />

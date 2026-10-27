@@ -8,9 +8,8 @@ import { toast } from "sonner";
 
 const packages = [
   { id: "starterPack1", name: "Starter Product Pack No.01", icon: "📦", price: 1299 },
-  { id: "packA", name: "Healthcare PACK-A", icon: "💊", price: 1299 },
-  { id: "packB", name: "Healthcare PACK-B", icon: "⚕️", price: 1299 },
-  { id: "packageC", name: "Healthcare PACK-C", icon: "💎", price: 1299 },
+  { id: "starterPack2", name: "Starter Product Pack No.02", icon: "💊", price: 1299 },
+  { id: "starterPack3", name: "Starter Product Pack No.03", icon: "💎", price: 1299 },
 ];
 
 export default function BuyEPinPage() {

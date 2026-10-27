@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Mail, Phone, MapPin, Send, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
+import { Mail, Phone, MapPin, Send, Facebook, Instagram, Twitter, Youtube, Building2 } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 
@@ -96,19 +96,41 @@ export default function ContactPage() {
                 </p>
               </div>
 
-              {/* Address */}
-              <div className="bg-[#0A6E5A] p-6 rounded-lg">
-                <div className="flex items-start gap-4">
-                  <div className="w-12 h-12 bg-[#C9A84C] rounded-full flex items-center justify-center shrink-0">
-                    <MapPin className="w-6 h-6 text-[#FFFFFF]" />
+              {/* Addresses */}
+              <div className="space-y-4">
+                {/* Registered Office */}
+                <div className="bg-[#0A6E5A] p-6 rounded-lg">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-[#C9A84C] rounded-full flex items-center justify-center shrink-0">
+                      <MapPin className="w-6 h-6 text-[#FFFFFF]" />
+                    </div>
+                    <div>
+                      <h3 className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C] mb-2">Registered Office (Company Address)</h3>
+                      <p className="font-['Roboto'] text-[#FFFFFF] leading-relaxed">
+                        Ward No. 21, Holding No. 120<br />
+                        Dak Bangla Road, Masaurhi<br />
+                        Patna, Bihar - 804452
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <h3 className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C] mb-2">Head Office</h3>
-                    <p className="font-['Roboto'] text-[#FFFFFF]">
-                      Ward No. 21, Holding No. 120<br />
-                      Dak Bangla Road, Masaurhi<br />
-                      Patna, Bihar - 804452
-                    </p>
+                </div>
+
+                {/* Corporate Office */}
+                <div className="bg-[#0A6E5A] p-6 rounded-lg border-2 border-[#C9A84C]/40">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-[#C9A84C] rounded-full flex items-center justify-center shrink-0">
+                      <Building2 className="w-6 h-6 text-[#FFFFFF]" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C]">Corporate Office</h3>
+                        <span className="text-[0.75rem] bg-[#C9A84C] text-[#0A6E5A] font-semibold px-2 py-0.5 rounded font-['Roboto']">Director Office</span>
+                      </div>
+                      <p className="font-['Roboto'] text-[#FFFFFF] leading-relaxed">
+                        Near Masaurhi Court, Railway Station<br />
+                        Masaurhi, Patna, Bihar - 804452
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>

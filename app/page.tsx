@@ -257,15 +257,22 @@ export default function HomePage() {
               <SectionHeading title="A Legacy of Trust & Growth" align="left" />
               <div className="space-y-12">
                 {/* Company Details Grid */}
-                <div className="grid sm:grid-cols-2 gap-8">
+                <div className="grid sm:grid-cols-3 gap-6">
                   <div className="space-y-2">
                     <p className="text-[0.875rem] font-['Roboto'] text-[#C9A84C] uppercase tracking-wider font-semibold">Established</p>
                     <p className="font-['Fraunces'] text-[1.5rem] text-[#0A6E5A]">22 Jan 2026</p>
+                    <p className="text-[0.8rem] text-[#333333]/70 font-['Roboto']">Direct Selling Govt. Registered</p>
                   </div>
                   <div className="space-y-2">
-                    <p className="text-[0.875rem] font-['Roboto'] text-[#C9A84C] uppercase tracking-wider font-semibold">Headquarters</p>
-                    <p className="font-['Roboto'] text-[#333333]/80 leading-relaxed">
+                    <p className="text-[0.875rem] font-['Roboto'] text-[#C9A84C] uppercase tracking-wider font-semibold">Registered Office</p>
+                    <p className="font-['Roboto'] text-[0.875rem] text-[#333333]/80 leading-relaxed">
                       Ward No. 21, Holding No. 120,<br />Dak Bangla Road, Masaurhi,<br />Patna, Bihar - 804452
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <p className="text-[0.875rem] font-['Roboto'] text-[#C9A84C] uppercase tracking-wider font-semibold">Corporate Office</p>
+                    <p className="font-['Roboto'] text-[0.875rem] text-[#333333]/80 leading-relaxed">
+                      Near Masaurhi Court,<br />Railway Station, Masaurhi,<br />Patna, Bihar - 804452
                     </p>
                   </div>
                 </div>

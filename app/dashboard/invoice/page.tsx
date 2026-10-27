@@ -1012,7 +1012,10 @@ export default function TaxInvoicePage() {
                   <path d="M7 1C4.239 1 2 3.239 2 6c0 4 5 9 5 9s5-5 5-9c0-2.761-2.239-5-5-5z" stroke="#1a4a2e" strokeWidth="1.5" fill="none" />
                   <circle cx="7" cy="6" r="2" fill="#1a4a2e" />
                 </svg>
-                <span>House No 120, Ward No 21,<br />Dak Bungalow Road,<br />Masaurhi, Patna – 804452</span>
+                <span>
+                  <strong>Reg. Office:</strong> Ward No 21, Holding No 120, Dak Bangla Road, Masaurhi, Patna – 804452<br />
+                  <strong>Corp. Office:</strong> Near Masaurhi Court, Railway Station, Masaurhi – 804452
+                </span>
               </div>
             </div>
 

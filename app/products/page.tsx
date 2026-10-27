@@ -71,6 +71,18 @@ const MOCK_PRODUCTS: Products[] = [
       'Strengthens immune system\nEnhances overall health\nRich in antioxidants',
     usageInstructions: 'Take 5 drops on an empty stomach in the morning and evening with a glass of warm water',
   },
+  {
+    _id: '7',
+    itemName: 'Active Drops',
+    productNameHindi: 'एक्टिव ड्रॉप्स',
+    itemPrice: 0,
+    itemImage: '/images/activedrops.jpeg',
+    bvValue: 300,
+    pvValue: 300,
+    keyBenefits:
+      'Enriched with Ginger, Tulsi & Curcumin\nBoosts immunity and respiratory wellness\nHelps in cold, cough, and throat irritation\nRich source of natural antioxidants\nAnti-inflammatory and rejuvenating properties\n100% natural and safe herbal drops',
+    usageInstructions: 'Take 5 drops on an empty stomach in the morning and evening with a glass of warm water',
+  },
 ];
 
 const MOCK_STARTER_PACKS: StarterPacks[] = [
@@ -80,7 +92,19 @@ const MOCK_STARTER_PACKS: StarterPacks[] = [
     itemPrice: 1299,
     itemImage: '/images/pack 1.jpeg',
     itemDescription:
-      'Starter pack for beginners\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
+      'Sea Buckthorn Capsule (700 BV)\nAcidity Drops (300 BV)\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
+    totalBV: 1000,
+    totalPV: 1000,
+    binaryIncomeInfo:
+      '1 Pair (700 BV + 300 BV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
+  },
+  {
+    _id: '2',
+    itemName: 'Starter Product Pack No.02',
+    itemPrice: 1299,
+    itemImage: '/images/pack 2.jpeg',
+    itemDescription:
+      'Multivitamin Capsule (700 BV)\nActive Drops (Ginger, Tulsi & Curcumin - 300 BV)\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
     totalBV: 1000,
     totalPV: 1000,
     binaryIncomeInfo:
@@ -88,35 +112,11 @@ const MOCK_STARTER_PACKS: StarterPacks[] = [
   },
   {
     _id: '3',
-    itemName: 'Healthcare PACK-C',
+    itemName: 'Starter Product Pack No.03',
     itemPrice: 1299,
-    itemImage: '/images/womenpack coming soon banner.jpeg',
+    itemImage: '/images/pack 3.jpeg',
     itemDescription:
-      'Immunity booster drops (300 BV)\nNari shakti capsule (700 BV)\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
-    totalBV: 1000,
-    totalPV: 1000,
-    binaryIncomeInfo:
-      '1 Pair (700 BV + 300 BV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
-  },
-  {
-    _id: '4',
-    itemName: 'Healthcare PACK-A',
-    itemPrice: 1299,
-    itemImage: '/images/starterpack1.png',
-    itemDescription:
-      'Essential healthcare supplements\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
-    totalBV: 1000,
-    totalPV: 1000,
-    binaryIncomeInfo:
-      '1 Pair (700 BV + 300 BV)\nNet payout up to ₹800\nIncome depends on individual effort and team performance\nTerms & conditions apply',
-  },
-  {
-    _id: '5',
-    itemName: 'Healthcare PACK-B',
-    itemPrice: 1299,
-    itemImage: '/images/starterpack2.png',
-    itemDescription:
-      'Advanced healthcare pack\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
+      'Nari Shakti Capsule (700 BV)\nImmunity Booster Drops (300 BV)\nNo joining fee required\nIncome based on product sales only\nSimple and easy earning model',
     totalBV: 1000,
     totalPV: 1000,
     binaryIncomeInfo:

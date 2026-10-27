@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { TrendingUp, Award, Gift, Clock } from 'lucide-react';
+import { TrendingUp, Award, Gift, Clock, Download } from 'lucide-react';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import { IncomePlans, AwardsandRewards } from '@/entities';
@@ -58,9 +58,21 @@ export default function BusinessPlanPage() {
             <h1 className="font-['Fraunces'] text-[2.25rem] md:text-[3.75rem] text-[#FFFFFF] mb-4">
               Business & Income Plan
             </h1>
-            <p className="font-['Roboto'] text-[1.125rem] text-[#FFFFFF] max-w-3xl mx-auto">
+            <p className="font-['Roboto'] text-[1.125rem] text-[#FFFFFF] max-w-3xl mx-auto mb-8">
               Discover multiple income streams and unlimited earning potential
             </p>
+            <div className="flex justify-center">
+              <a
+                href="/images/CLM NEW PDF 2626.pdf"
+                download="CLM_Business_Plan_2026.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-3 px-8 py-3.5 bg-[#C9A84C] text-[#0A6E5A] font-['Roboto'] font-bold rounded hover:bg-[#FFFFFF] transition-all shadow-lg text-[0.95rem]"
+              >
+                <Download className="w-5 h-5" />
+                Download Official Presentation (PDF)
+              </a>
+            </div>
           </motion.div>
         </div>
       </section>

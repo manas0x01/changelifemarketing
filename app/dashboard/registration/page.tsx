@@ -21,7 +21,12 @@ const days = Array.from({ length: 31 }, (_, i) => String(i + 1));
 const months = ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"];
 const years = Array.from({ length: 60 }, (_, i) => String(2005 - i));
 
-const packages = ["-- Select Package --", "Healthcare PACK-A", "Healthcare PACK-B", "Healthcare PACK-C"];
+const packages = [
+  { value: "-- Select Package --", label: "-- Select Package --" },
+  { value: "Healthcare PACK-A", label: "Healthcare PACK-A (Sea Buckthorn Capsule + Acidity Drops)" },
+  { value: "Healthcare PACK-B", label: "Healthcare PACK-B (Multivitamin Capsule + Active Drops)" },
+  { value: "Healthcare PACK-C", label: "Healthcare PACK-C (Nari Shakti Capsule + Immunity Booster Drops)" },
+];
 const positions = ["-- Select --", "Left", "Right"];
 const nomineeRels = ["-- Select --", "Son", "Daughter", "Wife", "Husband", "Father", "Mother", "Brother", "Sister", "Other"];
 const accountTypes = ["-- Select --", "Saving", "Current", "Salary", "NRI", "Joint"];
@@ -1341,7 +1346,9 @@ function NewRegisterForm() {
                               value={pkg}
                               onChange={(e) => setPkg(e.target.value)}
                             >
-                              {packages.map(p => <option key={p}>{p}</option>)}
+                              {packages.map(pack => (
+                                <option key={pack.value} value={pack.value}>{pack.label}</option>
+                              ))}
                             </select>
                           </div>
                         </div>
@@ -1422,7 +1429,7 @@ function NewRegisterForm() {
                   <div className="form-group">
                     <label className="form-label"><span className="req">*</span>Package :</label>
                     <select className="form-select" value={pkg} disabled style={{ background: "#f5f5f5", color: "#777" }}>
-                      <option>{pkg}</option>
+                      <option value={pkg}>{packages.find((pack) => pack.value === pkg)?.label ?? pkg}</option>
                     </select>
                   </div>
                   <div className="form-group" style={{ visibility: "hidden" }}>

@@ -16,7 +16,7 @@ const MOCK_PRODUCTS: Products[] = [
     itemName: 'Sea Buckthorn Capsule',
     productNameHindi: 'सी बकथॉर्न कैप्सूल',
     itemPrice: 0,
-    itemImage: '/images/seabuckthorncapsule.png',
+    itemImage: '/images/seabuckthorncapsule.jpeg',
     bvValue: 700,
     pvValue: 700,
     keyBenefits:
@@ -28,7 +28,7 @@ const MOCK_PRODUCTS: Products[] = [
     itemName: 'Acidity Drops',
     productNameHindi: 'एसिडिटी ड्रॉप्स',
     itemPrice: 0,
-    itemImage: '/images/aciditydrops.png',
+    itemImage: '/images/aciditydrops.jpeg',
     bvValue: 300,
     pvValue: 300,
     keyBenefits:
@@ -40,12 +40,24 @@ const MOCK_PRODUCTS: Products[] = [
     itemName: 'Multi Vitamin Capsule',
     productNameHindi: 'मल्टी विटामिन कैप्सूल',
     itemPrice: 0,
-    itemImage: '/images/multivitamincapsule.png',
+    itemImage: '/images/multivitamincapsule.jpeg',
     bvValue: 700,
     pvValue: 700,
     keyBenefits:
       'Helps reduce weakness and fatigue\nStrengthens the immune system\nBeneficial for hair health\nSupports healthy skin\nHelps in strengthening bones\nGood for heart health and memory',
     usageInstructions: 'Take 1 capsule daily in the morning after meals with warm water',
+  },
+  {
+    _id: '7',
+    itemName: 'Active Drops',
+    productNameHindi: 'एक्टिव ड्रॉप्स',
+    itemPrice: 0,
+    itemImage: '/images/activedrops.jpeg',
+    bvValue: 300,
+    pvValue: 300,
+    keyBenefits:
+      'Enriched with Ginger, Tulsi & Curcumin\nBoosts immunity and respiratory wellness\nHelps in cold, cough, and throat irritation\nRich source of natural antioxidants\nAnti-inflammatory and rejuvenating properties\n100% natural and safe herbal drops',
+    usageInstructions: 'Take 5 drops on an empty stomach in the morning and evening with a glass of warm water',
   },
   {
     _id: '5',
@@ -69,18 +81,6 @@ const MOCK_PRODUCTS: Products[] = [
     pvValue: 300,
     keyBenefits:
       'Strengthens immune system\nEnhances overall health\nRich in antioxidants',
-    usageInstructions: 'Take 5 drops on an empty stomach in the morning and evening with a glass of warm water',
-  },
-  {
-    _id: '7',
-    itemName: 'Active Drops',
-    productNameHindi: 'एक्टिव ड्रॉप्स',
-    itemPrice: 0,
-    itemImage: '/images/activedrops.jpeg',
-    bvValue: 300,
-    pvValue: 300,
-    keyBenefits:
-      'Enriched with Ginger, Tulsi & Curcumin\nBoosts immunity and respiratory wellness\nHelps in cold, cough, and throat irritation\nRich source of natural antioxidants\nAnti-inflammatory and rejuvenating properties\n100% natural and safe herbal drops',
     usageInstructions: 'Take 5 drops on an empty stomach in the morning and evening with a glass of warm water',
   },
 ];
@@ -222,7 +222,7 @@ export default function ProductsPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.6 }}
-                className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto"
               >
                 {products.map((product) => (
                   <motion.div
@@ -230,21 +230,23 @@ export default function ProductsPage() {
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="bg-[#FFFFFF] border-2 border-[#0A6E5A] rounded-lg overflow-hidden hover:shadow-2xl transition-shadow"
+                    className="bg-[#FFFFFF] border-2 border-[#0A6E5A] rounded-xl overflow-hidden hover:shadow-2xl transition-all duration-300 flex flex-col"
                   >
                     <div className="bg-[#0A6E5A] p-4 text-center">
                       <h3 className="font-['Fraunces'] text-[1.25rem] text-[#C9A84C] mb-1">{product.itemName}</h3>
                       <p className="font-['Roboto'] text-[0.875rem] text-[#FFFFFF]">{product.productNameHindi}</p>
                     </div>
 
-                    <div className="p-4">
-                      <Image
-                        src={product.itemImage || ''}
-                        alt={product.itemName || 'Product'}
-                        className="w-full h-48 object-contain rounded-lg mb-4"
-                        width={300}
-                        height={200}
-                      />
+                    <div className="p-4 sm:p-5 flex flex-col flex-1">
+                      <div className="relative w-full aspect-square rounded-xl overflow-hidden mb-4 bg-gray-50 border border-gray-100 shadow-xs">
+                        <Image
+                          src={product.itemImage || ''}
+                          alt={product.itemName || 'Product'}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover hover:scale-105 transition-transform duration-300"
+                        />
+                      </div>
 
                       <div className="flex justify-end items-center mb-4">
                         {/* Pricing removed as per request */}
@@ -272,7 +274,7 @@ export default function ProductsPage() {
 
                       <button
                         onClick={() => handleOrderNow(product)}
-                        className="w-full bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors flex items-center justify-center gap-2"
+                        className="mt-auto w-full bg-[#C9A84C] text-[#FFFFFF] px-6 py-3 rounded-lg font-['Roboto'] font-semibold hover:bg-[#F5A623] transition-colors flex items-center justify-center gap-2"
                       >
                         <ShoppingCart className="w-5 h-5" />
                         Order Now

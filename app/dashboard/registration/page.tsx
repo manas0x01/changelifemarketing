@@ -554,6 +554,7 @@ function NewRegisterForm() {
   };
 
   const handleRegistrationSubmit = async () => {
+    if (isSubmitting || showCongratulations || registrationFrozen) return;
     // Sessions: Morning = 12:00 AM to 12:00 PM, Evening = 12:00 PM to 12:00 AM
     // No freeze period - registration is always allowed
 
@@ -606,7 +607,7 @@ function NewRegisterForm() {
         gender,
         mobileNo,
         email,
-        dateOfBirth: `${String(dobDay).padStart(2, '0')}-${dobMonth}-${dobYear}`,
+        dateOfBirth: `${dobYear}-${dobMonth}-${String(dobDay).padStart(2, '0')}`,
         panNo,
         state,
         district,
@@ -634,7 +635,7 @@ function NewRegisterForm() {
       });
       const data = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !data.success) {
         setIsRegistering(false);
         setIsSubmitting(false);
         toast.error(data.message || data.error || "Registration failed");
@@ -657,9 +658,6 @@ function NewRegisterForm() {
       toast.error("Network error. Please check your connection and try again.");
       setIsRegistering(false);
       setIsSubmitting(false);
-    } finally {
-      // setIsSubmitting should stay true until we are done showing the congrats or failing
-      if (!showCongratulations) setIsSubmitting(false);
     }
   };
 

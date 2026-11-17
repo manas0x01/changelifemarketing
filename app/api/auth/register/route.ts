@@ -9,8 +9,7 @@ import { updateTeamCounts } from "@/lib/teamUtils";
 import { escapeRegex } from "@/lib/utils";
 
 export async function POST(req: NextRequest) {
-  const dbSession = await mongoose.startSession();
-  console.log('[DEBUG] register: DB session started');
+  let dbSession: mongoose.ClientSession | undefined;
 
   try {
     let session: any;
@@ -46,6 +45,7 @@ export async function POST(req: NextRequest) {
     //////////////////////////////////////////////////////////////
 
     await connectDB();
+    dbSession = await mongoose.startSession();
 
     let username = "";
     let isUnique = false;
@@ -411,7 +411,6 @@ export async function POST(req: NextRequest) {
     //////////////////////////////////////////////////////////////
 
     await dbSession.commitTransaction();
-    dbSession.endSession();
     console.log('[DEBUG] register: transaction committed');
 
     //////////////////////////////////////////////////////////////
@@ -433,13 +432,14 @@ export async function POST(req: NextRequest) {
     console.error("❌ Registration Error:", error);
 
     try {
-      await dbSession.abortTransaction();
-      dbSession.endSession();
+      if (dbSession?.inTransaction()) await dbSession.abortTransaction();
     } catch { }
 
     return NextResponse.json(
       { success: false, message: "Registration failed" },
       { status: 500 }
     );
+  } finally {
+    await dbSession?.endSession();
   }
 }

@@ -19,7 +19,12 @@ export default function TermsConditionsModal({
 
   useEffect(() => {
     // Check if user has already accepted
-    const accepted = localStorage.getItem(storageKey);
+    let accepted: string | null = null;
+    try {
+      accepted = localStorage.getItem(storageKey);
+    } catch {
+      // Storage can be blocked by browser privacy settings.
+    }
     if (!accepted) {
       setIsVisible(true);
       // Prevent body scrolling when modal is open
@@ -31,7 +36,11 @@ export default function TermsConditionsModal({
   }, [storageKey]);
 
   const handleClose = () => {
-    localStorage.setItem(storageKey, "true");
+    try {
+      localStorage.setItem(storageKey, "true");
+    } catch {
+      // Acceptance still applies for this visit when storage is unavailable.
+    }
     setIsVisible(false);
     document.body.style.overflow = "";
   };
@@ -586,7 +595,16 @@ export default function TermsConditionsModal({
             {/* Checkbox */}
             <div
               className={`tandc-checkbox-wrap ${isChecked ? "checked" : ""}`}
-              onClick={() => setIsChecked(!isChecked)}
+              role="checkbox"
+              aria-checked={isChecked}
+              tabIndex={0}
+              onClick={() => setIsChecked((checked) => !checked)}
+              onKeyDown={(event) => {
+                if (event.key === " " || event.key === "Enter") {
+                  event.preventDefault();
+                  setIsChecked((checked) => !checked);
+                }
+              }}
             >
               <div className={`tandc-checkbox ${isChecked ? "checked" : ""}`}>
                 {isChecked && (
@@ -604,6 +622,7 @@ export default function TermsConditionsModal({
             {/* Proceed Button */}
             <button
               className={`tandc-proceed-btn ${isChecked ? "active" : "disabled"}`}
+              type="button"
               onClick={handleProceed}
               disabled={!isChecked}
             >

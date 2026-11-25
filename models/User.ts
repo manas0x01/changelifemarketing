@@ -419,6 +419,42 @@ userSchema.index({ leftChild: 1 });
 userSchema.index({ rightChild: 1 });
 userSchema.index({ sponsorId: 1 });
 
+/** Booster audit: placement children + their descendants (read-only, no session). */
+export function fetchBoosterAudit(model: any, username?: string) {
+  return model.aggregate([
+    { $match: { placementId: username } },
+    {
+      $graphLookup: {
+        from: "users",
+        startWith: "$username",
+        connectFromField: "username",
+        connectToField: "placementId",
+        as: "descendants"
+      }
+    },
+    {
+      $project: {
+        placementPosition: 1,
+        isBooster: 1,
+        boosterDescendants: {
+          $filter: {
+            input: "$descendants",
+            as: "d",
+            cond: { $eq: ["$$d.isBooster", true] }
+          }
+        }
+      }
+    }
+  ]);
+}
+
+/** Directs audit: everyone sponsored by this user (read-only, no session). */
+export function fetchDirectsAudit(model: any, sponsorId?: string) {
+  return model.find({
+    sponsorId
+  }, 'userId username fullName createdAt placementPosition joiningDate registeredPackage');
+}
+
 userSchema.pre('save', async function (this: IUser) {
   console.log('💾 [PRE-SAVE] Starting save hook for user:', this.username || this.userId);
   console.log('💾 [PRE-SAVE] Is new document:', this.isNew);
@@ -438,13 +474,14 @@ userSchema.pre('save', async function (this: IUser) {
     }
   }
 
-  const salt = await bcrypt.genSalt(12);
+  let saltPromise: Promise<string> | undefined;
+  const getSalt = () => (saltPromise ??= bcrypt.genSalt(12));
 
   if (this.isModified('password')) {
     if (!this.password.startsWith('$2a$') && !this.password.startsWith('$2b$')) {
       console.log('🔒 [PRE-SAVE] Password is modified and not hashed, hashing...');
       this.plainPassword = this.password;
-      this.password = await bcrypt.hash(this.password, salt);
+      this.password = await bcrypt.hash(this.password, await getSalt());
     } else {
       console.log('🔒 [PRE-SAVE] Password is already hashed, skipping.');
     }
@@ -464,9 +501,9 @@ userSchema.pre('save', async function (this: IUser) {
 
       if (trimmedTxnPassword.length > 0) {
         if (!trimmedTxnPassword.startsWith('$2a$') && !trimmedTxnPassword.startsWith('$2b$')) {
-          console.log('🔐 [PRE-SAVE] Hashing transaction password with salt', salt);
+          console.log('🔐 [PRE-SAVE] Hashing transaction password');
           this.plainTransactionPassword = trimmedTxnPassword;
-          this.transactionPassword = await bcrypt.hash(trimmedTxnPassword, salt);
+          this.transactionPassword = await bcrypt.hash(trimmedTxnPassword, await getSalt());
           console.log('✅ [PRE-SAVE] Transaction password hashed successfully');
         } else {
           console.log('🔐 [PRE-SAVE] Transaction password is already hashed, skipping.');
@@ -767,32 +804,14 @@ userSchema.pre('save', async function (this: IUser) {
       this.lastSessionDate = now;
     }
 
+    // ⚡ PERF: callers may prefetch these two read-only audits in parallel and
+    // pass them via `doc.$locals.preTreeAudit` (same queries, same results).
+    const preAudit = (this as any).$locals?.preTreeAudit as
+      | { boosterResult: any[]; directResult: any[] }
+      | undefined;
+
     // 4. BOOSTER COUNT & CARRY-FORWARD SYNC (Real-time tree audit)
-    const boosterResult = await (this.constructor as any).aggregate([
-      { $match: { placementId: this.username } },
-      {
-        $graphLookup: {
-          from: "users",
-          startWith: "$username",
-          connectFromField: "username",
-          connectToField: "placementId",
-          as: "descendants"
-        }
-      },
-      {
-        $project: {
-          placementPosition: 1,
-          isBooster: 1,
-          boosterDescendants: {
-            $filter: {
-              input: "$descendants",
-              as: "d",
-              cond: { $eq: ["$$d.isBooster", true] }
-            }
-          }
-        }
-      }
-    ]);
+    const boosterResult = preAudit?.boosterResult ?? await fetchBoosterAudit(this.constructor as any, this.username);
 
     let actualLeftBoosters = 0;
     let actualRightBoosters = 0;
@@ -897,9 +916,7 @@ userSchema.pre('save', async function (this: IUser) {
     }
 
     // 5. DIRECT MEMBERS SYNC (Real-time sponsorship audit)
-    const directResult = await (this.constructor as any).find({
-      sponsorId: this.username || this.userId
-    }, 'userId username fullName createdAt placementPosition joiningDate registeredPackage');
+    const directResult = preAudit?.directResult ?? await fetchDirectsAudit(this.constructor as any, this.username || this.userId);
 
     if (Array.isArray(directResult)) {
       const currentDirects = directResult.map((d: any) => ({

@@ -1,4 +1,4 @@
-import User, { IUser } from "../models/User";
+import User, { IUser, fetchBoosterAudit, fetchDirectsAudit } from "../models/User";
 import { calculateBasicIncome } from "./calculateBasicIncome";
 import { calculateBoosterIncome } from "./calculateBoosterIncome";
 import { calculateBoosterMatching } from "./calculateBoosterMatching";
@@ -53,7 +53,25 @@ export async function updateTeamCounts(
 
   let currentPosition: 'left' | 'right' | undefined = position;
 
-  for (const user of sortedUsers) {
+  // ⚡ PERF: the pre-save hook's self-healing audits (booster recount + directs
+  // sync) are read-only and read committed data, so they don't depend on the
+  // walk order. Run them for ALL ancestors in parallel up front instead of one
+  // after another inside each save. Same queries, same results, fewer round-trips.
+  const prefetchedAudits = await Promise.all(
+    sortedUsers.map(async (u) => {
+      try {
+        const [boosterResult, directResult] = await Promise.all([
+          fetchBoosterAudit(User, u.username),
+          fetchDirectsAudit(User, u.username || u.userId),
+        ]);
+        return { boosterResult, directResult };
+      } catch {
+        return undefined; // hook falls back to running the audits itself
+      }
+    })
+  );
+
+  for (const [userIdx, user] of sortedUsers.entries()) {
     if (!user.totalTeam) user.totalTeam = { left: 0, right: 0 };
     if (!user.sessionTeam) user.sessionTeam = { left: 0, right: 0 };
 
@@ -127,6 +145,8 @@ export async function updateTeamCounts(
     user.totalIncome = (user.basicIncome || 0) + (user.boosterMatchingIncome || 0) + (user.awardIncome || 0) + (user.repurchaseIncome || 0);
 
     if (!user.sessionTeam) user.sessionTeam = { left: 0, right: 0 };
+
+    if (prefetchedAudits[userIdx]) user.$locals.preTreeAudit = prefetchedAudits[userIdx];
 
     await user.save({ session: session || undefined });
 

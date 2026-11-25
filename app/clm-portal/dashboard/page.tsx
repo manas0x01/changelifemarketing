@@ -21,6 +21,8 @@ import {
   IndianRupee,
   ChevronUp,
   Loader2,
+  Package,
+  Building2,
 } from "lucide-react";
 
 
@@ -59,6 +61,13 @@ interface DashboardData {
     level: string;
     earnings: string;
   }>;
+}
+
+interface ImpactStats {
+  membersJoined: number;
+  productsAvailable: number;
+  statesActive: number;
+  incomeDistributed: number;
 }
 
 /* ─────────────────────────────────────────────
@@ -115,6 +124,31 @@ export default function AdminDashboard() {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<DashboardData | null>(null);
+  const [impact, setImpact] = useState<ImpactStats | null>(null);
+  const [impactUpdatedAt, setImpactUpdatedAt] = useState<Date | null>(null);
+
+  // Real-time "Impact in Numbers" (admin only) — refreshes every 10s
+  useEffect(() => {
+    let active = true;
+    const fetchImpact = async () => {
+      try {
+        const res = await fetch("/api/admin/impact-stats", { cache: "no-store" });
+        const json = await res.json();
+        if (active && json.success) {
+          setImpact(json.stats);
+          setImpactUpdatedAt(new Date(json.updatedAt));
+        }
+      } catch (error) {
+        console.error("Failed to fetch impact stats:", error);
+      }
+    };
+    fetchImpact();
+    const id = setInterval(fetchImpact, 10000);
+    return () => {
+      active = false;
+      clearInterval(id);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchDashboardStats = async () => {
@@ -326,6 +360,45 @@ export default function AdminDashboard() {
                   <p className="text-[0.65rem] uppercase tracking-wider text-[#333333]/50 font-medium leading-snug">{label}</p>
                 </div>
               ))}
+            </Card>
+          </motion.div>
+
+          {/* ── Impact in Numbers (real-time) ── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
+            <Card>
+              <CardHeader
+                title="Impact in Numbers"
+                action={
+                  <span className="inline-flex items-center gap-2 text-[0.7rem] uppercase tracking-wide text-[#333333]/50">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                    </span>
+                    Live{impactUpdatedAt ? ` · ${impactUpdatedAt.toLocaleTimeString("en-IN")}` : ""}
+                  </span>
+                }
+              />
+              <div className="grid grid-cols-2 lg:grid-cols-4 divide-x divide-y lg:divide-y-0 divide-[#0A6E5A]/8">
+                {[
+                  { label: "Members Joined", value: (impact?.membersJoined ?? 0).toLocaleString("en-IN"), unit: "members", icon: Users },
+                  { label: "Products Available", value: (impact?.productsAvailable ?? 0).toLocaleString("en-IN"), unit: "products", icon: Package },
+                  { label: "States Active", value: (impact?.statesActive ?? 0).toLocaleString("en-IN"), unit: "states", icon: Building2 },
+                  { label: "Income Distributed", value: `₹${(impact?.incomeDistributed ?? 0).toLocaleString("en-IN")}`, unit: "", icon: TrendingUp },
+                ].map(({ label, value, unit, icon: Icon }) => (
+                  <div key={label} className="flex flex-col items-center justify-center py-6 px-4 text-center gap-2">
+                    <Icon className="w-5 h-5 text-[#C9A84C]" />
+                    <p className="font-['Fraunces'] text-[1.75rem] text-[#0A6E5A] leading-none">
+                      {value}
+                      {unit && <span className="text-[1rem] text-[#C9A84C] ml-1">{unit}</span>}
+                    </p>
+                    <p className="text-[0.68rem] uppercase tracking-wider text-[#333333]/50 font-medium">{label}</p>
+                  </div>
+                ))}
+              </div>
             </Card>
           </motion.div>
 
